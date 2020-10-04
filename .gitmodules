@@ -1,0 +1,9 @@
+[submodule "ReHitman/Modules/fmt"]
+	path = ReHitman/Modules/fmt
+	url = https://github.com/fmtlib/fmt
+[submodule "ReHitman/Modules/spdlog"]
+	path = ReHitman/Modules/spdlog
+	url = https://github.com/gabime/spdlog
+[submodule "ReHitman/Modules/ImGui/imgui"]
+	path = ReHitman/Modules/ImGui/imgui
+	url = https://github.com/ocornut/imgui
