@@ -16,7 +16,7 @@ namespace Glacier
         char pad_0030[128]; //0x0030
 
         // === vftable ===
-        virtual void Function_0000(); //#0 +0 .rdata:00756adc
+        virtual REFTAB32* Release(bool doFreeMemory); //#0 +0 .rdata:00756adc
         virtual void Function_0001(); //#1 +4 .rdata:00756ae0
         virtual void Function_0002(); //#2 +8 .rdata:00756ae4
         virtual void Function_0003(); //#3 +c .rdata:00756ae8
@@ -36,7 +36,7 @@ namespace Glacier
         virtual void Function_0017(); //#17 +44 .rdata:00756b20
         virtual void Function_0018(); //#18 +48 .rdata:00756b24
         virtual void Function_0019(); //#19 +4c .rdata:00756b28
-        virtual void getFirstEntity(int* pResult); //#20 +50 .rdata:00756b2c
+        virtual void* getFirstEntity(void* pResult); //#20 +50 .rdata:00756b2c
         virtual void Function_0021(); //#21 +54 .rdata:00756b30
         virtual void Function_0022(); //#22 +58 .rdata:00756b34
         virtual void Function_0023(); //#23 +5c .rdata:00756b38
@@ -49,8 +49,8 @@ namespace Glacier
         virtual void Function_0030(); //#30 +78 .rdata:00756b54
         virtual void Function_0031(); //#31 +7c .rdata:00756b58
         virtual void Function_0032(); //#32 +80 .rdata:00756b5c
-        virtual void Function_0033(); //#33 +84 .rdata:00756b60
-        virtual void Function_0034(); //#34 +88 .rdata:00756b64
+        virtual void Function_0033(void* a0); //#33 +84 .rdata:00756b60
+        virtual void* Function_0034(); //#34 +88 .rdata:00756b64
     };
 
     template <typename T> T* get(REFTAB32* reftab, size_t index)

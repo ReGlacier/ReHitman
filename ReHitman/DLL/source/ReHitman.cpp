@@ -1,7 +1,7 @@
 #include <DLL/ReHitman.h>
 #include <DLL/Logger.h>
 #include <DLL/DebugConsole.h>
-#include <Client/ReHitmanClientInterface.h>
+#include <Client/IClient.h>
 
 #include <spdlog/spdlog.h>
 
@@ -13,9 +13,9 @@
 
 namespace ReHitman
 {
-    Client::ReHitmanClientInterface* g_ClientInterface = nullptr;
+    Client::IClient* g_ClientInterface = nullptr;
 
-    Client::ReHitmanClientInterface* CreateClientInterface()
+    Client::IClient* CreateClientInterface()
     {
 #ifdef REHITMAN_BLOOD_MONEY_PROJECT
         return new Hitman::BloodMoney::Client();

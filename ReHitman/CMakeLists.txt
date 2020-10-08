@@ -8,6 +8,7 @@ add_definitions(-D_CRT_SECURE_NO_WARNINGS=1) #MSVS Stuff
 add_subdirectory(Modules/fmt)
 add_subdirectory(Modules/spdlog)
 add_subdirectory(Modules/ImGui)
+add_subdirectory(Modules/HF)
 
 add_subdirectory(Glacier)
 add_subdirectory(BloodMoney)

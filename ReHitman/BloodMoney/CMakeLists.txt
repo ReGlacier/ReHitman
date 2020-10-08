@@ -12,4 +12,4 @@ file(GLOB_RECURSE HITMAN_BM_SOURCES
 add_library(BloodMoney STATIC ${HITMAN_BM_SOURCES})
 add_library(Hitman::BloodMoney ALIAS BloodMoney)
 target_include_directories(BloodMoney PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_link_libraries(BloodMoney ReHitman::IClient spdlog)
+target_link_libraries(BloodMoney HF::Core ReHitman::IClient ImGui::Core ImGui::DX9 spdlog)
