@@ -7,6 +7,13 @@ namespace Glacier
     class ZItem;
     class ZItemTemplate;
 
+    enum class HandType {
+        LeftHand	= 32,
+        RightHand	= 31,
+        RatUnk0		= 20,
+        RatUnk1		= 25
+    };
+
     class ZIKHAND
     {
     public:
