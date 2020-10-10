@@ -20,6 +20,8 @@
 #define GET_ADDR_FROM_MEMBER_OR_ENTITY(f) (reinterpret_cast<uint32_t>(reinterpret_cast<uint32_t*&>(f)))
 #endif
 
+#define LAMBDA(x) (+x)
+
 /**
  * @brief this is my hacker framework
  */
@@ -38,6 +40,7 @@ namespace HF
         static constexpr uint16_t CALL_ABS  = 0xFF15;
         static constexpr uint16_t JMP_ABS   = 0xFF25;
         static constexpr uint8_t  PUSH_AD   = 0x60;
+        static constexpr uint8_t  PUSH_FD   = 0x9C;
         static constexpr uint8_t  POP_AD    = 0x61;
         static constexpr uint8_t  POP_FD    = 0x9D;
         static constexpr uint8_t  PUSH_EAX  = 0x50;
@@ -143,6 +146,7 @@ namespace HF
             {}
 
             using Ptr = std::shared_ptr<Module>;
+            using Ref = std::weak_ptr<Module>;
 
             [[nodiscard]] const std::string& getName() const { return m_name; }
             [[nodiscard]] std::uintptr_t getBaseAddress() const { return m_baseAddr; }
@@ -362,67 +366,6 @@ namespace HF
         };
     };
 
-    namespace CXX
-    {
-        template <typename ClassT>
-        class VFHook final
-        {
-            uint32_t m_originalFunction { 0x0 };
-            ClassT*  m_instance { nullptr };
-            size_t   m_index { 0x0 };
-        public:
-            VFHook(ClassT* instance, size_t index, uint32_t newAddr)
-                    : m_instance(instance)
-                    , m_index(index)
-            {
-                Setup(newAddr);
-            }
-
-            template <typename Ret, typename... Args>
-            VFHook(ClassT* instance, size_t index, Ret(__thiscall ClassT::* member)(Args...))
-            {
-                /*
-                 * @brief this is funny C++ trick to get member addr xD
-                 * @ref   https://stackoverflow.com/a/8122891
-                 */
-                VFHook(instance, index, GET_ADDR_FROM_MEMBER_OR_ENTITY(member));
-            }
-
-            ~VFHook()
-            {
-                remove();
-            }
-
-        private:
-            void setup(uint32_t newAddr)
-            {
-                std::intptr_t vftblptr = *reinterpret_cast<std::intptr_t*>(m_instance);
-                std::intptr_t entity = vftblptr + sizeof(std::intptr_t) * m_index;
-                std::intptr_t orgfunc = *reinterpret_cast<std::intptr_t*>(entity);
-
-                MEMORY_BASIC_INFORMATION mbi;
-                VirtualQuery((LPCVOID)entity, &mbi, sizeof(mbi));
-
-                // Local region for short operation via RAII
-                {
-                    HF::Win32::VProtect entityProtection {
-                            reinterpret_cast<uint32_t>(mbi.BaseAddress),
-                            mbi.RegionSize,
-                            PAGE_READWRITE
-                    };
-                    *reinterpret_cast<std::intptr_t*>(entity) = static_cast<std::intptr_t>(newAddr);
-                }
-
-                m_originalFunction = orgfunc;
-            }
-
-            void remove()
-            {
-                setup(m_instance, m_index, m_originalFunction);
-            }
-        };
-    }
-
     namespace Memory
     {
         class MaskComparator final
@@ -478,7 +421,107 @@ namespace HF
 
     namespace Hook
     {
-        template <size_t PayloadSize = X86::DEFAULT_JMP_SIZE, bool UseAsRAII = true>
+        template <typename ClassT>
+        class VFHook final
+        {
+            std::intptr_t m_originalFunction { 0x0 };
+            ClassT*  m_instance { nullptr };
+            size_t   m_index { 0x0 };
+        public:
+            VFHook(ClassT* instance, size_t index, std::intptr_t newAddr)
+                    : m_instance(instance)
+                    , m_index(index)
+            {
+                setup(newAddr);
+            }
+
+            template <typename FinClass, typename Ret, typename... Args>
+            VFHook(ClassT* instance, size_t index, Ret(__thiscall FinClass::* member)(Args...))
+                : VFHook(instance, index, GET_ADDR_FROM_MEMBER_OR_ENTITY(member))
+            {
+            }
+
+            template <typename FinClass, typename Ret, typename... Args>
+            VFHook(ClassT* instance, size_t index, Ret(__thiscall FinClass::* member)(Args...) const)
+                : VFHook(instance, index, GET_ADDR_FROM_MEMBER_OR_ENTITY(member))
+            {
+            }
+
+            ~VFHook()
+            {
+                remove();
+            }
+
+            [[nodiscard]] std::intptr_t getOriginalPtr() const { return m_originalFunction; }
+
+            void reset(std::intptr_t newAddr)
+            {
+                setup(newAddr);
+            }
+
+            template <typename Functor>
+            void reset(Functor target)
+            {
+                setup(GET_ADDR_FROM_MEMBER_OR_ENTITY(target));
+            }
+
+            template <typename Ret, typename... Args>
+            auto invoke(Args&&... args)
+            {
+                typedef Ret(__thiscall* Function_t)(ClassT*, Args&&...);
+                auto func = (Function_t)m_originalFunction;
+                return func(m_instance, std::forward<Args>(args)...);
+            }
+
+        private:
+            static std::intptr_t getMethodAddrByIndex(ClassT* instance, size_t index)
+            {
+                std::intptr_t vftblptr = *reinterpret_cast<std::intptr_t*>(instance);
+                std::intptr_t entity = vftblptr + sizeof(std::intptr_t) * index;
+                return *reinterpret_cast<std::intptr_t*>(entity);
+            }
+
+            void setup(uint32_t newAddr)
+            {
+                std::intptr_t vftblptr = *reinterpret_cast<std::intptr_t*>(m_instance);
+                std::intptr_t entity = vftblptr + sizeof(std::intptr_t) * m_index;
+                m_originalFunction = *reinterpret_cast<std::intptr_t*>(entity);
+
+                {
+                    MEMORY_BASIC_INFORMATION mbi;
+                    VirtualQuery((LPCVOID)entity, &mbi, sizeof(mbi));
+
+                    Win32::VProtect protect(reinterpret_cast<uint32_t>(mbi.BaseAddress),
+                                            mbi.RegionSize,
+                                            PAGE_READWRITE);
+                    *reinterpret_cast<std::intptr_t*>(entity) = static_cast<std::intptr_t>(newAddr);
+
+//                    auto unprotect = [](void* region) -> int {
+//                        MEMORY_BASIC_INFORMATION mbi;
+//                        VirtualQuery((LPCVOID)region, &mbi, sizeof(mbi));
+//                        VirtualProtect(mbi.BaseAddress, mbi.RegionSize, PAGE_READWRITE, &mbi.Protect);
+//                        return mbi.Protect;
+//                    };
+//
+//                    auto protect = [](void* region, int protection) {
+//                        MEMORY_BASIC_INFORMATION mbi;
+//                        VirtualQuery((LPCVOID)region, &mbi, sizeof(mbi));
+//                        VirtualProtect(mbi.BaseAddress, mbi.RegionSize, protection, &mbi.Protect);
+//                    };
+//
+//                    int original_protection = unprotect((void*)entity);
+//                    *reinterpret_cast<std::intptr_t*>(entity) = static_cast<std::intptr_t>(newAddr);
+//                    protect((void*)entity, original_protection);
+                }
+            }
+
+            void remove()
+            {
+                setup(m_originalFunction);
+            }
+        };
+
+        template <size_t PayloadSize = X86::DEFAULT_JMP_SIZE>
         class Trampoline
         {
             static_assert(PayloadSize >= X86::DEFAULT_JMP_SIZE, "PayloadSize must be grater or equal than 5 (x86 near jmp)");
@@ -664,6 +707,10 @@ namespace HF
             }
         };
 
+        using TrampolineBasic = Trampoline<X86::DEFAULT_JMP_SIZE>;
+        using TrampolineBasicPtr = std::shared_ptr<TrampolineBasic>;
+        template <size_t PatchSize> using TrampolinePtr = std::shared_ptr<Trampoline<PatchSize>>;
+
         /**
          * @fn HookFunction
          * @brief Override control flow to user's function via patching original function
@@ -682,14 +729,25 @@ namespace HF
                 Functor to,
                 const X86::AssemblyPayload& patchBeforeJump,
                 const X86::AssemblyPayload& patchAfterReturnFromTrampoline
-        ) {
-            static_assert(PatchSize >= X86::DEFAULT_JMP_SIZE);
+        ) requires (PatchSize >= X86::DEFAULT_JMP_SIZE) {
             return std::make_shared<Trampoline<PatchSize>>(
                     process,
                     addr,
                     GET_ADDR_FROM_MEMBER_OR_ENTITY(to),
                     patchBeforeJump,
                     patchAfterReturnFromTrampoline);
+        }
+
+        template <typename TargetClass, size_t MethodIndex, typename FinalClass, typename Ret, typename... Args>
+        static std::unique_ptr<VFHook<TargetClass>> HookVirtualFunction(TargetClass* instance, Ret(FinalClass::*target)(Args&&...))
+        {
+            return std::make_unique<VFHook<TargetClass>>(instance, MethodIndex, GET_ADDR_FROM_MEMBER_OR_ENTITY(target));
+        }
+
+        template <typename TargetClass, size_t MethodIndex, typename Functor>
+        static std::unique_ptr<VFHook<TargetClass>> HookVirtualFunction(TargetClass* instance, Functor target)
+        {
+            return std::make_unique<VFHook<TargetClass>>(instance, MethodIndex, GET_ADDR_FROM_MEMBER_OR_ENTITY(target));
         }
 
         static bool FillMemoryByNOPs(const std::shared_ptr<Win32::Process>& process, std::intptr_t addr, size_t size)

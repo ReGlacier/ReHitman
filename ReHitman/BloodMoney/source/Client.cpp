@@ -1,21 +1,42 @@
 #include <BloodMoney/Client.h>
-#include <BloodMoney/Debug/BMDebugView.h>
-#include <BloodMoney/Debug/BMDebugModel.h>
 
 #include <HF/HackingFramework.hpp>
-
 #include <spdlog/spdlog.h>
+
+/// Delegates
+#include <BloodMoney/Delegates/DX9Delegate.h>
+
+/// Patches
+#include <BloodMoney/Patches/All/ZHitman3Patches.h>
+#include <BloodMoney/Patches/All/ZDirect3D9DevicePatches.h>
+#include <BloodMoney/Patches/All/InputDevicesPatches.h>
 
 namespace Hitman::BloodMoney
 {
     static constexpr std::string_view kDirectX9DllName = "d3d9.dll";
     static constexpr std::string_view kProcessName = "HitmanBloodMoney.exe";
 
-    std::shared_ptr<HF::Hook::Trampoline<HF::X86::DEFAULT_JMP_SIZE>> g_trampoline = nullptr;
-
-    void __stdcall OnNewSession(DWORD pInstance)
+    bool Client::OnAttach()
     {
-        spdlog::info("New game session at {:08X}", pInstance);
+        spdlog::info("----------[ WELCOME TO RE:HITMAN PROJECT ]----------");
+
+        if (!LocateModules()) return false;
+
+        m_patches = std::make_shared<CommonPatches>(m_selfProcess, m_selfModule, m_d3d9Module);
+        RegisterPatches();
+        if (!m_patches->Setup())
+        {
+            spdlog::error("Failed to setup patches!");
+            return false;
+        }
+
+        return true;
+    }
+
+    void Client::OnDestroy()
+    {
+        m_patches->Release();
+        ReleaseModules();
     }
 
     bool Client::LocateModules()
@@ -63,63 +84,15 @@ namespace Hitman::BloodMoney
 
     void Client::ReleaseModules()
     {
-        g_trampoline->remove();
-        g_trampoline = nullptr;
-
         m_selfModule = nullptr;
         m_d3d9Module = nullptr;
         m_selfProcess = nullptr;
     }
 
-    bool Client::OnAttach()
+    void Client::RegisterPatches()
     {
-        spdlog::info("----------[ WELCOME TO RE:HITMAN PROJECT ]----------");
-
-        if (!LocateModules()) return false;
-
-        // TODO: It is debug, remove later
-        const auto kAddr = 0x00604CF1;
-
-        HF::Hook::MoveInstructions<4>(m_selfProcess, kAddr, kAddr + 5);
-        HF::Hook::FillMemoryByNOPs(m_selfProcess, kAddr, 5);
-
-        g_trampoline = HF::Hook::HookFunction(
-                m_selfProcess,
-                kAddr,
-                &OnNewSession,
-                {
-                        HF::X86::PUSH_ECX,
-                        HF::X86::PUSH_EAX,
-                        HF::X86::PUSH_EAX
-                },
-                {
-                        HF::X86::POP_EAX,
-                        HF::X86::POP_EAX
-                });
-
-        if (g_trampoline->setup())
-            spdlog::info("Hook inited at {:08X}", g_trampoline->at());
-        else
-            spdlog::error("Failed to setup hook at {:08X}", g_trampoline->at());
-
-
-        return true;
-    }
-
-    void Client::OnDestroy()
-    {
-        ReleaseModules();
-    }
-
-    ReHitman::Client::IDebugView * Client::GetDebugView()
-    {
-        if (!m_debugView)
-        {
-            auto view = new DebugUI::BMDebugView();
-            view->SetModel(new DebugUI::BMDebugModel); ///TODO: Take infos from ZHM3GameData here
-            m_debugView = view;
-        }
-
-        return m_debugView;
+        m_patches->RegisterPatch<ZDirect3D9DevicePatches>(new DX9Delegate());
+        m_patches->RegisterPatch<InputDevicesPatches>();
+        m_patches->RegisterPatch<ZHitman3Patches>();
     }
 }

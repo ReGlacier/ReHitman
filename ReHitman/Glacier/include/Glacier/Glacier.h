@@ -49,4 +49,10 @@ namespace Glacier
     class ZCheckPointBuffer; // NOT AVAILABLE FOR PC ?
 
     using zstring = std::string; /// I GUESS, CAUSE INSIDE ZSTRING USED STD::BASIC_STRING<CHAR, ...>
+
+    template <typename T = std::uintptr_t>
+    T* getInterface(std::uintptr_t baseAddr)
+    {
+        return ((*(T**)baseAddr));
+    }
 }

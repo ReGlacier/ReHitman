@@ -7,3 +7,6 @@
 [submodule "ReHitman/Modules/ImGui/imgui"]
 	path = ReHitman/Modules/ImGui/imgui
 	url = https://github.com/ocornut/imgui
+[submodule "ReHitman/Modules/gtest"]
+	path = ReHitman/Modules/gtest
+	url = https://github.com/google/googletest

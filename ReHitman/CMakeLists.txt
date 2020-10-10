@@ -9,6 +9,7 @@ add_subdirectory(Modules/fmt)
 add_subdirectory(Modules/spdlog)
 add_subdirectory(Modules/ImGui)
 add_subdirectory(Modules/HF)
+add_subdirectory(Modules/gtest)
 
 add_subdirectory(Glacier)
 add_subdirectory(BloodMoney)
