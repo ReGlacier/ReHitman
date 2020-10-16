@@ -1,15 +1,22 @@
 #pragma once
 
-#include <Glacier/Glacier.h>
+#include <Glacier/GlacierFWD.h>
 #include <Glacier/ZMath.h>
 
 namespace Glacier
 {
     class ZRTTI;
+    class ZEntityLocator;
 
     class ZGEOM
     {
     public:
+        // Data
+        ZEntityLocator* m_baseGeom;
+        int m_field8;
+        int m_fieldC;
+
+        // VFTable
         virtual void Release(bool);
         virtual void PreSave(ISerializerStream &);
         virtual void PostSave(ISerializerStream &);
@@ -21,11 +28,11 @@ namespace Glacier
         virtual void SaveObject(IOutputSerializerStream &);
         virtual void ExchangeObject(ISerializerStream &);
         virtual void SetToDefault();
-        virtual ZRTTI* GetTypeID();
+        virtual void* GetTypeID(); // Always nullptr, better to use GetOldClassInfo
         virtual void GetProperties();
-        virtual void GetObjectId();
+        virtual int GetObjectId();
         virtual void GetObjectIdAndMask(uint &,uint &);
-        virtual void GetOldClassInfo();
+        virtual ZRTTI* GetOldClassInfo();
         virtual void DoInit();
         virtual void CalcCenSize(); // #17, pure virtual
         virtual void PreSaveGame();
@@ -45,17 +52,17 @@ namespace Glacier
         virtual void RecurGetNext(ZBaseGeom const**);
         virtual void DisableParentBoundAdjust();
         virtual void ExpandBounds(float *,float *,float *,ZBaseGeom *);
-        virtual void SetMat(float const*);
-        virtual void SetPos(float const*);
-        virtual void SetMatPos(float const*,float const*);
-        virtual void SetWorldPosition(float const*);
-        virtual void SetRootTM(float const*,float const*);
-        virtual void Display(bool);
-        virtual void Select(bool);
-        virtual void Hide(bool);
-        virtual void HideRecursive(bool);
-        virtual void Freeze(bool);
-        virtual void DispBound(bool);
+        virtual void SetMat(const Glacier::ZMat3x3*);                    //#35 at 0x0076A200
+        virtual void SetPos(const Glacier::ZVector3*);                   //#36 at 0x0076A204
+        virtual void SetMatPos(float const*,float const*);               //#37 at 0x0076A208
+        virtual void SetWorldPosition(float const*);                     //#38 at 0x0076A20C
+        virtual void SetRootTM(float const*,float const*);               //#39 at 0x0076A210
+        virtual void Display(bool);                                      //#40 at 0x0076A214
+        virtual void Select(bool);                                       //#41 at 0x0076A218
+        virtual void Hide(bool);                                         //#42 at 0x0076A21C
+        virtual void HideRecursive(bool);                                //#43 at 0x0076A220
+        virtual void Freeze(bool);                                       //#44 at 0x0076A224
+        virtual void DispBound(bool);                                    //#45 at 0x0076A228
         virtual void SetMoving(bool);
         virtual void RequestCustomDraw();
         virtual void HasOwnerDraw();

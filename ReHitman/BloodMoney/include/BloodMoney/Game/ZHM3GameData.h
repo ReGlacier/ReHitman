@@ -27,11 +27,12 @@ namespace Hitman::BloodMoney
     class CIngameMap;
     class ZHM3BriefingControl;
     class ZHM3CameraClass;
+    class ZBoidSystem;
 
     class ZHM3GameData final : public Glacier::ZGameData
     {
     public:
-        N00001B3F* m_HumanInfo; //0x0004
+        ZBoidSystem* m_BoidSystem; //0x0004
         int32_t m_ActorsInPoolCount; //0x0008
         ZHM3Actor* m_ActorsPool[512]; //0x000C
         N000033C1* m_UNKNOWN_LIST; //0x080C

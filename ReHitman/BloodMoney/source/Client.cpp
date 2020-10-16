@@ -10,6 +10,7 @@
 #include <BloodMoney/Patches/All/ZHitman3Patches.h>
 #include <BloodMoney/Patches/All/ZDirect3D9DevicePatches.h>
 #include <BloodMoney/Patches/All/InputDevicesPatches.h>
+#include <BloodMoney/Patches/All/ZGEOMManagementPatch.h>
 
 namespace Hitman::BloodMoney
 {
@@ -94,5 +95,6 @@ namespace Hitman::BloodMoney
         m_patches->RegisterPatch<ZDirect3D9DevicePatches>(new DX9Delegate());
         m_patches->RegisterPatch<InputDevicesPatches>();
         m_patches->RegisterPatch<ZHitman3Patches>();
+        m_patches->RegisterPatch<ZGEOMManagementPatch>();
     }
 }

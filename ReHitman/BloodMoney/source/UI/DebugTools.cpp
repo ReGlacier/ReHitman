@@ -3,8 +3,11 @@
 #include <BloodMoney/Game/ZHM3GameData.h>
 #include <BloodMoney/Game/CIngameMap.h>
 
+#include <BloodMoney/Editors/LevelEditorGeomsPool.h>
+
 #include <Glacier/ZEngineDataBase.h>
 #include <Glacier/ZSysInterfaceWintel.h>
+#include <Glacier/ZGEOM.h>
 
 #include <spdlog/spdlog.h>
 #include <imgui.h>
@@ -17,35 +20,32 @@ namespace Hitman::BloodMoney
         auto sysInterface = Glacier::getInterface<Glacier::ZSysInterfaceWintel>(Globals::kSysInterfaceAddr);
         auto engineDataBase = sysInterface->m_engineDataBase;
 
-        ImGui::Begin("Demo");
+        ImGui::Begin("ZGEOMS list");
+        ImGui::Text("Total geoms: %.4d", LevelEditorGeomsPool::GetInstance().GetCount());
 
-        if (ImGui::Button("Aim to buddy and shoot him"))
+        ImGui::SetNextItemOpen(true);
+        if (ImGui::TreeNode("Scene"))
         {
-            for (int i = 1; i < gameData->m_ActorsInPoolCount; i++)
-            {
-                ZHM3Actor* currentActor = gameData->m_ActorsPool[i];
-                ZHM3Actor* previousActor = gameData->m_ActorsPool[i - 1];
+            // Draw everything
+            auto DrawGeomInfo = [](Glacier::ZGEOM* geom) {
+                ImGui::InputFloat3("Position", &geom->m_baseGeom->position.x);
+                ImGui::Text("Parent: %p", &geom->m_baseGeom->parent);
+                ImGui::Text("Data: %p", &geom->m_baseGeom->m_data);
 
-                int weaponOfCurrentActor = currentActor->GetWeapon();
-                if (weaponOfCurrentActor)
+                if (ImGui::Button("Hide")) geom->Hide(true); ImGui::SameLine(0.f, 10.f);
+                if (ImGui::Button("Show")) geom->Hide(false); ImGui::SameLine(0.f, 10.f);
+                if (ImGui::Button("Draw Bound Box")) geom->DispBound(true);
+            };
+
+            LevelEditorGeomsPool::GetInstance().ForEach([DrawGeomInfo](Glacier::ZGEOM* geom) {
+                if (ImGui::TreeNode((const void*)geom, "%s (object ID %d)", geom->GetOldClassInfo()->ComplexTypeName, geom->GetObjectId()))
                 {
-                    Glacier::Vector3 previousActorPos;
-                    previousActor->GetActorWorldPosition(&previousActorPos);
-
-                    currentActor->SetAimTarget(0, &previousActorPos, 0.4f, nullptr, 0, 0, -1, 100);
-                    currentActor->FireWeapon(weaponOfCurrentActor, true, 5.f, true);
+                    DrawGeomInfo(geom);
+                    ImGui::TreePop();
                 }
+            });
 
-                int weaponOfPreviousActor = previousActor->GetWeapon();
-                if (weaponOfPreviousActor)
-                {
-                    Glacier::Vector3 currentActorPos;
-                    currentActor->GetActorWorldPosition(&currentActorPos);
-
-                    previousActor->SetAimTarget(0, &currentActorPos, 0.4f, 0, 0, 0, -1, 4);
-                    previousActor->FireWeapon(weaponOfPreviousActor, true, 5.f, true);
-                }
-            }
+            ImGui::TreePop();
         }
 
         ImGui::End();

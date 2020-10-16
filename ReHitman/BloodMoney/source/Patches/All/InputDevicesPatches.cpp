@@ -1,8 +1,13 @@
 #include <BloodMoney/Patches/All/InputDevicesPatches.h>
 #include <Glacier/ZInputDevice.h>
+#include <Windows.h>
+
 #include <spdlog/spdlog.h>
 
 #include <imgui.h>
+
+// Win32 message handler
+extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 namespace Hitman::BloodMoney
 {
@@ -10,6 +15,9 @@ namespace Hitman::BloodMoney
     {
         static constexpr std::intptr_t ZWintelMouse_Constructor = 0x0045007C;
         static constexpr size_t ZInputDevice_OnUpdateIndex = 26;
+
+        static constexpr std::intptr_t kOriginalWndProcAddr = 0x004513E0;
+        static constexpr std::intptr_t kRegisterClassExAddr = 0x00453E68;
         static constexpr float kWheelDelta = WHEEL_DELTA;
     }
 
@@ -55,6 +63,25 @@ namespace Hitman::BloodMoney
             spdlog::info("Mouse device at {:08X}", (int)inputDevice);
             Globals::g_pZMouseWintelOnUpdate = HF::Hook::HookVirtualFunction<Glacier::ZInputDevice, Consts::ZInputDevice_OnUpdateIndex>(inputDevice, &ZMouseWintel::OnUpdate);
         }
+
+        LRESULT WINAPI Glacier_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+        {
+            typedef LRESULT(__stdcall* GlacierWndProc_t)(HWND, UINT, WPARAM, LPARAM);
+            auto glacierWndProc = (GlacierWndProc_t)Consts::kOriginalWndProcAddr;
+
+            ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam);
+            const bool glacierResult = glacierWndProc(hWnd, msg, wParam, lParam);
+
+            return glacierResult;
+        }
+
+        ATOM __stdcall RegisterClassExA_Hooked(WNDCLASSEXA* wndClass)
+        {
+            spdlog::info("Window class registered! Event loop function hooked!");
+            wndClass->lpfnWndProc = Glacier_WndProc;
+            return RegisterClassExA(wndClass);
+        }
+
     }
 
     std::string_view InputDevicesPatches::GetName() const { return "Input"; }
@@ -80,6 +107,28 @@ namespace Hitman::BloodMoney
                 return false;
             }
 
+            // Do not revert this patch!
+            if (!HF::Hook::FillMemoryByNOPs(process, Consts::kRegisterClassExAddr, kRegisterClassExPatchSize))
+            {
+                m_wintelMouseCtorHook->remove();
+                spdlog::error("Failed to cleanup memory");
+                return false;
+            }
+
+            m_registerClassExHook = HF::Hook::HookFunction<ATOM(__stdcall*)(WNDCLASSEXA*), kRegisterClassExPatchSize>(
+                    process,
+                    Consts::kRegisterClassExAddr,
+                    &Callbacks::RegisterClassExA_Hooked,
+                    {},
+                    {});
+
+            if (!m_registerClassExHook->setup())
+            {
+                m_wintelMouseCtorHook->remove();
+                spdlog::error("Failed to setup patch to RegisterClassEx!");
+                return false;
+            }
+
             return BasicPatch::Apply(modules);
         }
 
@@ -89,6 +138,7 @@ namespace Hitman::BloodMoney
     void InputDevicesPatches::Revert(const ModPack& modules)
     {
         m_wintelMouseCtorHook->remove();
+        m_registerClassExHook->remove();
         Globals::g_pZMouseWintelOnUpdate.reset(nullptr);
     }
 }

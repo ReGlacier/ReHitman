@@ -21,7 +21,6 @@ namespace Glacier
     class CCom;
     class ZBone;
     class ZCameraSpace;
-    class ZBaseGeom;
     class ZDrawBuffer;
     class ZItemState;
     class ZCAMERA;
@@ -66,4 +65,11 @@ namespace Glacier
     class ZCheckPointBuffer; // NOT AVAILABLE FOR PC ?
 
     using zstring = std::string; /// I GUESS, CAUSE INSIDE ZSTRING USED STD::BASIC_STRING<CHAR, ...>
+
+    namespace PF4
+    {
+        class Interface;
+    }
+
+    class ZBaseGeom; //ZEntityLocator implements this by old design
 }
