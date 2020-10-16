@@ -4,17 +4,17 @@ namespace Glacier
 {
     struct Vector2
     {
-        float x, y;
+        float x = 0.f, y = 0.f;
     };
 
     struct Vector3
     {
-        float x, y, z;
+        float x = 0.f, y = 0.f, z = 0.f;
     };
 
     struct Vector4
     {
-        float x, y, z, w;
+        float x = 0.f, y = 0.f, z = 0.f, w = 0.f;
     };
 
     struct Matrix3x3

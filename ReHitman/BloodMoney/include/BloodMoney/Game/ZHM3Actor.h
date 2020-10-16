@@ -61,7 +61,7 @@ namespace Hitman::BloodMoney
     {
     public:
         // === sub types ===
-        enum class ActorStatus : int32_t {
+        enum class ActorState : int32_t {
             // Pure
             Status_0 = 0,
             Status_1 = 1,
@@ -359,113 +359,113 @@ namespace Hitman::BloodMoney
         virtual void Function_0270(); //#270 +438 .rdata:0079676c
         virtual void Function_0271(); //#271 +43c .rdata:00796770
         virtual void Function_0272(); //#272 +440 .rdata:00796774
-        virtual void Function_0273(); //#273 +444 .rdata:00796778
-        virtual void Function_0274(); //#274 +448 .rdata:0079677c
-        virtual void Function_0275(); //#275 +44c .rdata:00796780
-        virtual void Function_0276(); //#276 +450 .rdata:00796784
-        virtual void Function_0277(); //#277 +454 .rdata:00796788
-        virtual void Function_0278(); //#278 +458 .rdata:0079678c
-        virtual void Function_0279(); //#279 +45c .rdata:00796790
-        virtual void Function_0280(); //#280 +460 .rdata:00796794
-        virtual void Function_0281(); //#281 +464 .rdata:00796798
-        virtual void Function_0282(); //#282 +468 .rdata:0079679c
-        virtual void Function_0283(); //#283 +46c .rdata:007967a0
-        virtual void Function_0284(); //#284 +470 .rdata:007967a4
-        virtual void Function_0285(); //#285 +474 .rdata:007967a8
-        virtual void Function_0286(); //#286 +478 .rdata:007967ac
-        virtual void Function_0287(); //#287 +47c .rdata:007967b0
-        virtual void Function_0288(); //#288 +480 .rdata:007967b4
-        virtual void Function_0289(); //#289 +484 .rdata:007967b8
-        virtual double Function_0290(); //#290 +488 .rdata:007967bc
-        virtual void Function_0291(); //#291 +48c .rdata:007967c0
-        virtual void Function_0292(); //#292 +490 .rdata:007967c4
-        virtual void Function_0293(); //#293 +494 .rdata:007967c8
-        virtual void Function_0294(); //#294 +498 .rdata:007967cc
-        virtual void Function_0295(); //#295 +49c .rdata:007967d0
-        virtual void Function_0296(); //#296 +4a0 .rdata:007967d4
-        virtual void Function_0297(); //#297 +4a4 .rdata:007967d8
-        virtual void Function_0298(); //#298 +4a8 .rdata:007967dc
-        virtual void Function_0299(); //#299 +4ac .rdata:007967e0
-        virtual void Function_0300(); //#300 +4b0 .rdata:007967e4
-        virtual void Function_0301(); //#301 +4b4 .rdata:007967e8
-        virtual void Function_0302(); //#302 +4b8 .rdata:007967ec
-        virtual void Function_0303(); //#303 +4bc .rdata:007967f0
-        virtual void Function_0304(); //#304 +4c0 .rdata:007967f4
-        virtual void Function_0305(); //#305 +4c4 .rdata:007967f8
-        virtual void Function_0306(); //#306 +4c8 .rdata:007967fc
-        virtual /* ZHM3Item */ void* Function_0307(); //#307 +4cc .rdata:00796800
-        virtual void Function_0308(); //#308 +4d0 .rdata:00796804
-        virtual void Function_0309(); //#309 +4d4 .rdata:00796808
-        virtual void Function_0310(); //#310 +4d8 .rdata:0079680c
-        virtual void Function_0311(); //#311 +4dc .rdata:00796810
-        virtual void Function_0312(); //#312 +4e0 .rdata:00796814
-        virtual void Function_0313(); //#313 +4e4 .rdata:00796818
-        virtual void Function_0314(); //#314 +4e8 .rdata:0079681c
-        virtual void Function_0315(); //#315 +4ec .rdata:00796820
-        virtual void Function_0316(); //#316 +4f0 .rdata:00796824
-        virtual void Function_0317(); //#317 +4f4 .rdata:00796828
-        virtual void Function_0318(); //#318 +4f8 .rdata:0079682c
-        virtual void Function_0319(); //#319 +4fc .rdata:00796830
-        virtual void Function_0320(); //#320 +500 .rdata:00796834
-        virtual void Function_0321(); //#321 +504 .rdata:00796838
-        virtual void Function_0322(); //#322 +508 .rdata:0079683c
+        virtual bool OnlyVerticalAim(); //#273 +444 .rdata:00796778 { always false }
+        virtual void GetAimAnim(Glacier::Animation::Header** results, uint32_t& count); //#274 +448 .rdata:0079677c
+        virtual void GetPoseEffects(float* ,unsigned short*); //#275 +44c .rdata:00796780 { BAD ASSEMBLY! }
+        virtual int SetHandTarget(int unknownIndex, Glacier::Vector3*, float); //#276 +450 .rdata:00796784
+        virtual void DontAnimateAttachers(); //#277 +454 .rdata:00796788 { DO NOT NOTHING }
+        virtual void RemoveLHandIKTarget(float, void* callback); //#278 +458 .rdata:0079678c
+        virtual void RemoveRHandIKTarget(float, void* callback); //#279 +45c .rdata:00796790
+        virtual void UpdateAimTarget(); //#280 +460 .rdata:00796794
+        virtual int SetAimTarget(uint32_t, Glacier::Vector3*, float, void* callback, int, int, int, int); //#281 +464 .rdata:00796798 (called by sub_6A6750)
+        virtual void SetAimTarget2(/* TODO: Detect args! Do not use this function! */); //#282 +468 .rdata:0079679c
+        virtual void RemoveAimTarget(float, void* callback); //#283 +46c .rdata:007967a0
+        virtual bool FreezeAimTarget(); //#284 +470 .rdata:007967a4
+        virtual void DisableAim(); //#285 +474 .rdata:007967a8
+        virtual void EnableAim(); //#286 +478 .rdata:007967ac
+        virtual bool GetAimTarget(); //#287 +47c .rdata:007967b0
+        virtual bool GetAimTarget(uint32_t*); //#288 +480 .rdata:007967b4
+        virtual bool GetAimTarget(Glacier::Vector3*); //#289 +484 .rdata:007967b8
+        virtual float GetDrawWeaponSpeed(); //#290 +488 .rdata:007967bc
+        virtual bool IsAiming(); //#291 +48c .rdata:007967c0
+        virtual void SetAimAnimPrc(float, float, float); //#292 +490 .rdata:007967c4 { DO NOTHING I GUESS }
+        virtual void FireShotNotify(); //#293 +494 .rdata:007967c8
+        virtual void SetHitAnimation(const char*); //#294 +498 .rdata:007967cc
+        virtual void SetHitAnimHandle(int& handle); //#295 +49c .rdata:007967d0
+        virtual void UseItem(Glacier::ZItem*, int); //#296 +4a0 .rdata:007967d4
+        virtual void DropItem(Glacier::ZItem*); //#297 +4a4 .rdata:007967d8
+        virtual void PickupItem(Glacier::ZItem*); //#298 +4a8 .rdata:007967dc
+        virtual void Reload(Glacier::ZItem*); //#299 +4ac .rdata:007967e0
+        virtual void Chamber(Glacier::ZItem*); //#300 +4b0 .rdata:007967e4
+        virtual void PerformDrop(Glacier::ZItem*, bool doPhysicsBody, bool a3); //#301 +4b4 .rdata:007967e8
+        virtual Glacier::ZIKHAND* GetRHand(); //#302 +4b8 .rdata:007967ec
+        virtual Glacier::ZIKHAND* GetLHand(); //#303 +4bc .rdata:007967f0
+        virtual Glacier::ZItem* GetLHandItem(); //#304 +4c0 .rdata:007967f4
+        virtual Glacier::ZItem* GetRHandItem(); //#305 +4c4 .rdata:007967f8
+        virtual Glacier::ZItemWeapon* GetLHandWeapon(); //#306 +4c8 .rdata:007967fc
+        virtual Glacier::ZItemWeapon* GetRHandWeapon(); //#307 +4cc .rdata:00796800
+        virtual Glacier::ZItemTemplate* GetRHandItemType(); //#308 +4d0 .rdata:00796804
+        virtual Glacier::ZItemTemplate* GetLHandItemType(); //#309 +4d4 .rdata:00796808
+        virtual void SetRHandItemState(int itemState); //#310 +4d8 .rdata:0079680c
+        virtual void SetLHandItemState(int itemState); //#311 +4dc .rdata:00796810
+        virtual void AttachItemToHand(Glacier::ZIKHAND* hand, uint32_t itemId); //#312 +4e0 .rdata:00796814
+        virtual bool AttachRHandItem(uint32_t itemID); //#313 +4e4 .rdata:00796818
+        virtual bool AttachLHandItem(uint32_t itemID); //#314 +4e8 .rdata:0079681c
+        virtual void GetNearItems(); //#315 +4ec .rdata:00796820 {similar to next}
+        virtual void GetNearItems2(); //#316 +4f0 .rdata:00796824 {similar to prev}
+        virtual void SetDialog(bool); //#317 +4f4 .rdata:00796828
+        virtual bool GetDialog(); //#318 +4f8 .rdata:0079682c
+        virtual void* DialogListen(int variant); //#319 +4fc .rdata:00796830 {variant between 0 and 1}
+        virtual void* DialogTalk(int variant); //#320 +500 .rdata:00796834 {variant between 0 and 1}
+        virtual void ForceRHandItem(Glacier::ZItem*, bool); //#321 +504 .rdata:00796838
+        virtual void ForceLHandItem(Glacier::ZItem*, bool); //#322 +508 .rdata:0079683c {second bool not used I guess}
         virtual void Function_0323(); //#323 +50c .rdata:00796840
-        virtual void Function_0324(); //#324 +510 .rdata:00796844
-        virtual void Function_0325(); //#325 +514 .rdata:00796848
-        virtual void Function_0326(); //#326 +518 .rdata:0079684c
-        virtual void Function_0327(); //#327 +51c .rdata:00796850
-        virtual int Function_0328(); //#328 +520 .rdata:00796854 {always 999}
-        virtual void Function_0329(); //#329 +524 .rdata:00796858
-        virtual void Function_0330(); //#330 +528 .rdata:0079685c
-        virtual void Function_0331(); //#331 +52c .rdata:00796860
-        virtual void Function_0332(); //#332 +530 .rdata:00796864
-        virtual void Function_0333(); //#333 +534 .rdata:00796868
-        virtual int Function_0334(int _a0, int _a1, int _a2); //#334 +538 .rdata:0079686c
-        virtual void Function_0335(); //#335 +53c .rdata:00796870
-        virtual void Function_0336(); //#336 +540 .rdata:00796874
-        virtual float Function_0337(float _a0); //#337 +544 .rdata:00796878
-        virtual void Function_0338(); //#338 +548 .rdata:0079687c
-        virtual int Function_0339(int _a0, int _a1); //#339 +54c .rdata:00796880
-        virtual void Function_0340(); //#340 +550 .rdata:00796884
-        virtual int Function_0341(float* _a0); //#341 +554 .rdata:00796888 {possible setPosition!!!}
-        virtual void Function_0342(); //#342 +558 .rdata:0079688c
-        virtual void Function_0343(float _a0, int _a1, float _a2, float _a3, int _a4, int _a5, bool _a6, int _a7, int _a8); //#343 +55c .rdata:00796890
-        virtual void Function_0344(); //#344 +560 .rdata:00796894
-        virtual void Function_0345(); //#345 +564 .rdata:00796898 {possible isAlive}
-        virtual void Function_0346(); //#346 +568 .rdata:0079689c
-        virtual void Function_0347(); //#347 +56c .rdata:007968a0
-        virtual int setStatus(ActorStatus status); //#348 +570 .rdata:007968a4
-        virtual void Function_0349(); //#349 +574 .rdata:007968a8
-        virtual void Function_0350(); //#350 +578 .rdata:007968ac
-        virtual void Function_0351(); //#351 +57c .rdata:007968b0
-        virtual bool Function_0352(bool _a0); //#352 +580 .rdata:007968b4
-        virtual void Function_0353(); //#353 +584 .rdata:007968b8
-        virtual void setPosition__FAKE(float* pThreeFloats); //#354 +588 .rdata:007968bc (it works with coordinates but not world coordinates [-1.0; 1.0])
-        virtual const float* getPosition__FAKE(); //#355 +58c .rdata:007968c0
-        virtual void Function_0356(); //#356 +590 .rdata:007968c4
-        virtual void Function_0357(); //#357 +594 .rdata:007968c8
-        virtual void Function_0358(); //#358 +598 .rdata:007968cc
-        virtual bool Function_0359(bool arg); //#359 +59c .rdata:007968d0
-        virtual bool Function_0360(bool arg); //#360 +5a0 .rdata:007968d4
-        virtual void Function_0361(int a0, int a1, int a2); //#361 +5a4 .rdata:007968d8
-        virtual void Function_0362(); //#362 +5a8 .rdata:007968dc
-        virtual void Function_0363(); //#363 +5ac .rdata:007968e0
-        virtual void Function_0364(); //#364 +5b0 .rdata:007968e4
-        virtual int Function_0365(bool arg); //#365 +5b4 .rdata:007968e8
-        virtual bool Function_0366(bool _a0); //#366 +5b8 .rdata:007968ec
-        virtual bool Function_0367(bool _a0); //#367 +5bc .rdata:007968f0
-        virtual void Function_0368(); //#368 +5c0 .rdata:007968f4
-        virtual void Function_0369(int _a0, int _a1, int _a2, float _a3); //#369 +5c4 .rdata:007968f8
-        virtual float Function_0370(float _a0); //#370 +5c8 .rdata:007968fc {set 5B0 value}
-        virtual void Function_0371(); //#371 +5cc .rdata:00796900
-        virtual void Function_0372(); //#372 +5d0 .rdata:00796904
-        virtual void Function_0373(int _a0); //#373 +5d4 .rdata:00796908 {possible reset actor state}
-        virtual void Function_0374(); //#374 +5d8 .rdata:0079690c
-        virtual void Function_0375(); //#375 +5dc .rdata:00796910
-        virtual void Function_0376(); //#376 +5e0 .rdata:00796914
-        virtual bool Function_0377(); //#377 +5e4 .rdata:00796918
-        virtual void Function_0378(); //#378 +5e8 .rdata:0079691c
-        virtual void Function_0379(int _enum0); //#379 +5ec .rdata:00796920
+        virtual void DestroyRHandItem(); //#324 +510 .rdata:00796844
+        virtual void DestroyLHandItem(); //#325 +514 .rdata:00796848
+        virtual bool EmptyHands(); //#326 +518 .rdata:0079684c
+        virtual void SetAmmoFor(Glacier::ZItemWeapon*, int); //#327 +51c .rdata:00796850 (do nothing)
+        virtual int GetAmmoFor(Glacier::ZItemWeapon*); //#328 +520 .rdata:00796854 {always 999}
+        virtual void SetLHandIKTarget(const float*, const float*, float, void* callback); //#329 +524 .rdata:00796858
+        virtual void SetRHandIKTarget(const float*, const float*, float, void* callback); //#330 +528 .rdata:0079685c
+        virtual void UpdateItemActions(); //#331 +52c .rdata:00796860
+        virtual void CallBackItemAction(); //#332 +530 .rdata:00796864
+        virtual int GetNearItems3(); //#333 +534 .rdata:00796868
+        virtual void PlaySpeech(uint32_t, int, bool); //#334 +538 .rdata:0079686c
+        virtual void PlayFootStep(int /* EFootSide */); //#335 +53c .rdata:00796870
+        virtual bool IsFirstPersonCamera(); //#336 +540 .rdata:00796874
+        virtual float GetCombatStrength(); //#337 +544 .rdata:00796878
+        virtual void SetActorRootTM(const Glacier::Vector3*, const Glacier::Vector3*); //#338 +548 .rdata:0079687c
+        virtual void SetActorPosDir(const Glacier::Vector3*, const Glacier::Vector3*); //#339 +54c .rdata:00796880
+        virtual void* GetActorRootTM(const float*, const float*); //#340 +550 .rdata:00796884
+        virtual void GetActorWorldPosition(Glacier::Vector3*); //#341 +554 .rdata:00796888 {possible setPosition!!!}
+        virtual void SetActorWorldPosition(Glacier::Vector3*); //#342 +558 .rdata:0079688c
+        virtual bool CanPlayAnimSegment(Glacier::Animation::Header*, float, float, const float*, const float*, bool, float, float); //#343 +55c .rdata:00796890
+        virtual bool IsUnconscious(); //#344 +560 .rdata:00796894
+        virtual bool IsAwake(); //#345 +564 .rdata:00796898 {possible isAlive}
+        virtual bool IsSleeping(); //#346 +568 .rdata:0079689c
+        virtual void SetHero(uint8_t); //#347 +56c .rdata:007968a0
+        virtual int SetActorState(ActorState status); //#348 +570 .rdata:007968a4
+        virtual void OnViewEnter(); //#349 +574 .rdata:007968a8
+        virtual void OnViewLeave(); //#350 +578 .rdata:007968ac
+        virtual void* /* TODO: PF4::RunTime */ GetPathFinder4(); //#351 +57c .rdata:007968b0 (return ZEngineDataBase + 0x14)
+        virtual bool EnablePathFinder(bool _a0); //#352 +580 .rdata:007968b4
+        virtual void SetStopDistance(float ); //#353 +584 .rdata:007968b8
+        virtual void SetEndDir(Glacier::ZVector3* pThreeFloats); //#354 +588 .rdata:007968bc (it works with coordinates but not world coordinates [-1.0; 1.0])
+        virtual const Glacier::ZVector3* GetEndDir(); //#355 +58c .rdata:007968c0
+        virtual void MoveToPosition(const Glacier::Vector3*, const Glacier::Vector3*); //#356 +590 .rdata:007968c4
+        virtual void SlideToPosition(const Glacier::Vector3*, const Glacier::Vector3*); //#357 +594 .rdata:007968c8
+        virtual void SetPathNotify(float ); //#358 +598 .rdata:007968cc
+        virtual void SetPathNotifySyncToCycle(bool arg); //#359 +59c .rdata:007968d0
+        virtual void SetEndAction(bool arg); //#360 +5a0 .rdata:007968d4
+        virtual void RemovePath(uint8_t,void* PATH_CANCEL_REASONS, bool); //#361 +5a4 .rdata:007968d8
+        virtual void SendPathDone(bool); //#362 +5a8 .rdata:007968dc
+        virtual void* GetMoveFromPos(const Glacier::Vector3*); //#363 +5ac .rdata:007968e0
+        virtual void* FindNextPathBlocker(); //#364 +5b0 .rdata:007968e4
+        virtual int SetShootIntoGround(bool arg); //#365 +5b4 .rdata:007968e8
+        virtual bool SetShootIntoGroundInFullbody(bool _a0); //#366 +5b8 .rdata:007968ec
+        virtual bool SetStayInsidePath(bool _a0); //#367 +5bc .rdata:007968f0
+        virtual void ShootIntoGround(float*, bool, bool); //#368 +5c0 .rdata:007968f4
+        virtual void ShootIntoGroundRegularly(float*, bool, bool, float); //#369 +5c4 .rdata:007968f8
+        virtual float SetMoveSpeedMultiplier(float speedMul); //#370 +5c8 .rdata:007968fc {set 5B0 value}
+        virtual void SetPathFinderEnabled(bool); //#371 +5cc .rdata:00796900
+        virtual void OnPathRequest(uint32_t); //#372 +5d0 .rdata:00796904
+        virtual void OnPathFinished(uint32_t); //#373 +5d4 .rdata:00796908 {possible reset actor state}
+        virtual void OnPathCanceled(void* PATH_CANCEL_ERRORS); //#374 +5d8 .rdata:0079690c
+        virtual void OnPathCanceledLockedDoor(uint32_t); //#375 +5dc .rdata:00796910
+        virtual void OnPathError(void* PATH_ERRORS); //#376 +5e0 .rdata:00796914
+        virtual bool OnPathNotify(); //#377 +5e4 .rdata:00796918
+        virtual void OnNewPath(); //#378 +5e8 .rdata:0079691c
+        virtual void OnSound(Glacier::REFTAB* ); //#379 +5ec .rdata:00796920
         virtual void Die(); //#380 +5f0 .rdata:00796924
         virtual void DieByForce(const Glacier::ZVector3*, const Glacier::ZVector3*, float, int); //#381 +5f4 .rdata:00796928
         virtual int Resurrect(); //#382 +5f8 .rdata:0079692c
@@ -483,7 +483,7 @@ namespace Hitman::BloodMoney
         virtual void WantToLookAt(Glacier::ZGEOM*, uint8_t); //#394 +628 .rdata:0079695c
         virtual void VerifyPlayerVisible(); //#395 +62c .rdata:00796960 (sync suspicious level with ZOSD)
         virtual void DeterminePathLookAt(Glacier::LocomotionInfo *,float *,float *,float *,float *); //#396 +630 .rdata:00796964
-        virtual void CanLookAt(Glacier::ZGEOM*); //#397 +634 .rdata:00796968
+        virtual bool CanLookAt(Glacier::ZGEOM*); //#397 +634 .rdata:00796968
         virtual bool IsOnStairs(); //#398 +638 .rdata:0079696c
         virtual void UpdatePositionOffScreen(); //#399 +63c .rdata:00796970
         virtual void UpdatePosition(); //#400 +640 .rdata:00796974
@@ -500,7 +500,7 @@ namespace Hitman::BloodMoney
         virtual std::intptr_t GetWeapon(); //#411 +66c .rdata:007969a0
         virtual void SetWeaponTemplate(uint32_t); //#412 +670 .rdata:007969a4
         virtual std::intptr_t GetWeaponTemplate(); //#413 +674 .rdata:007969a8
-        virtual int FireWeapon(std::intptr_t _itemID, double _unkDouble, int _unkInt0, char _a5, int _a6, float _a7); //#414 +678 .rdata:007969ac
+        virtual int FireWeapon(uint32_t weaponId, bool, float, bool); //#414 +678 .rdata:007969ac
         virtual void Bite(int, Glacier::Vector3*, Glacier::Vector3*, float, float); //#415 +67c .rdata:007969b0 [Works but need to have a bit in hands]
         virtual void Punch(bool); //#416 +680 .rdata:007969b4 [Works but need to determine condition of usage]
         virtual void StunGunAttack(); //#417 +684 .rdata:007969b8 [Works, but need to check that actor has stun gun in hands!]
@@ -640,18 +640,5 @@ namespace Hitman::BloodMoney
         char pad_0B14[56]; //0x0B14
         int32_t m_fieldB4C; //0x0B4C
         char pad_0B50[16]; //0x0B50
-
-
-        // === custom ===
-        Glacier::ZIKHAND* getHand(Glacier::HandType type);
-
-        /**
-            Unmapped:
-                +900 - Actor type
-
-
-            #89 called when actor see us
-
-        **/
     }; //Size: 0x0008
 }
