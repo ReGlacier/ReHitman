@@ -9,6 +9,9 @@ namespace Glacier
     using uint = unsigned int;
     using ZMSGID = unsigned short;
 
+    using RefRun = void*;
+    using TabBlk = void*;
+
     /// FWD
     class ISerializerStream {};
     class IInputSerializerStream {};
@@ -47,6 +50,7 @@ namespace Glacier
     class ZIKHAND;
     class ZBodyInfo;
     class ZActionDispatcher;
+    class ZROUTCLASSINFO;
 
     struct SGeomTypeCount;
     struct SCompiledGeom;
@@ -54,6 +58,7 @@ namespace Glacier
     struct SInputActionDefinition;
     struct SExtendedImpactInfo;
     struct SRigidBodyVelocity;
+    struct SMouseColi;
 
     enum ALLOCSEQUENCESTATUS {};
     struct ITEMHANDS {};

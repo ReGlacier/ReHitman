@@ -4,10 +4,6 @@
 
 namespace Glacier
 {
-    // Type forwardings for class REFTAB32
-    class RefRun;
-    class TabBlk;
-
     // Class definition REFTAB32
     class REFTAB32
     {

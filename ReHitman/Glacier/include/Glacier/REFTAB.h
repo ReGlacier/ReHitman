@@ -1,12 +1,10 @@
 #pragma once
 
 #include <Glacier/Glacier.h>
+#include <Glacier/GlacierFWD.h>
 
 namespace Glacier
 {
-    using RefRun = void*;
-    using TabBlk = void*;
-
     class REFTAB
     {
     public:

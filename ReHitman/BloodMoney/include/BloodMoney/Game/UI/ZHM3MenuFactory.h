@@ -1,6 +1,6 @@
 #pragma once
 
-#include <BloodMoney/Game/ZStandardMenuFactory.h>
+#include <BloodMoney/Game/UI/ZStandardMenuFactory.h>
 
 namespace Hitman::BloodMoney
 {
