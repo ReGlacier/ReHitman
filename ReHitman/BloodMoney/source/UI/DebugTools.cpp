@@ -47,6 +47,14 @@ namespace Hitman::BloodMoney
 
     void DebugTools::onPreDraw()
     {
+        drawTopMenu();
+    }
+
+    void DebugTools::onPostDraw()
+    {}
+
+    void DebugTools::drawTopMenu()
+    {
         static bool showActorsViewer = false;
         static bool showInventoryEditor = false;
         static bool showGeomViewer = false;
@@ -84,7 +92,4 @@ namespace Hitman::BloodMoney
 //            showGeomViewerWindow(&showGeomViewer);
         }
     }
-
-    void DebugTools::onPostDraw()
-    {}
 }

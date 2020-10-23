@@ -17,5 +17,7 @@ namespace Hitman::BloodMoney
     private:
         void onPreDraw();
         void onPostDraw();
+
+        void drawTopMenu();
     };
 }

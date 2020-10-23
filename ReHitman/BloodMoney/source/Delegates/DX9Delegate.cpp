@@ -1,4 +1,5 @@
 #include <BloodMoney/Delegates/DX9Delegate.h>
+#include <BloodMoney/UI/Widgets/SandboxWidget.h>
 #include <BloodMoney/UI/DebugTools.h>
 #include <BloodMoney/Game/Globals.h>
 
@@ -43,6 +44,10 @@ namespace Hitman::BloodMoney
         ImGui_ImplDX9_Init(device);
 
         Globals::g_pDebugTools = std::make_unique<DebugTools>();
+
+        {
+            Globals::g_pDebugTools->addChild(std::make_shared<SandboxWidget>());
+        }
 
         spdlog::info("DX9Delegate initialised!");
     }
