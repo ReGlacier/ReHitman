@@ -1,15 +1,15 @@
 #include <DLL/ReHitman.h>
 #include <DLL/Logger.h>
 #include <DLL/DebugConsole.h>
+#include <DLL/CrashHandlerReporter.h>
 #include <Client/IClient.h>
-
-#include <spdlog/spdlog.h>
-
-#include <Windows.h>
-
 #ifdef REHITMAN_BLOOD_MONEY_PROJECT
 #include <BloodMoney/Client.h>
 #endif
+
+#include <Windows.h>
+
+#include <spdlog/spdlog.h>
 
 namespace ReHitman
 {
@@ -28,8 +28,13 @@ namespace ReHitman
         ReHitman::DebugConsole::Create("ReHitman | Developer Console");
         ReHitman::Logger::Setup();
 
+        CrashHandlerReporter crashHandlerReporter;
+
+        // Setup client core
         g_ClientInterface = CreateClientInterface();
         RH_ASSERT2(g_ClientInterface != nullptr, "Bad g_ClientInterface interface! Probably CreateClientInterface() failed!");
+        if (!g_ClientInterface)
+            return EXIT_FAILURE;
 
         spdlog::info("Core::EntryPoint() run ...");
 
@@ -51,6 +56,7 @@ namespace ReHitman
         spdlog::info("Core::EntryPoint() shutdown...");
 
         ReHitman::Logger::Shutdown();
+
         return EXIT_SUCCESS;
     }
 }

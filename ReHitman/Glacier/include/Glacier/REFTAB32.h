@@ -1,9 +1,14 @@
 #pragma once
 
-#include <Glacier.h>
+#include <Glacier/GlacierFWD.h>
 
 namespace Glacier
 {
+    // Type forwardings for class REFTAB32
+    class RefRun;
+    class TabBlk;
+
+    // Class definition REFTAB32
     class REFTAB32
     {
     public:
@@ -15,47 +20,46 @@ namespace Glacier
         uint32_t m_firstItem; //0x002C
         char pad_0030[128]; //0x0030
 
-        // === vftable ===
-        virtual REFTAB32* Release(bool doFreeMemory); //#0 +0 .rdata:00756adc
-        virtual void Function_0001(); //#1 +4 .rdata:00756ae0
-        virtual void Function_0002(); //#2 +8 .rdata:00756ae4
-        virtual void Function_0003(); //#3 +c .rdata:00756ae8
-        virtual void Function_0004(); //#4 +10 .rdata:00756aec
-        virtual void Function_0005(); //#5 +14 .rdata:00756af0
-        virtual void Function_0006(); //#6 +18 .rdata:00756af4
-        virtual void Function_0007(); //#7 +1c .rdata:00756af8
-        virtual void Function_0008(); //#8 +20 .rdata:00756afc
-        virtual void Function_0009(); //#9 +24 .rdata:00756b00
-        virtual void Function_0010(); //#10 +28 .rdata:00756b04
-        virtual void Function_0011(); //#11 +2c .rdata:00756b08
-        virtual void Function_0012(); //#12 +30 .rdata:00756b0c
-        virtual void Function_0013(); //#13 +34 .rdata:00756b10
-        virtual void Function_0014(); //#14 +38 .rdata:00756b14
-        virtual void Function_0015(); //#15 +3c .rdata:00756b18
-        virtual void Function_0016(); //#16 +40 .rdata:00756b1c
-        virtual void Function_0017(); //#17 +44 .rdata:00756b20
-        virtual void Function_0018(); //#18 +48 .rdata:00756b24
-        virtual void Function_0019(); //#19 +4c .rdata:00756b28
-        virtual void* getFirstEntity(void* pResult); //#20 +50 .rdata:00756b2c
-        virtual void Function_0021(); //#21 +54 .rdata:00756b30
-        virtual void Function_0022(); //#22 +58 .rdata:00756b34
-        virtual void Function_0023(); //#23 +5c .rdata:00756b38
-        virtual int* getNextEntityAfter(int* pEntity); //#24 +60 .rdata:00756b3c
-        virtual void Function_0025(); //#25 +64 .rdata:00756b40
-        virtual void Function_0026(); //#26 +68 .rdata:00756b44
-        virtual void Function_0027(); //#27 +6c .rdata:00756b48
-        virtual void Function_0028(); //#28 +70 .rdata:00756b4c
-        virtual void Function_0029(); //#29 +74 .rdata:00756b50
-        virtual void Function_0030(); //#30 +78 .rdata:00756b54
-        virtual void Function_0031(); //#31 +7c .rdata:00756b58
-        virtual void Function_0032(); //#32 +80 .rdata:00756b5c
-        virtual void Function_0033(void* a0); //#33 +84 .rdata:00756b60
-        virtual void* Function_0034(); //#34 +88 .rdata:00756b64
-    };
+    public:
+        virtual void Release_REFTAB32(bool); //#0000 at 00117DC0 org REFTAB32::~REFTAB32()
+        virtual void Add(unsigned int); //#0001 at 00117358 org REFTAB::Add(unsigned int)
+        virtual void AddUnique(unsigned int); //#0002 at 00117420 org REFTAB::AddUnique(unsigned int)
+        virtual void Clear(); //#0003 at 00117480 org REFTAB::Clear(void)
+        virtual void ClearThis(); //#0004 at 00117494 org REFTAB::ClearThis(void)
+        virtual size_t Count(); //#0005 at 0011752C org REFTAB::Count(void)const
+        virtual size_t Size(); //#0006 at 00117534 org REFTAB::Size(void)const
+        virtual size_t GetEleSize(); //#0007 at 0043A0CC org REFTAB::GetEleSize(void)const
+        virtual size_t PoolSize(); //#0008 at 0011753C org REFTAB::PoolSize(void)
+        virtual void DelRefPtr(unsigned int *); //#0009 at 00117544 org REFTAB::DelRefPtr(unsigned int *)
+        virtual bool Exists(unsigned int); //#0010 at 001175B8 org REFTAB::Exists(unsigned int)const
+        virtual bool Exists(unsigned int *); //#0011 at 00117628 org REFTAB::Exists(unsigned int *)const
+        virtual void* Find(unsigned int); //#0012 at 00117718 org REFTAB::Find(unsigned int)
+        virtual void* GetRefNr(int); //#0013 at 00117788 org REFTAB::GetRefNr(int)const
+        virtual void* GetRefPtrNr(int); //#0014 at 001177E0 org REFTAB::GetRefPtrNr(int)const
+        virtual size_t GetIndex(unsigned int); //#0015 at 00117698 org REFTAB::GetIndex(unsigned int)const
+        virtual void Remove(unsigned int); //#0016 at 00117834 org REFTAB::Remove(unsigned int)
+        virtual void RemoveIfExists(unsigned int); //#0017 at 00117858 org REFTAB::RemoveIfExists(unsigned int)
+        virtual void RunDelRef(RefRun *); //#0018 at 00117BF0 org REFTAB::RunDelRef(RefRun *)
+        virtual void RunInitNxtRef(RefRun *); //#0019 at 001178DC org REFTAB::RunInitNxtRef(RefRun *)
+        virtual void RunInitNxtRef(RefRun *) const; //#0020 at 00117908 org REFTAB::RunInitNxtRef(RefRun *)const
+        virtual void RunInitPrevRef(RefRun *); //#0021 at 00117920 org REFTAB::RunInitPrevRef(RefRun *)
+        virtual void RunInitPrevRef(RefRun *) const; //#0022 at 0011795C org REFTAB::RunInitPrevRef(RefRun *)const
+        virtual void RunNxtRef(RefRun *); //#0023 at 00117988 org REFTAB::RunNxtRef(RefRun *)
+        virtual void RunNxtRef(RefRun *) const; //#0024 at 001179BC org REFTAB::RunNxtRef(RefRun *)const
+        virtual void RunNxtRefPtr(RefRun *); //#0025 at 001179F0 org REFTAB::RunNxtRefPtr(RefRun *)
+        virtual void RunNxtRefPtr(RefRun *) const; //#0026 at 00117A64 org REFTAB::RunNxtRefPtr(RefRun *)const
+        virtual void RunPrevRef(RefRun *); //#0027 at 00117AD8 org REFTAB::RunPrevRef(RefRun *)
+        virtual void RunPrevRef(RefRun *) const; //#0028 at 00117B0C org REFTAB::RunPrevRef(RefRun *)const
+        virtual void RunPrevRefPtr(RefRun *); //#0029 at 00117B40 org REFTAB::RunPrevRefPtr(RefRun *)
+        virtual void RunPrevRefPtr(RefRun *) const; //#0030 at 00117B98 org REFTAB::RunPrevRefPtr(RefRun *)const
+        virtual void* operator[](size_t index); //#0031 at 0043A0D4 org REFTAB::operator[](int)const
+        virtual void RunToRefPtr(RefRun *); //#0032 at 00117D38 org REFTAB::RunToRefPtr(RefRun *)
+        virtual void DeleteBlock(TabBlk *); //#0033 at 00117DFC org REFTAB32::DeleteBlock(TabBlk *)
+        virtual void* NewBlock(); //#0034 at 00117E2C org REFTAB32::NewBlock(void)
+    }; //End of REFTAB32 from 0054FBE0
 
     template <typename T> T* get(REFTAB32* reftab, size_t index)
     {
-        if (!reftab || index >= reftab->m_itemsCount) return nullptr;
-        return reinterpret_cast<T*>(&reftab->m_firstItem) + index;
+        return reftab ? reftab->operator[](index) : nullptr;
     }
 }

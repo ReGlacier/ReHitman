@@ -5,20 +5,21 @@
 
 namespace Glacier
 {
+    // Class definition ZGeomBuffer
     class ZGeomBuffer
     {
     public:
-        virtual void Release(bool);                         //#0
-        virtual void PreSave(ISerializerStream &);          //#1
-        virtual void PostSave(ISerializerStream &);         //#2
-        virtual void PreLoad(ISerializerStream &);          //#3
-        virtual void PostLoad(ISerializerStream &);         //#4
-        virtual void PostProcess(uint,uint);                //#5
-        virtual void LoadSave(ISerializerStream &,bool);    //#6
-        virtual void LoadObject(IInputSerializerStream &);  //#7
-        virtual void SaveObject(IOutputSerializerStream &); //#8
-        virtual void ExchangeObject(ISerializerStream &);   //#9
-        virtual void SetToDefault(void);                    //#10
-        virtual ZRTTI* GetTypeID(void);                     //#11
-    };
+        virtual void Release_ZGeomBuffer(bool); //#0000 at 00149258 org ZGeomBuffer::~ZGeomBuffer()
+        virtual void PreSave(ISerializerStream &); //#0001 at 0014A104 org ZGeomBuffer::PreSave(ISerializerStream &)
+        virtual void PostSave(ISerializerStream &); //#0002 at 0014A10C org ZGeomBuffer::PostSave(ISerializerStream &)
+        virtual void PreLoad(ISerializerStream &); //#0003 at 0014A114 org ZGeomBuffer::PreLoad(ISerializerStream &)
+        virtual void PostLoad(ISerializerStream &); //#0004 at 0014A11C org ZGeomBuffer::PostLoad(ISerializerStream &)
+        virtual void PostProcess(unsigned int,unsigned int); //#0005 at 0014A124 org ZGeomBuffer::PostProcess(unsigned int,unsigned int)
+        virtual void LoadSave(ISerializerStream &,bool); //#0006 at 0043C560 org ZSerializable::LoadSave(ISerializerStream &,bool)
+        virtual void LoadObject(IInputSerializerStream &); //#0007 at 0014A12C org ZGeomBuffer::LoadObject(IInputSerializerStream &)
+        virtual void SaveObject(IOutputSerializerStream &); //#0008 at 0014A3B4 org ZGeomBuffer::SaveObject(IOutputSerializerStream &)
+        virtual void ExchangeObject(ISerializerStream &); //#0009 at 0043CC1C org ZSerializable::ExchangeObject(ISerializerStream &)
+        virtual void SetToDefault(); //#0010 at 0043C568 org ZSerializable::SetToDefault(void)
+        virtual Glacier::ZRTTI* GetTypeID(); //#0011 at 0043CC24 org ZSerializable::GetTypeID(void)
+    }; //End of ZGeomBuffer from 00550E38
 }

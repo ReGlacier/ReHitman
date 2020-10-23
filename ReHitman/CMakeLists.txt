@@ -18,7 +18,7 @@ add_subdirectory(Client)
 
 file(GLOB_RECURSE REHITMAN_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/DLL/source/*.cpp)
 
-set ( CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 add_library(ReHitman SHARED ${REHITMAN_SOURCES})
 target_include_directories(ReHitman PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/DLL/include)
