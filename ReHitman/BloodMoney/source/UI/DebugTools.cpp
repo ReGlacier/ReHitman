@@ -14,6 +14,16 @@
 
 namespace Hitman::BloodMoney
 {
+    namespace Internals
+    {
+        static void QuitGame()
+        {
+            auto sysInterface = Glacier::getInterface<Glacier::ZSysInterfaceWintel>(Globals::kSysInterfaceAddr);
+            auto engineDB = sysInterface->m_engineDataBase;
+            engineDB->FreeSceneMemory();
+        }
+    }
+
     void DebugTools::draw()
     {
         if (!m_bIsVisible)
@@ -48,6 +58,11 @@ namespace Hitman::BloodMoney
                 ImGui::MenuItem("Actors viewer", nullptr, &showActorsViewer);
                 ImGui::MenuItem("Inventory editor", nullptr, &showInventoryEditor);
                 ImGui::MenuItem("GEOM viewer", nullptr, &showGeomViewer);
+                ImGui::Separator();
+                if (ImGui::MenuItem("Close game"))
+                {
+                    Internals::QuitGame();
+                }
                 ImGui::EndMenu();
             }
             ImGui::EndMainMenuBar();

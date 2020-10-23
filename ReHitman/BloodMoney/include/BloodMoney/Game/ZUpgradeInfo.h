@@ -11,6 +11,7 @@ namespace Hitman::BloodMoney
 
     // Class definition ZUpgradeInfo
     class ZUpgradeInfo {
+        virtual void Ctor();
         virtual void addElement(char const*, ZGUIBase*); //#0000 at 0044D9CC org ZGUIBase::addElement(char const*,ZGUIBase*)
         virtual void Update(bool); //#0001 at 003C59C8 org ZUpgradeInfo::Update(bool)
         virtual void Click(eZWUserEvents,int,ZXMLGUISystem *); //#0002 at 0044DA68 org IGUIElement::Click(eZWUserEvents,int,ZXMLGUISystem *)

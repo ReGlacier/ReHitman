@@ -32,7 +32,12 @@ namespace Hitman::BloodMoney
 
         ImGui::StyleColorsDark();
 
-        const auto hwnd = Glacier::getInterface<Glacier::ZSysInterfaceWintel>(Globals::kSysInterfaceAddr)->m_renderer->m_HWND; //TODO: Refactor this!
+        auto systemInterface = Glacier::getInterface<Glacier::ZSysInterfaceWintel>(Globals::kSysInterfaceAddr);
+        Glacier::ZRenderWintelD3D* renderer = systemInterface ? systemInterface->m_renderer : nullptr;
+
+        const auto hwnd = renderer ? renderer->m_HWND : nullptr;
+        if (!hwnd)
+            throw std::runtime_error { "Failed to get HWND. No renderer at systemInterface->m_renderer" };
 
         ImGui_ImplWin32_Init(hwnd);
         ImGui_ImplDX9_Init(device);

@@ -149,6 +149,6 @@ int main(int, char**)
     InjectDLL(spawnedProcessId, spawnedHandle, spawnedThread);
 
     std::cout << "Game process started!\n";
-    WaitForSingleObject(spawnedHandle, INFINITE);
+
     return 0;
 }
