@@ -20,7 +20,7 @@ namespace Consts
 
 namespace Globals
 {
-    static Hitman::BloodMoney::IDirect3DDelegate* g_pDelegate = nullptr;
+    static std::unique_ptr<Hitman::BloodMoney::IDirect3DDelegate> g_pDelegate = nullptr;
 
     static void SetupD3DHooks(IDirect3DDevice9* device);
 }
@@ -123,9 +123,9 @@ namespace Globals
 
 namespace Hitman::BloodMoney
 {
-    ZDirect3D9DevicePatches::ZDirect3D9DevicePatches(IDirect3DDelegate* delegate)
-        : m_delegate(delegate)
+    ZDirect3D9DevicePatches::ZDirect3D9DevicePatches(std::unique_ptr<IDirect3DDelegate>&& delegate)
     {
+        Globals::g_pDelegate = std::move(delegate);
     }
 
     std::string_view ZDirect3D9DevicePatches::GetName() const
@@ -159,7 +159,6 @@ namespace Hitman::BloodMoney
                 return false;
             }
 
-            Globals::g_pDelegate = m_delegate;
             return BasicPatch::Apply(modules);
         }
 

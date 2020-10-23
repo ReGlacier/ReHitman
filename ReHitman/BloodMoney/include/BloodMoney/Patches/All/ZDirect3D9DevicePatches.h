@@ -13,7 +13,7 @@ namespace Hitman::BloodMoney
         IDirect3DDelegate* m_delegate { nullptr };
         HF::Hook::TrampolinePtr<10> m_ZDirect3DDevice_Constructor { nullptr };
     public:
-        explicit ZDirect3D9DevicePatches(IDirect3DDelegate* delegate);
+        explicit ZDirect3D9DevicePatches(std::unique_ptr<IDirect3DDelegate>&& delegate);
 
         [[nodiscard]] std::string_view GetName() const override;
         bool Apply(const ModPack& modules) override;

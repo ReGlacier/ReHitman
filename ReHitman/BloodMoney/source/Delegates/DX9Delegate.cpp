@@ -17,7 +17,7 @@ namespace Hitman::BloodMoney
 {
     namespace Globals
     {
-        static std::unique_ptr<DebugTools> g_pDebugTools = nullptr;
+        std::unique_ptr<DebugTools> g_pDebugTools = nullptr;
     }
 
     void DX9Delegate::OnInitialised(IDirect3DDevice9* device)
@@ -53,7 +53,18 @@ namespace Hitman::BloodMoney
         ImGui_ImplWin32_NewFrame();
         ImGui::NewFrame();
 
-        Globals::g_pDebugTools->Draw();
+        if (Globals::g_pDebugTools)
+        {
+            const bool isDebugToolsVisible = Globals::g_pDebugTools->isVisible();
+
+            if (isDebugToolsVisible)
+            {
+                Globals::g_pDebugTools->draw();
+            }
+
+            ImGuiIO& io = ImGui::GetIO();
+            io.MouseDrawCursor = isDebugToolsVisible;
+        }
 
         ImGui::EndFrame();
         device->SetRenderState(D3DRS_ZENABLE, false);

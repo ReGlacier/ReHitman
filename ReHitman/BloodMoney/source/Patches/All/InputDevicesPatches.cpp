@@ -1,13 +1,9 @@
 #include <BloodMoney/Patches/All/InputDevicesPatches.h>
+#include <BloodMoney/Delegates/IInputDelegate.h>
 #include <Glacier/ZInputDevice.h>
 #include <Windows.h>
 
 #include <spdlog/spdlog.h>
-
-#include <imgui.h>
-
-// Win32 message handler
-extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 namespace Hitman::BloodMoney
 {
@@ -24,12 +20,16 @@ namespace Hitman::BloodMoney
     namespace Globals
     {
         static std::unique_ptr<HF::Hook::VFHook<Glacier::ZInputDevice>> g_pZMouseWintelOnUpdate = nullptr;
+        static std::unique_ptr<IInputDelegate> g_pInputDelegate = nullptr;
     }
 
     namespace Callbacks
     {
         struct ZMouseWintel
         {
+            ///
+            /// REVERSED DATA [READ ONLY, DO NOT CHANGE THE STRUCTURE]
+            ///
             char pad_0000[44]; //0x0000
             uint32_t m_mouseState; //0x002C
             char pad_0030[60]; //0x0030
@@ -49,10 +49,12 @@ namespace Hitman::BloodMoney
                 HF::Hook::VFHook<Glacier::ZInputDevice>& hook = *Globals::g_pZMouseWintelOnUpdate;
                 int result = hook.invoke<int>();
 
-                ImGuiIO& io = ImGui::GetIO();
-                io.MouseDown[0] = m_leftButton;
-                io.MouseDown[1] = m_rightButton;
-                io.MouseWheel += static_cast<float>(m_wheel) / Consts::kWheelDelta;
+                if (Globals::g_pInputDelegate)
+                {
+                    Globals::g_pInputDelegate->setMouseKeyState(0, m_leftButton);
+                    Globals::g_pInputDelegate->setMouseKeyState(1, m_rightButton);
+                    Globals::g_pInputDelegate->setMouseWheelState(static_cast<float>(m_wheel) / Consts::kWheelDelta);
+                }
 
                 return result;
             }
@@ -69,7 +71,22 @@ namespace Hitman::BloodMoney
             typedef LRESULT(__stdcall* GlacierWndProc_t)(HWND, UINT, WPARAM, LPARAM);
             auto glacierWndProc = (GlacierWndProc_t)Consts::kOriginalWndProcAddr;
 
-            ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam);
+            if (Globals::g_pInputDelegate)
+            {
+                switch (msg)
+                {
+                    case WM_KEYDOWN:
+                        Globals::g_pInputDelegate->setKeyState(static_cast<int>(wParam), true);
+                        break;
+                    case WM_KEYUP:
+                        Globals::g_pInputDelegate->setKeyState(static_cast<int>(wParam), false);
+                        break;
+                    default: /* unhandled event */ break;
+                }
+
+                Globals::g_pInputDelegate->onWindowsEvent(hWnd, msg, wParam, lParam);
+            }
+
             const bool glacierResult = glacierWndProc(hWnd, msg, wParam, lParam);
 
             return glacierResult;
@@ -82,6 +99,11 @@ namespace Hitman::BloodMoney
             return RegisterClassExA(wndClass);
         }
 
+    }
+
+    InputDevicesPatches::InputDevicesPatches(std::unique_ptr<IInputDelegate>&& delegate)
+    {
+        Globals::g_pInputDelegate = std::move(delegate);
     }
 
     std::string_view InputDevicesPatches::GetName() const { return "Input"; }
@@ -140,5 +162,6 @@ namespace Hitman::BloodMoney
         m_wintelMouseCtorHook->remove();
         m_registerClassExHook->remove();
         Globals::g_pZMouseWintelOnUpdate.reset(nullptr);
+        Globals::g_pInputDelegate.reset(nullptr);
     }
 }

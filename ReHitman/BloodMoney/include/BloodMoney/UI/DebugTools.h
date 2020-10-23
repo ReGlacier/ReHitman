@@ -1,10 +1,21 @@
 #pragma once
 
+#include <BloodMoney/UI/DebugWidget.h>
+
 namespace Hitman::BloodMoney
 {
-    class DebugTools
+    class DebugTools : public DebugWidget
     {
+    private:
+        bool m_bIsVisible { false };
+
     public:
-        void Draw();
+        void draw() override;
+        void toggleVisibility();
+        [[nodiscard]] bool isVisible() const;
+
+    private:
+        void onPreDraw();
+        void onPostDraw();
     };
 }

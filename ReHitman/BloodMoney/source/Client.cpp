@@ -5,6 +5,7 @@
 
 /// Delegates
 #include <BloodMoney/Delegates/DX9Delegate.h>
+#include <BloodMoney/Delegates/ImGuiInputDelegate.h>
 
 /// Patches
 #include <BloodMoney/Patches/All/ZHitman3Patches.h>
@@ -92,8 +93,8 @@ namespace Hitman::BloodMoney
 
     void Client::RegisterPatches()
     {
-        m_patches->RegisterPatch<ZDirect3D9DevicePatches>(new DX9Delegate());
-        m_patches->RegisterPatch<InputDevicesPatches>();
+        m_patches->RegisterPatch<ZDirect3D9DevicePatches>(std::make_unique<DX9Delegate>());
+        m_patches->RegisterPatch<InputDevicesPatches>(std::make_unique<ImGuiInputDelegate>());
         m_patches->RegisterPatch<ZHitman3Patches>();
         m_patches->RegisterPatch<ZGEOMManagementPatch>();
     }
