@@ -17,6 +17,16 @@ namespace Glacier
         float x = 0.f, y = 0.f, z = 0.f, w = 0.f;
     };
 
+    struct ZRGB
+    {
+        float r = 0.f, g = 0.f, b = 0.f;
+    };
+
+    struct ZRGBA
+    {
+        float r = 0.f, g = 0.f, b = 0.f, a = 0.f;
+    };
+
     struct Matrix3x3
     {
         float data[9];
@@ -32,6 +42,4 @@ namespace Glacier
     using ZVector4 = Vector4;
     using ZMat4x4 = Matrix4x4;
     using ZMat3x3 = Matrix3x3;
-    using ZRGBA = Vector4;
-    using ZRGB = Vector3;
 }

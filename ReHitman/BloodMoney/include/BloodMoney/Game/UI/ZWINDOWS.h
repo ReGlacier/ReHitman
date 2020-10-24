@@ -290,7 +290,7 @@ namespace Hitman::BloodMoney
         int field_18c;
         Glacier::LINKSORTREFTAB m_cameras;
         int field_1bc;
-        int m_gfxHandler;
+        ZWinGfxHandler* m_gfxHandler;
         int field_1c4;
         int field_1c8;
         int field_1cc;
@@ -302,7 +302,7 @@ namespace Hitman::BloodMoney
         bool m_mouseVisible;
         char field_1DF;
         bool m_shouldClearScreen;
-        char m_forceUpdateMouse;
+        bool m_forceUpdateMouse;
         char field_1E2;
         char field_1E3;
         int field_1e4;

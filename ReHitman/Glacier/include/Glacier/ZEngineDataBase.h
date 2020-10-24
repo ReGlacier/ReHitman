@@ -114,48 +114,52 @@ namespace Glacier
         virtual void CreateObjectFactories(void); //#33
         virtual void StartUp(void); //#34
         virtual void CloseDown(void); //#35
-        virtual void ControlSceneChange(void); //#36
-        virtual void UnloadScene(void); //#37
-        virtual void LoadScene(char const*); //#38
-        virtual void CheckAndMakeStaticContainer(void); //#39
-        virtual void FreeSceneMemory(void); //#40
-        virtual void PushValues(ZScene *); //#41
-        virtual void InstallTextureBuffer(void); //#42
-        virtual void GetPrimsSize(void); //#43
-        virtual void GetPrimsData(void *,uint); //#44
-        virtual void GetGeomsSize(void); //#45
-        virtual void GetGeomsData(void *,uint); //#46
-        virtual void CreatePropertyInputStream(void); //#47
-        virtual void CleanupPropertyData(void); //#48
-        virtual void GetStaticSize(void); //#49
-        virtual void GetStaticData(void *,uint); //#50
-        virtual void GetTextureSize(void); //#51
-        virtual void GetTextureData(void *,uint); //#52
-        virtual void GetMaterialsSize(void); //#53
-        virtual void GetMaterialsData(void *,uint); //#54
-        virtual void GetSoundDataSize(void); //#55
-        virtual void GetSoundData(void *,uint); //#56
-        virtual void GetWaveDataSize(void); //#57
-        virtual void GetWaveData(void *,uint); //#58
-        virtual void GetWaveHeaderDataSize(void); //#59
-        virtual void GetWaveHeaderData(void *,uint); //#60
-        virtual uint32_t GetAnimsSize(void); //#61
-        virtual void* GetAnimsData(void *,uint); //#62
-        virtual uint32_t GetGeomFilesSize(void); //#63
-        virtual void* GetGeomFilesData(void *,uint); //#64
-        virtual uint32_t GetRoomColiTreeSize(void); //#65
-        virtual void* GetRoomColiTreeData(void *,uint); //#66
-        virtual uint32_t GetRoomInsideTreeSize(void); //#67
-        virtual uint32_t GetRoomInsideTreeSize_(void); //#68
-        virtual void* GetRoomInsideTreeData(void *,uint); //#69
-        virtual uint32_t GetGlobalColiTreeSize(void); //#70
-        virtual void* GetGlobalColiTreeData(void *,uint); //#71
-        virtual uint32_t GetGlobalStripColiTreeSize(void); //#72
-        virtual void* GetGlobalStripColiTreeData(void *,uint); //#73
-        virtual ZCAMERA* CreateDefaultCam(ZCAMERA *); //#74
-        virtual void CorrectEditorDestGroup(SCompiledGeom *,ZGROUP *); //#75
-        virtual void PackHookMissingOnlyInitialize(void); //#76
-        virtual void CreatePackedStaticGameLevelData(void); //#77
-        virtual void LoadPackedStaticGameLevelData(void); //#78
+        virtual void UnknownFunction_36(); //#36
+        virtual void UnknownFunction_37(); //#37
+        virtual void UnknownFunction_38(); //#38
+        virtual void ControlSceneChange(void); //#39
+        virtual void UnloadScene(void); //#40
+        virtual void LoadScene(char const*); //#41
+        virtual void CheckAndMakeStaticContainer(void); //#42
+        virtual void UnknownFunction_43(); //#43
+        virtual void FreeSceneMemory(void); //#44
+        virtual void PushValues(ZScene *); //#45
+        virtual void InstallTextureBuffer(void); //#46
+        virtual void GetPrimsSize(void); //#47
+        virtual void GetPrimsData(void *,uint); //#48
+        virtual void GetGeomsSize(void); //#49
+        virtual void GetGeomsData(void *,uint); //#50
+        virtual void CreatePropertyInputStream(void); //#51
+        virtual void CleanupPropertyData(void); //#512
+        virtual void GetStaticSize(void); //#53
+        virtual void GetStaticData(void *,uint); //#54
+        virtual void GetTextureSize(void); //#55
+        virtual void GetTextureData(void *,uint); //#56
+        virtual void GetMaterialsSize(void); //#57
+        virtual void GetMaterialsData(void *,uint); //#58
+        virtual void GetSoundDataSize(void); //#59
+        virtual void GetSoundData(void *,uint); //#60
+        virtual void GetWaveDataSize(void); //#61
+        virtual void GetWaveData(void *,uint); //#62
+        virtual void GetWaveHeaderDataSize(void); //#63
+        virtual void GetWaveHeaderData(void *,uint); //#64
+        virtual uint32_t GetAnimsSize(void); //#65
+        virtual void* GetAnimsData(void *,uint); //#66
+        virtual uint32_t GetGeomFilesSize(void); //#67
+        virtual void* GetGeomFilesData(void *,uint); //#68
+        virtual uint32_t GetRoomColiTreeSize(void); //#69
+        virtual void* GetRoomColiTreeData(void *,uint); //#70
+        virtual uint32_t GetRoomInsideTreeSize(void); //#71
+        virtual uint32_t GetRoomInsideTreeSize_(void); //#72
+        virtual void* GetRoomInsideTreeData(void *,uint); //#73
+        virtual uint32_t GetGlobalColiTreeSize(void); //#74
+        virtual void* GetGlobalColiTreeData(void *,uint); //#75
+        virtual uint32_t GetGlobalStripColiTreeSize(void); //#76
+        virtual void* GetGlobalStripColiTreeData(void *,uint); //#77
+        virtual ZCAMERA* CreateDefaultCam(ZCAMERA *); //#78
+        virtual void CorrectEditorDestGroup(SCompiledGeom *,ZGROUP *); //#79
+        virtual void PackHookMissingOnlyInitialize(void); //#80
+        virtual void CreatePackedStaticGameLevelData(void); //#81
+        virtual void LoadPackedStaticGameLevelData(void); //#82
     };
 }
