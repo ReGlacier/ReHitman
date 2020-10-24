@@ -46,7 +46,6 @@ namespace Hitman::BloodMoney
             } else ImGui::Text("No game data");
         }
 
-        if (ImGui::Button("Load M13"))
         {
             auto sysInterface = Glacier::getInterface<Glacier::ZSysInterfaceWintel>(Globals::kSysInterfaceAddr);
             if (sysInterface)
@@ -54,10 +53,18 @@ namespace Hitman::BloodMoney
                 auto engineDb = sysInterface->m_engineDataBase;
                 if (engineDb)
                 {
-                    engineDb->LoadScene("M13/M13_main.gms");
+                    if (ImGui::Button("Load M13"))
+                    {
+                        engineDb->LoadScene("M13/M13_main.gms");
+                    }
+
+                    if (ImGui::Button("Load Main Menu"))
+                    {
+                        engineDb->LoadScene("HitmanBloodMoney.gms");
+                    }
+
                 } else spdlog::warn("Failed to load M13: no engine db instance");
             } else spdlog::warn("Failed to load M13: no sys wintel interface instance");
-
         }
 
         ImGui::End();

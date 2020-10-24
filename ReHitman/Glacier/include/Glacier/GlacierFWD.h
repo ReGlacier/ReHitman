@@ -51,6 +51,10 @@ namespace Glacier
     class ZBodyInfo;
     class ZActionDispatcher;
     class ZROUTCLASSINFO;
+    class CHUNKFILE;
+    class CHUNK;
+    class REFTAB;
+    class REFTAB32;
 
     struct SGeomTypeCount;
     struct SCompiledGeom;
@@ -77,4 +81,5 @@ namespace Glacier
     }
 
     class ZBaseGeom; //ZEntityLocator implements this by old design
+    class FsZip_t;
 }

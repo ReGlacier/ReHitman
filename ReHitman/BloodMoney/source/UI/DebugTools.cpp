@@ -19,8 +19,14 @@ namespace Hitman::BloodMoney
         static void QuitGame()
         {
             auto sysInterface = Glacier::getInterface<Glacier::ZSysInterfaceWintel>(Globals::kSysInterfaceAddr);
-            auto engineDB = sysInterface->m_engineDataBase;
-            engineDB->FreeSceneMemory();
+            if (sysInterface)
+            {
+                auto engineDB = sysInterface->m_engineDataBase;
+                if (engineDB)
+                {
+                    engineDB->CloseDown();
+                } else spdlog::error("QuitGame| No EngineDataBase instance");
+            } else spdlog::error("QuitGame| No SystemInterface instance");
         }
     }
 
