@@ -78,7 +78,7 @@ namespace Glacier
         virtual void Function_0020(); //#20 +50 .rdata:0075fdfc
         virtual void Function_0021(); //#21 +54 .rdata:0075fe00
         virtual void Function_0022(); //#22 +58 .rdata:0075fe04
-        virtual void Function_0023(); //#23 +5c .rdata:0075fe08
+        virtual CConfiguration* LoadConfiguration(); //#23 +5c .rdata:0075fe08
         virtual void Function_0024(); //#24 +60 .rdata:0075fe0c
         virtual void Function_0025(); //#25 +64 .rdata:0075fe10
         virtual void Function_0026(); //#26 +68 .rdata:0075fe14

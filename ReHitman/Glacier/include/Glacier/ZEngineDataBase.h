@@ -6,6 +6,8 @@
 
 namespace Glacier
 {
+    class ZIOInputStream;
+
     class ZEngineDataBase
     {
     public:
@@ -19,8 +21,8 @@ namespace Glacier
         uint32_t m_ppPF4Runtime__Data; //0x001C
         int32_t m_field20; //0x0020
         int32_t m_field24; //0x0024
-        char* m_field28; //0x0028
-        int32_t m_field2C; //0x002C
+        void* m_ANMBufferPtr; //0x0028
+        int32_t m_ANMBufferSize; //0x002C
         int32_t m_field30; //0x0030
         /// ---{ LINKED LIST GOD RAY BEGIN }---
 
@@ -129,7 +131,7 @@ namespace Glacier
         virtual void GetPrimsData(void *,uint); //#48
         virtual void GetGeomsSize(void); //#49
         virtual void GetGeomsData(void *,uint); //#50
-        virtual void CreatePropertyInputStream(void); //#51
+        virtual ZIOInputStream* CreatePropertyInputStream(); //#51
         virtual void CleanupPropertyData(void); //#512
         virtual void GetStaticSize(void); //#53
         virtual void GetStaticData(void *,uint); //#54
