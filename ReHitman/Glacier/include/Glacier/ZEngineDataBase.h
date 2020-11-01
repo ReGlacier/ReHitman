@@ -17,7 +17,7 @@ namespace Glacier
         int32_t m_fieldC; //0x000C
         ZGeomBuffer* m_geomBuffer; //0x0010
         uint32_t m_pf4runtime__data; //0x0014
-        ZAnimationInfo* m_animUnknown; //0x0018
+        AnimationManager* m_animUnknown; //0x0018
         uint32_t m_ppPF4Runtime__Data; //0x001C
         int32_t m_field20; //0x0020
         int32_t m_field24; //0x0024

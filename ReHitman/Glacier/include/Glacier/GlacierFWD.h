@@ -44,6 +44,7 @@ namespace Glacier
     class ZGeomBuffer;
     class ZGameStats;
     class ZAnimationInfo;
+    class AnimationManager;
     class ResourceCollection;
     class ZAnimVariationHandle;
     class ZLnkAction;
@@ -55,6 +56,7 @@ namespace Glacier
     class CHUNK;
     class REFTAB;
     class REFTAB32;
+    class ZDirect3DDevice;
 
     struct SGeomTypeCount;
     struct SCompiledGeom;
