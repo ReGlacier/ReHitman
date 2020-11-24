@@ -7,10 +7,9 @@
 
 namespace Hitman::BloodMoney
 {
-    class SMapText
+    struct SMapText
     {
-    public:
-        int32_t id; //0x0000
+        int id; //0x0000
         bool field_04; //0x0004
         bool field_05; //0x0005
         bool field_06; //0x0006
@@ -18,14 +17,15 @@ namespace Hitman::BloodMoney
         char str[92]; //0x0008
     }; //Size: 0x0064
 
-    class SIconInstance
+    struct SIconInstance
     {
-    public:
-        int32_t geomRefId; //0x0000
-        int32_t field_04; //0x0004
-        int32_t field_08; //0x0008
-        int32_t field_0C; //0x000C
-    }; //Size: 0x0010
+        int32_t ref;         // SRef id (object id)
+        bool field_04;       // must be true if you want to replace icon
+        char field_5;        // ?
+        char field_6;        // ?
+        char field_7;        // ?
+        int32_t eIconType;   // icon type (enum)
+    };
 
     class CIngameMap
     {
@@ -83,9 +83,9 @@ namespace Hitman::BloodMoney
         virtual void AddMapGroup(uint16_t,char const*,uint16_t);
         virtual void OpenMap(void);
         virtual void CloseMap(void);
-        virtual void AddIcon(SIconInstance const*,bool);
-        virtual void* GetIcon(uint16_t);
-        virtual void RemoveIcon(SIconInstance const*);
+        virtual void AddIcon(SIconInstance*,bool);
+        virtual SIconInstance* GetIcon(uint16_t);
+        virtual void RemoveIcon(SIconInstance*);
         virtual SMapText* AddText(SMapText const*);
         virtual void RemoveText(SMapText const*);
         virtual void NotifyUpdate(uint16_t);

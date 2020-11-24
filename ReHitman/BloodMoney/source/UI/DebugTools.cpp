@@ -11,6 +11,8 @@
 
 #include <spdlog/spdlog.h>
 #include <imgui.h>
+#include <array>
+#include <string>
 
 namespace Hitman::BloodMoney
 {
@@ -59,6 +61,52 @@ namespace Hitman::BloodMoney
     void DebugTools::onPostDraw()
     {}
 
+    void DebugTools::drawLevelsTopMenu()
+    {
+        auto gameData = Glacier::getInterface<Hitman::BloodMoney::ZHM3GameData>(Globals::kGameDataAddr);
+        if (!gameData) { return; }
+
+        auto sysInterface = Glacier::getInterface<Glacier::ZSysInterfaceWintel>(Globals::kSysInterfaceAddr);
+        if (!sysInterface) { return; }
+
+        auto engineDb = sysInterface->m_engineDataBase;
+        if (!engineDb) { return; }
+
+        if (ImGui::BeginMenu("Levels"))
+        {
+            using LevelNameToLevelScene = std::pair<std::string_view, std::string_view>;
+
+            std::array<LevelNameToLevelScene, 13> levels = {
+                    LevelNameToLevelScene { "M00", "M00/M00_main.gms" },
+                    LevelNameToLevelScene { "M01", "M01/M01_main.gms" },
+                    LevelNameToLevelScene { "M02", "M02/M02_main.gms" },
+                    LevelNameToLevelScene { "M03", "M03/M03_main.gms" },
+                    LevelNameToLevelScene { "M04", "M04/M04_main.gms" },
+                    LevelNameToLevelScene { "M05", "M05/M05_main.gms" },
+                    LevelNameToLevelScene { "M06", "M06/M06_main.gms" },
+                    LevelNameToLevelScene { "M08", "M08/M08_main.gms" },
+                    LevelNameToLevelScene { "M09", "M09/M09_main.gms" },
+                    LevelNameToLevelScene { "M10", "M10/M10_main.gms" },
+                    LevelNameToLevelScene { "M11", "M11/M11_main.gms" },
+                    LevelNameToLevelScene { "M12", "M12/M12_main.gms" },
+                    LevelNameToLevelScene { "M13", "M13/M13_main.gms" }
+            };
+
+            for (const auto& level : levels)
+            {
+                const auto& [ name, scene ] = level;
+
+                if (ImGui::MenuItem(name.data()))
+                {
+                    engineDb->LoadScene(scene.data());
+                }
+            }
+
+            // ------------
+            ImGui::EndMenu();
+        }
+    }
+
     void DebugTools::drawTopMenu()
     {
         static bool showActorsViewer = false;
@@ -79,6 +127,9 @@ namespace Hitman::BloodMoney
                 }
                 ImGui::EndMenu();
             }
+
+            drawLevelsTopMenu();
+
             ImGui::EndMainMenuBar();
         }
 
