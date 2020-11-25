@@ -39,6 +39,8 @@ namespace Hitman::BloodMoney
 
     void EnableCheatsPatch::Revert(const ModPack& modules)
     {
+        BasicPatch::Revert(modules);
+
         if (auto process = modules.process.lock())
         {
             process->writeMemory(Consts::kFirstPatchAddr, Consts::kFirstPatchSize, m_firstPatch.data());

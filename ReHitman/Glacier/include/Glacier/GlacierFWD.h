@@ -29,6 +29,7 @@ namespace Glacier
     class ZCAMERA;
     class ZScheduledScript;
     class ZGEOM;
+    class ZSTDOBJ;
     class ZLNKOBJ;
     class ZItem;
     class ZItemWeapon;

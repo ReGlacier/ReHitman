@@ -159,6 +159,8 @@ namespace Hitman::BloodMoney
 
     void InputDevicesPatches::Revert(const ModPack& modules)
     {
+        BasicPatch::Revert(modules);
+
         m_wintelMouseCtorHook->remove();
         m_registerClassExHook->remove();
         Globals::g_pZMouseWintelOnUpdate.reset(nullptr);

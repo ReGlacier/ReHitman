@@ -9,7 +9,7 @@ namespace Glacier
     {
     public:
         virtual REFTAB* Release(bool doFreeMem);   //#0 +0 .rdata:007569ec
-        virtual void Add(unsigned int);            //#1 +4 .rdata:007569f0
+        virtual void* Add(unsigned int);            //#1 +4 .rdata:007569f0
         virtual void AddUnique(uint);              //#2 +8 .rdata:007569f4
         virtual void Clear();                      //#3 +c .rdata:007569f8
         virtual void ClearThis();                  //#4 +10 .rdata:007569fc
