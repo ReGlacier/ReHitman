@@ -30,6 +30,17 @@ namespace Hitman::BloodMoney
         char pad_0134[12];			//0x0134
     }; //Size: 0x0140
 
+    enum EActorMapRole : int {
+        Civilian                 = 0,
+        Enemy                    = 1,
+        VIP                      = 2,
+        Target                   = 3,
+        UnknownRole_FilledYellow = 4,
+        Police                   = 5,
+        Optional                 = 6,
+        Default                  = Civilian
+    };
+
     enum class UnknownEnum : int { //From 00637BD0
         Value0 = 0x2000000C,
         Value1 = 0x2000000E,
@@ -597,7 +608,7 @@ namespace Hitman::BloodMoney
         int32_t m_field8E4; //0x08E4
         uint32_t m_animCurrent; //0x08E8
         char pad_08EC[20]; //0x08EC
-        int32_t m_actorRole; //0x0900
+        EActorMapRole m_actorRole; //0x0900
         int32_t m_HmAsID; //0x0904
         int32_t m_STDOBJID; //0x0908
         int32_t m_field90C; //0x090C

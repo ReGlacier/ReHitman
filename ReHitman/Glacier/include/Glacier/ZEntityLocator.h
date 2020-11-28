@@ -7,14 +7,24 @@ namespace Glacier {
     class ZEntityLocator
     {
     public:
-        char pad_0000[36]; //0x0000
-        Vector3 position; //0x0024
-        char pad_0030[32]; //0x0030
-        ZEntityLocator* parent; //0x0050
-        char pad_0054[8]; //0x0054
-        uint32_t m_unk; //0x005C
-        void* m_data; //0x0060
-        char pad_0064[8]; //0x0064
-        char* entityName; //0x006C
+        ZMat3x3 m_transform;
+        ZVector3 position;
+        ZVector3 field_30;
+        int field_3C;
+        int field_40;
+        Glacier::ZVector3 field_44;
+        ZEntityLocator *parent; //+0x50
+        int field_54;           //+0x54
+        uint16_t field_58;      //+0x58
+        uint16_t m_id;          //+0x5A
+        uint32_t m_Instance;    //+0x5C
+        uint32_t m_assignedTo;  //+0x60
+        int field_64;           //+0x64
+        int m_primitive;        //+0x68
+        const char *entityName; //+0x6C
+        int field_70;
+        int field_74;
+        int field_78;
+        int field_7C;
     }; //Size: 0x0080
 }

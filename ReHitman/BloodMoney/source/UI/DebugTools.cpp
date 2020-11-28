@@ -14,6 +14,9 @@
 #include <array>
 #include <string>
 
+// Widgets
+#include <BloodMoney/UI/Widgets/ActorsListWidget.h>
+
 namespace Hitman::BloodMoney
 {
     namespace Internals
@@ -109,7 +112,6 @@ namespace Hitman::BloodMoney
 
     void DebugTools::drawTopMenu()
     {
-        static bool showActorsViewer = false;
         static bool showInventoryEditor = false;
         static bool showGeomViewer = false;
 
@@ -117,7 +119,7 @@ namespace Hitman::BloodMoney
         {
             if (ImGui::BeginMenu("Tools"))
             {
-                ImGui::MenuItem("Actors viewer", nullptr, &showActorsViewer);
+                ImGui::MenuItem("Actors viewer", nullptr, &ActorsListWidget::g_bIsOpened);
                 ImGui::MenuItem("Inventory editor", nullptr, &showInventoryEditor);
                 ImGui::MenuItem("GEOM viewer", nullptr, &showGeomViewer);
                 ImGui::Separator();
@@ -131,12 +133,6 @@ namespace Hitman::BloodMoney
             drawLevelsTopMenu();
 
             ImGui::EndMainMenuBar();
-        }
-
-
-        if (showActorsViewer)
-        {
-//            showDebugActorsWindow(&showActorsViewer);
         }
 
         if (showInventoryEditor)

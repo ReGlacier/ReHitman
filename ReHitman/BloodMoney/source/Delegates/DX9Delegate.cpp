@@ -1,7 +1,9 @@
 #include <BloodMoney/Delegates/DX9Delegate.h>
-#include <BloodMoney/UI/Widgets/SandboxWidget.h>
 #include <BloodMoney/UI/DebugTools.h>
 #include <BloodMoney/Game/Globals.h>
+
+#include <BloodMoney/UI/Widgets/SandboxWidget.h>
+#include <BloodMoney/UI/Widgets/ActorsListWidget.h>
 
 #include <Glacier/ZSysInterfaceWintel.h>
 #include <Glacier/ZRenderWintelD3D.h>
@@ -47,6 +49,7 @@ namespace Hitman::BloodMoney
 
         {
             Globals::g_pDebugTools->addChild(std::make_shared<SandboxWidget>());
+            Globals::g_pDebugTools->addChild(std::make_shared<ActorsListWidget>());
         }
 
         spdlog::info("DX9Delegate initialised!");

@@ -117,7 +117,7 @@ namespace Glacier
         virtual void PushState();
         virtual void PopState();
         virtual void DuplicateData(ZGEOM*);
-        virtual void Duplicate(ZGROUP *,char const*,bool);
+        virtual ZGEOM* Duplicate(ZGROUP *,char const*,bool);
         virtual void DuplicateInit(ZGROUP *,float const*,float const*,char const*,bool);
         virtual void DuplicateToResource(ZGROUP *,uint,char const*,bool);
         virtual void DuplicateToResourceInit(ZGROUP *,uint,float const*,float const*,char const*,bool);

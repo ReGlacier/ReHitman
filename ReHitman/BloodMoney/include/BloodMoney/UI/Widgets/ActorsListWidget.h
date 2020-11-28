@@ -4,10 +4,11 @@
 
 namespace Hitman::BloodMoney
 {
-    class SandboxWidget final : public DebugWidget
+    class ActorsListWidget final : public DebugWidget
     {
-        static bool g_bIsVisible;
     public:
+        static bool g_bIsOpened;
+
         void draw() override;
     };
 }

@@ -14,6 +14,7 @@ namespace Hitman::BloodMoney
         void OnDestroy() override;
 
     private:
+        bool RegisterGameConfigurationForGlacier();
         bool LocateModules();
         void ReleaseModules();
         void RegisterPatches();

@@ -58,6 +58,11 @@ namespace Glacier
     class REFTAB;
     class REFTAB32;
     class ZDirect3DDevice;
+    class ZOffsetAlloc;
+    class ZEventBuffer;
+    class ZGeomBufferPoolEntity;
+    class ZQElemsBuffer;
+    class ZBaseGeomLists;
 
     struct SGeomTypeCount;
     struct SCompiledGeom;
@@ -83,6 +88,7 @@ namespace Glacier
         class Interface;
     }
 
+    class ZEntityLocator;
     class ZBaseGeom; //ZEntityLocator implements this by old design
     class FsZip_t;
 }

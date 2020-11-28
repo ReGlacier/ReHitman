@@ -1,5 +1,6 @@
 #include <BloodMoney/Client.h>
 
+#include <G1ConfigurationService.h>
 #include <HF/HackingFramework.hpp>
 #include <spdlog/spdlog.h>
 
@@ -25,6 +26,13 @@ namespace Hitman::BloodMoney
 
         if (!LocateModules()) return false;
 
+        // Register game configuration
+        if (!RegisterGameConfigurationForGlacier())
+        {
+            spdlog::error("Failed to register game configuration!");
+            return false;
+        }
+
         m_patches = std::make_shared<CommonPatches>(m_selfProcess, m_selfModule, m_d3d9Module);
         RegisterPatches();
         if (!m_patches->Setup())
@@ -40,6 +48,17 @@ namespace Hitman::BloodMoney
     {
         m_patches->Release();
         ReleaseModules();
+    }
+
+    bool Client::RegisterGameConfigurationForGlacier()
+    {
+        auto& config = Glacier::G1ConfigurationService::GetInstance();
+
+        // Setup embedded functions
+        config.G1API_FunctionAddress_ZGROUP_CreateGeom    = 0x004EA060;
+        config.G1API_FunctionAddress_ZHumanBoid_SetTarget = 0x00585670;
+
+        return true;
     }
 
     bool Client::LocateModules()
