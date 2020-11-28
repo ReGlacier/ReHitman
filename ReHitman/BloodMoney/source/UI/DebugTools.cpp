@@ -16,6 +16,7 @@
 
 // Widgets
 #include <BloodMoney/UI/Widgets/ActorsListWidget.h>
+#include <BloodMoney/UI/Widgets/CutSequencePlayerWidget.h>
 
 namespace Hitman::BloodMoney
 {
@@ -120,6 +121,7 @@ namespace Hitman::BloodMoney
             if (ImGui::BeginMenu("Tools"))
             {
                 ImGui::MenuItem("Actors viewer", nullptr, &ActorsListWidget::g_bIsOpened);
+                ImGui::MenuItem("Cut Sequences player", nullptr, &CutSequencePlayerWidget::g_bIsShowed);
                 ImGui::MenuItem("Inventory editor", nullptr, &showInventoryEditor);
                 ImGui::MenuItem("GEOM viewer", nullptr, &showGeomViewer);
                 ImGui::Separator();

@@ -14,6 +14,7 @@
 #include <BloodMoney/Patches/All/InputDevicesPatches.h>
 #include <BloodMoney/Patches/All/ZGEOMManagementPatch.h>
 #include <BloodMoney/Patches/All/EnableCheatsPatch.h>
+#include <BloodMoney/Patches/All/ZCutSequencePlayerPatch.h>
 
 namespace Hitman::BloodMoney
 {
@@ -118,5 +119,6 @@ namespace Hitman::BloodMoney
         m_patches->RegisterPatch<ZHitman3Patches>();
         //m_patches->RegisterPatch<ZGEOMManagementPatch>();
         m_patches->RegisterPatch<EnableCheatsPatch>();
+        m_patches->RegisterPatch<ZCutSequencePlayerPatch>();
     }
 }
