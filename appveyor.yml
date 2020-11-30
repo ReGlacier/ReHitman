@@ -35,7 +35,7 @@ build_script: |
 
 after_build:
   - cmd: cd c:\projects\ReHitman\build
-  - cmd: 7z a ReHitman.zip ReHitman\ReHitman.dll ReHitman\Launcher\Launch.ReHitman.exe
+  - cmd: 7z a ReHitman.zip ReHitman\Release\ReHitman.dll ReHitman\Launcher\Release\Launch.ReHitman.exe
   - cmd: mv ReHitman.zip ../ReHitman.zip
 
 #---------------------------------#
