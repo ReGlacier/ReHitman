@@ -1,0 +1,58 @@
+#---------------------------------#
+#       build configuration       #
+#---------------------------------#
+
+# build platform, i.e. x86, x64, Any CPU. This setting is optional.
+platform: x86
+
+branches:
+  only:
+    - main
+
+clone_folder: c:\projects\ReHitman
+
+configuration: Release
+
+image:
+  - Visual Studio 2019
+
+install:
+  - git submodule update --init --recursive
+
+before_build:
+  - cmd: |
+      mkdir build
+      cd build
+      cmake --version
+      cmake -A Win32 -G "Visual Studio 16 2019" ..
+
+build:
+  parallel: true
+  verbosity: normal
+
+build_script: |
+  cmake --build . --config Release
+
+after_build:
+  - cmd: cd c:\projects\ReHitman\build
+  - cmd: 7z a ReHitman.zip ReHitman\ReHitman.dll ReHitman\Launcher\Launch.ReHitman.exe
+  - cmd: mv ReHitman.zip ../ReHitman.zip
+
+#---------------------------------#
+#      artifacts configuration    #
+#---------------------------------#
+
+artifacts:
+  - path: ReHitman.zip
+    name: ReHitman
+
+#---------------------------------#
+#         Discord WebHook         #
+#---------------------------------#
+
+on_success:
+  - ps: Invoke-RestMethod https://raw.githubusercontent.com/DiscordHooks/appveyor-discord-webhook/master/send.ps1 -o send.ps1
+  - ps: ./send.ps1 success $env:WEBHOOK_URL
+on_failure:
+  - ps: Invoke-RestMethod https://raw.githubusercontent.com/DiscordHooks/appveyor-discord-webhook/master/send.ps1 -o send.ps1
+  - ps: ./send.ps1 failure $env:WEBHOOK_URL
