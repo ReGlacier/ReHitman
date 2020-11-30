@@ -2,7 +2,10 @@ cmake_minimum_required(VERSION 3.16)
 project(Launcher CXX)
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(Launcher ${CMAKE_CURRENT_SOURCE_DIR}/source/Launcher.cpp)
+set(RES_FILES ${CMAKE_CURRENT_SOURCE_DIR}/assets/app.rc)
+enable_language(RC)
+
+add_executable(Launcher ${CMAKE_CURRENT_SOURCE_DIR}/source/Launcher.cpp ${RES_FILES})
 target_link_libraries(Launcher Kernel32.lib)
 
 #Uncomment next line to enable pause before process will be resumed
