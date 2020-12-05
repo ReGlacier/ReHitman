@@ -1,12 +1,15 @@
 #pragma once
 
+#include <G1ConfigurationService.h>
 #include <Glacier/Glacier.h>
 #include <Glacier/ZMath.h>
 
-namespace Glacier {
+namespace Glacier
+{
     class ZEntityLocator
     {
     public:
+        // Data
         ZMat3x3 m_transform;
         ZVector3 position;
         ZVector3 field_30;
@@ -26,5 +29,11 @@ namespace Glacier {
         int field_74;
         int field_78;
         int field_7C;
+
+        // API
+        ZGROUP* ParentGroup();
+        void SetName(const char* name);
+        bool SetPrim(int primId);
+        void GetMatPos(Glacier::ZMat3x3* mat, Glacier::ZVector3* pos);
     }; //Size: 0x0080
 }

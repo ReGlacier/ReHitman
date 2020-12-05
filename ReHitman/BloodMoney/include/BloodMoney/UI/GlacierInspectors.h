@@ -2,6 +2,8 @@
 
 #include <BloodMoney/UI/ImGuiInspector.h>
 #include <Glacier/ZHumanBoid.h>
+#include <Glacier/ZGROUP.h>
+#include <Glacier/ZGEOM.h>
 #include <Glacier/ZMath.h>
 
 #include <spdlog/spdlog.h> //only for FMT
@@ -113,6 +115,38 @@ namespace ImGui
                 ImGui::Inspector<Glacier::ZVector3>::Draw("Boid Position", &boid->m_Position);
                 ImGui::Text("Actual speed: %f / Speed: %f / Speed2: %f", boid->m_ActualSpeed, boid->m_speed, boid->m_speed2);
             }
+        }
+    };
+
+    template <> struct Inspector<Glacier::ZGROUP>
+    {
+        static void Draw(const char* id, Glacier::ZGROUP* group)
+        {
+            if (!group)
+            {
+                ImGui::TextColored(ImVec4 { 1.f, 0.f, 0.f, 1.f }, "INVALID ZGROUP INSTANCE");
+                return;
+            }
+
+            ImGui::Text(" GROUP INFO ");
+            ImGui::Separator();
+
+            ImGui::Text("Name   : %s", group->m_pEntityLocator->entityName);
+            ImGui::Text("Depth  : %d", group->GroupDepth());
+            ImGui::Text("IsRoot : %s", (group->IsRoot() ? "YES" : "NO"));
+
+            if (!group->IsRoot())
+            {
+                auto parentGroup = group->m_pEntityLocator->ParentGroup();
+                // Show parent node
+                if (parentGroup && ImGui::TreeNode("Child"))
+                {
+                    ImGui::Inspector<Glacier::ZGROUP>::Draw(parentGroup->m_pEntityLocator->entityName, parentGroup);
+                    ImGui::TreePop();
+                }
+            }
+
+            // Try to locate children nodes
         }
     };
 }

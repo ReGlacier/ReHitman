@@ -53,11 +53,20 @@ namespace Hitman::BloodMoney
 
     bool Client::RegisterGameConfigurationForGlacier()
     {
-        auto& config = Glacier::G1ConfigurationService::GetInstance();
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZSysMem_Alloc = 0x00446720;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZSysMem_Free  = 0x004466D0;
 
-        // Setup embedded functions
-        config.G1API_FunctionAddress_ZGROUP_CreateGeom    = 0x004EA060;
-        config.G1API_FunctionAddress_ZHumanBoid_SetTarget = 0x00585670;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZGROUP_CreateGeom     = 0x004EA060;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZGROUP_IsRoot         = 0x004EA2F0;
+
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZGEOM_GetMatPos       = 0x004E5E40;
+
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZHumanBoid_SetTarget  = 0x00585670;
+
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZBaseGeom_ParentGroup = 0x00432640;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZBaseGeom_SetName     = 0x00431570;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZBaseGeom_SetPrim     = 0x00431DB0;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZBaseGeom_GetMatPos   = 0x00431430;
 
         return true;
     }

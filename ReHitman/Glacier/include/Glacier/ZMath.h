@@ -1,38 +1,40 @@
 #pragma once
 
+#include <Glacier/ZMemory.h>
+
 namespace Glacier
 {
-    struct Vector2
+    struct Vector2 : public UseManagedAllocator
     {
         float x = 0.f, y = 0.f;
     };
 
-    struct Vector3
+    struct Vector3 : public UseManagedAllocator
     {
         float x = 0.f, y = 0.f, z = 0.f;
     };
 
-    struct Vector4
+    struct Vector4 : public UseManagedAllocator
     {
         float x = 0.f, y = 0.f, z = 0.f, w = 0.f;
     };
 
-    struct ZRGB
+    struct ZRGB : public UseManagedAllocator
     {
         float r = 0.f, g = 0.f, b = 0.f;
     };
 
-    struct ZRGBA
+    struct ZRGBA : public UseManagedAllocator
     {
         float r = 0.f, g = 0.f, b = 0.f, a = 0.f;
     };
 
-    struct Matrix3x3
+    struct Matrix3x3 : public UseManagedAllocator
     {
         float data[9];
     };
 
-    struct Matrix4x4
+    struct Matrix4x4 : public UseManagedAllocator
     {
         float data[16];
     };

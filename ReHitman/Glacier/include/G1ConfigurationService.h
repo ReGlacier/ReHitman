@@ -6,19 +6,20 @@ namespace Glacier
 {
     class G1ConfigurationService final
     {
-        G1ConfigurationService() = default;
     public:
-        G1ConfigurationService(const G1ConfigurationService&) noexcept = delete;
-        G1ConfigurationService(G1ConfigurationService&&)      noexcept = delete;
-
-        // Singleton
-        static G1ConfigurationService& GetInstance();
-
         // Consts
         static constexpr std::intptr_t kNotConfiguredOption = 0x0;
 
         // API Configuration
-        std::intptr_t G1API_FunctionAddress_ZGROUP_CreateGeom = kNotConfiguredOption;
-        std::intptr_t G1API_FunctionAddress_ZHumanBoid_SetTarget = kNotConfiguredOption;
+        static std::intptr_t G1API_FunctionAddress_ZSysMem_Alloc;
+        static std::intptr_t G1API_FunctionAddress_ZSysMem_Free;
+        static std::intptr_t G1API_FunctionAddress_ZGROUP_CreateGeom;
+        static std::intptr_t G1API_FunctionAddress_ZGROUP_IsRoot;
+        static std::intptr_t G1API_FunctionAddress_ZGEOM_GetMatPos;
+        static std::intptr_t G1API_FunctionAddress_ZHumanBoid_SetTarget;
+        static std::intptr_t G1API_FunctionAddress_ZBaseGeom_ParentGroup;
+        static std::intptr_t G1API_FunctionAddress_ZBaseGeom_SetName;
+        static std::intptr_t G1API_FunctionAddress_ZBaseGeom_SetPrim;
+        static std::intptr_t G1API_FunctionAddress_ZBaseGeom_GetMatPos;
     };
 }

@@ -54,7 +54,7 @@ namespace Glacier
         virtual void ExpandBounds(float *,float *,float *,ZBaseGeom *);
         virtual void SetMat(const Glacier::ZMat3x3*);                    //#35 at 0x0076A200
         virtual void SetPos(const Glacier::ZVector3*);                   //#36 at 0x0076A204
-        virtual void SetMatPos(float const*,float const*);               //#37 at 0x0076A208
+        virtual void SetMatPos(const Glacier::ZMat3x3* mat, const Glacier::Vector3* pos);               //#37 at 0x0076A208
         virtual void SetWorldPosition(float const*);                     //#38 at 0x0076A20C
         virtual void SetRootTM(float const*,float const*);               //#39 at 0x0076A210
         virtual void Display(bool);                                      //#40 at 0x0076A214
@@ -118,7 +118,7 @@ namespace Glacier
         virtual void PopState();
         virtual void DuplicateData(ZGEOM*);
         virtual ZGEOM* Duplicate(ZGROUP *,char const*,bool);
-        virtual void DuplicateInit(ZGROUP *,float const*,float const*,char const*,bool);
+        virtual void DuplicateInit(ZGROUP* to, const Glacier::ZMat3x3* mat, const Glacier::ZVector3* pos, char const* name, bool f4);
         virtual void DuplicateToResource(ZGROUP *,uint,char const*,bool);
         virtual void DuplicateToResourceInit(ZGROUP *,uint,float const*,float const*,char const*,bool);
         virtual void CopyData(ZGEOM const*);
@@ -135,5 +135,8 @@ namespace Glacier
         virtual ZLNKOBJ* GetAttachedTo();
         virtual void IsLinkBaseObj();
         virtual void OnCameraEnter();
+
+        // API
+        void GetMatPos(Glacier::ZMat3x3* mat, Glacier::ZVector3* pos);
     };
 }

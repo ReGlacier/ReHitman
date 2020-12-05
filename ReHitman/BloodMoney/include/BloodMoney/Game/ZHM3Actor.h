@@ -24,7 +24,7 @@ namespace Hitman::BloodMoney
         char pad_0070[80];			//0x0070
         uint32_t equipment;			//0x00C0 [ptr]
         char pad_00C4[12];			//0x00C4
-        Glacier::ZGROUP* group;				//0x00D0 [ptr]
+        Glacier::ZGEOM* attachment;				//0x00D0 [ptr]
         char pad_00D4[92];			//0x00D4
         uint32_t unk_equ2;			//0x0130 [ptr]
         char pad_0134[12];			//0x0134

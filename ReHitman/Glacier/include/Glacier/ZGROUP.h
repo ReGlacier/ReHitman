@@ -133,7 +133,7 @@ namespace Glacier
         virtual int* FindLoadWorldGeom(char const*);
         virtual int* FindMasterGeom(char const*);
         virtual ZGEOM* FindGeom(char const*, ZEntityLocator*);
-        virtual void GroupDepth();
+        virtual int GroupDepth();
         virtual float GetPFResMultiplier();
         virtual void LinkBound(unsigned int);
         virtual void RemoveBound(unsigned int);
@@ -149,7 +149,7 @@ namespace Glacier
         virtual void RecurGetNextGroup(ZEntityLocator const**);
         virtual void RecurGetNextExclRoom(ZEntityLocator const**);
         virtual void SetGroupControl(unsigned int, unsigned int);
-        virtual void GroupControl();
+        virtual int GroupControl();
         virtual void ResetGroupPosition(bool);
         virtual void MakeActiveRecursive();
         virtual int* GetStaticLights(ZEntityLocator**, ZEntityLocator**);
@@ -167,7 +167,7 @@ namespace Glacier
         float m_field1C; //0x001C
         float m_field20; //0x0020
         float m_field24; //0x0024
-        int32_t m_field28; //0x0028
+        int32_t m_control; //0x0028
         int32_t m_field2C; //0x002C
         int32_t m_field30; //0x0030
         int32_t m_field34; //0x0034
@@ -179,5 +179,6 @@ namespace Glacier
 
         //API
         ZGEOM* CreateGeom(const char* name, int typeId, bool unk3);
+        bool IsRoot();
     };
 }

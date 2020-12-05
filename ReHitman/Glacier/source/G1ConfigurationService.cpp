@@ -2,9 +2,18 @@
 
 namespace Glacier
 {
-    G1ConfigurationService& G1ConfigurationService::GetInstance()
-    {
-        static G1ConfigurationService instance;
-        return instance;
-    }
+    std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZSysMem_Alloc         = G1ConfigurationService::kNotConfiguredOption;
+    std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZSysMem_Free          = G1ConfigurationService::kNotConfiguredOption;
+
+    std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZGROUP_CreateGeom     = G1ConfigurationService::kNotConfiguredOption;
+    std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZGROUP_IsRoot         = G1ConfigurationService::kNotConfiguredOption;
+
+    std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZGEOM_GetMatPos       = G1ConfigurationService::kNotConfiguredOption;
+
+    std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZHumanBoid_SetTarget  = G1ConfigurationService::kNotConfiguredOption;
+
+    std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZBaseGeom_ParentGroup = G1ConfigurationService::kNotConfiguredOption;
+    std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZBaseGeom_SetName     = G1ConfigurationService::kNotConfiguredOption;
+    std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZBaseGeom_SetPrim     = G1ConfigurationService::kNotConfiguredOption;
+    std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZBaseGeom_GetMatPos   = G1ConfigurationService::kNotConfiguredOption;
 }
