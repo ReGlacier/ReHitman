@@ -20,4 +20,24 @@ namespace Glacier
     {
         ((void(__thiscall*)(ZEntityLocator*, Glacier::ZMat3x3*, Glacier::ZVector3*))(G1ConfigurationService::G1API_FunctionAddress_ZBaseGeom_GetMatPos))(this, mat, pos);
     }
+
+    ZEntityLocator* ZEntityLocator::Next()
+    {
+        return ((ZEntityLocator*(__thiscall*)(ZEntityLocator*))(G1ConfigurationService::G1API_FunctionAddress_ZBaseGeom_Next))(this);
+    }
+
+    void ZEntityLocator::SetNext(ZEntityLocator* next)
+    {
+        ((void(__thiscall*)(ZEntityLocator*, ZEntityLocator*))(G1ConfigurationService::G1API_FunctionAddress_ZBaseGeom_SetNext))(this, next);
+    }
+
+    ZEntityLocator* ZEntityLocator::GetPrev()
+    {
+        return ((ZEntityLocator*(__thiscall*)(ZEntityLocator*))(G1ConfigurationService::G1API_FunctionAddress_ZBaseGeom_GetPrev))(this);
+    }
+
+    void ZEntityLocator::SetPrev(ZEntityLocator* prev)
+    {
+        ((void(__thiscall*)(ZEntityLocator*, ZEntityLocator*))(G1ConfigurationService::G1API_FunctionAddress_ZBaseGeom_SetPrev))(this, prev);
+    }
 }

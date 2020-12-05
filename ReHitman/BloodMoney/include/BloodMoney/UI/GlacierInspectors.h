@@ -139,7 +139,7 @@ namespace ImGui
             {
                 auto parentGroup = group->m_pEntityLocator->ParentGroup();
                 // Show parent node
-                if (parentGroup && ImGui::TreeNode("Child"))
+                if (parentGroup && ImGui::TreeNode("Parent"))
                 {
                     ImGui::Inspector<Glacier::ZGROUP>::Draw(parentGroup->m_pEntityLocator->entityName, parentGroup);
                     ImGui::TreePop();
@@ -147,6 +147,8 @@ namespace ImGui
             }
 
             // Try to locate children nodes
+            // For test: try to take a next geom
+
         }
     };
 }

@@ -53,8 +53,8 @@ namespace Hitman::BloodMoney
 
     bool Client::RegisterGameConfigurationForGlacier()
     {
-        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZSysMem_Alloc = 0x00446720;
-        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZSysMem_Free  = 0x004466D0;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZSysMem_Alloc         = 0x00446720;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZSysMem_Free          = 0x004466D0;
 
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZGROUP_CreateGeom     = 0x004EA060;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZGROUP_IsRoot         = 0x004EA2F0;
@@ -67,6 +67,10 @@ namespace Hitman::BloodMoney
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZBaseGeom_SetName     = 0x00431570;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZBaseGeom_SetPrim     = 0x00431DB0;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZBaseGeom_GetMatPos   = 0x00431430;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZBaseGeom_Next        = 0x004317C0;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZBaseGeom_SetNext     = 0x004317F0;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZBaseGeom_GetPrev     = 0x00431E20;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZBaseGeom_SetPrev     = 0x00431E50;
 
         return true;
     }

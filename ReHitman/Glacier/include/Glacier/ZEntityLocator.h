@@ -35,5 +35,9 @@ namespace Glacier
         void SetName(const char* name);
         bool SetPrim(int primId);
         void GetMatPos(Glacier::ZMat3x3* mat, Glacier::ZVector3* pos);
+        ZEntityLocator* Next();
+        void SetNext(ZEntityLocator* next);
+        ZEntityLocator* GetPrev();
+        void SetPrev(ZEntityLocator* prev);
     }; //Size: 0x0080
 }

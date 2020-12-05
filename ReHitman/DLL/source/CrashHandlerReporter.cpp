@@ -80,9 +80,10 @@ void NotifyAboutException(EXCEPTION_POINTERS* exceptionInfoFrame)
     MessageBox(
             NULL,
             "We got an fatal error.\nMinidump will be saved near exe.\nMore details in dev console.",
-            "Hitman Blood Money | CoreKill",
+            "Hitman Blood Money | ReGlacier",
             MB_ICONERROR | MB_OK
     );
+
     WriteMiniDump(exceptionInfoFrame);
 }
 
