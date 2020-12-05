@@ -34,11 +34,10 @@ namespace Hitman::BloodMoney
     {
         ImGui::BeginTabItem("General");
         {
-            ImGui::Text("ID: %.8X", actor->ActorInformation->location->m_Instance);
-            ImGui::Text("Name: "); ImGui::SameLine(0.f, 4.f); ImGui::TextColored(ImVec4{ 0.f, 1.f, 0.f, 1.f }, "%s", actor->ActorInformation->location->entityName);
-            ImGui::Text("Primitive ID: %.8X", actor->ActorInformation->location->m_primitive);
-            ImGui::Inspector<Glacier::ZVector3>::Draw("Actor position", &actor->ActorInformation->location->position);
+            ImGui::Inspector<Glacier::ZEntityLocator>::Draw("actor.entity", actor->ActorInformation->location);
             ImGui::Inspector<Glacier::ZHumanBoid>::Draw("Actor boid", actor->m_boid);
+            ImGui::Text("Group Info: ");
+            ImGui::Inspector<Glacier::ZGROUP>::Draw("ActorGroup", actor->ActorInformation->location->ParentGroup());
         }
         ImGui::EndTabItem();
     }

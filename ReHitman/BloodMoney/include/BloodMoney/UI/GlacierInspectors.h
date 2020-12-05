@@ -118,9 +118,27 @@ namespace ImGui
         }
     };
 
+    template <> struct Inspector<Glacier::ZEntityLocator>
+    {
+        static void Draw(const char*, Glacier::ZEntityLocator* entity)
+        {
+            if (!entity)
+            {
+                ImGui::TextColored(ImVec4 { 1.f, 0.f, 0.f, 1.f }, "INVALID ZEntityLocator INSTANCE");
+                return;
+            }
+
+            ImGui::Text("ID: %X", entity->m_Instance);
+            ImGui::Text("Name: "); ImGui::SameLine(0.f, 0.4f); ImGui::TextColored(ImVec4 { 0.f, 1.f, 0.f, 1.f }, "%s", entity->entityName);
+            ImGui::Inspector<Glacier::ZMat3x3>::Draw("Transform", &entity->m_transform);
+            ImGui::Inspector<Glacier::ZVector3>::Draw("Position", &entity->position);
+            ImGui::Text("Primitive ID: %d", entity->m_primitive);
+        }
+    };
+
     template <> struct Inspector<Glacier::ZGROUP>
     {
-        static void Draw(const char* id, Glacier::ZGROUP* group)
+        static void Draw(const char* /*id*/, Glacier::ZGROUP* group)
         {
             if (!group)
             {
@@ -145,10 +163,6 @@ namespace ImGui
                     ImGui::TreePop();
                 }
             }
-
-            // Try to locate children nodes
-            // For test: try to take a next geom
-
         }
     };
 }
