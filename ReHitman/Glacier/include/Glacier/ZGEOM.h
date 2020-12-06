@@ -12,9 +12,9 @@ namespace Glacier
     {
     public:
         // Data
-        ZEntityLocator* m_baseGeom;
-        int m_field8;
-        int m_fieldC;
+        ZEntityLocator* m_baseGeom; //+0x4
+        int m_field8;               //+0x8
+        int m_fieldC;               //+0xC
 
         // VFTable
         virtual void Release(bool);
@@ -80,7 +80,7 @@ namespace Glacier
         virtual void GetLODMaskOverride();
         virtual void GetSortPriority();
         virtual void CopyEvents(ZGEOM const*);
-        virtual void FindEvent(char const*);
+        virtual ZEventBase* FindEvent(char const*);
         virtual void GetEventData(char *);
         virtual void AddEvent(char const*);
         virtual void AttachEvent(ZEventBase &);
@@ -138,5 +138,8 @@ namespace Glacier
 
         // API
         void GetMatPos(Glacier::ZMat3x3* mat, Glacier::ZVector3* pos);
+
+        // Static API
+        static ZGEOM* RefToPtr(unsigned int REF);
     };
 }

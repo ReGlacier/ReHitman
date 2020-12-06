@@ -42,8 +42,6 @@ namespace Hitman::BloodMoney
 //            char pad_003C[168]; //0x003C
         }; //Size: 0x00E4
 
-        typedef bool(Glacier::ZGEOM::* AnimCallback_t)(Glacier::Animation::ActiveAnimation*, float, float, Glacier::uint);
-
         /// === vftable ===
         virtual void Release(bool);                                             //#0
         virtual void PreSave(Glacier::ISerializerStream &);                     //#1
@@ -70,7 +68,7 @@ namespace Hitman::BloodMoney
         virtual void MakeInactive();                                            //#22
         virtual void MakeActive();                                              //#23
         virtual int  GetBoundTreeType();                                        //#24
-        virtual void AnimCallBackToId(AnimCallback_t callback);                 //#25
+        virtual void AnimCallBackToId(Glacier::AnimCallback_t callback);        //#25
         virtual void AnimCallBackFromId(int);                                   //#26
         virtual void CameraMessages(bool);                                      //#27
         virtual void* CreateExData();                                           //#28

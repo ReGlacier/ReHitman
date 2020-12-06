@@ -1,17 +1,20 @@
 #include <BloodMoney/UI/Widgets/ActorsListWidget.h>
 
+#include <BloodMoney/Game/PF/ZPathFollower.h>
 #include <BloodMoney/Game/ZHM3GameData.h>
 #include <BloodMoney/Game/ZHM3Actor.h>
 #include <BloodMoney/Game/Globals.h>
 
 #include <BloodMoney/UI/ImGuiInspector.h>
 #include <BloodMoney/UI/GlacierInspectors.h>
+#include <BloodMoney/UI/BloodMoneyInspectors.h>
 
 #include <Glacier/ZSysInterfaceWintel.h>
 #include <Glacier/ZEngineDataBase.h>
 #include <Glacier/ZEntityLocator.h>
 #include <Glacier/ZGeomBuffer.h>
 #include <Glacier/ZHumanBoid.h>
+#include <Glacier/CInventory.h>
 #include <Glacier/Glacier.h>
 #include <Glacier/ZGROUP.h>
 #include <Glacier/ZGEOM.h>
@@ -38,6 +41,8 @@ namespace Hitman::BloodMoney
             ImGui::Inspector<Glacier::ZHumanBoid>::Draw("Actor boid", actor->m_boid);
             ImGui::Text("Group Info: ");
             ImGui::Inspector<Glacier::ZGROUP>::Draw("ActorGroup", actor->ActorInformation->location->ParentGroup());
+            ImGui::Inspector<BloodMoney::ZPathFollower>::Draw("Actor.PathFollower", reinterpret_cast<ZPathFollower*>(actor->FindEvent(ZPathFollower::Name)));
+            ImGui::Inspector<Glacier::CInventory>::Draw("Actor.Inventory", reinterpret_cast<Glacier::CInventory*>(actor->FindEvent(Glacier::CInventory::Name)));
         }
         ImGui::EndTabItem();
     }

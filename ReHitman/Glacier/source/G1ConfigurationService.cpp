@@ -9,6 +9,7 @@ namespace Glacier
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZGROUP_IsRoot         = G1ConfigurationService::kNotConfiguredOption;
 
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZGEOM_GetMatPos       = G1ConfigurationService::kNotConfiguredOption;
+    std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZGEOM_RefToPtr        = G1ConfigurationService::kNotConfiguredOption;
 
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZHumanBoid_SetTarget  = G1ConfigurationService::kNotConfiguredOption;
 

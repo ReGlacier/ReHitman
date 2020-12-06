@@ -1,37 +1,46 @@
 #pragma once
 
 #include <Glacier/REFTAB.h>
+#include <Glacier/ZRTTI.h>
+#include <Glacier/ZEventBase.h>
 
 namespace Hitman::BloodMoney
 {
-    class ZPathFollower
+    class ZEventBase;
+
+    enum EScriptPathType : int {}; //TODO: Reverse all possible values of enum
+
+    class ZPathFollower : public Glacier::ZEventBase
     {
     public:
-        /// === vftable ===
+        /// === consts ===
+        static constexpr const char* Name = "PathFollower";
+
+        /// === api ===
+        int GetClosestWaypoint();
+        int GetRndUsePoint();
+        void SetExternalWaypointList(unsigned int REF);
+        void SetWaypointIndex(int index);
 
         /// === members ===
-        int field_4;
-        int field_8;
-        int field_c;
-        int field_10;
-        int field_14;
-        int field_18;
-        int field_1c;
-        int field_20;
-        int field_24;
-        int field_28;
-        int field_2c;
-        Glacier::REFTAB m_reftab;
-        int field_4c;
-        int field_50;
-        int field_54;
-        int field_58;
-        int field_5c;
+        // --> ZPathFollower
+        Glacier::REFTAB m_listsOfWaypoints; //0x30
+        int m_currentWaypointList;
+        int m_countOfWaypoints;
+        int m_totalWaypoints;
+        EScriptPathType m_pathType;
+        bool m_useWalk;
+        bool m_useClosestOnStart;
+        bool m_playAnimsWhileWalking;
+        bool m_field5F;
         int field_60;
-        int field_64;
-        char field_68;
+        int m_waypointIndex;
+        bool m_isPathFollowerValid;
         char field_69;
         char field_6A;
         char field_6B;
     };
+
+    // Stack checks
+    static_assert(offsetof(ZPathFollower, m_listsOfWaypoints) == 0x30, "ZPathFollower| Bad class entry point");
 }

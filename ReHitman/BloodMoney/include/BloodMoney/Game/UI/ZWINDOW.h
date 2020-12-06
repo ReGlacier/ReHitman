@@ -12,8 +12,6 @@ namespace Hitman::BloodMoney
     class ZWINDOW
     {
     public:
-        typedef bool(Glacier::ZGEOM::* AnimCallback_t)(Glacier::Animation::ActiveAnimation*, float, float, Glacier::uint);
-
         /// === members ===
         Glacier::ZBaseGeom* m_baseGeom; //0x0004
         char pad_0008[64]; //0x0008
@@ -46,7 +44,7 @@ namespace Hitman::BloodMoney
         virtual void MakeInactive();
         virtual void MakeActive();
         virtual void GetBoundTreeType();
-        virtual void AnimCallBackToId(AnimCallback_t callback);
+        virtual void AnimCallBackToId(Glacier::AnimCallback_t callback);
         virtual void AnimCallBackFromId(int);
         virtual void CameraMessages(bool);
         virtual void CreateExData();

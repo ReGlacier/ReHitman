@@ -1,6 +1,8 @@
 #include <BloodMoney/Client.h>
 
 #include <G1ConfigurationService.h>
+#include <BloodMoney/BMConfigurationService.h>
+
 #include <HF/HackingFramework.hpp>
 #include <spdlog/spdlog.h>
 
@@ -53,6 +55,7 @@ namespace Hitman::BloodMoney
 
     bool Client::RegisterGameConfigurationForGlacier()
     {
+#pragma region Glacier Engine Configuration Table
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZSysMem_Alloc         = 0x00446720;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZSysMem_Free          = 0x004466D0;
 
@@ -60,6 +63,7 @@ namespace Hitman::BloodMoney
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZGROUP_IsRoot         = 0x004EA2F0;
 
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZGEOM_GetMatPos       = 0x004E5E40;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZGEOM_RefToPtr        = 0x004E5BE0;
 
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZHumanBoid_SetTarget  = 0x00585670;
 
@@ -71,7 +75,13 @@ namespace Hitman::BloodMoney
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZBaseGeom_SetNext     = 0x004317F0;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZBaseGeom_GetPrev     = 0x00431E20;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZBaseGeom_SetPrev     = 0x00431E50;
-
+#pragma endregion
+#pragma region BloodMoney Configuration Table
+        BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZPathFollower_GetClosestWaypoint      = 0x00654450;
+        BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZPathFollower_GetRndUsePoint          = 0x00654580;
+        BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZPathFollower_SetExternalWaypointList = 0x006543F0;
+        BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZPathFollower_SetWaypointIndex        = 0x00654270;
+#pragma endregion
         return true;
     }
 

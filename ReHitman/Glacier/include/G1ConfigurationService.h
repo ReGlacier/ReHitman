@@ -16,6 +16,7 @@ namespace Glacier
         static std::intptr_t G1API_FunctionAddress_ZGROUP_CreateGeom;
         static std::intptr_t G1API_FunctionAddress_ZGROUP_IsRoot;
         static std::intptr_t G1API_FunctionAddress_ZGEOM_GetMatPos;
+        static std::intptr_t G1API_FunctionAddress_ZGEOM_RefToPtr;
         static std::intptr_t G1API_FunctionAddress_ZHumanBoid_SetTarget;
         static std::intptr_t G1API_FunctionAddress_ZBaseGeom_ParentGroup;
         static std::intptr_t G1API_FunctionAddress_ZBaseGeom_SetName;

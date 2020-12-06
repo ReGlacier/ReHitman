@@ -10,7 +10,6 @@ namespace Hitman::BloodMoney
     class ZDirect3D9DevicePatches final : public BasicPatch
     {
     private:
-        IDirect3DDelegate* m_delegate { nullptr };
         HF::Hook::TrampolinePtr<10> m_ZDirect3DDevice_Constructor { nullptr };
     public:
         explicit ZDirect3D9DevicePatches(std::unique_ptr<IDirect3DDelegate>&& delegate);

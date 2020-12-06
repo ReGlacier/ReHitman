@@ -161,7 +161,7 @@ namespace Hitman::BloodMoney
         virtual void Function_0061(); //#61 +f4 .rdata:00796428
         virtual void Function_0062(); //#62 +f8 .rdata:0079642c
         virtual void Function_0063(); //#63 +fc .rdata:00796430
-        virtual int getComponent(const char* componentName); //#64 +100 .rdata:00796434
+        virtual Glacier::ZEventBase* FindEvent(const char* name); //#64 +100 .rdata:00796434
         virtual void Function_0065(); //#65 +104 .rdata:00796438
         virtual void Function_0066(); //#66 +108 .rdata:0079643c
         virtual void Function_0067(); //#67 +10c .rdata:00796440

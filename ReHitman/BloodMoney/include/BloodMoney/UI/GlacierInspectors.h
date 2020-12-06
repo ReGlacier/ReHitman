@@ -2,6 +2,7 @@
 
 #include <BloodMoney/UI/ImGuiInspector.h>
 #include <Glacier/ZHumanBoid.h>
+#include <Glacier/CInventory.h>
 #include <Glacier/ZGROUP.h>
 #include <Glacier/ZGEOM.h>
 #include <Glacier/ZMath.h>
@@ -163,6 +164,33 @@ namespace ImGui
                     ImGui::TreePop();
                 }
             }
+        }
+    };
+
+    template <> struct Inspector<Glacier::CInventory>
+    {
+        static void Draw(const char* /*id*/, Glacier::CInventory* inventory)
+        {
+            if (!inventory)
+            {
+                ImGui::TextColored(ImVec4 { 1.f, 0.f, 0.f, 1.f }, "NO CInventory INSTANCE");
+                return;
+            }
+
+            auto inventoryList = inventory->GetInventoryList();
+            if (!inventoryList)
+            {
+                ImGui::TextColored(ImVec4 { 1.f, 0.f, 0.f, 1.f }, "No inventory list!");
+                return;
+            }
+
+            if (inventoryList->Count() == 0)
+            {
+                ImGui::TextColored(ImVec4 { 1.f, 1.f, 0.f, 0.f }, "(The inventory is empty)");
+                return;
+            }
+
+            //TODO: Continue from https://github.com/DronCode/ReHitman/blob/22fb0d77f3bfb593072bdfb8a3c380e7e2dc7c37/HM3CoreKill/HM3CoreKill/ck/HM3InGameTools.cpp#L1121
         }
     };
 }

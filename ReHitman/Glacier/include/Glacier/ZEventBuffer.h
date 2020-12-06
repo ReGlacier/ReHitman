@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Glacier/ZLinkedListNodeBase.h>
+#include <Glacier/ZListNodeBase.h>
 #include <Glacier/GlacierFWD.h>
 #include <Glacier/ZEventBase.h>
 

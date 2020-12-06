@@ -1,11 +1,12 @@
 #pragma once
 
+#include <Glacier/ZRTTI.h>
 #include <Glacier/GlacierFWD.h>
-#include <Glacier/ZLinkedListNodeBase.h>
+#include <Glacier/ZListNodeBase.h>
 
 namespace Glacier
 {
-    class ZEventBase : public ZLinkedListNodeBase
+    class ZEventBase : public ZListNodeBase
     {
     public:
         /// === members ===
@@ -15,41 +16,44 @@ namespace Glacier
         int32_t m_field20; //0x0020
         ZSTDOBJ* m_STDOBJ; //0x0024
         int32_t m_field28; //0x0028
+        Glacier::ZRTTI* m_runtimeTypeInfo; //0x002C
 
         /// === vftable ===
-        virtual void Remove(); //#0 +0 .rdata:00768ce4
-        virtual void Function_0001(); //#1 +4 .rdata:00768ce8
-        virtual void Function_0002(); //#2 +8 .rdata:00768cec
-        virtual void Function_0003(); //#3 +c .rdata:00768cf0
-        virtual void Function_0004(); //#4 +10 .rdata:00768cf4
-        virtual void Function_0005(); //#5 +14 .rdata:00768cf8
-        virtual void Function_0006(); //#6 +18 .rdata:00768cfc
-        virtual void Function_0007(); //#7 +1c .rdata:00768d00
-        virtual void Function_0008(); //#8 +20 .rdata:00768d04
-        virtual void Function_0009(); //#9 +24 .rdata:00768d08
-        virtual void Function_0010(); //#10 +28 .rdata:00768d0c
-        virtual void Function_0011(); //#11 +2c .rdata:00768d10
-        virtual void Function_0012(); //#12 +30 .rdata:00768d14
-        virtual void Function_0013(); //#13 +34 .rdata:00768d18
-        virtual void Function_0014(); //#14 +38 .rdata:00768d1c
-        virtual void Function_0015(); //#15 +3c .rdata:00768d20
-        virtual void Function_0016(); //#16 +40 .rdata:00768d24
-        virtual void Function_0017(); //#17 +44 .rdata:00768d28
-        virtual void Function_0018(); //#18 +48 .rdata:00768d2c
-        virtual void Function_0019(); //#19 +4c .rdata:00768d30
-        virtual void Function_0020(); //#20 +50 .rdata:00768d34
-        virtual void Function_0021(); //#21 +54 .rdata:00768d38
-        virtual void Function_0022(); //#22 +58 .rdata:00768d3c
-        virtual void Function_0023(); //#23 +5c .rdata:00768d40
-        virtual void Function_0024(); //#24 +60 .rdata:00768d44
-        virtual void Function_0025(); //#25 +64 .rdata:00768d48
-        virtual void Function_0026(); //#26 +68 .rdata:00768d4c
-        virtual void Function_0027(); //#27 +6c .rdata:00768d50
-        virtual void Function_0028(); //#28 +70 .rdata:00768d54
-        virtual void Function_0029(); //#29 +74 .rdata:00768d58
-        virtual void Function_0030(); //#30 +78 .rdata:00768d5c
-        virtual void Function_0031(); //#31 +7c .rdata:00768d60
-        virtual void Function_0032(); //#32 +80 .rdata:00768d64
-        virtual void Function_0033(); //#33 +84 .rdata:00768d68
+        virtual void Release(bool);
+        virtual void PreSave(int&);
+        virtual void PostSave(int&);
+        virtual void PreLoad(int&);
+        virtual void PostLoad(int&);
+        virtual void PostProcess(int, int);
+        virtual void LoadSave(Glacier::ZPackedInput*, bool);
+        virtual void LoadObject(int&);
+        virtual void SaveObject(int&);
+        virtual void ExchangeObject(Glacier::ZPackedInput*);
+        virtual void SetToDefault();
+        virtual int GetTypeID();
+        virtual void* GetProperties();
+        virtual int GetEventPriority();
+        virtual void Init();
+        virtual void Init2();
+        virtual void PostInit();
+        virtual void PostInit2();
+        virtual void CopyData(const ZEventBase*);
+        virtual const char* EventName();
+        virtual void ExpandBounds(float*, float*, float*, Glacier::ZEntityLocator*);
+        virtual void PreSaveGame();
+        virtual void RegisterInstance();
+        virtual void CheckPointSave(int&);
+        virtual void CheckPointLoad(int&);
+        virtual void Reset();
+        virtual void TimeUpdate();
+        virtual void FrameUpdate();
+        virtual void Command(Glacier::ZMSGID command, Glacier::ZDATA data);
+        virtual void DoEvent(int, int, void*);
+        virtual void End();
+        virtual void EditorCommand(Glacier::ZMSGID command, Glacier::ZDATA data);
+        virtual void Remove();
+        virtual void SchedUpdate();
+        virtual void InitBaseConRout(Glacier::ZROUTCLASSINFO*);
+        virtual void UnknownCommand(Glacier::ZMSGID command, Glacier::ZDATA data);
     }; //Size: 0x0030
 }
