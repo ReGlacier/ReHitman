@@ -36,8 +36,9 @@ namespace Glacier
         int m_field58;
         int m_field5C;
         int m_field60;
-        int m_states;
-        int m_field68;
+        REFTAB* m_states;
+        Glacier::ZMSGID m_MSG_ITEMSETSTATE;
+        Glacier::ZMSGID m_MSG_ITEMGETANIMNAME;
         int m_material;
         int m_field70;
     };

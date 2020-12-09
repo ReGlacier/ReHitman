@@ -36,6 +36,7 @@ namespace Glacier
     class ZItem;
     class ZItemWeapon;
     class ZItemTemplate;
+    class ZItemTemplateAmmo;
     class ZItemWeaponTemplate;
     class ZROOM;
     class ZGROUP;
@@ -80,6 +81,7 @@ namespace Glacier
     struct LocomotionInfo;
 
     struct ITEMSTATE {};
+    struct WEAPONOPERATION {};
     enum EFootSide {};
 
     class ZCheckPointBuffer; // NOT AVAILABLE FOR PC ?
