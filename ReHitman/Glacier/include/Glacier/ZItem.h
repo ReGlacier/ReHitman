@@ -51,8 +51,10 @@ namespace Glacier
         int m_field64;
         int m_field68;
         int m_field6C;
-        int m_field70;
-        int m_field74;
+        ZMSGID m_MSG_ITEMSETSTATE;
+        ZMSGID m_MSG_GETAVAILABLEITEMSTATES;
+        ZMSGID m_MSG_SetItem;
+        ZMSGID field_76; // no message here, just for alignment
         int m_field78;
         int m_field7C;
         int m_field80;

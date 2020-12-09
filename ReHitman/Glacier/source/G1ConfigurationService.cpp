@@ -23,4 +23,8 @@ namespace Glacier
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZBaseGeom_SetPrev     = G1ConfigurationService::kNotConfiguredOption;
 
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZAction_GetActionArray = G1ConfigurationService::kNotConfiguredOption;
+
+    std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZItemContainer_FreePos = G1ConfigurationService::kNotConfiguredOption;
+    std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZItemContainer_OccupyPos = G1ConfigurationService::kNotConfiguredOption;
+    std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZItemContainer_IsContainerFull = G1ConfigurationService::kNotConfiguredOption;
 }

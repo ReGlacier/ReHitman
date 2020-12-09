@@ -27,5 +27,8 @@ namespace Glacier
         static std::intptr_t G1API_FunctionAddress_ZBaseGeom_GetPrev;
         static std::intptr_t G1API_FunctionAddress_ZBaseGeom_SetPrev;
         static std::intptr_t G1API_FunctionAddress_ZAction_GetActionArray;
+        static std::intptr_t G1API_FunctionAddress_ZItemContainer_FreePos;
+        static std::intptr_t G1API_FunctionAddress_ZItemContainer_OccupyPos;
+        static std::intptr_t G1API_FunctionAddress_ZItemContainer_IsContainerFull;
     };
 }
