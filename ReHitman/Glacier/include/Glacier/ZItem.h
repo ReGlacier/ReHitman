@@ -1,163 +1,16 @@
 #pragma once
 
-#include <Glacier/Glacier.h>
+#include <Glacier/GlacierFWD.h>
 #include <Glacier/ZRTTI.h>
 #include <Glacier/ZMath.h>
+#include <Glacier/ZGROUP.h>
 
 namespace Glacier
 {
-    enum ITEMSTATE {};
-
-    class ZItem
+    class ZItem : public ZGROUP
     {
     public:
-        virtual void Release(bool);
-        virtual void PreSave(ISerializerStream &);
-        virtual void PostSave(ISerializerStream &);
-        virtual void PreLoad(ISerializerStream &);
-        virtual void PostLoad(ISerializerStream &);
-        virtual void PostProcess(uint,uint);
-        virtual void LoadSave(ISerializerStream &,bool);
-        virtual void LoadObject(IInputSerializerStream &);
-        virtual void SaveObject(IOutputSerializerStream &);
-        virtual void ExchangeObject(ISerializerStream &);
-        virtual void SetToDefault();
-        virtual uint GetTypeID();
-        virtual void* GetProperties();
-        virtual uint GetObjectId();
-        virtual void GetObjectIdAndMask(uint& objectId, uint& mask);
-        virtual ZRTTI* GetOldClassInfo();
-        virtual void DoInit();
-        virtual void CalcCenSize();
-        virtual void PreSaveGame();
-        virtual void CheckPointSave(ZCheckPointBuffer &);
-        virtual void CheckPointLoad(ZCheckPointBuffer &);
-        virtual void Activate(bool);
-        virtual void MakeInactive();
-        virtual void MakeActive();
-        virtual uint GetBoundTreeType();
-        virtual void AnimCallBackToId(void* callback /* bool (ZGEOM::*)(Animation::ActiveAnimation *,float,float,uint) */);
-        virtual void* AnimCallBackFromId(int);
-        virtual void* CameraMessages(bool);
-        virtual void *CreateExData();
-        virtual void FreeExData();
-        virtual void CopyExData(const ZGEOM*);
-        virtual void* GetChunkData(int);
-        virtual void RecurGetNext(const ZBaseGeom**);
-        virtual void DisableParentBoundAdjust();
-        virtual void ExpandBounds(float*, float*, float*, ZBaseGeom*);
-        virtual void SetMat(const ZMat4x4* matrix);
-        virtual void SetPos(const ZVector3* position);
-        virtual void SetMatPos(const ZMat4x4* mat, const ZVector3* pos);
-        virtual void SetWorldPosition(const ZVector3* pos);
-        virtual void SetRootTM(float const*, float const*); /// TM?
-        virtual void Display(bool);
-        virtual void Select(bool);
-        virtual void Hide(bool);
-        virtual void HideRecursive(bool);
-        virtual void Freeze(bool);
-        virtual void DispBound(bool);
-        virtual void SetMoving(bool);
-        virtual void RequestCustomDraw();
-        virtual bool HasOwnerDraw();
-        virtual void OwnerDraw(ZBaseGeom*, uint, ZDrawBuffer*, ZCAMERA*, float const*, float const*, void const*);
-        virtual void CorrectOwnerDrawMatrix(float *,float *,ZBaseGeom *,uint);
-        virtual void CorrectOwnerDrawPartMatrix(ZMat4x4 *,ZBaseGeom *, ZBone *);
-        virtual bool WantDrawBufferControl();
-        virtual void DrawUpdate();
-        virtual void DrawBufferViewUpdate(ZDrawBuffer *,ZCameraSpace *);
-        virtual void DrawBufferViewUpdate(ZDrawBuffer *,ZBaseGeom *,uint);
-        virtual void WantViewPrimHideUnhideRequest();
-        virtual void WantViewPrimHide(uchar,bool);
-        virtual void WantViewPrimHideMirrors(uchar);
-        virtual void WantViewUseAllLOD();
-        virtual void GetLODMaskOverride();
-        virtual void GetSortPriority();
-        virtual void CopyEvents(ZGEOM const*);
-        virtual void FindEvent(char const*);
-        virtual void GetEventData(char *);
-        virtual void AddEvent(char const*);
-        virtual void AttachEvent(ZEventBase &);
-        virtual void EnableClassCall(uint);
-        virtual void DisableClassCall(uint);
-        virtual void SetClassTimerInterval(float);
-        virtual void CallEvents(int,void *,int,ZGEOM*);
-        virtual void SendCommand(ZGEOM*,ushort,void *);
-        virtual void SendCommand(uint,ushort,void *);
-        virtual void SendCommand(ushort,void *,ZGEOM*);
-        virtual void SendCommandRecursive(ushort,void *,ZGEOM *);
-        virtual void SendCommandRecursive(uint,ushort,void *);
-        virtual void FreeEvents();
-        virtual void FreeEvent(ZEventBase *);
-        virtual void FreeEvent(char const*);
-        virtual void RemoveEventFromList(ZEventBase *);
-        virtual void RegisterInstance(uint);
-        virtual void ClassInit();
-        virtual void ClassInit2();
-        virtual void PostClassInit();
-        virtual void PostClassInit2();
-        virtual void ClassDisplay();
-        virtual void ClassFrameUpdate();
-        virtual void ClassTimeUpdate();
-        virtual void ClassCommand(ZMSGID command, void* result);
-        virtual void ClassPushPopScene(bool);
-        virtual void ChkLineColi(COLI*, bool);
-        virtual void CheckPointInside(float const*, float);
-        virtual void CheckPointInsideBound(float const*);
-        virtual void CheckBoxInside(float const*,float const*,float const*);
-        virtual void GetPointInsideDistance(float const*);
-        virtual void Visible();
-        virtual void Invisible();
-        virtual void PushState();
-        virtual void PopState();
-        virtual void DuplicateData(ZGEOM*);
-        virtual void Duplicate(ZGROUP*,char const*,bool);
-        virtual void DuplicateInit(ZGROUP*,float const*,float const*,char const*,bool);
-        virtual void DuplicateToResource(ZGROUP*,uint,char const*,bool);
-        virtual void DuplicateToResourceInit(ZGROUP*,uint,float const*,float const*,char const*,bool);
-        virtual void CopyData(ZGEOM const*);
-        virtual void AddActionMap(SInputActionDefinition *,char *);
-        virtual void RemoveActionMap(char *);
-        virtual void CheckAction(int,void *);
-        virtual void CheckAction(char *,void *);
-        virtual void CheckAction(SInputAction *,void *);
-        virtual void GetActionID(char *);
-        virtual void GetActionPtr(int);
-        virtual void GetActionPtr(char *);
-        virtual void IsAttached();
-        virtual void SetAttachedTo(ZLNKOBJ *);
-        virtual void GetAttachedTo();
-        virtual void IsLinkBaseObj();
-        virtual void OnCameraEnter();
-        virtual void IsRecursiveActivateAllowed();
-        virtual void DynamicGroupOnScreen();
-        virtual void CheckBoxInside_2(float const*,float const*,float const*);
-        virtual void FindLoadWorldGeom(char const*);
-        virtual void FindMasterGeom(char const*);
-        virtual void FindGeom(char const*,ZBaseGeom *);
-        virtual void GroupDepth();
-        virtual void GetPFResMultiplier();
-        virtual void LinkBound(uint);
-        virtual void RemoveBound(uint);
-        virtual void GetAmbientSettings(float const*,float *,float *,float *);
-        virtual void CreateParentsRecur(ZGROUP*,ZGROUP**,bool);
-        virtual void SetOverRideNearFar(float *);
-        virtual void CorrectCenSizeRecur();
-        virtual void CorrectCenSize();
-        virtual void InvalidateBounds();
-        virtual void AttachGeom(ZBaseGeom *,bool);
-        virtual void AttachGeom(ZGEOM *,bool);
-        virtual void DetachGeom(ZBaseGeom *,bool);
-        virtual void RecurGetNextGroup(ZBaseGeom const**);
-        virtual void RecurGetNextExclRoom(ZBaseGeom const**);
-        virtual void SetGroupControl(uint,uint);
-        virtual void GroupControl();
-        virtual void ResetGroupPosition(bool);
-        virtual void MakeActiveRecursive();
-        virtual void GetStaticLights(ZBaseGeom **,ZBaseGeom **);
-        virtual void CalcCenSizeRecur();
-        virtual void GetCenSizeRecur(float *,float *,bool);
-        virtual void FindMaskGeom(char const*,int);
+        // vftable
         virtual void CreateFromTemplate();
         virtual void GetItemRootTM(float *,float *);
         virtual void GetMainItemRootTM(float *,float *);
@@ -167,8 +20,8 @@ namespace Glacier
         virtual void SetMain(uint);
         virtual void GetMain();
         virtual void GetMainMatPos(float *,float *,uint);
-        virtual void SetItemTemplate(uint);
-        virtual void GetItemTemplate();
+        virtual void SetItemTemplate(Glacier::ZREF itemTemplateRef);
+        virtual ZItemTemplate* GetItemTemplate();
         virtual void VerifyItemTemplate(ZItemTemplate const*);
         virtual void SetItemOwner(uint,ZGROUP *,bool,bool);
         virtual void GetItemOwner();
@@ -184,5 +37,24 @@ namespace Glacier
         virtual void AddDeactivate(uint, float);
         virtual void UpdateActivate();
         virtual void UpdateDeactivate();
+
+        // data (total size is 0x84, ZGROUP size is 0x4C)
+        int m_field4C;
+        int m_field50;
+        bool m_isVisibleForNPCs;
+        bool m_field55;
+        bool m_field56;
+        bool m_field57;
+        int m_field58;
+        int m_field5C;
+        int m_field60;
+        int m_field64;
+        int m_field68;
+        int m_field6C;
+        int m_field70;
+        int m_field74;
+        int m_field78;
+        int m_field7C;
+        int m_field80;
     };
 }

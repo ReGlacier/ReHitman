@@ -21,9 +21,9 @@ namespace Glacier
         virtual void ExchangeObject(int&);
         virtual void SetToDefault();
         virtual int* GetTypeID();
-        virtual int* GetProperties(); const
-        virtual int* GetObjectId(); const
-        virtual int* GetObjectIdAndMask(unsigned int&, unsigned int&); const
+        virtual int* GetProperties() const;
+        virtual int* GetObjectId() const;
+        virtual int* GetObjectIdAndMask(unsigned int&, unsigned int&) const;
         virtual int* GetOldClassInfo(); const
         virtual void DoInit();
         virtual void CalcCenSize();
