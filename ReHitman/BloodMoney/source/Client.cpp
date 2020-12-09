@@ -75,6 +75,8 @@ namespace Hitman::BloodMoney
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZBaseGeom_SetNext     = 0x004317F0;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZBaseGeom_GetPrev     = 0x00431E20;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZBaseGeom_SetPrev     = 0x00431E50;
+
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZAction_GetActionArray = 0x0052B670;
 #pragma endregion
 #pragma region BloodMoney Configuration Table
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZPathFollower_GetClosestWaypoint      = 0x00654450;

@@ -21,5 +21,13 @@ namespace Glacier
         virtual void AddMeshNrs(MeshNrs*);
         virtual int  Script_GetRefNr(int);
         virtual int  Script_GetCount();
+
+        /// === helpers ===
+        template <typename T> T* At(size_t index) {
+            if (index >= m_entries->Count()) {
+                return nullptr;
+            }
+            return reinterpret_cast<T*>(m_entries->operator[](index));
+        }
     };
 }

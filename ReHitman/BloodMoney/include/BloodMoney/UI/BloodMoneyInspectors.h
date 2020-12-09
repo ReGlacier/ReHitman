@@ -40,6 +40,15 @@ namespace ImGui
                     continue;
                 }
 
+//                for (int pointIndex = 0; pointIndex < pointsList->m_entries->Count(); ++pointIndex)
+//                {
+//                    auto entity = pointsList->At<Glacier::ZGEOM>(pointIndex);
+//                    if (!entity)
+//                    {
+//                        ImGui::
+//                    }
+//                }
+
                 ImGui::Text("Waypoints List #%d : %s", (waypointListIndex+1), pointsList->m_baseGeom->entityName);
                 //const int pointsCount = pointsList->m_entries->Count();
                 //TODO: Continue from https://github.com/DronCode/ReHitman/blob/22fb0d77f3bfb593072bdfb8a3c380e7e2dc7c37/HM3CoreKill/HM3CoreKill/ck/HM3InGameTools.cpp#L896

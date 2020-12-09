@@ -14,7 +14,7 @@ namespace Glacier
         int32_t m_field18; //0x0018
         int32_t m_field1C; //0x001C
         int32_t m_field20; //0x0020
-        ZSTDOBJ* m_STDOBJ; //0x0024
+        Glacier::ZGEOM* m_geom; //0x0024
         int32_t m_field28; //0x0028
         Glacier::ZRTTI* m_runtimeTypeInfo; //0x002C
 

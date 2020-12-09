@@ -9,6 +9,7 @@ namespace Glacier
     using uint = unsigned int;
     using ZMSGID = unsigned short;
     using ZDATA = void*;
+    using ZREF = unsigned int;
 
     using RefRun = void*;
     using TabBlk = void*;
@@ -51,6 +52,7 @@ namespace Glacier
     class ZAnimVariationHandle;
     class ZLnkAction;
     class ZIKHAND;
+    class ZItemContainer;
     class ZBodyInfo;
     class ZActionDispatcher;
     class ZROUTCLASSINFO;

@@ -138,17 +138,6 @@ namespace Hitman::BloodMoney
 
     public:
         //Data
-        int field_4;
-        int field_8;
-        int field_c;
-        int field_10;
-        int field_14;
-        int field_18;
-        int field_1c;
-        int field_20;
-        int field_24;
-        int field_28;
-        int field_2c;
         int field_30;
         int field_34;
         int field_38;

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <BloodMoney/Game/ZHM3Actor.h>
+#include <BloodMoney/Game/LevelControls/ZHM3LevelControl.h>
 
 #include <Glacier/ZGameData.h>
 #include <Glacier/REFTAB.h>
@@ -21,7 +22,6 @@ namespace Hitman::BloodMoney
     class ZHM3DialogControl;
     class ZHM3MenuElements;
     class ZHM3Hitman3;
-    class ZHM3LevelControl;
     class ZOSD;
     class ZGui;
     class CIngameMap;
