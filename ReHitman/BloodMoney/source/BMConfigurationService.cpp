@@ -6,4 +6,5 @@ namespace Hitman::BloodMoney
     std::intptr_t BMConfigurationService::BMAPI_FunctionAddress_ZPathFollower_GetRndUsePoint = BMConfigurationService::kNotConfiguredOption;
     std::intptr_t BMConfigurationService::BMAPI_FunctionAddress_ZPathFollower_SetExternalWaypointList = BMConfigurationService::kNotConfiguredOption;
     std::intptr_t BMConfigurationService::BMAPI_FunctionAddress_ZPathFollower_SetWaypointIndex = BMConfigurationService::kNotConfiguredOption;
+    std::intptr_t BMConfigurationService::BMAPI_FunctionAddress_ZHM3ItemBomb_Explode = BMConfigurationService::kNotConfiguredOption;
 }

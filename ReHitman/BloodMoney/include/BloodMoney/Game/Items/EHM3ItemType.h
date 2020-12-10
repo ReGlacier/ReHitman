@@ -290,7 +290,7 @@ namespace Hitman::BloodMoney
         Container_CakeHack_01,
         CC_Sword_Cane_02,
         Food_ChickenLeg_01_DUP, //dup
-        Food_GlassTim_01.
+        Food_GlassTim_01,
         Item_BookAnimated_01_DUP, //dup
         Item_BubblePack_01_DUP, //dup
         Pc09H_WeddingCake_01, //dup

@@ -87,6 +87,7 @@ namespace Hitman::BloodMoney
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZPathFollower_GetRndUsePoint          = 0x00654580;
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZPathFollower_SetExternalWaypointList = 0x006543F0;
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZPathFollower_SetWaypointIndex        = 0x00654270;
+        BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZHM3ItemBomb_Explode                  = 0x0064F810;
 #pragma endregion
         return true;
     }
