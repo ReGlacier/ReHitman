@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Glacier/ZMath.h>
+#include <Glacier/ZSTL/ZMath.h>
 
 namespace Hitman::BloodMoney
 {

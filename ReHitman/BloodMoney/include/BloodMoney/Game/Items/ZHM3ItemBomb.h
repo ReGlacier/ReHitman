@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Glacier/REFTAB32.h>
+#include <Glacier/ZSTL/REFTAB32.h>
 #include <BloodMoney/Game/Items/ZHM3ItemWeapon.h>
 
 namespace Hitman::BloodMoney

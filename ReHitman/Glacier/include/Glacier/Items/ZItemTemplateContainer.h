@@ -1,5 +1,5 @@
-#include <Glacier/ZItemTemplate.h>
-#include <Glacier/REFTAB.h>
+#include <Glacier/Items/ZItemTemplate.h>
+#include <Glacier/ZSTL/REFTAB.h>
 
 namespace Glacier
 {

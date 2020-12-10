@@ -2,7 +2,7 @@
 
 #include <G1ConfigurationService.h>
 #include <Glacier/Glacier.h>
-#include <Glacier/ZMath.h>
+#include <Glacier/ZSTL/ZMath.h>
 
 namespace Glacier
 {

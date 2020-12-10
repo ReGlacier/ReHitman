@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Glacier/ZRTTI.h>
+#include <Glacier/ZSTL/ZRTTI.h>
 #include <Glacier/GlacierFWD.h>
 #include <Glacier/ZListNodeBase.h>
 

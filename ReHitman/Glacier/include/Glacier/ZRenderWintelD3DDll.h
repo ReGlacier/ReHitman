@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-#include <Glacier/LINKREFTAB.h>
+#include <Glacier/ZSTL/LINKREFTAB.h>
 #include <Glacier/ZTextureManagerD3D.h>
 
 namespace Glacier

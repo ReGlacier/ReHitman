@@ -4,7 +4,7 @@
 #include <BloodMoney/Game/LevelControls/ZHM3LevelControl.h>
 
 #include <Glacier/ZGameData.h>
-#include <Glacier/REFTAB.h>
+#include <Glacier/ZSTL/REFTAB.h>
 
 #define DECLARE_UNKNOWN_TYPE_PTR(name) using name = std::uintptr_t;
 

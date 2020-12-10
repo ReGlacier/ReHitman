@@ -30,5 +30,7 @@ namespace Glacier
         static std::intptr_t G1API_FunctionAddress_ZItemContainer_FreePos;
         static std::intptr_t G1API_FunctionAddress_ZItemContainer_OccupyPos;
         static std::intptr_t G1API_FunctionAddress_ZItemContainer_IsContainerFull;
+        static std::intptr_t G1API_FunctionAddress_ZLnkActionQueue_DispatchNextAction;
+        static std::intptr_t G1API_FunctionAddress_ZLnkActionQueue_RemoveAction;
     };
 }

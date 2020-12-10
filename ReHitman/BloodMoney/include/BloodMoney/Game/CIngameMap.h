@@ -1,8 +1,8 @@
 #pragma once
 
 #include <Glacier/Glacier.h>
-#include <Glacier/ZRTTI.h>
-#include <Glacier/ZMath.h>
+#include <Glacier/ZSTL/ZRTTI.h>
+#include <Glacier/ZSTL/ZMath.h>
 #include <Glacier/ZWinEvents.h>
 
 namespace Hitman::BloodMoney

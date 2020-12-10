@@ -1,4 +1,4 @@
-#include <Glacier/ZItemContainer.h>
+#include <Glacier/Items/ZItemContainer.h>
 #include <G1ConfigurationService.h>
 #include <cassert>
 

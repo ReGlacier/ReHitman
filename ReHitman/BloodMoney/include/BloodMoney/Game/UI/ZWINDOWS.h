@@ -2,11 +2,11 @@
 
 #include <Glacier/GlacierFWD.h>
 #include <Glacier/ZWinEvents.h>
-#include <Glacier/ZMath.h>
-#include <Glacier/ZRTTI.h>
-#include <Glacier/REFTAB32.h>
-#include <Glacier/LINKREFTAB.h>
-#include <Glacier/LINKSORTREFTAB.h>
+#include <Glacier/ZSTL/ZMath.h>
+#include <Glacier/ZSTL/ZRTTI.h>
+#include <Glacier/ZSTL/REFTAB32.h>
+#include <Glacier/ZSTL/LINKREFTAB.h>
+#include <Glacier/ZSTL/LINKSORTREFTAB.h>
 
 #include <BloodMoney/Game/UI/UIFWD.h>
 #include <BloodMoney/Game/UI/ZWinInput.h>

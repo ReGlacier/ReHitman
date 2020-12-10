@@ -1,8 +1,8 @@
 #pragma once
 
 #include <Glacier/Glacier.h>
-#include <Glacier/MYSTR.h>
-#include <Glacier/STRREFTAB.h>
+#include <Glacier/ZSTL/MYSTR.h>
+#include <Glacier/ZSTL/STRREFTAB.h>
 
 namespace Glacier
 {

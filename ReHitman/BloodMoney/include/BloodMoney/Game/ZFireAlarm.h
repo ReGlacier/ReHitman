@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Glacier/ZEventBase.h>
+#include <Glacier/EventBase/ZEventBase.h>
 #include <Glacier/GlacierFWD.h>
 
 namespace Hitman::BloodMoney

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Glacier/ZItemTemplate.h>
+#include <Glacier/Items/ZItemTemplate.h>
 #include <BloodMoney/Game/Items/EHM3ItemType.h>
 
 namespace Hitman::BloodMoney

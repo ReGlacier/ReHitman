@@ -1,8 +1,8 @@
 #pragma once
 
 #include <Glacier/GlacierFWD.h>
-#include <Glacier/REFTAB.h>
-#include <Glacier/ZMath.h>
+#include <Glacier/ZSTL/REFTAB.h>
+#include <Glacier/ZSTL/ZMath.h>
 #include <Glacier/ZEntityLocator.h>
 #include <Glacier/ZIKHAND.h>
 #include <Glacier/ZHumanBoid.h>

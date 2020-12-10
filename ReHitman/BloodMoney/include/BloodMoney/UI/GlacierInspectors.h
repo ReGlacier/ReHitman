@@ -5,7 +5,7 @@
 #include <Glacier/CInventory.h>
 #include <Glacier/ZGROUP.h>
 #include <Glacier/ZGEOM.h>
-#include <Glacier/ZMath.h>
+#include <Glacier/ZSTL/ZMath.h>
 
 #include <spdlog/spdlog.h> //only for FMT
 #include <imgui.h>

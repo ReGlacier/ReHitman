@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Glacier/ZItem.h>
+#include <Glacier/Items/ZItem.h>
 
 #include <BloodMoney/Game/Items/EHM3ItemType.h>
 

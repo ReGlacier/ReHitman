@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Glacier/GlacierFWD.h>
-#include <Glacier/ZItemWeapon.h>
+#include <Glacier/Items/ZItemWeapon.h>
 #include <BloodMoney/Game/Items/EHM3ItemType.h>
 
 namespace Hitman::BloodMoney

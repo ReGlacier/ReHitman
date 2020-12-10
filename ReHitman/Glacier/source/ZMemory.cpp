@@ -1,5 +1,5 @@
 #include <G1ConfigurationService.h>
-#include <Glacier/ZMemory.h>
+#include <Glacier/ZSTL/ZMemory.h>
 
 #include <stdexcept>
 

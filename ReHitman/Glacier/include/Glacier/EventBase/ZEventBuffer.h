@@ -2,7 +2,7 @@
 
 #include <Glacier/ZListNodeBase.h>
 #include <Glacier/GlacierFWD.h>
-#include <Glacier/ZEventBase.h>
+#include <Glacier/EventBase/ZEventBase.h>
 
 namespace Glacier
 {

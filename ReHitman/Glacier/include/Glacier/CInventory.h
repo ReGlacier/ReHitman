@@ -2,9 +2,9 @@
 
 #include <Glacier/ZGEOM.h>
 #include <Glacier/ZGROUP.h>
-#include <Glacier/ZEventBase.h>
-#include <Glacier/REFTAB.h>
-#include <Glacier/REFTAB32.h>
+#include <Glacier/EventBase/ZEventBase.h>
+#include <Glacier/ZSTL/REFTAB.h>
+#include <Glacier/ZSTL/REFTAB32.h>
 
 namespace Glacier
 {

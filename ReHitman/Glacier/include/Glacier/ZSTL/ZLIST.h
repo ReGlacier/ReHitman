@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Glacier/GlacierFwd.h>
+#include <Glacier/GlacierFWD.h>
 #include <Glacier/ZGEOM.h>
 
 namespace Glacier

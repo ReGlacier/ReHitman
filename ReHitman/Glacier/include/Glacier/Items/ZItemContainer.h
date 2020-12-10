@@ -1,7 +1,7 @@
 #pragma once
 
-#include <Glacier/REFTAB.h>
-#include <Glacier/ZItem.h>
+#include <Glacier/ZSTL/REFTAB.h>
+#include <Glacier/Items/ZItem.h>
 
 namespace Glacier
 {

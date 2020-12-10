@@ -2,7 +2,7 @@
 
 #include <Glacier/GlacierFWD.h>
 #include <BloodMoney/Game/UI/UIFWD.h>
-#include <Glacier/ZMath.h>
+#include <Glacier/ZSTL/ZMath.h>
 
 namespace Hitman::BloodMoney
 {

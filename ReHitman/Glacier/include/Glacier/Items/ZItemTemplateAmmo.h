@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Glacier/GlacierFWD.h>
-#include <Glacier/ZItemTemplate.h>
+#include <Glacier/Items/ZItemTemplate.h>
 
 namespace Glacier
 {

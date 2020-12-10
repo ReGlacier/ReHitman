@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Glacier/Glacier.h>
-#include <Glacier/ZRTTI.h>
+#include <Glacier/ZSTL/ZRTTI.h>
 
 namespace Glacier
 {
