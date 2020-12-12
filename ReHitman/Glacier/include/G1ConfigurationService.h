@@ -32,5 +32,16 @@ namespace Glacier
         static std::intptr_t G1API_FunctionAddress_ZItemContainer_IsContainerFull;
         static std::intptr_t G1API_FunctionAddress_ZLnkActionQueue_DispatchNextAction;
         static std::intptr_t G1API_FunctionAddress_ZLnkActionQueue_RemoveAction;
+        static std::intptr_t G1API_FunctionAddress_CRigidBody_Enable;
+        static std::intptr_t G1API_FunctionAddress_CRigidBody_Disable;
+        static std::intptr_t G1API_FunctionAddress_CRigidBody_DisableRemove;
+        static std::intptr_t G1API_FunctionAddress_CRigidBody_SetPos;
+        static std::intptr_t G1API_FunctionAddress_CRigidBody_SetVelocity;
+        static std::intptr_t G1API_FunctionAddress_CRigidBody_SetupTransform;
+        static std::intptr_t G1API_FunctionAddress_CRigidBody_HandleHit;
+        static std::intptr_t G1API_FunctionAddress_CRigidBody_HandleExplodeBomb;
+        static std::intptr_t G1API_FunctionAddress_CRigidBody_PlaySound;
+        static std::intptr_t G1API_FunctionAddress_CRigidBody_CheckCollision4a;
+        static std::intptr_t G1API_FunctionAddress_CRigidBody_CheckCollision4b;
     };
 }

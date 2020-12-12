@@ -78,12 +78,24 @@ namespace Hitman::BloodMoney
 
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZAction_GetActionArray = 0x0052B670;
 
-        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZItemContainer_FreePos         = 0x005103F0;
-        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZItemContainer_OccupyPos       = 0x00510370;
-        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZItemContainer_IsContainerFull = 0x005105C0;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZItemContainer_FreePos               = 0x005103F0;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZItemContainer_OccupyPos             = 0x00510370;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZItemContainer_IsContainerFull       = 0x005105C0;
 
-        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZLnkActionQueue_DispatchNextAction = 0x00653CB0;
-        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZLnkActionQueue_RemoveAction       = 0x00653D10;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZLnkActionQueue_DispatchNextAction   = 0x00653CB0;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZLnkActionQueue_RemoveAction         = 0x00653D10;
+
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_CRigidBody_Enable                    = 0x005740A0;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_CRigidBody_Disable                   = 0x005741A0;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_CRigidBody_DisableRemove             = 0x00574250;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_CRigidBody_SetPos                    = 0x00574320;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_CRigidBody_SetVelocity               = 0x00574340;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_CRigidBody_SetupTransform            = 0x00574D30;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_CRigidBody_HandleHit                 = 0x00574D70;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_CRigidBody_HandleExplodeBomb         = 0x00574DE0;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_CRigidBody_PlaySound                 = 0x00574E90;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_CRigidBody_CheckCollision4a          = 0x00575010;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_CRigidBody_CheckCollision4b          = 0x005754A0;
 #pragma endregion
 #pragma region BloodMoney Configuration Table
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZPathFollower_GetClosestWaypoint      = 0x00654450;
