@@ -46,7 +46,7 @@ namespace Hitman::BloodMoney
         ImGui::Begin("Sandbox (scene tree view)");
         {
             auto root = engineDb->m_root;
-            ImGui::Inspector<Glacier::ZGROUP>::Draw(root->m_pEntityLocator->entityName, root);
+            ImGui::Inspector<Glacier::ZGROUP>::Draw(root->m_baseGeom->entityName, root);
         }
         ImGui::End();
     }

@@ -35,6 +35,7 @@ namespace Glacier
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_CRigidBody_Disable                  = G1ConfigurationService::kNotConfiguredOption;
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_CRigidBody_DisableRemove            = G1ConfigurationService::kNotConfiguredOption;
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_CRigidBody_SetPos                   = G1ConfigurationService::kNotConfiguredOption;
+    std::intptr_t G1ConfigurationService::G1API_FunctionAddress_CRigidBody_SetupTransform           = G1ConfigurationService::kNotConfiguredOption;
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_CRigidBody_SetVelocity              = G1ConfigurationService::kNotConfiguredOption;
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_CRigidBody_HandleHit                = G1ConfigurationService::kNotConfiguredOption;
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_CRigidBody_HandleExplodeBomb        = G1ConfigurationService::kNotConfiguredOption;

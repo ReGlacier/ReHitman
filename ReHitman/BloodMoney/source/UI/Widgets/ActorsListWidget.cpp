@@ -19,6 +19,9 @@
 #include <Glacier/ZGROUP.h>
 #include <Glacier/ZGEOM.h>
 
+#include <Glacier/Fysix/CRigidBody.h>
+#include <Glacier/Fysix/SExplosionInfo.h>
+
 #include <spdlog/spdlog.h>
 #include <imgui.h>
 

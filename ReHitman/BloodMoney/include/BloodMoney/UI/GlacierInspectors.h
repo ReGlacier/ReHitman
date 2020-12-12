@@ -150,17 +150,17 @@ namespace ImGui
             ImGui::Text(" GROUP INFO ");
             ImGui::Separator();
 
-            ImGui::Text("Name   : %s", group->m_pEntityLocator->entityName);
-            ImGui::Text("Depth  : %d", group->GroupDepth());
+            ImGui::Text("Name   : %s", group->m_baseGeom->entityName);
+            ImGui::Text("Depth  : %d", group->GroupDepth()); // await jump to 004EA2D0
             ImGui::Text("IsRoot : %s", (group->IsRoot() ? "YES" : "NO"));
 
             if (!group->IsRoot())
             {
-                auto parentGroup = group->m_pEntityLocator->ParentGroup();
+                auto parentGroup = group->m_baseGeom->ParentGroup();
                 // Show parent node
                 if (parentGroup && ImGui::TreeNode("Parent"))
                 {
-                    ImGui::Inspector<Glacier::ZGROUP>::Draw(parentGroup->m_pEntityLocator->entityName, parentGroup);
+                    ImGui::Inspector<Glacier::ZGROUP>::Draw(parentGroup->m_baseGeom->entityName, parentGroup);
                     ImGui::TreePop();
                 }
             }
