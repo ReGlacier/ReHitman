@@ -15,5 +15,7 @@ namespace Hitman::BloodMoney
         static std::intptr_t BMAPI_FunctionAddress_ZPathFollower_SetExternalWaypointList;
         static std::intptr_t BMAPI_FunctionAddress_ZPathFollower_SetWaypointIndex;
         static std::intptr_t BMAPI_FunctionAddress_ZHM3ItemBomb_Explode;
+        static std::intptr_t BMAPI_FunctionAddress_CMetalDetector_DoDetectWeapon;
+        static std::intptr_t BMAPI_FunctionAddress_CMetalDetector_DoAlarm;
     };
 }
