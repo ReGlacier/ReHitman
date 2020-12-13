@@ -10,6 +10,7 @@ namespace Glacier
     using ZMSGID = unsigned short;
     using ZDATA = void*;
     using ZREF = unsigned int;
+    using ZWM_MESSAGE = signed int; //Less that 0x1000!
 
     using RefRun = void*;
     using TabBlk = void*;

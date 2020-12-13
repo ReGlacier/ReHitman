@@ -19,41 +19,41 @@ namespace Glacier
         Glacier::ZRTTI* m_runtimeTypeInfo; //0x002C
 
         /// === vftable ===
-        virtual void Release(bool);
-        virtual void PreSave(int&);
-        virtual void PostSave(int&);
-        virtual void PreLoad(int&);
-        virtual void PostLoad(int&);
-        virtual void PostProcess(int, int);
-        virtual void LoadSave(Glacier::ZPackedInput*, bool);
-        virtual void LoadObject(int&);
-        virtual void SaveObject(int&);
-        virtual void ExchangeObject(Glacier::ZPackedInput*);
-        virtual void SetToDefault();
-        virtual int GetTypeID();
-        virtual void* GetProperties();
-        virtual int GetEventPriority();
-        virtual void Init();
-        virtual void Init2();
-        virtual void PostInit();
-        virtual void PostInit2();
-        virtual void CopyData(const ZEventBase*);
-        virtual const char* EventName();
-        virtual void ExpandBounds(float*, float*, float*, Glacier::ZEntityLocator*);
-        virtual void PreSaveGame();
-        virtual void RegisterInstance();
-        virtual void CheckPointSave(int&);
-        virtual void CheckPointLoad(int&);
-        virtual void Reset();
-        virtual void TimeUpdate();
-        virtual void FrameUpdate();
-        virtual void Command(Glacier::ZMSGID command, Glacier::ZDATA data);
-        virtual void DoEvent(int, int, void*);
-        virtual void End();
-        virtual void EditorCommand(Glacier::ZMSGID command, Glacier::ZDATA data);
-        virtual void Remove();
-        virtual void SchedUpdate();
-        virtual void InitBaseConRout(Glacier::ZROUTCLASSINFO*);
-        virtual void UnknownCommand(Glacier::ZMSGID command, Glacier::ZDATA data);
+        virtual void Release(bool);                                                     //#00 | +0
+        virtual void PreSave(int&);                                                     //#01 | +4
+        virtual void PostSave(int&);                                                    //#02 | +8
+        virtual void PreLoad(int&);                                                     //#03 | +C
+        virtual void PostLoad(int&);                                                    //#04 | +10
+        virtual void PostProcess(int, int);                                             //#05 | +14
+        virtual void LoadSave(Glacier::ZPackedInput*, bool);                            //#06 | +18
+        virtual void LoadObject(int&);                                                  //#07 | +1C
+        virtual void SaveObject(int&);                                                  //#08 | +20
+        virtual void ExchangeObject(Glacier::ZPackedInput*);                            //#09 | +24
+        virtual void SetToDefault();                                                    //#10 | +28
+        virtual int GetTypeID();                                                        //#11 | +2C
+        virtual void* GetProperties();                                                  //#12 | +30
+        virtual int GetEventPriority();                                                 //#13 | +34
+        virtual void Init();                                                            //#14 | +38
+        virtual void Init2();                                                           //#15 | +3C
+        virtual void PostInit();                                                        //#16 | +40
+        virtual void PostInit2();                                                       //#17 | +44
+        virtual void CopyData(const ZEventBase*);                                       //#18 | +48
+        virtual const char* EventName();                                                //#19 | +4C
+        virtual void ExpandBounds(float*, float*, float*, Glacier::ZEntityLocator*);    //#20 | +50
+        virtual void PreSaveGame();                                                     //#21 | +54
+        virtual void RegisterInstance();                                                //#22 | +58
+        virtual void CheckPointSave(int&);                                              //#23 | +5C
+        virtual void CheckPointLoad(int&);                                              //#24 | +60
+        virtual void Reset();                                                           //#25 | +64
+        virtual void TimeUpdate();                                                      //#26 | +68
+        virtual void FrameUpdate();                                                     //#27 | +6C
+        virtual void Command(Glacier::ZMSGID command, Glacier::ZDATA data);             //#28 | +70
+        virtual void DoEvent(int, int, void*);                                          //#29 | +74
+        virtual void End();                                                             //#30 | +78
+        virtual void EditorCommand(Glacier::ZMSGID command, Glacier::ZDATA data);       //#31 | +7C
+        virtual void Remove();                                                          //#32 | +80
+        virtual void SchedUpdate();                                                     //#33 | +84
+        virtual void InitBaseConRout(Glacier::ZROUTCLASSINFO*);                         //#34 | +88
+        virtual void UnknownCommand(Glacier::ZMSGID command, Glacier::ZDATA data);      //#35 | +8C
     }; //Size: 0x0030
 }

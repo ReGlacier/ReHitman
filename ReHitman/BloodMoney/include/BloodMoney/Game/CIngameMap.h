@@ -1,24 +1,42 @@
 #pragma once
 
 #include <Glacier/Glacier.h>
+#include <Glacier/ZHandle.h>
 #include <Glacier/ZSTL/ZRTTI.h>
 #include <Glacier/ZSTL/ZMath.h>
+#include <Glacier/ZSTL/REFTAB.h>
+#include <Glacier/ZSTL/REFTAB32.h>
 #include <Glacier/ZWinEvents.h>
 
 #include <BloodMoney/Game/SMapGroup.h>
 #include <BloodMoney/Game/SIconBase.h>
+#include <BloodMoney/Game/UI/ZWINDOW.h>
+#include <BloodMoney/Game/UI/CWinEvent.h>
 
 namespace Hitman::BloodMoney
 {
     struct SMapText
     {
         int id; //0x0000
-        bool field_04; //0x0004
-        bool field_05; //0x0005
-        bool field_06; //0x0006
-        bool field_07; //0x0007
-        char str[92]; //0x0008
-    }; //Size: 0x0064
+        bool field_04;   //0x0004
+        bool field_05;   //0x0005
+        bool field_06;   //0x0006
+        bool field_07;   //0x0007
+        char str[0x5C];  //0x0008
+        int  field_64;   //0x0064
+        int  field_68;
+        int  field_6C;
+        int  field_70;
+        int  field_74;
+        int  field_78;
+        int  field_7C;
+        int  field_80;
+        int  field_84;
+        int  field_88;
+        int  field_8C;
+        int  field_90;
+        int  field_94;
+    }; //Size: 0x0098 (see CIngameMap::AddText at 00663E20 for details)
 
     struct SIconInstance
     {
@@ -30,60 +48,10 @@ namespace Hitman::BloodMoney
         int32_t eIconType;   // icon type (enum)
     };
 
-    class CIngameMap
+    class CIngameMap : public CWinEvent<ZWINDOW>
     {
     public:
         //vftable
-        virtual void Release(bool); //#0
-        virtual void PreSave(Glacier::ISerializerStream &);
-        virtual void PostSave(Glacier::ISerializerStream &);
-        virtual void PreLoad(Glacier::ISerializerStream &);
-        virtual void PostLoad(Glacier::ISerializerStream &);
-        virtual void PostProcess(uint32_t,uint32_t);
-        virtual void LoadSave(Glacier::ISerializerStream &,bool);
-        virtual void LoadObject(Glacier::IInputSerializerStream &);
-        virtual void SaveObject(Glacier::IOutputSerializerStream &);
-        virtual void ExchangeObject(Glacier::ISerializerStream &);
-        virtual void SetToDefault(void);
-        virtual Glacier::ZRTTI* GetTypeID(void);
-        virtual void* GetProperties(void);
-        virtual int GetEventPriority(void);
-        virtual void Init(void);
-        virtual void Init2(void);
-        virtual void PostInit(void);
-        virtual void PostInit2(void);
-        virtual void CopyData(Glacier::ZEventBase *);
-        virtual void EventName(void);
-        virtual void ExpandBounds(float *,float *,float *, Glacier::ZBaseGeom *);
-        virtual void PreSaveGame(void);
-        virtual void RegisterInstance(uint32_t);
-        virtual void CheckPointSave(Glacier::ZCheckPointBuffer &);
-        virtual void CheckPointLoad(Glacier::ZCheckPointBuffer &);
-        virtual void Reset(void);
-        virtual void TimeUpdate(void);
-        virtual void FrameUpdate(void);
-        virtual void Command(Glacier::ZMSGID ,void *);
-        virtual void DoEvent(int,int,void *);
-        virtual void End(void);
-        virtual void EditorCommand(Glacier::ZMSGID,void *);
-        virtual void Remove(void);
-        virtual void SchedUpdate(void);
-        virtual void InitBaseConRout(/*ZROUTCLASSINFO*/void *);
-        virtual void UnknownCommand(Glacier::ZMSGID,void *);
-        virtual void GetSystem(void);
-        virtual int WndMessage(Glacier::ZWMEVENT *);
-        virtual void OnCommand(uint16_t);
-        virtual void OnMouseMove(Glacier::Vector3*);
-        virtual void OnKeyUp(uint16_t);
-        virtual void OnKeyDown(uint16_t);
-        virtual void OnKeyPress(uint16_t);
-        virtual void OnFocusReceived(uint16_t);
-        virtual void OnFocusLost(uint16_t);
-        virtual void OnClick(float,float);
-        virtual void OnWindowOpen(uint16_t,bool);
-        virtual void OnWindowClose(uint16_t,bool);
-        virtual void OnSliderChange(uint16_t,uint16_t);
-        virtual void OnFocusChanged(uint16_t,uint16_t);
         virtual void AddMapGroup(uint16_t,char const*,uint16_t);
         virtual void OpenMap(void);
         virtual void CloseMap(void);
@@ -94,6 +62,96 @@ namespace Hitman::BloodMoney
         virtual void RemoveText(SMapText const*);
         virtual void NotifyUpdate(uint16_t);
 
-        // api
+        //data (total size is 0x2C4, CWinEvent<ZWINDOW> : ZEventBase size is 0x30)
+        Glacier::ZHandle m_mapLegendAction;
+        Glacier::ZHandle m_mapSelectAction;
+        Glacier::ZHandle m_mapCameraLeftAction;
+        Glacier::ZHandle m_mapCameraRightAction;
+        Glacier::ZHandle m_mapCameraUpAction;
+        Glacier::ZHandle m_mapCameraDownAction;
+        Glacier::ZHandle m_mapMoveUpAction;
+        Glacier::ZHandle m_mapMoveDownAction;
+        Glacier::ZHandle m_mapPrevAction;
+        Glacier::ZHandle m_mapNextAction;
+        Glacier::ZHandle m_mapMenuAction;
+        Glacier::ZHandle m_mapAction;
+        int field_00C0;
+        int field_00C4;
+        int field_00C8;
+        int field_00CC;
+        int field_00D0;
+        int field_00D4;
+        int field_00D8;
+        int field_00DC;
+        int field_00E0;
+        int field_00E4;
+        int field_00E8;
+        int field_00EC;
+        int field_00F0;
+        int field_00F4;
+        Glacier::REFTAB32 m_reftab32_00F8;
+        int field_01A4;
+        SMapGroup* m_legendMapGroup;
+        int field_01AC;
+        Glacier::REFTAB m_mapGroups; //REFTAB of SMapGroup
+        int field_01CC;
+        int field_01D0;
+        Glacier::REFTAB m_iconsRefTab;
+        Glacier::REFTAB m_textsRefTab;
+        int field_020C;
+        int field_0210;
+        int field_0214;
+        int field_0218;
+        int field_021C;
+        int field_0220;
+        int field_0224;
+        int field_0228;
+        int field_022C;
+        int field_0230;
+        int field_0234;
+        int field_0238;
+        int field_023C;
+        int field_0240;
+        int field_0244;
+        int field_0248;
+        int field_024C;
+        int field_0250;
+        int field_0254;
+        int field_0258;
+        int field_025C;
+        int field_0260;
+        int field_0264;
+        int field_0268;
+        int field_026C;
+        int field_0270;
+        int field_0274;
+        int field_0278;
+        int field_027C;
+        int field_0280;
+        int field_0284;
+        int field_0288;
+        int field_028C;
+        int field_0290;
+        int field_0294;
+        char m_isMapListOpened;
+        char field_299;
+        char field_29A;
+        char field_29B;
+        char field_029C;
+        char field_29D;
+        char m_mapsComboShowing;
+        char field_29F;
+        char field_02A0;
+        char field_2A1;
+        char field_2A2;
+        char field_2A3;
+        int field_02A4;
+        int field_02A8;
+        SMapGroup *m_currentMapGroup;
+        int field_02B0;
+        int field_02B4;
+        int field_02B8;
+        int field_02BC;
+        int field_02C0;
     };
 }

@@ -24,6 +24,7 @@
 #include <BloodMoney/Game/ZHM3Actor.h>
 
 #include <BloodMoney/UI/GlacierInspectors.h>
+#include <BloodMoney/Game/CIngameMap.h>
 
 namespace Hitman::BloodMoney
 {
@@ -44,10 +45,9 @@ namespace Hitman::BloodMoney
         if (!geomBuffer) { return; }
 
         ImGui::Begin("Sandbox (scene tree view)");
-        {
-            auto root = engineDb->m_root;
-            ImGui::Inspector<Glacier::ZGROUP>::Draw(root->m_baseGeom->entityName, root);
-        }
+        /**
+         * Test code here
+         */
         ImGui::End();
     }
 
