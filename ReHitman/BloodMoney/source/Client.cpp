@@ -96,6 +96,10 @@ namespace Hitman::BloodMoney
         Glacier::G1ConfigurationService::G1API_FunctionAddress_CRigidBody_PlaySound                 = 0x00574E90;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_CRigidBody_CheckCollision4a          = 0x00575010;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_CRigidBody_CheckCollision4b          = 0x005754A0;
+
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZHash_int_SMatPos_Put                = 0x00665E20;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZHash_int_SMatPos_Clear              = 0x00663FB0;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZHash_int_SMatPos_Find               = 0x00664060;
 #pragma endregion
 #pragma region BloodMoney Configuration Table
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZPathFollower_GetClosestWaypoint      = 0x00654450;

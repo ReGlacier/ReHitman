@@ -43,5 +43,8 @@ namespace Glacier
         static std::intptr_t G1API_FunctionAddress_CRigidBody_PlaySound;
         static std::intptr_t G1API_FunctionAddress_CRigidBody_CheckCollision4a;
         static std::intptr_t G1API_FunctionAddress_CRigidBody_CheckCollision4b;
+        static std::intptr_t G1API_FunctionAddress_ZHash_int_SMatPos_Put;
+        static std::intptr_t G1API_FunctionAddress_ZHash_int_SMatPos_Clear;
+        static std::intptr_t G1API_FunctionAddress_ZHash_int_SMatPos_Find;
     };
 }

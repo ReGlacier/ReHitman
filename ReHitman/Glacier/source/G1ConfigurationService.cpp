@@ -42,4 +42,8 @@ namespace Glacier
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_CRigidBody_PlaySound                = G1ConfigurationService::kNotConfiguredOption;
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_CRigidBody_CheckCollision4a         = G1ConfigurationService::kNotConfiguredOption;
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_CRigidBody_CheckCollision4b         = G1ConfigurationService::kNotConfiguredOption;
+
+    std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZHash_int_SMatPos_Put               = G1ConfigurationService::kNotConfiguredOption;
+    std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZHash_int_SMatPos_Clear             = G1ConfigurationService::kNotConfiguredOption;
+    std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZHash_int_SMatPos_Find              = G1ConfigurationService::kNotConfiguredOption;
 }

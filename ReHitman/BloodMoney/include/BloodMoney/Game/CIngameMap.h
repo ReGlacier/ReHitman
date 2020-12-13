@@ -5,6 +5,9 @@
 #include <Glacier/ZSTL/ZMath.h>
 #include <Glacier/ZWinEvents.h>
 
+#include <BloodMoney/Game/SMapGroup.h>
+#include <BloodMoney/Game/SIconBase.h>
+
 namespace Hitman::BloodMoney
 {
     struct SMapText
@@ -30,6 +33,7 @@ namespace Hitman::BloodMoney
     class CIngameMap
     {
     public:
+        //vftable
         virtual void Release(bool); //#0
         virtual void PreSave(Glacier::ISerializerStream &);
         virtual void PostSave(Glacier::ISerializerStream &);
@@ -89,5 +93,7 @@ namespace Hitman::BloodMoney
         virtual SMapText* AddText(SMapText const*);
         virtual void RemoveText(SMapText const*);
         virtual void NotifyUpdate(uint16_t);
+
+        // api
     };
 }

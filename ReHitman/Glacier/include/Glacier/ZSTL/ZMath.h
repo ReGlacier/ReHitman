@@ -44,4 +44,11 @@ namespace Glacier
     using ZVector4 = Vector4;
     using ZMat4x4 = Matrix4x4;
     using ZMat3x3 = Matrix3x3;
+
+    struct SMatPos
+    {
+        int m_id;
+        ZMat3x3 transform;
+        ZVector3 position;
+    }; //size is 0x34
 }
