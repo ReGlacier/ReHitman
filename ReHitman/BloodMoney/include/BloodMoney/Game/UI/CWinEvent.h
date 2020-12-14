@@ -6,6 +6,7 @@
 #include <Glacier/EventBase/ZEventBase.h>
 
 #include <BloodMoney/Game/UI/ZWINDOW.h>
+#include <BloodMoney/Game/UI/ZWINGROUP.h>
 
 namespace Hitman::BloodMoney
 {
@@ -56,5 +57,25 @@ namespace Hitman::BloodMoney
          * If we will look for CIngameMap we will see that the first member (ZHandle) was located at 0x30, its class-specific location.
          * This means that CWinEvent<ZWINDOW> doesn't contain any internal fields or smth like that.
          */
+    };
+
+    template <> class CWinEvent<ZWINGROUP> : public Glacier::ZEventBase
+    {
+    public:
+        //vftable
+        virtual ZWINDOWS* GetSystem();                              //#36 | +90
+        virtual void WndMessage(Glacier::ZWMEVENT *);               //#37 | +94
+        virtual void OnCommand(Glacier::ZMSGID);                    //#38 | +98
+        virtual void OnMouseMove(Glacier::ZVector2*);               //#39 | +9C
+        virtual void OnKeyUp(unsigned int);                         //#40 | +104
+        virtual void OnKeyDown(unsigned int);                       //#41 | +108
+        virtual void OnKeyPress(unsigned int);                      //#42 | +10C
+        virtual void OnFocusReceived(unsigned int);                 //#43 | +110
+        virtual void OnFocusLost(unsigned int);                     //#44 | +114
+        virtual void OnClick(float x, float y);                     //#45 | +118
+        virtual void OnWindowOpen(unsigned int, bool);              //#46 | +11C
+        virtual void OnWindowClose(unsigned int, bool);             //#47 | +120
+        virtual void OnSliderChange(unsigned int, unsigned int);    //#48 | +124
+        virtual void OnFocusChanged(unsigned int, unsigned int);    //#49 | +128
     };
 }

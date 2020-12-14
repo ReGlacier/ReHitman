@@ -2,6 +2,7 @@
 
 #include <BloodMoney/Game/ZHM3Actor.h>
 #include <BloodMoney/Game/LevelControls/ZHM3LevelControl.h>
+#include <BloodMoney/Game/UI/ZOSD.h>
 
 #include <Glacier/ZGameData.h>
 #include <Glacier/ZSTL/REFTAB.h>
@@ -22,7 +23,6 @@ namespace Hitman::BloodMoney
     class ZHM3DialogControl;
     class ZHM3MenuElements;
     class ZHM3Hitman3;
-    class ZOSD;
     class ZGui;
     class CIngameMap;
     class ZHM3BriefingControl;
