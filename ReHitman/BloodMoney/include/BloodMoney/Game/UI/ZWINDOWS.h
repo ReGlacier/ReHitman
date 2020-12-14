@@ -68,10 +68,10 @@ namespace Hitman::BloodMoney
         int m_focusedControl;
         int field_58;
         int m_mouseGEOM;
-        Vec2F m_mousePos;
+        Glacier::ZVector2 m_mousePos;
         int field_68;
         int field_6c;
-        Vec2F field_70;
+        Glacier::ZVector2 field_70;
         int field_78;
         int field_7c;
         float m_mouseSpeed;
