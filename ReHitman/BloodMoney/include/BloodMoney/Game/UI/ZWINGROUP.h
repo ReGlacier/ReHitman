@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Glacier/ZGROUP.h>
+#include <Glacier/Geom/ZGROUP.h>
 #include <Glacier/ZWinEvents.h>
 
 namespace Hitman::BloodMoney

@@ -1,4 +1,4 @@
-#include <Glacier/ZEntityLocator.h>
+#include <Glacier/Geom/ZEntityLocator.h>
 #include <G1ConfigurationService.h>
 
 namespace Glacier

@@ -2,7 +2,7 @@
 
 #include <Glacier/Glacier.h>
 #include <Glacier/ZLinkedListHeader.hpp>
-#include <Glacier/ZGEOM.h>
+#include <Glacier/Geom/ZGEOM.h>
 
 namespace Glacier
 {
@@ -74,7 +74,7 @@ namespace Glacier
 
         /// ---{ LINKED LIST GOD RAY END }---
         ZScheduledScript* m_ppScheduledScript; //0x008C
-        ZGROUP* m_root; //0x0090 (real type ZTreeGroup)
+        ZROOM* m_root; //0x0090
         char pad_0094[4]; //0x0094
         ResourceCollection* m_resourceCollection; //0x0098
         char pad_009C[56]; //0x009C

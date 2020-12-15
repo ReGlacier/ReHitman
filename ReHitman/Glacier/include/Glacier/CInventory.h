@@ -1,7 +1,7 @@
 #pragma once
 
-#include <Glacier/ZGEOM.h>
-#include <Glacier/ZGROUP.h>
+#include <Glacier/Geom/ZGEOM.h>
+#include <Glacier/Geom/ZGROUP.h>
 #include <Glacier/EventBase/ZEventBase.h>
 #include <Glacier/ZSTL/REFTAB.h>
 #include <Glacier/ZSTL/REFTAB32.h>

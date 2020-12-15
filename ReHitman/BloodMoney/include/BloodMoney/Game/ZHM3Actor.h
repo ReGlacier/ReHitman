@@ -3,8 +3,8 @@
 #include <Glacier/GlacierFWD.h>
 #include <Glacier/ZSTL/REFTAB.h>
 #include <Glacier/ZSTL/ZMath.h>
-#include <Glacier/ZEntityLocator.h>
-#include <Glacier/ZIKHAND.h>
+#include <Glacier/Geom/ZEntityLocator.h>
+#include <Glacier/IK/ZIKHAND.h>
 #include <Glacier/ZHumanBoid.h>
 
 namespace Hitman::BloodMoney

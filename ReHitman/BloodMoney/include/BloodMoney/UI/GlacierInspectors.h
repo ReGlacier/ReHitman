@@ -3,8 +3,8 @@
 #include <BloodMoney/UI/ImGuiInspector.h>
 #include <Glacier/ZHumanBoid.h>
 #include <Glacier/CInventory.h>
-#include <Glacier/ZGROUP.h>
-#include <Glacier/ZGEOM.h>
+#include <Glacier/Geom/ZGROUP.h>
+#include <Glacier/Geom/ZGEOM.h>
 #include <Glacier/ZSTL/ZMath.h>
 
 #include <spdlog/spdlog.h> //only for FMT

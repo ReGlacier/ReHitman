@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Glacier/ZLNKOBJ.h>
+#include <Glacier/IK/ZLNKOBJ.h>
 #include <Glacier/GlacierFWD.h>
 #include <Glacier/ZSTL/ZMath.h>
 
@@ -61,8 +61,12 @@ namespace Glacier
         virtual void RemoveTargets();
 
         //data (total size is 0x190, base size is 0xF4)
-        int m_fieldF4;
+        int m_flagsF4;
         int m_fieldF8;
+        bool m_fieldF8;
+        bool m_bFacingEnabled;
+        bool m_fieldFA;
+        bool m_fieldFB;
         int m_fieldFC;
         int m_field100;
         int m_field104;

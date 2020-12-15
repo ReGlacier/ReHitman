@@ -1,6 +1,6 @@
 #include <BloodMoney/Patches/All/ZGEOMManagementPatch.h>
 #include <BloodMoney/Editors/LevelEditorGeomsPool.h>
-#include <Glacier/ZGEOM.h>
+#include <Glacier/Geom/ZGEOM.h>
 
 #include <spdlog/spdlog.h>
 #include <cstdint>

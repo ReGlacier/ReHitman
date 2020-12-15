@@ -2,7 +2,7 @@
 
 #include <Glacier/GlacierFWD.h>
 #include <Glacier/ZSTL/ZMath.h>
-#include <Glacier/ZGEOM.h>
+#include <Glacier/Geom/ZGEOM.h>
 
 namespace Glacier
 {
@@ -40,7 +40,7 @@ namespace Glacier
         virtual void GetCenSizeRecur(float*, float*, bool);
         virtual ZGEOM* FindMaskGeom(char const*, int);
 
-        //data
+        //data (total size is 0x4F)
         float m_field10; //0x0010
         float m_field14; //0x0014
         float m_field18; //0x0018

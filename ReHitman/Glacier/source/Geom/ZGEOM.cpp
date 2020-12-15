@@ -1,4 +1,4 @@
-#include <Glacier/ZGEOM.h>
+#include <Glacier/Geom/ZGEOM.h>
 #include <G1ConfigurationService.h>
 
 namespace Glacier

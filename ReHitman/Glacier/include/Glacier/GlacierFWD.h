@@ -55,6 +55,7 @@ namespace Glacier
     class ZLnkAction;
     class ZIKHAND;
     class ZItemContainer;
+    class ZItemTemplateWeapon;
     class ZBodyInfo;
     class ZActionDispatcher;
     class ZROUTCLASSINFO;
@@ -81,7 +82,7 @@ namespace Glacier
     struct ITEMHANDS {};
     struct LocomotionInfo;
 
-    struct ITEMSTATE {};
+    using ITEMSTATE = int;
     struct WEAPONOPERATION {};
     enum EFootSide {};
 

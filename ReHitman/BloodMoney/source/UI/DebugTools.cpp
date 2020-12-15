@@ -7,7 +7,7 @@
 #include <Glacier/ZEngineDataBase.h>
 #include <Glacier/ZSysInterfaceWintel.h>
 
-#include <Glacier/ZGEOM.h>
+#include <Glacier/Geom/ZGEOM.h>
 
 #include <spdlog/spdlog.h>
 #include <imgui.h>

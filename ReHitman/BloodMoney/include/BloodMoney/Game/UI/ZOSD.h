@@ -2,7 +2,7 @@
 
 #include <Glacier/ZSTL/ZMath.h>
 #include <Glacier/GlacierFWD.h>
-#include <Glacier/ZSTDOBJ.h>
+#include <Glacier/Geom/ZSTDOBJ.h>
 #include <Glacier/ZSDOwner.h>
 
 namespace Hitman::BloodMoney

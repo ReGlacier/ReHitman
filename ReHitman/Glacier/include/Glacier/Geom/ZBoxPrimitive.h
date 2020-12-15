@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Glacier/ZSTDOBJ.h>
+#include <Glacier/Geom/ZSTDOBJ.h>
 #include <Glacier/ZSTL/ZMath.h>
 
 namespace Glacier

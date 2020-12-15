@@ -6,8 +6,9 @@
 namespace Glacier
 {
     enum class EActionType : int {
-        Type1 = 6,
-        PlaceAction = 7
+        Type6 = 6,
+        PlaceAction = 7,
+        Type8 = 8,
     };
 
     class ZAction : public ZEventBase

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Glacier/GlacierFWD.h>
-#include <Glacier/ZGROUP.h>
+#include <Glacier/Geom/ZGROUP.h>
 
 namespace Glacier
 {

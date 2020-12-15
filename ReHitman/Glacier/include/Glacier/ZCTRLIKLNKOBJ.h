@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Glacier/ZIKLNKOBJ.h>
+#include <Glacier/IK/ZIKLNKOBJ.h>
 #include <Glacier/ZAction.h>
 
 namespace Glacier
@@ -25,9 +25,9 @@ namespace Glacier
         virtual void GetVisionPos(ZVector3* pos);
 
         //data (total size is 0x1A0, base size is 0x190)
-        int m_field190;
-        int m_field194;
-        int m_field198;
+        int m_controller;
+        int m_contactGeom;
+        int m_fLightReceived;
         int m_field19C;
     };
 }

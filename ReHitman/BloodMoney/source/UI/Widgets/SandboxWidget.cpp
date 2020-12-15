@@ -15,11 +15,11 @@
 
 #include <Glacier/ZSysInterfaceWintel.h>
 #include <Glacier/ZEngineDataBase.h>
-#include <Glacier/ZEntityLocator.h>
-#include <Glacier/ZGeomBuffer.h>
+#include <Glacier/Geom/ZEntityLocator.h>
+#include <Glacier/Geom/ZGeomBuffer.h>
 #include <Glacier/Glacier.h>
-#include <Glacier/ZGROUP.h>
-#include <Glacier/ZGEOM.h>
+#include <Glacier/Geom/ZGROUP.h>
+#include <Glacier/Geom/ZGEOM.h>
 
 #include <BloodMoney/Game/ZHM3Actor.h>
 

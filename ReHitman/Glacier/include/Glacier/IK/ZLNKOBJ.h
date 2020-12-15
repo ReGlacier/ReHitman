@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Glacier/ZSTDOBJ.h>
+#include <Glacier/Geom/ZSTDOBJ.h>
 #include <Glacier/Glacier.h>
 #include <Glacier/ZSTL/ZMath.h>
 
@@ -11,6 +11,34 @@ namespace Glacier
         int m_field4;
         int m_field8;
     };
+
+    struct Model {
+        int m_field0;
+        int m_field4;
+        int m_field8;
+        int m_fieldC;
+        int m_field10;
+        int m_field14;
+        int m_field18;
+        int m_field1C;
+        int m_field20;
+        ActiveAnimation m_animationsPool[4];
+        //Not completed!
+    };
+
+    struct ActiveAnimation {
+        int m_field0;
+        int m_field4;
+        int m_field8;
+        int m_fieldC;
+        int m_field10;
+        int m_field14;
+        int m_field18;
+        int m_field1C;
+        int m_field20;
+        int m_field24;
+        int m_field28;
+    }; //Size 0x2C
 
     class ZLNKOBJ : public ZSTDOBJ
     {
@@ -45,12 +73,12 @@ namespace Glacier
         virtual void SetDefaultBones(ZBone const*,SBoneDefinition const*);
         virtual void GetAnimDeltaBones(Animation::Header *);
         virtual void GetBoneMatPos(float *,float *, unsigned int);
-        virtual void AttachBaseGeomToBone(ZBaseGeom const*,unsigned int,float const*,float const*);
-        virtual void DetachBaseGeomFromBone(ZBaseGeom const*,unsigned int);
-        virtual void GetAttachedBaseGeomBoneId(ZBaseGeom const*);
+        virtual void AttachBaseGeomToBone(ZEntityLocator const*,unsigned int,float const*,float const*);
+        virtual void DetachBaseGeomFromBone(ZEntityLocator const*,unsigned int);
+        virtual void GetAttachedBaseGeomBoneId(ZEntityLocator const*);
         virtual void GetGroundBoneAnimMatPos(ZMat3x3*, ZVector3*, Animation::Header *,float,bool);
         virtual void GetGroundBoneDeltaMatPos(ZMat3x3*, ZVector3*, Animation::Header *,float,float);
-        virtual void GetAttachedGeomMatPos(ZBaseGeom const*,float *,float *);
+        virtual void GetAttachedGeomMatPos(ZEntityLocator const*,float *,float *);
         virtual void DisplayBone(unsigned int,bool);
         virtual void GetFocusMatPos(float *,float *);
         virtual void DisplayAllBones(bool);
@@ -92,9 +120,6 @@ namespace Glacier
         virtual void LoadSaveAnimations(ZPackedInput*, bool);
 
         //data (total size is 0xF4, base size is 0x10)
-        int field_4;
-        int field_8;
-        int field_C;
         int field_10;
         int field_14;
         int field_18;
@@ -113,7 +138,7 @@ namespace Glacier
         char field_69;
         char field_6A;
         char field_6B;
-        int m_animationModel;
+        Model* m_animationModel;
         int field_70;
         int field_74;
         int field_78;

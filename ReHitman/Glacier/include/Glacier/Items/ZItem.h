@@ -3,7 +3,7 @@
 #include <Glacier/GlacierFWD.h>
 #include <Glacier/ZSTL/ZRTTI.h>
 #include <Glacier/ZSTL/ZMath.h>
-#include <Glacier/ZGROUP.h>
+#include <Glacier/Geom/ZGROUP.h>
 
 namespace Glacier
 {
