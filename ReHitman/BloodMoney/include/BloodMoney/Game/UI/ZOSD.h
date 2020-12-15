@@ -1,6 +1,9 @@
 #pragma once
 
+#include <Glacier/ZSTL/ZMath.h>
+#include <Glacier/GlacierFWD.h>
 #include <Glacier/ZSTDOBJ.h>
+#include <Glacier/ZSDOwner.h>
 
 namespace Hitman::BloodMoney
 {
@@ -37,7 +40,7 @@ namespace Hitman::BloodMoney
         char field_35;
         char field_36;
         char field_37;
-        ZCAMERA *m_camera38;
+        Glacier::ZCAMERA *m_camera38;
         int m_field3C;
         int m_field40;
         int m_field44;
@@ -71,7 +74,7 @@ namespace Hitman::BloodMoney
         char field_A2;
         char field_A3;
         int m_fieldA4;
-        Vec3F m_vInfoDisplayPosition;
+        Glacier::ZVector3 m_vInfoDisplayPosition;
         int m_rInfoDisplay;
         int m_pInfoDisplay;
         int m_fieldBC;
@@ -140,7 +143,7 @@ namespace Hitman::BloodMoney
         int m_field1B8;
         int m_rPickupMenu;
         int m_pPickupMenu;
-        Vec3F m_vDropDisplayPosition;
+        Glacier::ZVector3 m_vDropDisplayPosition;
         int m_rDropDisplay;
         int m_pDropDisplay;
         int m_vActionDisplayPosition;
@@ -153,7 +156,7 @@ namespace Hitman::BloodMoney
         int m_field1F4;
         int m_rContainerMenu;
         int m_pContainerMenu;
-        ZSDOwner m_sdOwner;
+        Glacier::ZSDOwner m_sdOwner;
         int m_field210;
         int m_field214;
         int m_field218;
