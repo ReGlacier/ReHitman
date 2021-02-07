@@ -12,20 +12,6 @@ namespace Glacier
         int m_field8;
     };
 
-    struct Model {
-        int m_field0;
-        int m_field4;
-        int m_field8;
-        int m_fieldC;
-        int m_field10;
-        int m_field14;
-        int m_field18;
-        int m_field1C;
-        int m_field20;
-        ActiveAnimation m_animationsPool[4];
-        //Not completed!
-    };
-
     struct ActiveAnimation {
         int m_field0;
         int m_field4;
@@ -39,6 +25,20 @@ namespace Glacier
         int m_field24;
         int m_field28;
     }; //Size 0x2C
+
+    struct Model {
+        int m_field0;
+        int m_field4;
+        int m_field8;
+        int m_fieldC;
+        int m_field10;
+        int m_field14;
+        int m_field18;
+        int m_field1C;
+        int m_field20;
+        ActiveAnimation m_animationsPool[4];
+        //Not completed!
+    };
 
     class ZLNKOBJ : public ZSTDOBJ
     {

@@ -20,6 +20,7 @@
 #include <Glacier/Glacier.h>
 #include <Glacier/Geom/ZGROUP.h>
 #include <Glacier/Geom/ZGEOM.h>
+#include <Glacier/IK/ZLNKOBJ.h>
 
 #include <BloodMoney/Game/ZHM3Actor.h>
 
@@ -45,9 +46,17 @@ namespace Hitman::BloodMoney
         if (!geomBuffer) { return; }
 
         ImGui::Begin("Sandbox (scene tree view)");
-        /**
-         * Test code here
-         */
+        {
+            /// Let's make a party
+            if (ImGui::Button("Make everybody like 47")) {
+                auto pPlayerLNK = reinterpret_cast<Glacier::ZLNKOBJ*>(gameData->m_Hitman3);
+
+                for (size_t i = 0; i < gameData->m_ActorsInPoolCount; i++) {
+                    auto pActorLNK = reinterpret_cast<Glacier::ZLNKOBJ*>(gameData->m_ActorsPool[i]);
+                    pActorLNK->CopyGeometryFrom(pPlayerLNK);
+                }
+            }
+        }
         ImGui::End();
     }
 
