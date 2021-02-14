@@ -21,3 +21,8 @@ body {
     background: url("img/logo.png") center center/36px no-repeat;
     transition: all .1s ease-in-out 0s;
 }
+
+a:link {
+    text-decoration: none;
+    color: #0074e7;
+}
