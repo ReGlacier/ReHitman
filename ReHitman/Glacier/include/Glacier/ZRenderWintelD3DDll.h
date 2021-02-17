@@ -64,12 +64,12 @@ namespace Glacier
         virtual void Function_46();
 
         // data
-        char *m_dllName;
-        HMODULE m_dllHandle;
-        int m_fieldC;
-        int m_field10;
-        ZTextureManagerD3D *m_textureManager;
-        int m_primControlWintel;
+        char *m_dllName;                        //0x4
+        HMODULE m_dllHandle;                    //0x8
+        int m_fieldC;                           //0xC
+        int m_field10;                          //0x10
+        ZTextureManagerD3D *m_textureManager;   //0x14
+        ZPrimControlWintel* m_primControlWintel;                //0x18
         int m_materialBuffer;
         char *m_prmBuffer;
         char *m_prmEndOfBuffer;

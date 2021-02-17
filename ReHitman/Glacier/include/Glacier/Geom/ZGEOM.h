@@ -118,7 +118,7 @@ namespace Glacier
         virtual void PopState();
         virtual void DuplicateData(ZGEOM*);
         virtual ZGEOM* Duplicate(ZGROUP *,char const*,bool);
-        virtual void DuplicateInit(ZGROUP* to, const Glacier::ZMat3x3* mat, const Glacier::ZVector3* pos, char const* name, bool f4);
+        virtual ZGEOM* DuplicateInit(ZGROUP* to, const Glacier::ZMat3x3* mat, const Glacier::ZVector3* pos, char const* name, bool f4);
         virtual void DuplicateToResource(ZGROUP *,uint,char const*,bool);
         virtual void DuplicateToResourceInit(ZGROUP *,uint,float const*,float const*,char const*,bool);
         virtual void CopyData(ZGEOM const*);
@@ -138,6 +138,7 @@ namespace Glacier
 
         // API
         void GetMatPos(Glacier::ZMat3x3* mat, Glacier::ZVector3* pos);
+        ZREF GetRef();
 
         // Static API
         static ZGEOM* RefToPtr(unsigned int REF);

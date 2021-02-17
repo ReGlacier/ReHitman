@@ -1,18 +1,36 @@
 #pragma once
 
+#include <BloodMoney/Game/Globals.h>
+#include <BloodMoney/Game/ZHM3Actor.h>
 #include <BloodMoney/UI/ImGuiInspector.h>
+
 #include <Glacier/ZHumanBoid.h>
 #include <Glacier/CInventory.h>
+#include <Glacier/ZCAMERA.h>
+#include <Glacier/ZSysInterfaceWintel.h>
+#include <Glacier/ZEngineDataBase.h>
+
 #include <Glacier/Geom/ZGROUP.h>
 #include <Glacier/Geom/ZGEOM.h>
+#include <Glacier/Geom/ZSNDOBJ.h>
+
 #include <Glacier/ZSTL/ZMath.h>
 
 #include <spdlog/spdlog.h> //only for FMT
+
 #include <imgui.h>
 
 namespace ImGui
 {
     // Custom impls
+    template <>
+    struct Inspector<float> {
+        static void Draw(const char* id, float* data)
+        {
+            ImGui::InputFloat(id, data);
+        }
+    };
+
     template <> struct Inspector<Glacier::ZVector2> {
         static void Draw(const char* id, Glacier::ZVector2* data)
         {
@@ -192,5 +210,68 @@ namespace ImGui
 
             //TODO: Continue from https://github.com/DronCode/ReHitman/blob/22fb0d77f3bfb593072bdfb8a3c380e7e2dc7c37/HM3CoreKill/HM3CoreKill/ck/HM3InGameTools.cpp#L1121
         }
+    };
+
+    template <> struct Inspector<Glacier::ZCAMERA>
+    {
+        static void Draw(const char* /*id*/, Glacier::ZCAMERA* camera)
+        {
+            if (!camera) {
+                ImGui::TextColored(ImVec4 { 1.f, 0.f, 0.f, 1.f }, "No ZCAMERA INSTANCE");
+                return;
+            }
+
+            Glacier::ZMat3x3 matrixOld, matrix;
+            Glacier::ZVector3 positionOld, position;
+            float aspect = camera->GetViewAspect();
+            float fov = camera->GetFOV(), fovOld = camera->GetFOV();
+
+            camera->GetMatPos(&matrix, &position);
+            camera->GetMatPos(&matrixOld, &positionOld);
+
+            ImGui::Inspector<Glacier::ZMat3x3>::Draw("Transform", &matrix);
+            ImGui::Inspector<Glacier::ZVector3>::Draw("Position", &position);
+            ImGui::Inspector<float>::Draw("Aspect ratio", &aspect);
+            ImGui::Inspector<float>::Draw("FOV", &fov);
+
+            if (matrix != matrixOld) {
+                camera->SetMat(&matrix);
+            }
+
+            if (position != positionOld) {
+                camera->SetPos(&position);
+            }
+
+            if (fov != fovOld) {
+                camera->SetFOV(fov);
+            }
+
+            if (camera->IsActive() && ImGui::Button("Deactivate")) {
+                camera->DeactivateCam();
+            }
+
+            if (!camera->IsActive() && ImGui::Button("Activate")) {
+                camera->ActivateCam();
+            }
+        }
+    };
+
+    template <> struct Inspector<Glacier::ZSNDOBJ> {
+        static void Draw(const char* /*id*/, Glacier::ZSNDOBJ* sndobj) {
+            if (!sndobj) {
+                ImGui::TextColored(ImVec4{1.f, 0.f, 0.f, 1.f}, "No ZSNDOBJ INSTANCE");
+                return;
+            }
+
+            /**
+             * @todo: Do something ...
+             */
+        }
+    };
+
+    /// BloodMoney stuff
+    template <> struct Inspector<Hitman::BloodMoney::ZHM3Actor>
+    {
+        static void Draw(const char* id, Hitman::BloodMoney::ZHM3Actor* actor);
     };
 }

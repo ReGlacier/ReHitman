@@ -8,6 +8,9 @@ namespace Glacier
     class ZItemTemplate : public ZGROUP
     {
     public:
+        // static consts
+        static constexpr uint32_t kItemGroupId = 0x4954454D;
+
         // vftable
         virtual ZItem* CreateItem(ZGROUP*, unsigned int, bool isVisibleForNPC, bool);
         virtual ZItem* CreateItemAndActuallyUseDestinationParameter(ZGROUP* group, unsigned int, bool isVisibleForNPC, bool);

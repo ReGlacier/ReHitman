@@ -111,7 +111,7 @@ namespace Glacier
         virtual void CreateSoundGraph(void); //#28
         virtual void LoadSoundGraph(void); //#29
         virtual ZMSGID RegisterZDefine(char const*,char *,int); //#30
-        virtual ZMSGID RegisterZMsg(char const*,uint,char *,int); //#31
+        virtual ZMSGID RegisterZMsg(char const*,uint, const char *,int); //#31
         virtual const char* GetZMsgName(ZMSGID); //#32
         virtual void CreateObjectFactories(void); //#33
         virtual void StartUp(void); //#34
@@ -163,5 +163,8 @@ namespace Glacier
         virtual void PackHookMissingOnlyInitialize(void); //#80
         virtual void CreatePackedStaticGameLevelData(void); //#81
         virtual void LoadPackedStaticGameLevelData(void); //#82
+
+        // API
+        std::intptr_t GetSceneCom();
     };
 }

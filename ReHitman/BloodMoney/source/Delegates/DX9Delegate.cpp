@@ -5,6 +5,7 @@
 #include <BloodMoney/UI/Widgets/SandboxWidget.h>
 #include <BloodMoney/UI/Widgets/ActorsListWidget.h>
 #include <BloodMoney/UI/Widgets/CutSequencePlayerWidget.h>
+#include <BloodMoney/UI/Widgets/SceneViewer.h>
 
 #include <Glacier/ZSysInterfaceWintel.h>
 #include <Glacier/ZRenderWintelD3D.h>
@@ -52,6 +53,7 @@ namespace Hitman::BloodMoney
             Globals::g_pDebugTools->addChild(std::make_shared<SandboxWidget>());
             Globals::g_pDebugTools->addChild(std::make_shared<ActorsListWidget>());
             Globals::g_pDebugTools->addChild(std::make_shared<CutSequencePlayerWidget>());
+            Globals::g_pDebugTools->addChild(std::make_shared<SceneViewer>());
         }
 
         spdlog::info("DX9Delegate initialised!");
@@ -73,8 +75,15 @@ namespace Hitman::BloodMoney
 
     void DX9Delegate::OnPresent(IDirect3DDevice9* device)
     {
+        ImGuiIO& io = ImGui::GetIO();
+
         ImGui_ImplDX9_NewFrame();
         ImGui_ImplWin32_NewFrame();
+
+        if (io.DeltaTime <= 0.f) {
+            io.DeltaTime = 1.f / 60.f;
+        }
+
         ImGui::NewFrame();
 
         if (Globals::g_pDebugTools)
@@ -86,7 +95,6 @@ namespace Hitman::BloodMoney
                 Globals::g_pDebugTools->draw();
             }
 
-            ImGuiIO& io = ImGui::GetIO();
             io.MouseDrawCursor = isDebugToolsVisible;
         }
 

@@ -547,6 +547,9 @@ namespace Hitman::BloodMoney
         virtual void LoadSave(Glacier::ISerializerStream&); //#447 +6fc .rdata:00796a30 (actor flags, maybe not used by game)
         virtual bool ActivateRigidBody(const Glacier::SRigidBodyVelocity*); //#448 +700 .rdata:00796a34
 
+        // === API ===
+        void PreparePath();
+
         // === members ===
         ActorInfos* ActorInformation;	//0x0004
         /// ===========================================
@@ -591,7 +594,70 @@ namespace Hitman::BloodMoney
         int32_t m_field484; //0x0484
         char pad_0488[4]; //0x0488
         int32_t m_field48C; //0x048C
-        char pad_0490[256]; //0x0490
+        int m_field490; //+0x490
+        int m_field494; //+0x494
+        int m_field498; //+0x498
+        int m_field49C; //+0x49C
+        int m_field4A0; //+0x4A0
+        int m_field4A4; //+0x4A4
+        int m_field4A8; //+0x4A8
+        int m_field4AC; //+0x4AC
+        int m_field4B0; //+0x4B0
+        int m_field4B4; //+0x4B4
+        int m_field4B8; //+0x4B8
+        int m_field4BC; //+0x4BC
+        int m_field4C0; //+0x4C0
+        int m_field4C4; //+0x4C4
+        int m_field4C8; //+0x4C8
+        int m_field4CC; //+0x4CC
+        int m_field4D0; //+0x4D0
+        int m_field4D4; //+0x4D4
+        int m_field4D8; //+0x4D8
+        int m_field4DC; //+0x4DC
+        int m_field4E0; //+0x4E0
+        int m_field4E4; //+0x4E4
+        int m_field4E8; //+0x4E8
+        int m_field4EC; //+0x4EC
+        int m_field4F0; //+0x4F0
+        int m_field4F4; //+0x4F4
+        int m_field4F8; //+0x4F8
+        int m_field4FC; //+0x4FC
+        int m_field500; //+0x500
+        int m_field504; //+0x504
+        int m_field508; //+0x508
+        int m_field50C; //+0x50C
+        int m_field510; //+0x510
+        int m_field514; //+0x514
+        int m_field518; //+0x518
+        int m_field51C; //+0x51C
+        int m_field520; //+0x520
+        int m_field524; //+0x524
+        int m_field528; //+0x528
+        int m_field52C; //+0x52C
+        int m_field530; //+0x530
+        int m_field534; //+0x534
+        int m_field538; //+0x538
+        int m_field53C; //+0x53C
+        int m_field540; //+0x540
+        int m_field544; //+0x544
+        int m_field548; //+0x548
+        int m_field54C; //+0x54C
+        int m_field550; //+0x550
+        int m_field554; //+0x554
+        int m_field558; //+0x558
+        int m_field55C; //+0x55C
+        int m_field560; //+0x560
+        int m_field564; //+0x564
+        int m_field568; //+0x568
+        int m_field56C; //+0x56C
+        int m_field570; //+0x570
+        int m_field574; //+0x574
+        int m_field578; //+0x578
+        int m_field57C; //+0x57C
+        int m_field580; //+0x580
+        int m_field584; //+0x584
+        int m_field588; //+0x588
+        int m_field58C; //+0x58C
         float m_field590; //0x0590
         float m_field594; //0x0594
         float m_field598; //0x0598

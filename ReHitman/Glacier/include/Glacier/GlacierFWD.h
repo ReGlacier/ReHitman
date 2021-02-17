@@ -76,7 +76,6 @@ namespace Glacier
     struct SInputActionDefinition;
     struct SExtendedImpactInfo;
     struct SRigidBodyVelocity;
-    struct SMouseColi;
 
     enum ALLOCSEQUENCESTATUS {};
     struct ITEMHANDS {};

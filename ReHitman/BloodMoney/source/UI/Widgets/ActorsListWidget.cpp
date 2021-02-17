@@ -9,21 +9,73 @@
 #include <BloodMoney/UI/GlacierInspectors.h>
 #include <BloodMoney/UI/BloodMoneyInspectors.h>
 
+#include <Glacier/ZRenderWintelD3DDll.h>
 #include <Glacier/ZSysInterfaceWintel.h>
 #include <Glacier/ZEngineDataBase.h>
-#include <Glacier/Geom/ZEntityLocator.h>
 #include <Glacier/Geom/ZGeomBuffer.h>
-#include <Glacier/ZHumanBoid.h>
-#include <Glacier/CInventory.h>
-#include <Glacier/Glacier.h>
-#include <Glacier/Geom/ZGROUP.h>
-#include <Glacier/Geom/ZGEOM.h>
+#include <Glacier/IK/ZLNKOBJ.h>
 
 #include <Glacier/Fysix/CRigidBody.h>
-#include <Glacier/Fysix/SExplosionInfo.h>
-
-#include <spdlog/spdlog.h>
 #include <imgui.h>
+
+namespace ImGui
+{
+    void Inspector<Hitman::BloodMoney::ZHM3Actor>::Draw(const char* id, Hitman::BloodMoney::ZHM3Actor* actor) {
+        {
+            //ImGui::Inspector<Glacier::ZEntityLocator>::Draw("actor.entity", actor->ActorInformation->location);
+            ImGui::Inspector<Glacier::ZEntityLocator>::Draw("actor.entity", reinterpret_cast<Glacier::ZGEOM*>(actor)->m_baseGeom);
+            ImGui::Inspector<Glacier::ZHumanBoid>::Draw("Actor boid", actor->m_boid);
+            ImGui::Text("Group Info: ");
+            ImGui::Inspector<Glacier::ZGROUP>::Draw("ActorGroup", actor->ActorInformation->location->ParentGroup());
+            ImGui::Inspector<Hitman::BloodMoney::ZPathFollower>::Draw("Actor.PathFollower", reinterpret_cast<Hitman::BloodMoney::ZPathFollower*>(actor->FindEvent(Hitman::BloodMoney::ZPathFollower::Name)));
+            ImGui::Inspector<Glacier::CInventory>::Draw("Actor.Inventory", reinterpret_cast<Glacier::CInventory*>(actor->FindEvent(Glacier::CInventory::Name)));
+
+            /// ==================
+            {
+                auto gameData = Glacier::getInterface<Hitman::BloodMoney::ZHM3GameData>(Hitman::BloodMoney::Globals::kGameDataAddr);
+                if (gameData && ImGui::Button("Swap bodies"))
+                {
+                    auto actorGeom = reinterpret_cast<Glacier::ZGEOM*>(actor);
+                    auto playerGeom = reinterpret_cast<Glacier::ZGEOM*>(gameData->m_Hitman3);
+
+                    const int actorPrimId  = actorGeom->m_baseGeom->m_primitive;
+                    const int playerPrimId = playerGeom->m_baseGeom->m_primitive;
+
+                    reinterpret_cast<Glacier::ZLNKOBJ*>(actor)->CopyGeometryFrom(playerPrimId);
+                    reinterpret_cast<Glacier::ZLNKOBJ*>(actor)->UpdateGeometry(true);
+
+                    reinterpret_cast<Glacier::ZLNKOBJ*>(playerGeom)->CopyGeometryFrom(actorPrimId);
+                    reinterpret_cast<Glacier::ZLNKOBJ*>(playerGeom)->UpdateGeometry(true);
+                }
+            }
+
+            /// ==================
+            {
+                if (ImGui::Button("Clear PF4 path"))
+                {
+                    using PF4_Path_Clear_t = void(__thiscall*)(std::intptr_t*);
+                    auto PF4_Path_Clear = (PF4_Path_Clear_t)0x004D8D00;
+
+                    PF4_Path_Clear(&actor->m_field534);
+
+                    actor->PreparePath();
+                }
+            }
+
+            // ===================
+            {
+                auto gameData = Glacier::getInterface<Hitman::BloodMoney::ZHM3GameData>(Hitman::BloodMoney::Globals::kGameDataAddr);
+                if (gameData && ImGui::Button("Start human shield with"))
+                {
+                    using StartActionHumanShield_t = void(__thiscall*)(std::intptr_t*, Hitman::BloodMoney::ZHM3Actor*);
+                    auto StartActionHumanShield = (StartActionHumanShield_t)0x00600590;
+
+                    StartActionHumanShield(reinterpret_cast<std::intptr_t*>(gameData->m_Hitman3), actor);
+                }
+            }
+        }
+    }
+}
 
 namespace Hitman::BloodMoney
 {
@@ -36,20 +88,6 @@ namespace Hitman::BloodMoney
         ImGui::End();
     }
 
-    void DrawActorGeneralInfo(Hitman::BloodMoney::ZHM3Actor* actor)
-    {
-        ImGui::BeginTabItem("General");
-        {
-            ImGui::Inspector<Glacier::ZEntityLocator>::Draw("actor.entity", actor->ActorInformation->location);
-            ImGui::Inspector<Glacier::ZHumanBoid>::Draw("Actor boid", actor->m_boid);
-            ImGui::Text("Group Info: ");
-            ImGui::Inspector<Glacier::ZGROUP>::Draw("ActorGroup", actor->ActorInformation->location->ParentGroup());
-            ImGui::Inspector<BloodMoney::ZPathFollower>::Draw("Actor.PathFollower", reinterpret_cast<ZPathFollower*>(actor->FindEvent(ZPathFollower::Name)));
-            ImGui::Inspector<Glacier::CInventory>::Draw("Actor.Inventory", reinterpret_cast<Glacier::CInventory*>(actor->FindEvent(Glacier::CInventory::Name)));
-        }
-        ImGui::EndTabItem();
-    }
-
     void DrawActorInfo(Hitman::BloodMoney::ZHM3Actor* actor, int actorIndex)
     {
         ImGui::Text("Actor #%.2d (at 0x%.8X)", actorIndex, reinterpret_cast<uint32_t>(actor));
@@ -57,7 +95,9 @@ namespace Hitman::BloodMoney
 
         if (ImGui::BeginTabBar("##Tabs", ImGuiTabBarFlags_None))
         {
-            DrawActorGeneralInfo(actor);
+            ImGui::BeginTabItem("General");
+            ImGui::Inspector<Hitman::BloodMoney::ZHM3Actor>::Draw("???", actor);
+            ImGui::EndTabItem();
         }
         ImGui::EndTabBar();
     }

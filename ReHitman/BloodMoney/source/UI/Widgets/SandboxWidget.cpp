@@ -2,6 +2,7 @@
 #include <imgui.h>
 
 #include <BloodMoney/UI/Widgets/SandboxWidget.h>
+#include <BloodMoney/UI/GlacierInspectors.h>
 
 #include <BloodMoney/Game/ZHM3GameData.h>
 
@@ -21,14 +22,32 @@
 #include <Glacier/Geom/ZGROUP.h>
 #include <Glacier/Geom/ZGEOM.h>
 #include <Glacier/IK/ZLNKOBJ.h>
+#include <Glacier/CInventory.h>
+#include <Glacier/ZSTL/REFTAB32.h>
+#include <Glacier/Items/ZItem.h>
+#include <Glacier/Items/ZItemTemplate.h>
+#include <Glacier/Geom/ZROOM.h>
+#include <Glacier/Geom/ZTreeGroup.h>
+#include <Glacier/ZTypeTraits.h>
 
 #include <BloodMoney/Game/ZHM3Actor.h>
 
-#include <BloodMoney/UI/GlacierInspectors.h>
 #include <BloodMoney/Game/CIngameMap.h>
+#include <BloodMoney/Game/ZHM3HmAs.h>
+#include <BloodMoney/Game/ZHM3ClothBundle.h>
+#include <BloodMoney/Game/UI/ZCHAROBJ.h>
+#include <BloodMoney/Game/UI/ZWINOBJ.h>
+#include <BloodMoney/Game/UI/ZXMLGUISystem.h>
+
+#include <BloodMoney/Game/ZCloth.h>
+#include <BloodMoney/Game/ZTie.h>
+
+#include <HF/HackingFramework.hpp>
+
 
 namespace Hitman::BloodMoney
 {
+
     void SandboxWidget::draw()
     {
         DebugWidget::draw();
@@ -45,18 +64,6 @@ namespace Hitman::BloodMoney
         auto geomBuffer = Glacier::getInterface<Glacier::ZGeomBuffer>(Globals::kGeomBufferAddr);
         if (!geomBuffer) { return; }
 
-        ImGui::Begin("Sandbox (scene tree view)");
-        {
-            /// Let's make a party
-            if (ImGui::Button("Make everybody like 47")) {
-                auto pPlayerLNK = reinterpret_cast<Glacier::ZLNKOBJ*>(gameData->m_Hitman3);
-
-                for (size_t i = 0; i < gameData->m_ActorsInPoolCount; i++) {
-                    auto pActorLNK = reinterpret_cast<Glacier::ZLNKOBJ*>(gameData->m_ActorsPool[i]);
-                    pActorLNK->CopyGeometryFrom(pPlayerLNK);
-                }
-            }
-        }
         ImGui::End();
     }
 
