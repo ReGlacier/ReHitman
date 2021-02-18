@@ -64,6 +64,26 @@ namespace Hitman::BloodMoney
 
     void DX9Delegate::OnEndScene(IDirect3DDevice9* device)
     {
+        (void)device;
+    }
+
+    void DX9Delegate::OnDeviceLost()
+    {
+        ImGui_ImplDX9_InvalidateDeviceObjects();
+    }
+
+    void DX9Delegate::OnReset(IDirect3DDevice9* device)
+    {
+        (void)device;
+    }
+
+    void DX9Delegate::OnDeviceRestored(IDirect3DDevice9* device)
+    {
+        ImGui_ImplDX9_CreateDeviceObjects();
+    }
+
+    void DX9Delegate::OnPresent(IDirect3DDevice9* device)
+    {
         ImGui_ImplDX9_NewFrame();
         ImGui_ImplWin32_NewFrame();
         ImGui::NewFrame();
@@ -88,20 +108,5 @@ namespace Hitman::BloodMoney
 
         ImGui::Render();
         ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());
-    }
-
-    void DX9Delegate::OnDeviceLost()
-    {
-        ImGui_ImplDX9_InvalidateDeviceObjects();
-    }
-
-    void DX9Delegate::OnReset(IDirect3DDevice9* device)
-    {
-        (void)device;
-    }
-
-    void DX9Delegate::OnDeviceRestored(IDirect3DDevice9* device)
-    {
-        ImGui_ImplDX9_CreateDeviceObjects();
     }
 }

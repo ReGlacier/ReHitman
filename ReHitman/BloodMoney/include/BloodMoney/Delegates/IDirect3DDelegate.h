@@ -12,6 +12,7 @@ namespace Hitman::BloodMoney
         virtual void OnInitialised(IDirect3DDevice9* device) = 0;
         virtual void OnBeginScene(IDirect3DDevice9* device) = 0;
         virtual void OnEndScene(IDirect3DDevice9* device) = 0;
+        virtual void OnPresent(IDirect3DDevice9* device) = 0;
         virtual void OnDeviceLost() = 0;
         virtual void OnReset(IDirect3DDevice9* device) = 0;
         virtual void OnDeviceRestored(IDirect3DDevice9* device) = 0;
