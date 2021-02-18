@@ -133,7 +133,7 @@ namespace Glacier
         virtual bool IsAttached();
         virtual void SetAttachedTo(ZLNKOBJ *);
         virtual ZLNKOBJ* GetAttachedTo();
-        virtual void IsLinkBaseObj();
+        virtual bool IsLinkBaseObj();
         virtual void OnCameraEnter();
 
         // API

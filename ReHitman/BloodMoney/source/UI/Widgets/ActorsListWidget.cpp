@@ -21,57 +21,99 @@
 namespace ImGui
 {
     void Inspector<Hitman::BloodMoney::ZHM3Actor>::Draw(const char* id, Hitman::BloodMoney::ZHM3Actor* actor) {
+        //ImGui::Inspector<Glacier::ZEntityLocator>::Draw("actor.entity", actor->ActorInformation->location);
+        ImGui::Inspector<Glacier::ZEntityLocator>::Draw("actor.entity", reinterpret_cast<Glacier::ZGEOM*>(actor)->m_baseGeom);
+        ImGui::Inspector<Glacier::ZHumanBoid>::Draw("Actor boid", actor->m_boid);
+        ImGui::Text("Group Info: ");
+        ImGui::Inspector<Glacier::ZGROUP>::Draw("ActorGroup", actor->ActorInformation->location->ParentGroup());
+        ImGui::Inspector<Hitman::BloodMoney::ZPathFollower>::Draw("Actor.PathFollower", reinterpret_cast<Hitman::BloodMoney::ZPathFollower*>(actor->FindEvent(Hitman::BloodMoney::ZPathFollower::Name)));
+        ImGui::Inspector<Glacier::CInventory>::Draw("Actor.Inventory", reinterpret_cast<Glacier::CInventory*>(actor->FindEvent(Glacier::CInventory::Name)));
+
+        /// ==================
         {
-            //ImGui::Inspector<Glacier::ZEntityLocator>::Draw("actor.entity", actor->ActorInformation->location);
-            ImGui::Inspector<Glacier::ZEntityLocator>::Draw("actor.entity", reinterpret_cast<Glacier::ZGEOM*>(actor)->m_baseGeom);
-            ImGui::Inspector<Glacier::ZHumanBoid>::Draw("Actor boid", actor->m_boid);
-            ImGui::Text("Group Info: ");
-            ImGui::Inspector<Glacier::ZGROUP>::Draw("ActorGroup", actor->ActorInformation->location->ParentGroup());
-            ImGui::Inspector<Hitman::BloodMoney::ZPathFollower>::Draw("Actor.PathFollower", reinterpret_cast<Hitman::BloodMoney::ZPathFollower*>(actor->FindEvent(Hitman::BloodMoney::ZPathFollower::Name)));
-            ImGui::Inspector<Glacier::CInventory>::Draw("Actor.Inventory", reinterpret_cast<Glacier::CInventory*>(actor->FindEvent(Glacier::CInventory::Name)));
-
-            /// ==================
+            auto gameData = Glacier::getInterface<Hitman::BloodMoney::ZHM3GameData>(Hitman::BloodMoney::Globals::kGameDataAddr);
+            if (gameData && ImGui::Button("Swap bodies"))
             {
-                auto gameData = Glacier::getInterface<Hitman::BloodMoney::ZHM3GameData>(Hitman::BloodMoney::Globals::kGameDataAddr);
-                if (gameData && ImGui::Button("Swap bodies"))
-                {
-                    auto actorGeom = reinterpret_cast<Glacier::ZGEOM*>(actor);
-                    auto playerGeom = reinterpret_cast<Glacier::ZGEOM*>(gameData->m_Hitman3);
+                auto actorGeom = reinterpret_cast<Glacier::ZGEOM*>(actor);
+                auto playerGeom = reinterpret_cast<Glacier::ZGEOM*>(gameData->m_Hitman3);
 
-                    const int actorPrimId  = actorGeom->m_baseGeom->m_primitive;
-                    const int playerPrimId = playerGeom->m_baseGeom->m_primitive;
+                const int actorPrimId  = actorGeom->m_baseGeom->m_primitive;
+                const int playerPrimId = playerGeom->m_baseGeom->m_primitive;
 
-                    reinterpret_cast<Glacier::ZLNKOBJ*>(actor)->CopyGeometryFrom(playerPrimId);
-                    reinterpret_cast<Glacier::ZLNKOBJ*>(actor)->UpdateGeometry(true);
+                reinterpret_cast<Glacier::ZLNKOBJ*>(actor)->CopyGeometryFrom(playerPrimId);
+                reinterpret_cast<Glacier::ZLNKOBJ*>(actor)->UpdateGeometry(true);
 
-                    reinterpret_cast<Glacier::ZLNKOBJ*>(playerGeom)->CopyGeometryFrom(actorPrimId);
-                    reinterpret_cast<Glacier::ZLNKOBJ*>(playerGeom)->UpdateGeometry(true);
-                }
+                reinterpret_cast<Glacier::ZLNKOBJ*>(playerGeom)->CopyGeometryFrom(actorPrimId);
+                reinterpret_cast<Glacier::ZLNKOBJ*>(playerGeom)->UpdateGeometry(true);
             }
+        }
 
-            /// ==================
+        /// ==================
+        {
+            if (ImGui::Button("Clear PF4 path"))
             {
-                if (ImGui::Button("Clear PF4 path"))
-                {
-                    using PF4_Path_Clear_t = void(__thiscall*)(std::intptr_t*);
-                    auto PF4_Path_Clear = (PF4_Path_Clear_t)0x004D8D00;
+                using PF4_Path_Clear_t = void(__thiscall*)(std::intptr_t*);
+                auto PF4_Path_Clear = (PF4_Path_Clear_t)0x004D8D00;
 
-                    PF4_Path_Clear(&actor->m_field534);
+                PF4_Path_Clear(&actor->m_field534);
 
-                    actor->PreparePath();
-                }
+                actor->PreparePath();
             }
+        }
 
-            // ===================
+        // ===================
+        {
+            auto gameData = Glacier::getInterface<Hitman::BloodMoney::ZHM3GameData>(Hitman::BloodMoney::Globals::kGameDataAddr);
+            if (gameData && ImGui::Button("Start human shield with"))
             {
-                auto gameData = Glacier::getInterface<Hitman::BloodMoney::ZHM3GameData>(Hitman::BloodMoney::Globals::kGameDataAddr);
-                if (gameData && ImGui::Button("Start human shield with"))
-                {
-                    using StartActionHumanShield_t = void(__thiscall*)(std::intptr_t*, Hitman::BloodMoney::ZHM3Actor*);
-                    auto StartActionHumanShield = (StartActionHumanShield_t)0x00600590;
+                using StartActionHumanShield_t = void(__thiscall*)(std::intptr_t*, Hitman::BloodMoney::ZHM3Actor*);
+                auto StartActionHumanShield = (StartActionHumanShield_t)0x00600590;
 
-                    StartActionHumanShield(reinterpret_cast<std::intptr_t*>(gameData->m_Hitman3), actor);
-                }
+                StartActionHumanShield(reinterpret_cast<std::intptr_t*>(gameData->m_Hitman3), actor);
+            }
+        }
+
+        /// ------------------------
+        {
+            auto gameData = Glacier::getInterface<Hitman::BloodMoney::ZHM3GameData>(Hitman::BloodMoney::Globals::kGameDataAddr);
+            if (gameData && ImGui::Button("Make clone"))
+            {
+                auto actorOwnerGroup = reinterpret_cast<Glacier::ZGEOM*>(actor)->m_baseGeom->ParentGroup();
+                auto actorRootGroup = reinterpret_cast<Glacier::ZGEOM*>(actorOwnerGroup)->m_baseGeom->ParentGroup();
+
+                spdlog::info("Owner: {} / Root: {}",
+                             reinterpret_cast<Glacier::ZGEOM*>(actorOwnerGroup)->m_baseGeom->entityName,
+                             reinterpret_cast<Glacier::ZGEOM*>(actorRootGroup)->m_baseGeom->entityName);
+
+                Glacier::ZMat3x3 ownerMat;
+                Glacier::ZVector3 ownerPos;
+
+                actorOwnerGroup->GetMatPos(&ownerMat, &ownerPos);
+                auto duplicateGroup = actorOwnerGroup->DuplicateInit(
+                        actorRootGroup,
+                        &ownerMat,
+                        &ownerPos,
+                        fmt::format("Actor!CloneOf!{}", reinterpret_cast<Glacier::ZGEOM*>(actorOwnerGroup)->m_baseGeom->entityName).c_str(),
+                        true);
+                auto clonedActor = reinterpret_cast<Hitman::BloodMoney::ZHM3Actor*>(reinterpret_cast<Glacier::ZGROUP*>(duplicateGroup)->FindGeom("Ground", nullptr));
+
+                clonedActor->m_actorRole = Hitman::BloodMoney::EActorMapRole::VIP;
+                using ZHM3Actor_InitMapIconFn = void(__thiscall*)(Hitman::BloodMoney::ZHM3Actor*, bool);
+                auto ZHM3Actor_InitMapIcon = (ZHM3Actor_InitMapIconFn)0x00637460;
+
+                ZHM3Actor_InitMapIcon(clonedActor, true);
+
+                clonedActor->SetActorState(Hitman::BloodMoney::ZHM3Actor::ActorState::Normal);
+                reinterpret_cast<Glacier::ZLNKOBJ*>(clonedActor)->CopyPoseFrom(reinterpret_cast<Glacier::ZLNKOBJ*>(actor));
+
+                // Add actor to tracking list
+                auto pTrackLinkObjects = *(Glacier::ZLIST**)0x00972DA8;
+                pTrackLinkObjects->AddGeom(reinterpret_cast<Glacier::ZGEOM*>(clonedActor));
+                reinterpret_cast<Glacier::ZGEOM*>(clonedActor)->OnCameraEnter();
+
+                //pTrackLinkObjects->AddGeom(reinterpret_cast<Glacier::ZGEOM*>(clonedActor)->GetRef());
+                spdlog::info("TRK: {:08X}", (int)pTrackLinkObjects);
+                spdlog::info("Dup: {:08X} / ADup: {:08X}", (int)duplicateGroup, (int)clonedActor);
             }
         }
     }
