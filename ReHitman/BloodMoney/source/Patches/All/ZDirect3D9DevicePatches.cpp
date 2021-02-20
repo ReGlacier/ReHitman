@@ -10,10 +10,16 @@ namespace Consts
     {
         BeginScene = 41,
         EndScene = 42,
+        CreateAdditionalSwapChain = 13,
         Reset = 16,
-        Present = 17,
+        //Present = 17,
         SetTexture = 65,
         DrawIndexedPrimitive = 82
+    };
+
+    enum DX9SwapChainAPIVFTableIndex : size_t
+    {
+        Present = 3
     };
 
     static constexpr std::intptr_t kZDirect3DDeviceConstructor = 0x0049091C;
@@ -28,59 +34,25 @@ namespace Globals
 
 namespace Original
 {
-    typedef HRESULT(__stdcall* D3DBeginScene_t)(IDirect3DDevice9*);
-    typedef HRESULT(__stdcall* D3DEndScene_t)(IDirect3DDevice9*);
     typedef HRESULT(__stdcall* D3DReset_t)(IDirect3DDevice9*, D3DPRESENT_PARAMETERS*);
-    typedef HRESULT(__stdcall* D3DPresent_t)(IDirect3DDevice9*, const RECT*, const RECT*, HWND, const RGNDATA*);
-//    typedef HRESULT(__stdcall* D3DDrawIndexedPrimitive_t)(IDirect3DDevice9*, D3DPRIMITIVETYPE, INT, UINT, UINT, UINT, UINT);
-//    typedef HRESULT(__stdcall* D3DSetTexture_t)(IDirect3DDevice9*, DWORD, IDirect3DBaseTexture9*);
+    typedef HRESULT(__stdcall* D3D9CreateAdditionalSwapChain_t)(IDirect3DDevice9*, D3DPRESENT_PARAMETERS*, IDirect3DSwapChain9**);
+    typedef HRESULT(__stdcall* D3D9SwapChain_Present_t)(IDirect3DSwapChain9*, const RECT*, const RECT*, HWND, const RGNDATA*, DWORD);
 
-    D3DBeginScene_t				originalBeginSceneFunc;
-    D3DEndScene_t				originalEndSceneFunc;
-    D3DReset_t					originalResetFunc;
-    D3DPresent_t                originalPresentFunc;
-//    D3DDrawIndexedPrimitive_t	originalDrawIndexedPrimitiveFunc;
-//    D3DSetTexture_t				originalD3DSetTextureFunc;
+    D3DReset_t					    originalResetFunc;
+    D3D9CreateAdditionalSwapChain_t originalCreateAdditionalSwapChain;
+    D3D9SwapChain_Present_t         originalSwapChainPresent;
+}
+
+namespace Globals {
+    static std::unique_ptr<HF::Hook::VFHook<IDirect3DDevice9>> g_Direct3DDevice_Reset_Hook{nullptr};
+    static std::unique_ptr<HF::Hook::VFHook<IDirect3DDevice9>> g_Direct3DDevice_Present_Hook{nullptr};
+    static std::unique_ptr<HF::Hook::VFHook<IDirect3DDevice9>> g_Direct3DDevice_CreateAdditionalSwapChain_Hook{nullptr};
+
+    static std::unique_ptr<HF::Hook::VFHook<IDirect3DSwapChain9>> g_Direct3DSwapChain9_Present_Hook{nullptr};
 }
 
 namespace Callbacks
 {
-    HRESULT __stdcall D3D9_OnBeginScene(IDirect3DDevice9* device)
-    {
-        HRESULT result = Original::originalBeginSceneFunc(device);
-
-        if (Globals::g_pDelegate)
-        {
-            Globals::g_pDelegate->OnBeginScene(device);
-        }
-
-        return result;
-    }
-
-    HRESULT __stdcall D3D9_OnEndScene(IDirect3DDevice9* device)
-    {
-        HRESULT result = Original::originalEndSceneFunc(device);
-
-        if (Globals::g_pDelegate)
-        {
-            Globals::g_pDelegate->OnEndScene(device);
-        }
-
-        return result;
-    }
-
-    HRESULT __stdcall D3D9_OnPresent(IDirect3DDevice9* device, const RECT *pSourceRect,
-                                     const RECT *pDestRect, HWND hDestWindowOverride, const RGNDATA *pDirtyRegion)
-    {
-        spdlog::info("D3D9_OnPresent");
-        if (Globals::g_pDelegate)
-        {
-            Globals::g_pDelegate->OnPresent(device);
-        }
-
-        return Original::originalPresentFunc(device, pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion);
-    }
-
     HRESULT __stdcall D3D9_OnReset(IDirect3DDevice9* device, D3DPRESENT_PARAMETERS* pPresentationParameters)
     {
         if (!Globals::g_pDelegate)
@@ -94,6 +66,40 @@ namespace Callbacks
         Globals::g_pDelegate->OnDeviceRestored(device);
 
         return result;
+    }
+
+    HRESULT __stdcall D3D9_OnPresentSwapChain(IDirect3DSwapChain9* pSwapChain,
+                                              const RECT* pSourceRect,
+                                              const RECT* pDestRect,
+                                              HWND hDestWindowOverride,
+                                              const RGNDATA *pDirtyRegion,
+                                              DWORD dwFlags)
+    {
+        if (Globals::g_pDelegate) {
+            IDirect3DDevice9* pDevice = nullptr;
+            auto result = pSwapChain->GetDevice(&pDevice);
+            if (SUCCEEDED(result) && pDevice) {
+                Globals::g_pDelegate->OnPresent(pDevice);
+            }
+        }
+        return Original::originalSwapChainPresent(pSwapChain,
+                                                  pSourceRect,
+                                                  pDestRect,
+                                                  hDestWindowOverride,
+                                                  pDirtyRegion,
+                                                  dwFlags);
+    }
+
+    HRESULT __stdcall D3D9_OnCreateAdditionalSwapChain(IDirect3DDevice9* device,
+                                                       D3DPRESENT_PARAMETERS *pPresentationParameters,
+                                                       IDirect3DSwapChain9 **pSwapChain)
+    {
+        HRESULT res = Original::originalCreateAdditionalSwapChain(device, pPresentationParameters, pSwapChain);
+        Globals::g_Direct3DSwapChain9_Present_Hook = HF::Hook::HookVirtualFunction<IDirect3DSwapChain9, Consts::DX9SwapChainAPIVFTableIndex::Present>(*pSwapChain, &Callbacks::D3D9_OnPresentSwapChain);
+        if (reinterpret_cast<DWORD>(Original::originalSwapChainPresent) != Globals::g_Direct3DSwapChain9_Present_Hook->getOriginalPtr())
+            Original::originalSwapChainPresent = reinterpret_cast<Original::D3D9SwapChain_Present_t>(Globals::g_Direct3DSwapChain9_Present_Hook->getOriginalPtr());
+
+        return res;
     }
 
     static void __stdcall OnZDirect3DDeviceConstructor(Hitman::BloodMoney::Engine::ZDirect3DDevice* pDevice)
@@ -112,32 +118,19 @@ namespace Callbacks
 
 namespace Globals
 {
-    static std::unique_ptr<HF::Hook::VFHook<IDirect3DDevice9>> g_Direct3DDevice_BeginScene_Hook { nullptr };
-    static std::unique_ptr<HF::Hook::VFHook<IDirect3DDevice9>> g_Direct3DDevice_EndScene_Hook { nullptr };
-    static std::unique_ptr<HF::Hook::VFHook<IDirect3DDevice9>> g_Direct3DDevice_Reset_Hook { nullptr };
-    static std::unique_ptr<HF::Hook::VFHook<IDirect3DDevice9>> g_Direct3DDevice_Present_Hook { nullptr };
-
     static void SetupD3DHooks(IDirect3DDevice9* device)
     {
         /**
          * @todo Optimize this place! Less allocations! (cause EndScene() calling that every time)
          */
-        g_Direct3DDevice_BeginScene_Hook = HF::Hook::HookVirtualFunction<IDirect3DDevice9, Consts::DX9DeviceAPIVFTableIndex::BeginScene>(device, &Callbacks::D3D9_OnBeginScene);
-        g_Direct3DDevice_EndScene_Hook   = HF::Hook::HookVirtualFunction<IDirect3DDevice9, Consts::DX9DeviceAPIVFTableIndex::EndScene>(device, &Callbacks::D3D9_OnEndScene);
-        g_Direct3DDevice_Reset_Hook      = HF::Hook::HookVirtualFunction<IDirect3DDevice9, Consts::DX9DeviceAPIVFTableIndex::Reset>(device, &Callbacks::D3D9_OnReset);
-        g_Direct3DDevice_Present_Hook    = HF::Hook::HookVirtualFunction<IDirect3DDevice9, Consts::DX9DeviceAPIVFTableIndex::Present>(device, &Callbacks::D3D9_OnPresent);
-
-        if (reinterpret_cast<DWORD>(Original::originalBeginSceneFunc) != g_Direct3DDevice_BeginScene_Hook->getOriginalPtr())
-            Original::originalBeginSceneFunc = reinterpret_cast<Original::D3DBeginScene_t>(g_Direct3DDevice_BeginScene_Hook->getOriginalPtr());
-
-        if (reinterpret_cast<DWORD>(Original::originalEndSceneFunc) != g_Direct3DDevice_EndScene_Hook->getOriginalPtr())
-            Original::originalEndSceneFunc   = reinterpret_cast<Original::D3DEndScene_t>(g_Direct3DDevice_EndScene_Hook->getOriginalPtr());
+        g_Direct3DDevice_Reset_Hook = HF::Hook::HookVirtualFunction<IDirect3DDevice9, Consts::DX9DeviceAPIVFTableIndex::Reset>(device, &Callbacks::D3D9_OnReset);
+        g_Direct3DDevice_CreateAdditionalSwapChain_Hook = HF::Hook::HookVirtualFunction<IDirect3DDevice9, Consts::DX9DeviceAPIVFTableIndex::CreateAdditionalSwapChain>(device, &Callbacks::D3D9_OnCreateAdditionalSwapChain);
 
         if (reinterpret_cast<DWORD>(Original::originalResetFunc) != g_Direct3DDevice_Reset_Hook->getOriginalPtr())
             Original::originalResetFunc      = reinterpret_cast<Original::D3DReset_t>(g_Direct3DDevice_Reset_Hook->getOriginalPtr());
 
-        if (reinterpret_cast<DWORD>(Original::originalPresentFunc) != g_Direct3DDevice_Present_Hook->getOriginalPtr())
-            Original::originalPresentFunc    = reinterpret_cast<Original::D3DPresent_t >(g_Direct3DDevice_Present_Hook->getOriginalPtr());
+        if (reinterpret_cast<DWORD>(Original::originalCreateAdditionalSwapChain) != g_Direct3DDevice_CreateAdditionalSwapChain_Hook->getOriginalPtr())
+            Original::originalCreateAdditionalSwapChain = reinterpret_cast<Original::D3D9CreateAdditionalSwapChain_t>(g_Direct3DDevice_CreateAdditionalSwapChain_Hook->getOriginalPtr());
     }
 }
 
@@ -190,9 +183,9 @@ namespace Hitman::BloodMoney
         BasicPatch::Revert(modules);
 
         Globals::g_pDelegate = nullptr;
-        Globals::g_Direct3DDevice_BeginScene_Hook.reset(nullptr);
-        Globals::g_Direct3DDevice_EndScene_Hook.reset(nullptr);
         Globals::g_Direct3DDevice_Reset_Hook.reset(nullptr);
         Globals::g_Direct3DDevice_Present_Hook.reset(nullptr);
+        Globals::g_Direct3DDevice_CreateAdditionalSwapChain_Hook.reset(nullptr);
+        Globals::g_Direct3DSwapChain9_Present_Hook.reset(nullptr);
     }
 }

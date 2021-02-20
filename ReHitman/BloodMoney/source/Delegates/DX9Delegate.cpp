@@ -57,24 +57,13 @@ namespace Hitman::BloodMoney
         spdlog::info("DX9Delegate initialised!");
     }
 
-    void DX9Delegate::OnBeginScene(IDirect3DDevice9* device)
-    {
-        (void)device;
-    }
-
-    void DX9Delegate::OnEndScene(IDirect3DDevice9* device)
-    {
-        (void)device;
-    }
-
     void DX9Delegate::OnDeviceLost()
     {
         ImGui_ImplDX9_InvalidateDeviceObjects();
     }
 
-    void DX9Delegate::OnReset(IDirect3DDevice9* device)
+    void DX9Delegate::OnReset(IDirect3DDevice9* /*device*/)
     {
-        (void)device;
     }
 
     void DX9Delegate::OnDeviceRestored(IDirect3DDevice9* device)

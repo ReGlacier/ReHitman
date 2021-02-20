@@ -10,8 +10,6 @@ namespace Hitman::BloodMoney
         virtual ~IDirect3DDelegate() noexcept = default;
 
         virtual void OnInitialised(IDirect3DDevice9* device) = 0;
-        virtual void OnBeginScene(IDirect3DDevice9* device) = 0;
-        virtual void OnEndScene(IDirect3DDevice9* device) = 0;
         virtual void OnPresent(IDirect3DDevice9* device) = 0;
         virtual void OnDeviceLost() = 0;
         virtual void OnReset(IDirect3DDevice9* device) = 0;
