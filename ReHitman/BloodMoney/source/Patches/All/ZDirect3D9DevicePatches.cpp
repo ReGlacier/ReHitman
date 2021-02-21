@@ -8,11 +8,12 @@ namespace Consts
 {
     enum DX9DeviceAPIVFTableIndex : size_t
     {
-        BeginScene = 41,
-        EndScene = 42,
-        CreateAdditionalSwapChain = 13,
+        //BeginScene = 41,
+        //EndScene = 42,
+        //CreateAdditionalSwapChain = 13,
+        GetSwapChain = 14,
         Reset = 16,
-        //Present = 17,
+        DevicePresent = 17,
         SetTexture = 65,
         DrawIndexedPrimitive = 82
     };
@@ -35,19 +36,20 @@ namespace Globals
 namespace Original
 {
     typedef HRESULT(__stdcall* D3DReset_t)(IDirect3DDevice9*, D3DPRESENT_PARAMETERS*);
-    typedef HRESULT(__stdcall* D3D9CreateAdditionalSwapChain_t)(IDirect3DDevice9*, D3DPRESENT_PARAMETERS*, IDirect3DSwapChain9**);
+    typedef HRESULT(__stdcall* D3DPresent_t)(IDirect3DDevice9*, const RECT*, const RECT*, HWND, const RGNDATA*);
     typedef HRESULT(__stdcall* D3D9SwapChain_Present_t)(IDirect3DSwapChain9*, const RECT*, const RECT*, HWND, const RGNDATA*, DWORD);
+    typedef HRESULT(__stdcall* D3D9GetSwapChain_t)(IDirect3DDevice9*, UINT, IDirect3DSwapChain9**);
 
     D3DReset_t					    originalResetFunc;
-    D3D9CreateAdditionalSwapChain_t originalCreateAdditionalSwapChain;
+    D3DPresent_t                    originalPresent;
     D3D9SwapChain_Present_t         originalSwapChainPresent;
+    D3D9GetSwapChain_t              originalGetSwapChain;
 }
 
 namespace Globals {
     static std::unique_ptr<HF::Hook::VFHook<IDirect3DDevice9>> g_Direct3DDevice_Reset_Hook{nullptr};
     static std::unique_ptr<HF::Hook::VFHook<IDirect3DDevice9>> g_Direct3DDevice_Present_Hook{nullptr};
-    static std::unique_ptr<HF::Hook::VFHook<IDirect3DDevice9>> g_Direct3DDevice_CreateAdditionalSwapChain_Hook{nullptr};
-
+    static std::unique_ptr<HF::Hook::VFHook<IDirect3DDevice9>> g_Direct3DDevice_GetSwapChain_Hook{nullptr};
     static std::unique_ptr<HF::Hook::VFHook<IDirect3DSwapChain9>> g_Direct3DSwapChain9_Present_Hook{nullptr};
 }
 
@@ -82,6 +84,7 @@ namespace Callbacks
                 Globals::g_pDelegate->OnPresent(pDevice);
             }
         }
+
         return Original::originalSwapChainPresent(pSwapChain,
                                                   pSourceRect,
                                                   pDestRect,
@@ -90,14 +93,40 @@ namespace Callbacks
                                                   dwFlags);
     }
 
-    HRESULT __stdcall D3D9_OnCreateAdditionalSwapChain(IDirect3DDevice9* device,
-                                                       D3DPRESENT_PARAMETERS *pPresentationParameters,
-                                                       IDirect3DSwapChain9 **pSwapChain)
+    HRESULT __stdcall D3D9_OnPresent(IDirect3DDevice9* device,
+                                     const RECT* pSourceRect,
+                                     const RECT* pDestRect,
+                                     HWND hDestWindowOverride,
+                                     const RGNDATA* pDirtyRegion)
     {
-        HRESULT res = Original::originalCreateAdditionalSwapChain(device, pPresentationParameters, pSwapChain);
-        Globals::g_Direct3DSwapChain9_Present_Hook = HF::Hook::HookVirtualFunction<IDirect3DSwapChain9, Consts::DX9SwapChainAPIVFTableIndex::Present>(*pSwapChain, &Callbacks::D3D9_OnPresentSwapChain);
-        if (reinterpret_cast<DWORD>(Original::originalSwapChainPresent) != Globals::g_Direct3DSwapChain9_Present_Hook->getOriginalPtr())
-            Original::originalSwapChainPresent = reinterpret_cast<Original::D3D9SwapChain_Present_t>(Globals::g_Direct3DSwapChain9_Present_Hook->getOriginalPtr());
+        if (Globals::g_pDelegate) {
+            Globals::g_pDelegate->OnPresent(device);
+        }
+        return Original::originalPresent(device, pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion);
+    }
+
+    HRESULT __stdcall D3D9_OnGetSwapChain(IDirect3DDevice9* pDevice, UINT iSwapChain, IDirect3DSwapChain9** pSwapChain)
+    {
+        HRESULT res = Original::originalGetSwapChain(pDevice, iSwapChain, pSwapChain);
+        spdlog::info("GetSwapChain({}, {:08X})", iSwapChain, (int)(*pSwapChain));
+
+        if (*pSwapChain) {
+            if (!Globals::g_Direct3DSwapChain9_Present_Hook) {
+                Globals::g_Direct3DSwapChain9_Present_Hook = HF::Hook::HookVirtualFunction<IDirect3DSwapChain9, Consts::DX9SwapChainAPIVFTableIndex::Present>(
+                        *pSwapChain, &Callbacks::D3D9_OnPresentSwapChain
+                );
+
+                if (reinterpret_cast<DWORD>(Original::originalSwapChainPresent) != Globals::g_Direct3DSwapChain9_Present_Hook->getOriginalPtr()) {
+                    Original::originalSwapChainPresent = reinterpret_cast<Original::D3D9SwapChain_Present_t>(Globals::g_Direct3DSwapChain9_Present_Hook->getOriginalPtr());
+                }
+            }
+            else {
+                if (Globals::g_pDelegate) {
+                    Globals::g_pDelegate->OnDeviceLost();
+                    Globals::g_pDelegate->OnDeviceRestored(pDevice);
+                }
+            }
+        }
 
         return res;
     }
@@ -124,13 +153,17 @@ namespace Globals
          * @todo Optimize this place! Less allocations! (cause EndScene() calling that every time)
          */
         g_Direct3DDevice_Reset_Hook = HF::Hook::HookVirtualFunction<IDirect3DDevice9, Consts::DX9DeviceAPIVFTableIndex::Reset>(device, &Callbacks::D3D9_OnReset);
-        g_Direct3DDevice_CreateAdditionalSwapChain_Hook = HF::Hook::HookVirtualFunction<IDirect3DDevice9, Consts::DX9DeviceAPIVFTableIndex::CreateAdditionalSwapChain>(device, &Callbacks::D3D9_OnCreateAdditionalSwapChain);
+        g_Direct3DDevice_Present_Hook = HF::Hook::HookVirtualFunction<IDirect3DDevice9, Consts::DX9DeviceAPIVFTableIndex::DevicePresent>(device, &Callbacks::D3D9_OnPresent);
+        g_Direct3DDevice_GetSwapChain_Hook = HF::Hook::HookVirtualFunction<IDirect3DDevice9, Consts::DX9DeviceAPIVFTableIndex::GetSwapChain>(device, &Callbacks::D3D9_OnGetSwapChain);
 
         if (reinterpret_cast<DWORD>(Original::originalResetFunc) != g_Direct3DDevice_Reset_Hook->getOriginalPtr())
             Original::originalResetFunc      = reinterpret_cast<Original::D3DReset_t>(g_Direct3DDevice_Reset_Hook->getOriginalPtr());
 
-        if (reinterpret_cast<DWORD>(Original::originalCreateAdditionalSwapChain) != g_Direct3DDevice_CreateAdditionalSwapChain_Hook->getOriginalPtr())
-            Original::originalCreateAdditionalSwapChain = reinterpret_cast<Original::D3D9CreateAdditionalSwapChain_t>(g_Direct3DDevice_CreateAdditionalSwapChain_Hook->getOriginalPtr());
+        if (reinterpret_cast<DWORD>(Original::originalGetSwapChain) != g_Direct3DDevice_GetSwapChain_Hook->getOriginalPtr())
+            Original::originalGetSwapChain = reinterpret_cast<Original::D3D9GetSwapChain_t>(g_Direct3DDevice_GetSwapChain_Hook->getOriginalPtr());
+
+        if (reinterpret_cast<DWORD>(Original::originalPresent) != g_Direct3DDevice_Present_Hook->getOriginalPtr())
+            Original::originalPresent = reinterpret_cast<Original::D3DPresent_t>(g_Direct3DDevice_Present_Hook->getOriginalPtr());
     }
 }
 
@@ -185,7 +218,7 @@ namespace Hitman::BloodMoney
         Globals::g_pDelegate = nullptr;
         Globals::g_Direct3DDevice_Reset_Hook.reset(nullptr);
         Globals::g_Direct3DDevice_Present_Hook.reset(nullptr);
-        Globals::g_Direct3DDevice_CreateAdditionalSwapChain_Hook.reset(nullptr);
+        Globals::g_Direct3DDevice_GetSwapChain_Hook.reset(nullptr);
         Globals::g_Direct3DSwapChain9_Present_Hook.reset(nullptr);
     }
 }
