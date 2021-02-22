@@ -119,6 +119,7 @@ namespace Hitman::BloodMoney
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_CMetalDetector_DoDetectWeapon         = 0x005D5D60;
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_CMetalDetector_DoAlarm                = 0x005D5B50;
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZHM3Actor_PreparePath                 = 0x00505570;
+        BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZHM3Actor_ActivateBloodSpurt          = 0x0063D210;
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZTie_HideTie                          = 0x00580470;
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZTie_HideTieInMirror                  = 0x00580480;
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZXMLGUISystem_GetTopWindow            = 0x005665E0;

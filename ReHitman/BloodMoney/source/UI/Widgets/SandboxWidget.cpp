@@ -63,8 +63,6 @@ namespace Hitman::BloodMoney
 
         auto geomBuffer = Glacier::getInterface<Glacier::ZGeomBuffer>(Globals::kGeomBufferAddr);
         if (!geomBuffer) { return; }
-
-        ImGui::End();
     }
 
     bool SandboxWidget::g_bIsVisible = false;

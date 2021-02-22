@@ -27,7 +27,7 @@ namespace Glacier
         virtual void GetIKBoneMatPos(int, ZMat3x3*, ZVector3*);
         virtual void GetIKBoneMat(int, ZMat3x3*);
         virtual void GetIKBonePos(int,ZVector3*);
-        virtual void SetHeadTarget(const ZVector3*,float)
+        virtual void SetHeadTarget(const ZVector3*,float);
         virtual void ResetHeadTarget();
         virtual void HeadBoneIndex();
         virtual void NeckBoneIndex();
@@ -37,7 +37,7 @@ namespace Glacier
         virtual void LToeBoneIndex();
         virtual void RToeBoneIndex();
         virtual void IKCallBackToId(IKCallBack_t callback);
-        virtual IKCallBack_t IKCallBackFromId(int)l
+        virtual IKCallBack_t IKCallBackFromId(int);
         virtual void SetFacingTarget(unsigned int, float, IKCallBack_t callback);
         virtual void RemoveFacingTarget(float, IKCallBack_t callback);
         virtual void DisableFacing();
@@ -61,12 +61,8 @@ namespace Glacier
         virtual void RemoveTargets();
 
         //data (total size is 0x190, base size is 0xF4)
-        int m_flagsF4;
+        int m_fieldF4;
         int m_fieldF8;
-        bool m_fieldF8;
-        bool m_bFacingEnabled;
-        bool m_fieldFA;
-        bool m_fieldFB;
         int m_fieldFC;
         int m_field100;
         int m_field104;

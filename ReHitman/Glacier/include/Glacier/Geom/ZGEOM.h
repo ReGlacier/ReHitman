@@ -60,6 +60,7 @@ namespace Glacier
         virtual void Display(bool);                                      //#40 at 0x0076A214
         virtual void Select(bool);                                       //#41 at 0x0076A218
         virtual void Hide(bool);                                         //#42 at 0x0076A21C
+        virtual void UnknownMethod(bool flag);
         virtual void HideRecursive(bool);                                //#43 at 0x0076A220
         virtual void Freeze(bool);                                       //#44 at 0x0076A224
         virtual void DispBound(bool);                                    //#45 at 0x0076A228
@@ -111,11 +112,11 @@ namespace Glacier
         virtual void CheckPointInside(float const*,float);
         virtual void CheckPointInsideBound(float const*);
         virtual void CheckBoxInside(float const*,float const*,float const*);
-        virtual void GetPointInsideDistance(float const*);
-        virtual void Visible();
-        virtual void Invisible();
-        virtual void PushState();
-        virtual void PopState();
+        virtual float GetPointInsideDistance(float const*); /// OK
+        virtual void Visible();   /// NOP
+        virtual void Invisible(); /// NOP
+        virtual void PushState(); /// NOP
+        //virtual void PopState();  /// NOP
         virtual void DuplicateData(ZGEOM*);
         virtual ZGEOM* Duplicate(ZGROUP *,char const*,bool);
         virtual ZGEOM* DuplicateInit(ZGROUP* to, const Glacier::ZMat3x3* mat, const Glacier::ZVector3* pos, char const* name, bool f4);

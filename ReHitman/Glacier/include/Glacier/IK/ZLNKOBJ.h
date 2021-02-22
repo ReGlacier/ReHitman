@@ -40,6 +40,16 @@ namespace Glacier
         //Not completed!
     };
 
+    enum class ESuitMask : int32_t {
+        NoActor					 = 0b0000'0000'0000'0000'0000'0000'0000'0000,	///< This is not an actor (M13, wheelchair gui subactor kind)
+        SkinChangerNotSupported	 = 0b0000'0000'0000'0000'0000'0000'0000'0001,	///< This actor does not supports skin changer
+        Nude					 = 0b0000'0000'0000'0000'0000'0000'0000'0010,	///< Nude view of model (works only if the actor can share their suit, in other case works as Inivisble)
+        Invisible				 = 0b0000'0000'0000'0000'0000'0000'0000'0100,	///< Invisible view of the actor (possible model loading failure, I don't know)
+        OriginalView			 = 0b0000'0000'0000'0000'0000'0000'0000'0101,	///< Just original view of actor
+        Agent47_WithoutHeaddress = 0b0000'0000'0000'0000'0000'0000'0000'0110,	///< Sometimes works if suit have headdress (in other case will work as invisible)
+        Agent47_WithHeaddress	 = 0b0000'0000'0000'0000'0000'0000'0000'0111	///< Works in 99% of situations with actors who can share their suit
+    };
+
     class ZLNKOBJ : public ZSTDOBJ
     {
     public:
@@ -127,7 +137,7 @@ namespace Glacier
         int field_40;
         int field_44;
         int field_48;
-        int field_4C;
+        ESuitMask m_suitMask;
         int field_50;
         int field_54;
         int field_58;

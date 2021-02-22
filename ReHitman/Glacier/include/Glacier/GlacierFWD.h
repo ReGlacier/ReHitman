@@ -83,7 +83,7 @@ namespace Glacier
 
     using ITEMSTATE = int;
     struct WEAPONOPERATION {};
-    enum EFootSide {};
+    enum EFootSide;
 
     class ZCheckPointBuffer; // NOT AVAILABLE FOR PC ?
 
