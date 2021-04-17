@@ -5,10 +5,26 @@
 
 namespace Glacier
 {
-    enum class EActionType : int {
-        Type6 = 6,
-        PlaceAction = 7,
-        Type8 = 8,
+    // 0 - N/A
+    // 1 - N/A
+    // 2 - Open Door
+    // 3 - Close Door
+    // 4 - N/A
+    // 5 - Talk
+    // 6 - Our custom action in "bottom" actions slot ("E")
+    // 7 - Same to 6
+    // 8 - N/A
+    // 9 - Drag Body
+    // 10 - N/A
+    // 11 - N/A
+    enum EActionType {
+        OPEN_DOOR = 2,
+        CLOSE_DOOR = 3,
+        TALK = 5,
+        CUSTOM = 6,
+        CUSTOM2 = 7,
+        ALWAYS_IN_RANGE = 8,
+        DRAG_BODY = 9
     };
 
     class ZAction : public ZEventBase

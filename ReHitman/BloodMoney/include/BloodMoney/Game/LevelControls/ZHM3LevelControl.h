@@ -7,6 +7,7 @@
 #include <Glacier/ZSDOwner.h>
 
 #include <BloodMoney/Game/Items/EHM3ItemType.h>
+#include <BloodMoney/Game/LevelControls/ESecurityZone.h>
 
 namespace Hitman::BloodMoney
 {
@@ -15,8 +16,6 @@ namespace Hitman::BloodMoney
     class ZHM3ItemBomb;
     class ZHM3ItemWeapon;
     class ZHM3ClothBundle;
-
-    enum class ESecurityZone : int {};
 
     class ZMusicController;
 

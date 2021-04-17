@@ -17,6 +17,7 @@
 #include <BloodMoney/Patches/All/ZGEOMManagementPatch.h>
 #include <BloodMoney/Patches/All/EnableCheatsPatch.h>
 #include <BloodMoney/Patches/All/ZCutSequencePlayerPatch.h>
+#include <BloodMoney/Patches/Mods/SkinChanger.h>
 
 namespace Hitman::BloodMoney
 {
@@ -63,10 +64,13 @@ namespace Hitman::BloodMoney
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZGROUP_IsRoot         = 0x004EA2F0;
 
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZGEOM_GetMatPos       = 0x004E5E40;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZGEOM_GetRootTM       = 0x004E6990;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZGEOM_RefToPtr        = 0x004E5BE0;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZGEOM_GetRef          = 0x004E5BC0;
 
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZHumanBoid_SetTarget  = 0x00585670;
 
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZBaseGeom_DoInit      = 0x004316C0;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZBaseGeom_ParentGroup = 0x00432640;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZBaseGeom_SetName     = 0x00431570;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZBaseGeom_SetPrim     = 0x00431DB0;
@@ -100,6 +104,14 @@ namespace Hitman::BloodMoney
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZHash_int_SMatPos_Put                = 0x00665E20;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZHash_int_SMatPos_Clear              = 0x00663FB0;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZHash_int_SMatPos_Find               = 0x00664060;
+
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZEngineDataBase_GetSceneCom          = 0x0045AED0;
+
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_CInventory_AddItem                   = 0x005C5400;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_CInventory_RemoveItem                = 0x005C5780;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZSNDOBJ_AttachToDefaultRoom          = 0x004FA240;
+
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_GetGQC                               = 0x00461A20;
 #pragma endregion
 #pragma region BloodMoney Configuration Table
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZPathFollower_GetClosestWaypoint      = 0x00654450;
@@ -109,6 +121,12 @@ namespace Hitman::BloodMoney
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZHM3ItemBomb_Explode                  = 0x0064F810;
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_CMetalDetector_DoDetectWeapon         = 0x005D5D60;
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_CMetalDetector_DoAlarm                = 0x005D5B50;
+        BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZHM3Actor_PreparePath                 = 0x00505570;
+        BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZHM3Actor_ActivateBloodSpurt          = 0x0063D210;
+        BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZTie_HideTie                          = 0x00580470;
+        BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZTie_HideTieInMirror                  = 0x00580480;
+        BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZXMLGUISystem_GetTopWindow            = 0x005665E0;
+        BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_CTelePortList_TeleportToPointAtIndex  = 0x0052A970;
 #pragma endregion
         return true;
     }
@@ -168,8 +186,8 @@ namespace Hitman::BloodMoney
         m_patches->RegisterPatch<ZDirect3D9DevicePatches>(std::make_unique<DX9Delegate>());
         m_patches->RegisterPatch<InputDevicesPatches>(std::make_unique<ImGuiInputDelegate>());
         m_patches->RegisterPatch<ZHitman3Patches>();
-        //m_patches->RegisterPatch<ZGEOMManagementPatch>();
         m_patches->RegisterPatch<EnableCheatsPatch>();
         m_patches->RegisterPatch<ZCutSequencePlayerPatch>();
+        m_patches->RegisterPatch<SkinChanger>();
     }
 }

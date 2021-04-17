@@ -8,6 +8,7 @@ namespace Glacier
     class ZROOM;
     class ZRender;
     class ZEntityLocator;
+    struct SScreenSelect;
 
     class ZCAMERA : public ZGEOM
     {

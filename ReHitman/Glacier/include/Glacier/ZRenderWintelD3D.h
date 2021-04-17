@@ -5,6 +5,18 @@
 
 namespace Glacier
 {
+    struct SLODDef
+    {
+        int field0;
+        int field4;
+        int field8;
+        int fieldC;
+        int field10;
+        int field14;
+        int field18;
+        int field1C;
+    }; // size 0x20
+
     class ZRenderWintelD3D
     {
     public:

@@ -9,10 +9,13 @@ namespace Glacier
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZGROUP_IsRoot                       = G1ConfigurationService::kNotConfiguredOption;
 
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZGEOM_GetMatPos                     = G1ConfigurationService::kNotConfiguredOption;
+    std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZGEOM_GetRootTM                     = G1ConfigurationService::kNotConfiguredOption;
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZGEOM_RefToPtr                      = G1ConfigurationService::kNotConfiguredOption;
+    std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZGEOM_GetRef                        = G1ConfigurationService::kNotConfiguredOption;
 
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZHumanBoid_SetTarget                = G1ConfigurationService::kNotConfiguredOption;
 
+    std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZBaseGeom_DoInit                    = G1ConfigurationService::kNotConfiguredOption;
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZBaseGeom_ParentGroup               = G1ConfigurationService::kNotConfiguredOption;
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZBaseGeom_SetName                   = G1ConfigurationService::kNotConfiguredOption;
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZBaseGeom_SetPrim                   = G1ConfigurationService::kNotConfiguredOption;
@@ -46,4 +49,13 @@ namespace Glacier
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZHash_int_SMatPos_Put               = G1ConfigurationService::kNotConfiguredOption;
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZHash_int_SMatPos_Clear             = G1ConfigurationService::kNotConfiguredOption;
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZHash_int_SMatPos_Find              = G1ConfigurationService::kNotConfiguredOption;
+
+    std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZEngineDataBase_GetSceneCom         = G1ConfigurationService::kNotConfiguredOption;
+
+    std::intptr_t G1ConfigurationService::G1API_FunctionAddress_CInventory_AddItem                  = G1ConfigurationService::kNotConfiguredOption;
+    std::intptr_t G1ConfigurationService::G1API_FunctionAddress_CInventory_RemoveItem               = G1ConfigurationService::kNotConfiguredOption;
+
+    std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZSNDOBJ_AttachToDefaultRoom         = G1ConfigurationService::kNotConfiguredOption;
+
+    std::intptr_t G1ConfigurationService::G1API_FunctionAddress_GetGQC                              = G1ConfigurationService::kNotConfiguredOption;
 }

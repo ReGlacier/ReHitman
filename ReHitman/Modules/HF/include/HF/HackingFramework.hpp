@@ -421,7 +421,7 @@ namespace HF
 
     namespace Hook
     {
-        template <typename ClassT>
+        template <typename ClassT = int>
         class VFHook final
         {
             std::intptr_t m_originalFunction { 0x0 };
@@ -471,6 +471,34 @@ namespace HF
                 typedef Ret(__thiscall* Function_t)(ClassT*, Args&&...);
                 auto func = (Function_t)m_originalFunction;
                 return func(m_instance, std::forward<Args>(args)...);
+            }
+
+            template <typename Ret, typename... Args>
+            static auto invoke(ClassT* instance, size_t index, Args... args)
+            {
+                typedef Ret(__thiscall* Function_t)(ClassT*, Args...);
+                auto func = (Function_t)getMethodAddrByIndex(instance, index);
+                return func(instance, args...);
+            }
+
+            template <typename FuncT>
+            static std::intptr_t makeHook(ClassT* instance, size_t index, FuncT* dest)
+            {
+                std::intptr_t ptr = *reinterpret_cast<std::intptr_t*>(instance);
+                std::intptr_t entity = ptr + sizeof(std::intptr_t) * index;
+                std::intptr_t org = *reinterpret_cast<std::intptr_t*>(entity);
+
+                {
+                    MEMORY_BASIC_INFORMATION mbi;
+                    VirtualQuery((LPCVOID)entity, &mbi, sizeof(mbi));
+
+                    Win32::VProtect protect(reinterpret_cast<uint32_t>(mbi.BaseAddress),
+                                            mbi.RegionSize,
+                                            PAGE_READWRITE);
+                    *reinterpret_cast<std::intptr_t*>(entity) = GET_ADDR_FROM_MEMBER_OR_ENTITY(dest);
+                }
+
+                return org;
             }
 
         private:

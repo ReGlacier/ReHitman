@@ -16,8 +16,11 @@ namespace Glacier
         static std::intptr_t G1API_FunctionAddress_ZGROUP_CreateGeom;
         static std::intptr_t G1API_FunctionAddress_ZGROUP_IsRoot;
         static std::intptr_t G1API_FunctionAddress_ZGEOM_GetMatPos;
+        static std::intptr_t G1API_FunctionAddress_ZGEOM_GetRootTM;
         static std::intptr_t G1API_FunctionAddress_ZGEOM_RefToPtr;
+        static std::intptr_t G1API_FunctionAddress_ZGEOM_GetRef;
         static std::intptr_t G1API_FunctionAddress_ZHumanBoid_SetTarget;
+        static std::intptr_t G1API_FunctionAddress_ZBaseGeom_DoInit;
         static std::intptr_t G1API_FunctionAddress_ZBaseGeom_ParentGroup;
         static std::intptr_t G1API_FunctionAddress_ZBaseGeom_SetName;
         static std::intptr_t G1API_FunctionAddress_ZBaseGeom_SetPrim;
@@ -46,5 +49,10 @@ namespace Glacier
         static std::intptr_t G1API_FunctionAddress_ZHash_int_SMatPos_Put;
         static std::intptr_t G1API_FunctionAddress_ZHash_int_SMatPos_Clear;
         static std::intptr_t G1API_FunctionAddress_ZHash_int_SMatPos_Find;
+        static std::intptr_t G1API_FunctionAddress_ZEngineDataBase_GetSceneCom;
+        static std::intptr_t G1API_FunctionAddress_CInventory_AddItem;
+        static std::intptr_t G1API_FunctionAddress_CInventory_RemoveItem;
+        static std::intptr_t G1API_FunctionAddress_ZSNDOBJ_AttachToDefaultRoom;
+        static std::intptr_t G1API_FunctionAddress_GetGQC;
     };
 }

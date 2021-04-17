@@ -52,9 +52,6 @@ namespace Hitman::BloodMoney
                     { HF::X86::PUSH_ECX, HF::X86::PUSH_EAX, HF::X86::PUSH_EAX },
                     { HF::X86::POP_EAX, HF::X86::POP_EAX });
             ENABLE_MODULE(m_constructor, "ZHitman3::Ctor")
-            /**
-             * @brief Setup another patch?
-             */
 
             // On OK
             BasicPatch::Apply(modules);
@@ -68,9 +65,10 @@ namespace Hitman::BloodMoney
     {
         BasicPatch::Revert(modules);
         // Revert changes
-        m_constructor->remove();
         if (auto process = modules.process.lock())
         {
+            m_constructor->remove();
+
             HF::Hook::MoveInstructions<4>(process, Consts::kZHitman3Ctor + 5, Consts::kZHitman3Ctor);
             HF::Hook::FillMemoryByNOPs(process, Consts::kZHitman3Ctor + 5, 5);
         }

@@ -9,7 +9,7 @@ namespace Hitman::BloodMoney
     {
     private:
         HF::Hook::TrampolineBasicPtr m_constructor;
-        
+
     public:
         std::string_view GetName() const override;
         bool Apply(const ModPack& modules) override;
