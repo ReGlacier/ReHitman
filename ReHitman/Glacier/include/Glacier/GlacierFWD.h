@@ -12,7 +12,7 @@ namespace Glacier
     using ZREF = unsigned int;
     using ZWM_MESSAGE = signed int; //Less that 0x1000!
 
-    using RefRun = void*;
+    struct RefRun;
     using TabBlk = void*;
 
     /// FWD

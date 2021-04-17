@@ -138,6 +138,7 @@ namespace Glacier
         virtual void OnCameraEnter();
 
         // API
+        void GetRootTM(Glacier::ZMat3x3* mat, Glacier::ZVector3* pos);
         void GetMatPos(Glacier::ZMat3x3* mat, Glacier::ZVector3* pos);
         ZREF GetRef();
 

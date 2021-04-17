@@ -16,6 +16,7 @@ namespace Glacier
         static std::intptr_t G1API_FunctionAddress_ZGROUP_CreateGeom;
         static std::intptr_t G1API_FunctionAddress_ZGROUP_IsRoot;
         static std::intptr_t G1API_FunctionAddress_ZGEOM_GetMatPos;
+        static std::intptr_t G1API_FunctionAddress_ZGEOM_GetRootTM;
         static std::intptr_t G1API_FunctionAddress_ZGEOM_RefToPtr;
         static std::intptr_t G1API_FunctionAddress_ZGEOM_GetRef;
         static std::intptr_t G1API_FunctionAddress_ZHumanBoid_SetTarget;
@@ -52,5 +53,6 @@ namespace Glacier
         static std::intptr_t G1API_FunctionAddress_CInventory_AddItem;
         static std::intptr_t G1API_FunctionAddress_CInventory_RemoveItem;
         static std::intptr_t G1API_FunctionAddress_ZSNDOBJ_AttachToDefaultRoom;
+        static std::intptr_t G1API_FunctionAddress_GetGQC;
     };
 }

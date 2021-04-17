@@ -6,6 +6,7 @@
 #include <BloodMoney/UI/Widgets/ActorsListWidget.h>
 #include <BloodMoney/UI/Widgets/CutSequencePlayerWidget.h>
 #include <BloodMoney/UI/Widgets/SceneViewer.h>
+#include <BloodMoney/UI/Widgets/PlayerTeleportWidget.h>
 
 #include <Glacier/ZSysInterfaceWintel.h>
 #include <Glacier/ZRenderWintelD3D.h>
@@ -54,6 +55,7 @@ namespace Hitman::BloodMoney
             Globals::g_pDebugTools->addChild(std::make_shared<ActorsListWidget>());
             Globals::g_pDebugTools->addChild(std::make_shared<CutSequencePlayerWidget>());
             Globals::g_pDebugTools->addChild(std::make_shared<SceneViewer>());
+            Globals::g_pDebugTools->addChild(std::make_shared<PlayerTeleportWidget>());
         }
 
         spdlog::info("DX9Delegate initialised!");

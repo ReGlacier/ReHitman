@@ -64,6 +64,7 @@ namespace Hitman::BloodMoney
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZGROUP_IsRoot         = 0x004EA2F0;
 
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZGEOM_GetMatPos       = 0x004E5E40;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZGEOM_GetRootTM       = 0x004E6990;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZGEOM_RefToPtr        = 0x004E5BE0;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZGEOM_GetRef          = 0x004E5BC0;
 
@@ -109,6 +110,8 @@ namespace Hitman::BloodMoney
         Glacier::G1ConfigurationService::G1API_FunctionAddress_CInventory_AddItem                   = 0x005C5400;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_CInventory_RemoveItem                = 0x005C5780;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZSNDOBJ_AttachToDefaultRoom          = 0x004FA240;
+
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_GetGQC                               = 0x00461A20;
 #pragma endregion
 #pragma region BloodMoney Configuration Table
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZPathFollower_GetClosestWaypoint      = 0x00654450;
@@ -123,6 +126,7 @@ namespace Hitman::BloodMoney
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZTie_HideTie                          = 0x00580470;
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZTie_HideTieInMirror                  = 0x00580480;
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZXMLGUISystem_GetTopWindow            = 0x005665E0;
+        BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_CTelePortList_TeleportToPointAtIndex  = 0x0052A970;
 #pragma endregion
         return true;
     }

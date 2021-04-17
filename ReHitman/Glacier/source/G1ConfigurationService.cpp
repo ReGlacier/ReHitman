@@ -9,6 +9,7 @@ namespace Glacier
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZGROUP_IsRoot                       = G1ConfigurationService::kNotConfiguredOption;
 
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZGEOM_GetMatPos                     = G1ConfigurationService::kNotConfiguredOption;
+    std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZGEOM_GetRootTM                     = G1ConfigurationService::kNotConfiguredOption;
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZGEOM_RefToPtr                      = G1ConfigurationService::kNotConfiguredOption;
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZGEOM_GetRef                        = G1ConfigurationService::kNotConfiguredOption;
 
@@ -55,4 +56,6 @@ namespace Glacier
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_CInventory_RemoveItem               = G1ConfigurationService::kNotConfiguredOption;
 
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZSNDOBJ_AttachToDefaultRoom         = G1ConfigurationService::kNotConfiguredOption;
+
+    std::intptr_t G1ConfigurationService::G1API_FunctionAddress_GetGQC                              = G1ConfigurationService::kNotConfiguredOption;
 }

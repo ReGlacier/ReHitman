@@ -3,6 +3,10 @@
 
 namespace Glacier
 {
+    void ZGEOM::GetRootTM(Glacier::ZMat3x3* mat, Glacier::ZVector3* pos) {
+        ((void(__thiscall*)(ZGEOM*, Glacier::ZMat3x3*, Glacier::ZVector3*))(G1ConfigurationService::G1API_FunctionAddress_ZGEOM_GetRootTM))(this, mat, pos);
+    }
+
     void ZGEOM::GetMatPos(Glacier::ZMat3x3* mat, Glacier::ZVector3* pos)
     {
         ((void(__thiscall*)(ZGEOM*, Glacier::ZMat3x3*, Glacier::ZVector3*))(G1ConfigurationService::G1API_FunctionAddress_ZGEOM_GetMatPos))(this, mat, pos);
