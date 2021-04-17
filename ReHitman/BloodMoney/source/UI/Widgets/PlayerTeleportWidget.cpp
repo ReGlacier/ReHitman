@@ -39,7 +39,7 @@ namespace Hitman::BloodMoney {
         auto hitman = reinterpret_cast<Glacier::ZLNKWHANDS*>(gameData->m_Hitman3);
         if (!hitman) return;
 
-        ImGui::Begin("Teleport Player");
+        ImGui::Begin("Teleport Player", &PlayerTeleportWidget::g_bIsShowed);
         ImGui::Text("ZHitman3: 0x%.8X", (std::intptr_t)hitman); ImGui::SameLine(0.f, 5.f);
         if (ImGui::Button("PRINT")) {
             spdlog::info("ZHitman3 Instance at: 0x{:08X}", ((std::intptr_t)hitman));

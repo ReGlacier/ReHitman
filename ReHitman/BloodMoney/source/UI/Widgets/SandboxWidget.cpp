@@ -29,6 +29,7 @@
 #include <Glacier/Geom/ZROOM.h>
 #include <Glacier/Geom/ZTreeGroup.h>
 #include <Glacier/ZTypeTraits.h>
+#include <Glacier/ZRenderWintelD3D.h>
 
 #include <BloodMoney/Game/ZHM3Actor.h>
 
@@ -63,6 +64,10 @@ namespace Hitman::BloodMoney
 
         auto geomBuffer = Glacier::getInterface<Glacier::ZGeomBuffer>(Globals::kGeomBufferAddr);
         if (!geomBuffer) { return; }
+
+        ImGui::Begin("Sandbox");
+        ImGui::Text("Mouse pos 3D: %f; %f; %f", sysInterface->m_renderer->m_mousePos.x, sysInterface->m_renderer->m_mousePos.y, sysInterface->m_renderer->m_mousePos.z);
+        ImGui::End();
     }
 
     bool SandboxWidget::g_bIsVisible = false;
