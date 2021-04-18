@@ -421,7 +421,7 @@ namespace HF
 
     namespace Hook
     {
-        template <typename ClassT = int>
+        template <typename ClassT = int, bool ResetToOriginal = true>
         class VFHook final
         {
             std::intptr_t m_originalFunction { 0x0 };
@@ -449,7 +449,9 @@ namespace HF
 
             ~VFHook()
             {
-                remove();
+                if constexpr (ResetToOriginal) {
+                    remove();
+                }
             }
 
             [[nodiscard]] std::intptr_t getOriginalPtr() const { return m_originalFunction; }
@@ -776,6 +778,12 @@ namespace HF
         static std::unique_ptr<VFHook<TargetClass>> HookVirtualFunction(TargetClass* instance, Functor target)
         {
             return std::make_unique<VFHook<TargetClass>>(instance, MethodIndex, GET_ADDR_FROM_MEMBER_OR_ENTITY(target));
+        }
+
+        template <typename TargetClass, size_t MethodIndex, typename Functor>
+        static std::unique_ptr<VFHook<TargetClass, false>> HookVirtualFunctionWithoutRestore(TargetClass* instance, Functor target)
+        {
+            return std::make_unique<VFHook<TargetClass, false>>(instance, MethodIndex, GET_ADDR_FROM_MEMBER_OR_ENTITY(target));
         }
 
         static bool FillMemoryByNOPs(const std::shared_ptr<Win32::Process>& process, std::intptr_t addr, size_t size)

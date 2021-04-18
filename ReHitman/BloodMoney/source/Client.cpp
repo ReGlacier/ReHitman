@@ -17,7 +17,9 @@
 #include <BloodMoney/Patches/All/ZGEOMManagementPatch.h>
 #include <BloodMoney/Patches/All/EnableCheatsPatch.h>
 #include <BloodMoney/Patches/All/ZCutSequencePlayerPatch.h>
+#include <BloodMoney/Patches/All/FreeFileSystemPatch.h>
 #include <BloodMoney/Patches/Mods/SkinChanger.h>
+
 
 namespace Hitman::BloodMoney
 {
@@ -189,5 +191,6 @@ namespace Hitman::BloodMoney
         m_patches->RegisterPatch<EnableCheatsPatch>();
         m_patches->RegisterPatch<ZCutSequencePlayerPatch>();
         m_patches->RegisterPatch<SkinChanger>();
+        m_patches->RegisterPatch<FreeFileSystemPatch>();
     }
 }
