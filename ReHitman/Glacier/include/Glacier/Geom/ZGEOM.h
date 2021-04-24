@@ -14,7 +14,8 @@ namespace Glacier
         // Data
         ZEntityLocator* m_baseGeom; //+0x4
         int m_field8;               //+0x8
-        int m_fieldC;               //+0xC
+        uint16_t m_fieldC;          //+0xC
+        uint16_t m_fieldE;          //+0xE
 
         // VFTable
         virtual void Release(bool);

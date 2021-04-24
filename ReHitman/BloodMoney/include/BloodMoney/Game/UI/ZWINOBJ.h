@@ -34,8 +34,8 @@ namespace Hitman::BloodMoney
         virtual int32_t CalcDrawMode(int a2, int a3);
         virtual void SetDrawing();
         virtual void SetColor(uint32_t);
-        virtual void SetColor(float const*); // IDK Vec3F or other
         virtual void SetColor(uint32_t, bool);
+        virtual void SetColor(Glacier::Vector3* pColor); // Vec3F or other
         virtual void SetAlpha(uint8_t);
         virtual void SetScale(Glacier::Vector2* scale, bool /* unused */);
         virtual void SetAlignment(uint8_t alignType);

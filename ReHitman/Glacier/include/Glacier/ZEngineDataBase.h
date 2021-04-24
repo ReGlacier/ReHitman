@@ -166,5 +166,6 @@ namespace Glacier
 
         // API
         std::intptr_t GetSceneCom();
+        std::intptr_t GetSceneVar(const char* varname);
     };
 }

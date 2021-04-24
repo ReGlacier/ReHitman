@@ -7,6 +7,8 @@
 
 namespace Hitman::BloodMoney
 {
+    class ZLINEOBJ;
+
     class ZOSD : public Glacier::ZSTDOBJ
     {
     public:
@@ -47,7 +49,7 @@ namespace Hitman::BloodMoney
         int m_field48;
         int m_field4C_REF;
         int m_field50_REF;
-        int m_field54;
+        ZLINEOBJ* m_pSubtitles;
         int m_field58;
         int m_field5C;
         int m_field60;

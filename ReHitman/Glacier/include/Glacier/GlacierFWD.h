@@ -63,7 +63,6 @@ namespace Glacier
     class CHUNK;
     class REFTAB;
     class REFTAB32;
-    class ZDirect3DDevice;
     class ZOffsetAlloc;
     class ZEventBuffer;
     class ZGeomBufferPoolEntity;

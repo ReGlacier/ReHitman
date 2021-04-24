@@ -114,6 +114,11 @@ namespace Hitman::BloodMoney
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZSNDOBJ_AttachToDefaultRoom          = 0x004FA240;
 
         Glacier::G1ConfigurationService::G1API_FunctionAddress_GetGQC                               = 0x00461A20;
+
+        Glacier::G1ConfigurationService::G1ConfigurationService::G1API_FunctionAddress_ZScriptC_FindScript = 0x00549980;
+
+        Glacier::G1ConfigurationService::G1API_InstanceAddress_ZEngineGeomControl                   = 0x007F5AA8;
+        Glacier::G1ConfigurationService::G1API_InstanceAddress_CConfiguration_bSubtitles            = 0x008ACA9C;
 #pragma endregion
 #pragma region BloodMoney Configuration Table
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZPathFollower_GetClosestWaypoint      = 0x00654450;

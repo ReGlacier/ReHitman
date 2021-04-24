@@ -5,16 +5,29 @@ namespace Glacier
     class SPrimInfo
     {
     public:
-        int8_t m_byte0; //0x0000
-        int8_t m_byte1; //0x0001
+        int16_t m_word0; //0x0000
         int16_t m_kind; //0x0002
-        int32_t m_field4; //0x0004
+        int32_t m_primID; //0x0004
         int32_t m_field8; //0x0008
         int8_t m_byteC; //0x000C
         int8_t m_byteD; //0x000D
         int8_t m_byteE; //0x000E
-        int8_t m_byteF; //0x000F
-        int m_field10; //0x0010
+        int8_t m_variantID; //0x000F (mesh variant)
+        int m_field10; //0x0010 (?)
+        /**
+         * @brief Primitive parts visibility flag
+         * 10010 0x12 (normal)
+         * 00000 0x00 (invisible)
+         * 00001 0x01 (head without eye)
+         * 00011 ???? (head with eye)
+         * 00110 ???? (torso & head)
+         * 01110 ???? (torso & head & hands)
+         * 10000 CRASH
+         * 11000 CRASH
+         * 11100 CRASH
+         * 10111 CRASH
+         */
+        int m_field14;
     }; //Size: 0x0014 (struct is not done!!!)
 
     class ZPrimControlWintel
