@@ -134,6 +134,9 @@ namespace Hitman::BloodMoney
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZTie_HideTieInMirror                  = 0x00580480;
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZXMLGUISystem_GetTopWindow            = 0x005665E0;
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_CTelePortList_TeleportToPointAtIndex  = 0x0052A970;
+        BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZHM3DialogControl_StartDialog         = 0x00645550;
+        BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZHM3DialogControl_SetDialogSkipable   = 0x00645060;
+        BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_CElevatorHouse_GetElevatorDoorStatus  = 0x0059F1E0;
 #pragma endregion
         return true;
     }

@@ -23,5 +23,8 @@ namespace Hitman::BloodMoney
         static std::intptr_t BMAPI_FunctionAddress_ZTie_HideTieInMirror;
         static std::intptr_t BMAPI_FunctionAddress_ZXMLGUISystem_GetTopWindow;
         static std::intptr_t BMAPI_FunctionAddress_CTelePortList_TeleportToPointAtIndex;
+        static std::intptr_t BMAPI_FunctionAddress_ZHM3DialogControl_StartDialog;
+        static std::intptr_t BMAPI_FunctionAddress_ZHM3DialogControl_SetDialogSkipable;
+        static std::intptr_t BMAPI_FunctionAddress_CElevatorHouse_GetElevatorDoorStatus;
     };
 }

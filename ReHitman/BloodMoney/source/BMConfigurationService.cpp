@@ -15,4 +15,7 @@ namespace Hitman::BloodMoney
     std::intptr_t BMConfigurationService::BMAPI_FunctionAddress_ZTie_HideTieInMirror = BMConfigurationService::kNotConfiguredOption;
     std::intptr_t BMConfigurationService::BMAPI_FunctionAddress_ZXMLGUISystem_GetTopWindow = BMConfigurationService::kNotConfiguredOption;
     std::intptr_t BMConfigurationService::BMAPI_FunctionAddress_CTelePortList_TeleportToPointAtIndex = BMConfigurationService::kNotConfiguredOption;
+    std::intptr_t BMConfigurationService::BMAPI_FunctionAddress_ZHM3DialogControl_StartDialog = BMConfigurationService::kNotConfiguredOption;
+    std::intptr_t BMConfigurationService::BMAPI_FunctionAddress_ZHM3DialogControl_SetDialogSkipable = BMConfigurationService::kNotConfiguredOption;
+    std::intptr_t BMConfigurationService::BMAPI_FunctionAddress_CElevatorHouse_GetElevatorDoorStatus = BMConfigurationService::kNotConfiguredOption;
 }

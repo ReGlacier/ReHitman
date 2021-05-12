@@ -96,9 +96,9 @@ namespace Glacier
         virtual void GetBoneNrFromId(unsigned short );
         virtual void GetBoneFromPoint(float const*);
         virtual void GetBoneNrFromName(char const*);
-        virtual void GetBoneName(int);
+        virtual const char* GetBoneName(int);
         virtual void GetOrigLocalBones(void);
-        virtual void GetBoneDefinitions(void);
+        virtual void* GetBoneDefinitions(void);
         virtual void CopyGeometryFrom(ZGEOM *);
         virtual void CopyGeometryFrom(unsigned int);
         virtual void CopyPoseFrom(ZLNKOBJ*);

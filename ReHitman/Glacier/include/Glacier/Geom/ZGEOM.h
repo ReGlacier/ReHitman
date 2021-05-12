@@ -8,6 +8,15 @@ namespace Glacier
     class ZRTTI;
     class ZEntityLocator;
 
+    /**
+     * @brief Reversed from cRTP::Properties container
+     */
+    enum EBoundingBox {
+        BOUNDING_Static = 0,
+        BOUNDING_Dynamic = 1,
+        BOUNDING_DynamicAutoAssign = 2,
+    };
+
     class ZGEOM
     {
     public:
