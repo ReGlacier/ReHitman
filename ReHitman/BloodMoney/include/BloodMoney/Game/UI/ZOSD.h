@@ -13,6 +13,32 @@ namespace Hitman::BloodMoney
     {
     public:
         //vftable (no custom methods here)
+        // custom api
+        /**
+         * @brief Show notification message
+         * @param message
+         * @param shouldPlayNotificationSound
+         */
+        void AddInfo(const char* message, bool shouldPlayNotificationSound);
+
+        /**
+         * @brief Show warning message in-game
+         * @param message
+         * @param shouldPlayNotificationSound
+         */
+        void AddWarning(const char* message, bool shouldPlayNotificationSound);
+
+        /**
+         * @brief Show hint in-game
+         * @param message message in brief window
+         * @param a2 unknown flag
+         * @param shouldPlayNotificationSound - true - play sound
+         * @param osdElement - unknown value, but looks like it's not used
+         * @param a6 - unknown, but it's used only for M00
+         * @param tutorialId - if not null will be used localization from m00/Tutorials/{tutorialId}
+         */
+        void AddHint(const char* message, bool a2, bool shouldPlayNotificationSound, int osdElement, bool a6, const char* tutorialId);
+
         //data (total size is 0x8FC, base size is 0x10)
         char m_field10;
         char field_11;

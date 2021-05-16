@@ -140,6 +140,9 @@ namespace Hitman::BloodMoney
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZHM3DialogControl_StartDialog         = 0x00645550;
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZHM3DialogControl_SetDialogSkipable   = 0x00645060;
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_CElevatorHouse_GetElevatorDoorStatus  = 0x0059F1E0;
+        BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZOSD_AddInfo                          = 0x00660EE0;
+        BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZOSD_AddWarning                       = 0x00660F20;
+        BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZOSD_AddHint                          = 0x00660F40;
         BloodMoney::BMConfigurationService::BMAPI_GlobalVariableAddress_ZVCR_m_msgStealTape             = 0x009B3C24;
 #pragma endregion
         return true;
