@@ -143,6 +143,13 @@ namespace Hitman::BloodMoney
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZOSD_AddInfo                          = 0x00660EE0;
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZOSD_AddWarning                       = 0x00660F20;
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZOSD_AddHint                          = 0x00660F40;
+        BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_CKeycardReader_GetNearestDoor         = 0x005C7B60;
+        BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_CKeycardReader_ValidateKeyCard        = 0x005C8280;
+        BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_CKeycardReader_InvalidateKeyCard      = 0x005C8330;
+        BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_CKeycardReader_DetermineLnkObjLocation = 0x005C8480;
+        BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_CKeycardReader_GetKeyCard             = 0x005C8640;
+        BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_CKeycardReader_GetItemTemplateFromName = 0x005C8750;
+        BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_CKeycardReader_IsKeyCardValid         = 0x005C7DB0;
         BloodMoney::BMConfigurationService::BMAPI_GlobalVariableAddress_ZVCR_m_msgStealTape             = 0x009B3C24;
 #pragma endregion
         return true;

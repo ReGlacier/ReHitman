@@ -29,6 +29,13 @@ namespace Hitman::BloodMoney
         static std::intptr_t BMAPI_FunctionAddress_ZOSD_AddInfo;
         static std::intptr_t BMAPI_FunctionAddress_ZOSD_AddWarning;
         static std::intptr_t BMAPI_FunctionAddress_ZOSD_AddHint;
+        static std::intptr_t BMAPI_FunctionAddress_CKeycardReader_GetNearestDoor;
+        static std::intptr_t BMAPI_FunctionAddress_CKeycardReader_ValidateKeyCard;
+        static std::intptr_t BMAPI_FunctionAddress_CKeycardReader_InvalidateKeyCard;
+        static std::intptr_t BMAPI_FunctionAddress_CKeycardReader_DetermineLnkObjLocation;
+        static std::intptr_t BMAPI_FunctionAddress_CKeycardReader_GetKeyCard;
+        static std::intptr_t BMAPI_FunctionAddress_CKeycardReader_GetItemTemplateFromName;
+        static std::intptr_t BMAPI_FunctionAddress_CKeycardReader_IsKeyCardValid;
         static std::intptr_t BMAPI_GlobalVariableAddress_ZVCR_m_msgStealTape;
     };
 }
