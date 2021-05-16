@@ -11,6 +11,9 @@
 #include <Glacier/ZEngineDataBase.h>
 #include <Glacier/Geom/ZROOM.h>
 #include <Glacier/IK/ZLNKOBJ.h>
+#include <Glacier/ZEventBuffer.h>
+
+#include <spdlog/spdlog.h>
 
 #define CAPTURE_THIS(type, varname) \
     static type* varname = { nullptr }; \
@@ -61,15 +64,19 @@ namespace Hitman::BloodMoney
 
             Glacier::ZREF ref = listener->GetRef();
 
-            ((void(__cdecl*)(Glacier::ZGEOM*, const char*, const char*, Glacier::EActionType, Glacier::ZMSGID, Glacier::ZREF, int, int))0x005D3C10)(
-                    reinterpret_cast<Glacier::ZGEOM*>(pSelf),
-                    "Take clothes",
-                    "Take clothes",
-                    Glacier::EActionType::CUSTOM,
-                    g_ChangeSuitMSGID,
-                    ref,
-                    0,
-                    270);
+            auto actionId = Glacier::ZAction::AddAction(reinterpret_cast<Glacier::ZGEOM*>(pSelf),
+                                        "Take clothes",
+                                        "Take clothes",
+                                        Glacier::EActionType::CUSTOM,
+                                        g_ChangeSuitMSGID,
+                                        ref,
+                                        0,
+                                        270);
+
+            auto pAction = Glacier::ZEventBuffer::EventRefToInstance<Glacier::ZAction>(actionId);
+            if (pAction) { // It's not required but why not
+                pAction->Show();
+            }
 
             ((void(__thiscall*)(Hitman::BloodMoney::ZHM3Actor*))g_EnableClothPickup)(pSelf);
         }

@@ -55,6 +55,9 @@ namespace Glacier
         static std::intptr_t G1API_FunctionAddress_ZSNDOBJ_AttachToDefaultRoom;
         static std::intptr_t G1API_FunctionAddress_GetGQC;
         static std::intptr_t G1API_FunctionAddress_ZScriptC_FindScript;
+        static std::intptr_t G1API_FunctionAddress_ZAction_AddAction;
+        static std::intptr_t G1API_FunctionAddress_ZAction_Show;
+        static std::intptr_t G1API_FunctionAddress_ZAction_Hide;
 
         static std::intptr_t G1API_InstanceAddress_ZEngineGeomControl;
 

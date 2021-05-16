@@ -51,6 +51,8 @@
 #include <Glacier/ZPrimControlWintel.h>
 #include <Glacier/ZEngineGeomControl.h>
 
+#include <BloodMoney/Game/OnLevel/ZVCR.h>
+
 
 namespace Hitman::BloodMoney
 {
@@ -151,6 +153,10 @@ namespace Hitman::BloodMoney
                     pElevatorGroup->SendCommandRecursive(msg, nullptr, nullptr);
                 }
             }
+        }
+
+        if (!Hitman::BloodMoney::ZVCR::TapeWasStolen() && ImGui::Button("Steal camera tape")) {
+            Hitman::BloodMoney::ZVCR::SetTapeStolen(true);
         }
 
         ImGui::End();

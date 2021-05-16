@@ -116,6 +116,9 @@ namespace Hitman::BloodMoney
         Glacier::G1ConfigurationService::G1API_FunctionAddress_GetGQC                               = 0x00461A20;
 
         Glacier::G1ConfigurationService::G1ConfigurationService::G1API_FunctionAddress_ZScriptC_FindScript = 0x00549980;
+        Glacier::G1ConfigurationService::G1ConfigurationService::G1API_FunctionAddress_ZAction_AddAction = 0x005D3C10; //another func 0x00549980
+        Glacier::G1ConfigurationService::G1ConfigurationService::G1API_FunctionAddress_ZAction_Show = 0x0052BC30;
+        Glacier::G1ConfigurationService::G1ConfigurationService::G1API_FunctionAddress_ZAction_Hide = 0x0052B070;
 
         Glacier::G1ConfigurationService::G1API_InstanceAddress_ZEngineGeomControl                   = 0x007F5AA8;
         Glacier::G1ConfigurationService::G1API_InstanceAddress_CConfiguration_bSubtitles            = 0x008ACA9C;
@@ -137,6 +140,7 @@ namespace Hitman::BloodMoney
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZHM3DialogControl_StartDialog         = 0x00645550;
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZHM3DialogControl_SetDialogSkipable   = 0x00645060;
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_CElevatorHouse_GetElevatorDoorStatus  = 0x0059F1E0;
+        BloodMoney::BMConfigurationService::BMAPI_GlobalVariableAddress_ZVCR_m_msgStealTape             = 0x009B3C24;
 #pragma endregion
         return true;
     }

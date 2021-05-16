@@ -18,4 +18,5 @@ namespace Hitman::BloodMoney
     std::intptr_t BMConfigurationService::BMAPI_FunctionAddress_ZHM3DialogControl_StartDialog = BMConfigurationService::kNotConfiguredOption;
     std::intptr_t BMConfigurationService::BMAPI_FunctionAddress_ZHM3DialogControl_SetDialogSkipable = BMConfigurationService::kNotConfiguredOption;
     std::intptr_t BMConfigurationService::BMAPI_FunctionAddress_CElevatorHouse_GetElevatorDoorStatus = BMConfigurationService::kNotConfiguredOption;
+    std::intptr_t BMConfigurationService::BMAPI_GlobalVariableAddress_ZVCR_m_msgStealTape = BMConfigurationService::kNotConfiguredOption;
 }

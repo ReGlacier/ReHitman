@@ -26,5 +26,6 @@ namespace Hitman::BloodMoney
         static std::intptr_t BMAPI_FunctionAddress_ZHM3DialogControl_StartDialog;
         static std::intptr_t BMAPI_FunctionAddress_ZHM3DialogControl_SetDialogSkipable;
         static std::intptr_t BMAPI_FunctionAddress_CElevatorHouse_GetElevatorDoorStatus;
+        static std::intptr_t BMAPI_GlobalVariableAddress_ZVCR_m_msgStealTape;
     };
 }
