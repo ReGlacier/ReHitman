@@ -8,10 +8,12 @@ namespace Hitman::BloodMoney {
         static constexpr std::intptr_t FsZip_Ctor = 0x0042D0FC;
         //static constexpr std::intptr_t FsZip_Dtor = 0x0042D137;
         static constexpr std::intptr_t FsZip_Read_Index = 7;
+        static constexpr std::intptr_t FsZip_GetFileSize_Index = 4;  //TODO: Write hook
     }
 
     namespace Globals {
         [[maybe_unused]] static std::unique_ptr<HF::Hook::VFHook<FreeFS::HBMFreeFsProxy, false>> g_FsZip_Read_Hook;
+        [[maybe_unused]] static std::unique_ptr<HF::Hook::VFHook<FreeFS::HBMFreeFsProxy, false>> g_FsZip_GetFileSize_Hook;
     }
 
     namespace Callbacks {
@@ -20,6 +22,9 @@ namespace Hitman::BloodMoney {
             auto proxy = reinterpret_cast<FreeFS::HBMFreeFsProxy*>(instance);
             Globals::g_FsZip_Read_Hook = HF::Hook::HookVirtualFunctionWithoutRestore<FreeFS::HBMFreeFsProxy, Consts::FsZip_Read_Index>(proxy,
                                                                                                                          &FreeFS::HBMFreeFsProxy::readFileProvider);
+
+            Globals::g_FsZip_GetFileSize_Hook = HF::Hook::HookVirtualFunctionWithoutRestore<FreeFS::HBMFreeFsProxy, Consts::FsZip_GetFileSize_Index>(proxy,
+                                                                                                                                                     &FreeFS::HBMFreeFsProxy::getFileSizeProvider);
         }
     }
 
@@ -60,6 +65,7 @@ namespace Hitman::BloodMoney {
         if (auto process = modules.process.lock())
         {
             Globals::g_FsZip_Read_Hook = nullptr;
+            Globals::g_FsZip_GetFileSize_Hook = nullptr;
 
             (void)process; // avoid warning
             if (m_FsZipConstructor) {

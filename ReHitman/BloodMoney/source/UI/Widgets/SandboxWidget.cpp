@@ -155,8 +155,23 @@ namespace Hitman::BloodMoney
             }
         }
 
-        if (!Hitman::BloodMoney::ZVCR::TapeWasStolen() && ImGui::Button("Steal camera tape")) {
-            Hitman::BloodMoney::ZVCR::SetTapeStolen(true);
+        if (ImGui::Button("Show custom message")) {
+            gameData->m_OSD->AddInfo("This is very important message for you because you are playing in ReHitman!", true);
+        }
+
+        if (ImGui::Button("Show custom warning")) {
+            gameData->m_OSD->AddWarning("This is very important message for you because you are playing in ReHitman!", true);
+        }
+
+        if (ImGui::Button("Show custom hint")) {
+            gameData->m_OSD->AddHint("New player connected", false, true, 0, false, nullptr);
+        }
+
+        if (ImGui::Button("Pause all actors scripts")) {
+            for (int i = 0; i < gameData->m_ActorsInPoolCount; i++) {
+                auto actorRef = gameData->m_ActorsPool[i]->GetRef();
+                ((void(__cdecl*)(Glacier::ZREF, bool))0x0059C9D0)(actorRef, true);
+            }
         }
 
         ImGui::End();

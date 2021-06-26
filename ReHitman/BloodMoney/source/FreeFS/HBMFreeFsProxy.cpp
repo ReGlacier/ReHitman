@@ -9,6 +9,7 @@
 namespace Hitman::BloodMoney::FreeFS {
     namespace Consts {
         static constexpr std::intptr_t FsZip_Read_OriginalPtr = 0x0042C470;
+        static constexpr std::intptr_t FsZip_GetFileSize_OriginalPtr = 0x0042C2D0;
     }
 
     std::string HBMFreeFsProxy::findFileInFolderRecursively(const std::string& folder, const std::string& file) try
@@ -86,6 +87,47 @@ namespace Hitman::BloodMoney::FreeFS {
         typedef int(__thiscall* FsZip_read_t)(Glacier::FsZip_t*, const char*, void*, int, int);
         auto original = (FsZip_read_t)Consts::FsZip_Read_OriginalPtr;
         int result = original(reinterpret_cast<Glacier::FsZip_t*>(this), name, dest, fileSize, unk1);
+        return result;
+    }
+
+    int HBMFreeFsProxy::getFileSizeProvider(const char* name) {
+        namespace fs = std::filesystem;
+
+        auto sys = Glacier::getInterface<Glacier::ZSysInterfaceWintel>(Globals::kSysInterfaceAddr);
+
+        // --- detect scene ---
+        std::string fileName = name;
+        std::string zipPackageFileName = fs::path(this->m_missionZipFilePath).stem().string();
+        std::string sceneName = fs::path(sys->m_currentScene).stem().string();
+
+        if (fileName[0] == '*')
+        {
+            fileName = findFileInFolderRecursively(
+                    fmt::format("UnpackedScenes\\{}\\{}", sceneName, zipPackageFileName),
+                    fileName.substr(1, fileName.length())
+            );
+        }
+
+        std::string path = fmt::format(R"(UnpackedScenes\{}\{}\{})", sceneName, zipPackageFileName, fileName);
+
+        FILE* fp = fopen(path.c_str(), "rb");
+        if (fp)
+        {
+            int fileSize = 0;
+            fseek(fp, 0L, SEEK_END);	//move to end
+            fileSize = ftell(fp); //save the endpoint
+            fclose(fp);
+
+            spdlog::info("FsZip::getFileSize[0x{:08X}]| Got file size {} from fs {}", reinterpret_cast<std::intptr_t>(this), fileSize, path);
+            return fileSize;
+        }
+
+        // original code
+        typedef int(__thiscall* FsZip_getFileSize_t)(Glacier::FsZip_t*, const char*);
+        auto original = (FsZip_getFileSize_t)Consts::FsZip_GetFileSize_OriginalPtr;
+        int result = original(reinterpret_cast<Glacier::FsZip_t*>(this), name);
+
+        spdlog::warn("FsZip::getFileSize[0x{:08X}]| Got file size {} from ZIP {}", reinterpret_cast<std::intptr_t>(this), result, path);
         return result;
     }
 }

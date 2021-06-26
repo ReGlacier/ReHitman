@@ -13,5 +13,6 @@ namespace Hitman::BloodMoney::FreeFS {
         static std::string findFileInFolderRecursively(const std::string& folder, const std::string& file);
 
         int readFileProvider(const char* name, void* dest, int fileSize, int unk1);
+        int getFileSizeProvider(const char* name);
     };
 }
