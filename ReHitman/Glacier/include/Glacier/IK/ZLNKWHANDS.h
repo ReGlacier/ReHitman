@@ -100,7 +100,7 @@ namespace Glacier
         virtual void SetDialog(bool);
         virtual bool GetDialog();
         virtual void DialogListen(int variant); //1 or 0
-        virtual void DialogTalk(int) variant; //1 or 0
+        virtual void DialogTalk(int variant); //1 or 0
         virtual void SlipRHandItem();
         virtual void SlipLHandItem();
         virtual void ForceLHandItem(ZItem*, bool);
@@ -166,20 +166,20 @@ namespace Glacier
         int field_240;
         float m_fRecoil;
         int m_hitAnimationName;
-        __int16 m_animPullGun_Right;
-        __int16 field_24E;
-        __int16 m_animPickPut;
-        __int16 field_252;
-        __int16 m_animReloadMagnum;
-        __int16 field_256;
-        __int16 m_animReloadHardballer;
-        __int16 field_25A;
-        __int16 m_animReloadMP5;
-        __int16 field_25E;
-        __int16 m_animReloadRuger;
-        __int16 field_262;
-        __int16 m_animReloadGun_OneHand;
-        __int16 field_266;
+        uint16_t m_animPullGun_Right;
+        uint16_t field_24E;
+        uint16_t m_animPickPut;
+        uint16_t field_252;
+        uint16_t m_animReloadMagnum;
+        uint16_t field_256;
+        uint16_t m_animReloadHardballer;
+        uint16_t field_25A;
+        uint16_t m_animReloadMP5;
+        uint16_t field_25E;
+        uint16_t m_animReloadRuger;
+        uint16_t field_262;
+        uint16_t m_animReloadGun_OneHand;
+        uint16_t field_266;
         int m_pTarget;
         int field_26C;
         int field_270;

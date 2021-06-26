@@ -16,6 +16,7 @@ namespace Glacier
         /// === vftable ===
         virtual void SendCommandToList(Glacier::ZMSGID command, Glacier::ZDATA data);
         virtual void AddGeom(unsigned int);
+        virtual void AddGeom(ZGEOM*);
         virtual void RemoveGeomById(unsigned int);
         virtual void RemoveGeomByPtr(ZGEOM*);
         virtual void AddMeshNrs(MeshNrs*);

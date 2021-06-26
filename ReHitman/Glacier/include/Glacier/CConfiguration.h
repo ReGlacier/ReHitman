@@ -72,5 +72,9 @@ namespace Glacier
         virtual void SetGenericOption(char const*, bool);
         virtual void RemoveOption(char const*);
         virtual void Load();
+
+        //public API
+        static bool CanShowSubtitles();
+        static void SetCanShowSubtitles(bool value);
     };
 }

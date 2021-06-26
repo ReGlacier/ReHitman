@@ -16,7 +16,7 @@ namespace Glacier
         virtual void GetMainItemRootTM(float *,float *);
         virtual void GetState();
         virtual void SetState(ITEMSTATE, CCom*);
-        virtual void Place(float const*,float const*);
+        virtual void Place(float const*, float const*);
         virtual void SetMain(uint);
         virtual void GetMain();
         virtual void GetMainMatPos(float *,float *,uint);

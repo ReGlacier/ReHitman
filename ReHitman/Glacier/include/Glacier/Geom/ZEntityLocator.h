@@ -31,6 +31,7 @@ namespace Glacier
         int field_7C;
 
         // API
+        void DoInit();
         ZGROUP* ParentGroup();
         void SetName(const char* name);
         bool SetPrim(int primId);

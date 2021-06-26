@@ -20,9 +20,13 @@ namespace Glacier
         virtual void GiveAllItemsInGroup(ZGROUP* group);
         virtual void GiveAllItems();
         virtual void CreateTakeActions();
-        virtual void GetItemFromItemTemplate(ZItemTemplate* itemTemplate, bool);
+        virtual int GetItemFromItemTemplate(ZItemTemplate* itemTemplate, bool);
         virtual REFTAB32* GetInventoryList();
         virtual void TransferInventoryTo(ZGEOM* target);
+
+        // api
+        void AddItem(Glacier::ZREF itemREF);
+        void RemoveItem(Glacier::ZREF itemREF);
 
         // data
         int field_30;

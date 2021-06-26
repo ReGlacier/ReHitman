@@ -6,7 +6,6 @@
 namespace Hitman::BloodMoney
 {
     class ZWINDOWS;
-    struct SMouseColi;
 
     class ZWINGROUP : public Glacier::ZGROUP
     {
@@ -14,7 +13,7 @@ namespace Hitman::BloodMoney
         //vftable
         virtual ZWINDOWS* GetSystem();
         virtual void WndMessage(Glacier::ZWMEVENT*);
-        virtual void GetMouseColi(SMouseColi*, float*, float*);
+        virtual void GetMouseColi(Glacier::SMouseColi*, float*, float*);
         virtual void RecalcMaxMin();
         virtual void CalcRealCenSize(float*, float*);
         virtual void SetText(const char*);

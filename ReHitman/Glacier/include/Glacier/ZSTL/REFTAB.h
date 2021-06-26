@@ -5,6 +5,12 @@
 
 namespace Glacier
 {
+    struct RefRun {
+        int m_field0;
+        int m_field4;
+        int m_field8;
+    };
+
     class REFTAB
     {
     public:

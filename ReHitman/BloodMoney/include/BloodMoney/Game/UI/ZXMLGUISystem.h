@@ -19,5 +19,8 @@ namespace Hitman::BloodMoney
         /// vftable
         virtual void SetFocus();
         virtual void AddOtherWindowCount(int);
+
+        // api
+        ZWINDOW* GetTopWindow();
     };
 }

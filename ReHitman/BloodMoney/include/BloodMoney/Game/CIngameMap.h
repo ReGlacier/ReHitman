@@ -147,7 +147,7 @@ namespace Hitman::BloodMoney
         char field_2A3;
         int field_02A4;
         int field_02A8;
-        SMapGroup *m_currentMapGroup;
+        SMapGroup* m_currentMapGroup;
         int field_02B0;
         int field_02B4;
         int field_02B8;

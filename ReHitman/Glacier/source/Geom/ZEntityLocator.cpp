@@ -3,6 +3,10 @@
 
 namespace Glacier
 {
+    void ZEntityLocator::DoInit() {
+        ((void*(__thiscall*)(ZEntityLocator*))(G1ConfigurationService::G1API_FunctionAddress_ZBaseGeom_DoInit))(this);
+    }
+
     ZGROUP* ZEntityLocator::ParentGroup() {
         return ((ZGROUP*(__thiscall*)(ZEntityLocator*))(G1ConfigurationService::G1API_FunctionAddress_ZBaseGeom_ParentGroup))(this);
     }
