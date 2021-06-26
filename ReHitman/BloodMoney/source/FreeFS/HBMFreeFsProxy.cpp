@@ -118,7 +118,7 @@ namespace Hitman::BloodMoney::FreeFS {
             fileSize = ftell(fp); //save the endpoint
             fclose(fp);
 
-            spdlog::info("FsZip::getFileSize[0x{:08X}]| Got file size {} from fs {}", reinterpret_cast<std::intptr_t>(this), fileSize, path);
+            //spdlog::info("FsZip::getFileSize[0x{:08X}]| Got file size {} from fs {}", reinterpret_cast<std::intptr_t>(this), fileSize, path);
             return fileSize;
         }
 
@@ -127,7 +127,7 @@ namespace Hitman::BloodMoney::FreeFS {
         auto original = (FsZip_getFileSize_t)Consts::FsZip_GetFileSize_OriginalPtr;
         int result = original(reinterpret_cast<Glacier::FsZip_t*>(this), name);
 
-        spdlog::warn("FsZip::getFileSize[0x{:08X}]| Got file size {} from ZIP {}", reinterpret_cast<std::intptr_t>(this), result, path);
+        //spdlog::warn("FsZip::getFileSize[0x{:08X}]| Got file size {} from ZIP {}", reinterpret_cast<std::intptr_t>(this), result, path);
         return result;
     }
 }
