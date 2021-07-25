@@ -56,12 +56,12 @@ namespace Hitman::BloodMoney::FreeFS {
         if (fileName[0] == '*')
         {
             fileName = findFileInFolderRecursively(
-                    fmt::format("UnpackedScenes\\{}\\{}", sceneName, zipPackageFileName),
+                    fmt::format("UnpackedScenes\\{}\\{}", sceneName.data(), zipPackageFileName.data()),
                     fileName.substr(1, fileName.length())
             );
         }
 
-        std::string path = fmt::format(R"(UnpackedScenes\{}\{}\{})", sceneName, zipPackageFileName, fileName);
+        std::string path = fmt::format(R"(UnpackedScenes\{}\{}\{})", sceneName.data(), zipPackageFileName.data(), fileName.data());
 
         FILE* fp = fopen(path.c_str(), "rb");
         if (fp)
@@ -77,11 +77,11 @@ namespace Hitman::BloodMoney::FreeFS {
 
             const int readyBytes = fread(dest, 1, fileSize, fp);
             fclose(fp);
-            spdlog::info("FsZip::readContents| Read file from fs {} (got bytes {})", path, readyBytes);
+            spdlog::info("FsZip::readContents| Read file from fs {} (got bytes {})", path.data(), readyBytes);
             return readyBytes;
         }
 
-        spdlog::warn("FsZip::readContents| Read file from ZIP {}", path);
+        spdlog::warn("FsZip::readContents| Read file from ZIP {}", path.data());
 
         // original code
         typedef int(__thiscall* FsZip_read_t)(Glacier::FsZip_t*, const char*, void*, int, int);
@@ -103,12 +103,12 @@ namespace Hitman::BloodMoney::FreeFS {
         if (fileName[0] == '*')
         {
             fileName = findFileInFolderRecursively(
-                    fmt::format("UnpackedScenes\\{}\\{}", sceneName, zipPackageFileName),
+                    fmt::format("UnpackedScenes\\{}\\{}", sceneName.data(), zipPackageFileName.data()),
                     fileName.substr(1, fileName.length())
             );
         }
 
-        std::string path = fmt::format(R"(UnpackedScenes\{}\{}\{})", sceneName, zipPackageFileName, fileName);
+        std::string path = fmt::format(R"(UnpackedScenes\{}\{}\{})", sceneName.data(), zipPackageFileName.data(), fileName.data());
 
         FILE* fp = fopen(path.c_str(), "rb");
         if (fp)
@@ -118,7 +118,7 @@ namespace Hitman::BloodMoney::FreeFS {
             fileSize = ftell(fp); //save the endpoint
             fclose(fp);
 
-            spdlog::info("FsZip::getFileSize| Got file size {} from fs {}", fileSize, path);
+            spdlog::info("FsZip::getFileSize| Got file size {} from fs {}", fileSize, path.data());
             return fileSize;
         }
 
@@ -127,7 +127,7 @@ namespace Hitman::BloodMoney::FreeFS {
         auto original = (FsZip_getFileSize_t)Consts::FsZip_GetFileSize_OriginalPtr;
         int result = original(reinterpret_cast<Glacier::FsZip_t*>(this), name);
 
-        spdlog::warn("FsZip::getFileSize| Got file size {} from ZIP {}", result, path);
+        spdlog::warn("FsZip::getFileSize| Got file size {} from ZIP {}", result, path.data());
         return result;
     }
 }

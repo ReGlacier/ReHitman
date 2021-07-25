@@ -38,7 +38,7 @@ namespace Hitman::BloodMoney
                     spdlog::info("Patch {} applied!", patch->GetName().data());
                     if (!patch->IsApplied())
                     {
-                        spdlog::error("BAD PATCH IMPLEMENTATION! PATCH {} MUST BE APPLIED BUT IT DOESN'T!", patch->GetName());
+                        spdlog::error("BAD PATCH IMPLEMENTATION! PATCH {} MUST BE APPLIED BUT IT DOESN'T!", patch->GetName().data());
                         continue;
                     }
                 }

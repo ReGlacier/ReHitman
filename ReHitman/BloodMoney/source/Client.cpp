@@ -171,7 +171,7 @@ namespace Hitman::BloodMoney
                 return;
             }
 
-            spdlog::info("Module: {} base address at {:08x} of size {:08x}", mod->getName(), mod->getBaseAddress(), mod->getSize());
+            spdlog::info("Module: {} base address at {:08x} of size {:08x}", mod->getName().data(), mod->getBaseAddress(), mod->getSize());
         };
 
         m_selfProcess = std::make_shared<HF::Win32::Process>(kProcessName);
@@ -179,7 +179,7 @@ namespace Hitman::BloodMoney
 
         if (!m_selfProcess->isValid())
         {
-            spdlog::error("Failed to locate {} process", kProcessName);
+            spdlog::error("Failed to locate {} process", kProcessName.data());
             return false;
         }
 
@@ -193,7 +193,7 @@ namespace Hitman::BloodMoney
         m_d3d9Module = m_selfProcess->getModule(kDirectX9DllName);
         if (!m_d3d9Module)
         {
-            spdlog::error("Failed to locate {} module!", kDirectX9DllName);
+            spdlog::error("Failed to locate {} module!", kDirectX9DllName.data());
             return false;
         }
 
