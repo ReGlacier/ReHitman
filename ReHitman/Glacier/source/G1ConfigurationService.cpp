@@ -65,6 +65,13 @@ namespace Glacier
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZAction_Show                        = G1ConfigurationService::kNotConfiguredOption;
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZAction_Hide                        = G1ConfigurationService::kNotConfiguredOption;
 
+    std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZCameraSpace_AssignOperator         = G1ConfigurationService::kNotConfiguredOption;
+    std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZCameraSpace_IsMirror               = G1ConfigurationService::kNotConfiguredOption;
+    std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZCameraSpace_Proj2D                 = G1ConfigurationService::kNotConfiguredOption;
+    std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZCameraSpace_Proj3D                 = G1ConfigurationService::kNotConfiguredOption;
+    std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZCameraSpace_GetLocalMatPos         = G1ConfigurationService::kNotConfiguredOption;
+    std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZCameraSpace_TransformInversMatPos  = G1ConfigurationService::kNotConfiguredOption;
+
     std::intptr_t G1ConfigurationService::G1API_InstanceAddress_ZEngineGeomControl                  = G1ConfigurationService::kNotConfiguredOption;
 
     std::intptr_t G1ConfigurationService::G1API_InstanceAddress_CConfiguration_bSubtitles           = G1ConfigurationService::kNotConfiguredOption;

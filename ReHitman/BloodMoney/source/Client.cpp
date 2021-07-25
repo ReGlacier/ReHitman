@@ -122,6 +122,13 @@ namespace Hitman::BloodMoney
 
         Glacier::G1ConfigurationService::G1API_InstanceAddress_ZEngineGeomControl                   = 0x007F5AA8;
         Glacier::G1ConfigurationService::G1API_InstanceAddress_CConfiguration_bSubtitles            = 0x008ACA9C;
+
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZCameraSpace_AssignOperator          = 0x00439DE0;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZCameraSpace_IsMirror                = 0x00439C90;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZCameraSpace_Proj2D                  = 0x00439D30;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZCameraSpace_Proj3D                  = 0x00439CF0;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZCameraSpace_GetLocalMatPos          = 0x00439DB0;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZCameraSpace_TransformInversMatPos   = 0x00439FC0;
 #pragma endregion
 #pragma region BloodMoney Configuration Table
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZPathFollower_GetClosestWaypoint      = 0x00654450;
