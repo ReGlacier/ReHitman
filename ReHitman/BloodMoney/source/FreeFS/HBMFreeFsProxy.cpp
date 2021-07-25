@@ -77,11 +77,11 @@ namespace Hitman::BloodMoney::FreeFS {
 
             const int readyBytes = fread(dest, 1, fileSize, fp);
             fclose(fp);
-            spdlog::info("FsZip::readContents[0x{:08X}]| Read file from fs {} (got bytes {})", reinterpret_cast<std::intptr_t>(this), path, readyBytes);
+            spdlog::info("FsZip::readContents| Read file from fs {} (got bytes {})", path, readyBytes);
             return readyBytes;
         }
 
-        spdlog::warn("FsZip::readContents[0x{:08X}]| Read file from ZIP {}", reinterpret_cast<std::intptr_t>(this), path);
+        spdlog::warn("FsZip::readContents| Read file from ZIP {}", path);
 
         // original code
         typedef int(__thiscall* FsZip_read_t)(Glacier::FsZip_t*, const char*, void*, int, int);
@@ -118,7 +118,7 @@ namespace Hitman::BloodMoney::FreeFS {
             fileSize = ftell(fp); //save the endpoint
             fclose(fp);
 
-            spdlog::info("FsZip::getFileSize[0x{:08X}]| Got file size {} from fs {}", reinterpret_cast<std::intptr_t>(this), fileSize, path);
+            spdlog::info("FsZip::getFileSize| Got file size {} from fs {}", fileSize, path);
             return fileSize;
         }
 
@@ -127,7 +127,7 @@ namespace Hitman::BloodMoney::FreeFS {
         auto original = (FsZip_getFileSize_t)Consts::FsZip_GetFileSize_OriginalPtr;
         int result = original(reinterpret_cast<Glacier::FsZip_t*>(this), name);
 
-        spdlog::warn("FsZip::getFileSize[0x{:08X}]| Got file size {} from ZIP {}", reinterpret_cast<std::intptr_t>(this), result, path);
+        spdlog::warn("FsZip::getFileSize| Got file size {} from ZIP {}", result, path);
         return result;
     }
 }
