@@ -1,21 +1,21 @@
 #pragma once
 
 #include <Glacier/Geom/ZSTDOBJ.h>
+#include <Glacier/ZDrawBuffer.h>
+#include <Glacier/ZCameraSpace.h>
 
 namespace Hitman::BloodMoney
 {
     using SPRITETYPE = int;
-    class ZDrawBuffer;
-    class ZCameraSpace;
 
     class ZWINOBJ : public Glacier::ZSTDOBJ {
     public:
         // vftable
         virtual void CreateSpriteArray(uint32_t, uint32_t, SPRITETYPE);
         virtual void FreeSpriteArray(uint32_t);
-        virtual void DrawRaw(ZDrawBuffer*, float const*, float const*, float const*, float);
-        virtual void Draw(ZDrawBuffer *, ZCameraSpace*, float const*, float const*);
-        virtual void Draw(ZDrawBuffer*, ZCameraSpace*, Glacier::ZMat3x3* transform, Glacier::Vector3* position, unsigned char);
+        virtual void DrawRaw(Glacier::ZDrawBuffer*, float const*, float const*, float const*, float);
+        virtual void Draw(Glacier::ZDrawBuffer *, Glacier::ZCameraSpace*, float const*, float const*);
+        virtual void Draw(Glacier::ZDrawBuffer*, Glacier::ZCameraSpace*, Glacier::ZMat3x3* transform, Glacier::Vector3* position, unsigned char);
         virtual void RecalcMaxMin();
         virtual void GetMouseColi(Glacier::SMouseColi*, float*, float*);
         virtual void RemoveGeometry();
