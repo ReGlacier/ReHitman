@@ -9,7 +9,7 @@ namespace Glacier {
         // data
         Matrix3x3 matrix;
         Vector3 position;
-        // NOTE: There are not all class members, class looks bigger than 3*3*4 + 4*3 bytes (see operator= impl)
+        char sub[512];  /// That's should be enough, I guess
 
         // operators
         ZCameraSpace& operator=(ZCAMERA* pCamera);

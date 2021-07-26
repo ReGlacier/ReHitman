@@ -4,6 +4,10 @@
 
 namespace Glacier {
     ZCameraSpace& ZCameraSpace::operator=(ZCAMERA* pCamera) {
+        if (!pCamera) {
+            return *this;
+        }
+
         assert(G1ConfigurationService::G1API_FunctionAddress_ZCameraSpace_AssignOperator != G1ConfigurationService::kNotConfiguredOption);
         if (G1ConfigurationService::G1API_FunctionAddress_ZCameraSpace_AssignOperator != G1ConfigurationService::kNotConfiguredOption)
         {
