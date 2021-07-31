@@ -8,14 +8,16 @@
 
 namespace Hitman::BloodMoney
 {
+    struct ZFONT {};
+
     class ZCHAROBJ : public ZWINOBJ
     {
     public:
         // vftable
         virtual void CreateGeometry();
         virtual void SetFont(ZFONT*);
-        virtual void SetText(char const*, uint32_t);
         virtual void SetText(char const*);
+        virtual void SetText(char const*, uint32_t);
         virtual void SetTextId(char const*, char const*);
         virtual void Clear();
         virtual int GetCharPosition(int);

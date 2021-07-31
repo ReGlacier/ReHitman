@@ -17,7 +17,7 @@ namespace Hitman::BloodMoney
         virtual void Draw(Glacier::ZDrawBuffer *, Glacier::ZCameraSpace*, float const*, float const*);
         virtual void Draw(Glacier::ZDrawBuffer*, Glacier::ZCameraSpace*, Glacier::ZMat3x3* transform, Glacier::Vector3* position, unsigned char);
         virtual void RecalcMaxMin();
-        virtual void GetMouseColi(Glacier::SMouseColi*, float*, float*);
+        virtual void GetMouseColi(Glacier::Vector4*, float*, float*);
         virtual void RemoveGeometry();
         virtual void LoadSaveGeometry(Glacier::ZPackedInput*, bool);
         virtual void SetDrawMode(uint32_t, int);
@@ -33,9 +33,9 @@ namespace Hitman::BloodMoney
          */
         virtual int32_t CalcDrawMode(int a2, int a3);
         virtual void SetDrawing();
-        virtual void SetColor(uint32_t);
         virtual void SetColor(uint32_t, bool);
         virtual void SetColor(Glacier::Vector3* pColor); // Vec3F or other
+        virtual void SetColor(uint32_t);
         virtual void SetAlpha(uint8_t);
         virtual void SetScale(Glacier::Vector2* scale, bool /* unused */);
         virtual void SetAlignment(uint8_t alignType);
