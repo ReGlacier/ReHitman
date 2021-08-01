@@ -24,10 +24,17 @@ namespace Glacier
     {
     public:
         //vftable
-        virtual void Release(bool freeMem);
-        virtual int Unknown1(SUnknown1* pUnknown);
-        virtual void Unknown2();
-        virtual void Unknown3();
+        virtual void Release(bool freeMem);         //+0x0
+        virtual int Unknown1(SUnknown1* pUnknown);  //+0x4
+        virtual void Unknown2();                    //+0x8
+        virtual void Unknown3();                    //+0xC
+        virtual void Unknown4();                    //+0x10
+        virtual void Unknown5();                    //+0x14
+        virtual void Unknown6();                    //+0x18
+        virtual void Unknown7();                    //+0x1C
+        virtual void Unknown8();                    //+0x20
+        virtual void Unknown9();                    //+0x24
+        virtual ZEntityLocator* GetEntityLocator(); //+0x28
         // Not completed
 
         //data

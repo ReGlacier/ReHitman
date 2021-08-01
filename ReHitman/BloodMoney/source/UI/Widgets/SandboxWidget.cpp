@@ -70,6 +70,9 @@ namespace Hitman::BloodMoney
         auto engineDb = sysInterface->m_engineDataBase;
         if (!engineDb) { return; }
 
+        auto sceneCom = engineDb->GetSceneCom();
+        if (!sceneCom) { return; }
+
         auto renderDll = Glacier::getInterface<Glacier::ZRenderWintelD3DDll>(Globals::kD3DDllAddr);
         if (!renderDll) { return; }
 

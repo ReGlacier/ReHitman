@@ -4,12 +4,11 @@
 #include <BloodMoney/Game/UI/UIFWD.h>
 #include <Glacier/ZSTL/ZMath.h>
 #include <BloodMoney/Game/UI/ZWINOBJ.h>
+#include <BloodMoney/Game/UI/ZFONT.h>
 #include <Glacier/ZSTL/ZMemory.h>
 
 namespace Hitman::BloodMoney
 {
-    struct ZFONT {};
-
     class ZCHAROBJ : public ZWINOBJ
     {
     public:

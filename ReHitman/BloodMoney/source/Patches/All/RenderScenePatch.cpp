@@ -1,5 +1,12 @@
 #include <BloodMoney/Patches/All/RenderScenePatch.h>
 #include <BloodMoney/Delegates/RenderDelegateManager.h>
+#include <BloodMoney/Game/Globals.h>
+#include <Glacier/ZEngineDataBase.h>
+#include <Glacier/ZSysInterfaceWintel.h>
+#include <Glacier/Geom/ZGROUP.h>
+#include <Glacier/Geom/ZGEOM.h>
+#include <Glacier/Geom/ZEntityLocator.h>
+#include <Glacier/ZRenderEntry.h>
 #include <Glacier/ZCAMERA.h>
 #include <spdlog/spdlog.h>
 
@@ -12,42 +19,35 @@
 namespace Hitman::BloodMoney {
     namespace Callbacks
     {
-        static void __stdcall OnDrawBufferViewUpdate(Glacier::ZDrawBuffer* pDrawBuffer, Glacier::ZCameraSpace* pCameraSpace) {
-            CAPTURE_THIS(int, savedThis)
+        static void __stdcall OnDrawBufferViewUpdate(
+                Glacier::ZRenderEntry* pRenderCameraEntry,
+                Glacier::ZDrawBuffer* pDrawBuffer,
+                Glacier::ZCameraSpace* pCameraSpace,
+                Glacier::ZRenderEntry* pRenderEntry
+        )
+        {
+            if (!pDrawBuffer || !pCameraSpace || !pRenderEntry || !pRenderCameraEntry) {
+                return;
+            }
 
-            // Invoke original function #56 of savedThis thing
+            Glacier::ZEntityLocator* pEntityLocator = pRenderEntry->GetEntityLocator();
+            if (!pEntityLocator) {
+                return;
+            }
+
+            auto pGeom = reinterpret_cast<Glacier::ZGEOM*>(pEntityLocator->m_assignedTo);
+            if (!pGeom) {
+                return;
+            }
+
+            spdlog::info("CAMERA: {}", pRenderCameraEntry->GetEntityLocator()->entityName);
+
             using OriginalType = int;
             HF::Hook::VFHook<OriginalType>::invoke<void, Glacier::ZDrawBuffer*, Glacier::ZCameraSpace*>(
-                    reinterpret_cast<std::intptr_t*>(savedThis),
+                    reinterpret_cast<std::intptr_t*>(pGeom),
                     56,
                     pDrawBuffer,
                     pCameraSpace);
-
-            // Custom things
-            static ZLINEOBJ* pCustomLine = nullptr;
-            if (!pCustomLine) {
-                using Allocate_t = ZLINEOBJ*(__cdecl*)();
-                auto allocateLineObj = (Allocate_t)0x005558E0;
-
-                pCustomLine = allocateLineObj();
-                spdlog::info("Allocated new ZLINEOBJ at {:08X}", ((int)pCustomLine));
-
-                ZFONT* pFont = reinterpret_cast<ZFONT*>(Glacier::ZGEOM::RefToPtr(0x3EB));
-                pCustomLine->SetFont(pFont);
-
-                pCustomLine->SetWidth(pCustomLine->GetStringWidth("Hello world from ReHitman!", 26));
-                pCustomLine->SetText("Hello world from ReHitman!");
-
-                pCustomLine->SetPos(200.f, 25.f, 0.f);
-                pCustomLine->SetColor(0xFFFF0000);
-
-                Glacier::ZVector2 sv;
-                sv.x = -1.0f;
-                sv.y = 1.0f;
-                pCustomLine->SetScale(&sv, true);
-            }
-
-            pCustomLine->DrawBufferViewUpdate(pDrawBuffer, pCameraSpace);
         }
     }
 
@@ -58,17 +58,22 @@ namespace Hitman::BloodMoney {
     bool RenderScenePatch::Apply(const ModPack& modules) {
         if (auto process = modules.process.lock())
         {
-            //TODO: Write 3 hooks to invoke our delegates
-            process->fillMemory(0x004B9FBA, HF::X86::NOP, 6);
+            process->fillMemory(0x004B9F9F, HF::X86::NOP, 33);
 
-            m_patch = HF::Hook::HookFunction<void(__stdcall*)(Glacier::ZDrawBuffer*, Glacier::ZCameraSpace*), 6>(
+            m_patch = HF::Hook::HookFunction<void(__stdcall*)(Glacier::ZRenderEntry*, Glacier::ZDrawBuffer*, Glacier::ZCameraSpace*, Glacier::ZRenderEntry*), 6>(
                     process,
                     0x004B9FBA,
                     &Callbacks::OnDrawBufferViewUpdate,
                     {
+                        0x8B, 0x4C, 0x24, 0x24,                     //mov    ecx,DWORD PTR [esp+0x24]
+                        0x51,                                       //push   ecx ; pointer to current entry to draw
+                        0x8D, 0x94, 0x24, 0xD0, 0x01, 0x00, 0x00,   //lea    edx,[esp+0x1cc+4]
+                        0x52,                                       //push   edx ; pointer to camera space
+                        0x8D, 0x54, 0x24, 0x30,                     //lea    edx,[esp+0x2c+4]
+                        0x52,                                       //push   edx ; pointer to draw buffer
+                        0x56                                        //push   esi ; pointer to render camera entry
                     },
-                    {
-                    });
+                    {});
 
             if (!m_patch->setup())
             {

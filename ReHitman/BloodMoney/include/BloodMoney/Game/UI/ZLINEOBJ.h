@@ -14,6 +14,9 @@ namespace Hitman::BloodMoney
         virtual void SetWidth(int);
         virtual float GetWidth();
 
+        // custom method
+        static ZLINEOBJ* Create();
+
         // data (total size is 0xAC, base size is 0xA0)
         int m_fieldA0;
         int m_fieldA4;

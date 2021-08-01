@@ -158,6 +158,9 @@ namespace Hitman::BloodMoney
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_CKeycardReader_GetKeyCard             = 0x005C8640;
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_CKeycardReader_GetItemTemplateFromName = 0x005C8750;
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_CKeycardReader_IsKeyCardValid         = 0x005C7DB0;
+        BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZLINEOBJ_FactoryConstructor           = 0x005558E0;
+        BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZTTFONT_FactoryConstructor            = 0x0055B480;
+        BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZKerningFont_FactoryConstructor       = 0x0055B5F0;
         BloodMoney::BMConfigurationService::BMAPI_GlobalVariableAddress_ZVCR_m_msgStealTape             = 0x009B3C24;
 #pragma endregion
         return true;

@@ -36,6 +36,9 @@ namespace Hitman::BloodMoney
         static std::intptr_t BMAPI_FunctionAddress_CKeycardReader_GetKeyCard;
         static std::intptr_t BMAPI_FunctionAddress_CKeycardReader_GetItemTemplateFromName;
         static std::intptr_t BMAPI_FunctionAddress_CKeycardReader_IsKeyCardValid;
+        static std::intptr_t BMAPI_FunctionAddress_ZLINEOBJ_FactoryConstructor;
+        static std::intptr_t BMAPI_FunctionAddress_ZTTFONT_FactoryConstructor;
+        static std::intptr_t BMAPI_FunctionAddress_ZKerningFont_FactoryConstructor;
         static std::intptr_t BMAPI_GlobalVariableAddress_ZVCR_m_msgStealTape;
     };
 }
