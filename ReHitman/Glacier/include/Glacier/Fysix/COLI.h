@@ -17,7 +17,7 @@ namespace Glacier
         int m_field28;
         int m_field2C;
         int m_field30;
-        int m_field34;
+        Glacier::ZREF m_unknownREF3C;
         int m_field38;
         int m_field3C;
         int m_field40;

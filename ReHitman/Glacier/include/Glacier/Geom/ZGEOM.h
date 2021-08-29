@@ -59,9 +59,9 @@ namespace Glacier
         virtual void FreeExData();
         virtual void CopyExData(ZGEOM const*);
         virtual void GetChunkData(int);
-        virtual void RecurGetNext(ZBaseGeom const**);
+        virtual void RecurGetNext(ZEntityLocator**);
         virtual void DisableParentBoundAdjust();
-        virtual void ExpandBounds(float *,float *,float *,ZBaseGeom *);
+        virtual void ExpandBounds(float *,float *,float *,ZEntityLocator *);
         virtual void SetMat(const Glacier::ZMat3x3*);                    //#35 at 0x0076A200
         virtual void SetPos(const Glacier::ZVector3*);                   //#36 at 0x0076A204
         virtual void SetMatPos(const Glacier::ZMat3x3* mat, const Glacier::Vector3* pos);               //#37 at 0x0076A208
@@ -77,13 +77,13 @@ namespace Glacier
         virtual void SetMoving(bool);
         virtual void RequestCustomDraw();
         virtual void HasOwnerDraw();
-        virtual void OwnerDraw(ZBaseGeom *,uint,ZDrawBuffer *,ZCAMERA *,float const*,float const*,void const*);
-        virtual void CorrectOwnerDrawMatrix(float *,float *,ZBaseGeom *,uint);
-        virtual void CorrectOwnerDrawPartMatrix(ZMat4x4 *,ZBaseGeom *,ZBone *);
+        virtual void OwnerDraw(ZEntityLocator *,uint,ZDrawBuffer *,ZCAMERA *,float const*,float const*,void const*);
+        virtual void CorrectOwnerDrawMatrix(float *,float *,ZEntityLocator *,uint);
+        virtual void CorrectOwnerDrawPartMatrix(ZMat4x4 *,ZEntityLocator *,ZBone *);
         virtual void WantDrawBufferControl();
         virtual void DrawUpdate();
         virtual void DrawBufferViewUpdate(ZDrawBuffer *,ZCameraSpace *);
-        virtual void DrawBufferViewUpdate(ZDrawBuffer *,ZBaseGeom *,uint);
+        virtual void DrawBufferViewUpdate(ZDrawBuffer *,ZEntityLocator *,uint);
         virtual void WantViewPrimHideUnhideRequest();
         virtual void WantViewPrimHide(uchar,bool);
         virtual void WantViewPrimHideMirrors(uchar);

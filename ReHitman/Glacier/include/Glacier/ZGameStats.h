@@ -8,5 +8,7 @@ namespace Glacier
     {
     public:
         //???
+        void IncreaseCurrentShotCount();
+        void DecreaseCurrentShotCount();
     };
 }

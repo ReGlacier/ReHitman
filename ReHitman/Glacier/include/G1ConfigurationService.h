@@ -50,6 +50,7 @@ namespace Glacier
         static std::intptr_t G1API_FunctionAddress_ZHash_int_SMatPos_Clear;
         static std::intptr_t G1API_FunctionAddress_ZHash_int_SMatPos_Find;
         static std::intptr_t G1API_FunctionAddress_ZEngineDataBase_GetSceneCom;
+        static std::intptr_t G1API_FunctionAddress_ZEngineDataBase_SRefToPtr;
         static std::intptr_t G1API_FunctionAddress_CInventory_AddItem;
         static std::intptr_t G1API_FunctionAddress_CInventory_RemoveItem;
         static std::intptr_t G1API_FunctionAddress_ZSNDOBJ_AttachToDefaultRoom;
@@ -64,6 +65,8 @@ namespace Glacier
         static std::intptr_t G1API_FunctionAddress_ZCameraSpace_Proj3D;
         static std::intptr_t G1API_FunctionAddress_ZCameraSpace_GetLocalMatPos;
         static std::intptr_t G1API_FunctionAddress_ZCameraSpace_TransformInversMatPos;
+        static std::intptr_t G1API_FunctionAddress_CCom_GetpVal;
+        static std::intptr_t G1API_FunctionAddress_CCom_GetVal;
 
         static std::intptr_t G1API_InstanceAddress_ZEngineGeomControl;
 

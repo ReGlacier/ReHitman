@@ -35,6 +35,7 @@ namespace HF
     {
         static constexpr uint8_t  NOP       = 0x90;
         static constexpr uint8_t  INT3      = 0xCC;
+        static constexpr uint8_t  RETN      = 0xC3;
         static constexpr uint8_t  CALL_NEAR = 0xE8;
         static constexpr uint8_t  JMP_NEAR  = 0xE9;
         static constexpr uint16_t CALL_ABS  = 0xFF15;

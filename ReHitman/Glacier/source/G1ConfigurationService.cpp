@@ -51,6 +51,7 @@ namespace Glacier
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZHash_int_SMatPos_Find              = G1ConfigurationService::kNotConfiguredOption;
 
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZEngineDataBase_GetSceneCom         = G1ConfigurationService::kNotConfiguredOption;
+    std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZEngineDataBase_SRefToPtr           = G1ConfigurationService::kNotConfiguredOption;
 
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_CInventory_AddItem                  = G1ConfigurationService::kNotConfiguredOption;
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_CInventory_RemoveItem               = G1ConfigurationService::kNotConfiguredOption;
@@ -71,6 +72,8 @@ namespace Glacier
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZCameraSpace_Proj3D                 = G1ConfigurationService::kNotConfiguredOption;
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZCameraSpace_GetLocalMatPos         = G1ConfigurationService::kNotConfiguredOption;
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZCameraSpace_TransformInversMatPos  = G1ConfigurationService::kNotConfiguredOption;
+    std::intptr_t G1ConfigurationService::G1API_FunctionAddress_CCom_GetpVal                        = G1ConfigurationService::kNotConfiguredOption;
+    std::intptr_t G1ConfigurationService::G1API_FunctionAddress_CCom_GetVal                         = G1ConfigurationService::kNotConfiguredOption;
 
     std::intptr_t G1ConfigurationService::G1API_InstanceAddress_ZEngineGeomControl                  = G1ConfigurationService::kNotConfiguredOption;
 

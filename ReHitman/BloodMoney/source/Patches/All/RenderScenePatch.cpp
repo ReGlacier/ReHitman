@@ -1,5 +1,4 @@
 #include <BloodMoney/Patches/All/RenderScenePatch.h>
-#include <BloodMoney/Delegates/RenderDelegateManager.h>
 #include <BloodMoney/Game/Globals.h>
 #include <Glacier/ZEngineDataBase.h>
 #include <Glacier/ZSysInterfaceWintel.h>
@@ -10,11 +9,6 @@
 #include <Glacier/ZCAMERA.h>
 #include <spdlog/spdlog.h>
 
-#define CAPTURE_THIS(type, varname) \
-    static type* varname = { nullptr }; \
-    __asm { mov varname, ecx }
-
-#include <BloodMoney/Game/UI/ZLINEOBJ.h>
 
 namespace Hitman::BloodMoney {
     namespace Callbacks
@@ -40,14 +34,16 @@ namespace Hitman::BloodMoney {
                 return;
             }
 
-            spdlog::info("CAMERA: {}", pRenderCameraEntry->GetEntityLocator()->entityName);
-
             using OriginalType = int;
             HF::Hook::VFHook<OriginalType>::invoke<void, Glacier::ZDrawBuffer*, Glacier::ZCameraSpace*>(
                     reinterpret_cast<std::intptr_t*>(pGeom),
                     56,
                     pDrawBuffer,
                     pCameraSpace);
+        }
+
+        static void __stdcall Proxy() {
+
         }
     }
 
@@ -58,6 +54,8 @@ namespace Hitman::BloodMoney {
     bool RenderScenePatch::Apply(const ModPack& modules) {
         if (auto process = modules.process.lock())
         {
+            //Function in vtbl #4
+            //8B 4C 24 24 8B 11 FF 52 28 8B 48 60 8B 01 8D 94 24 ? ? ? ? 52 8D 54 24 2C 52 FF 90 ? ? ? ?
             process->fillMemory(0x004B9F9F, HF::X86::NOP, 33);
 
             m_patch = HF::Hook::HookFunction<void(__stdcall*)(Glacier::ZRenderEntry*, Glacier::ZDrawBuffer*, Glacier::ZCameraSpace*, Glacier::ZRenderEntry*), 6>(
@@ -80,6 +78,9 @@ namespace Hitman::BloodMoney {
                 spdlog::error("Failed to apply patch for RenderScenePatch (renderer of something)");
                 return false;
             }
+
+            uint8_t buffer[3] = { 0xC2, 0x14, 0x00 };
+            process->writeMemory(0x004B7660, 3, &buffer[0]);
 
             return BasicPatch::Apply(modules);
         }

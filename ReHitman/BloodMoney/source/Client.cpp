@@ -109,6 +109,7 @@ namespace Hitman::BloodMoney
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZHash_int_SMatPos_Find               = 0x00664060;
 
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZEngineDataBase_GetSceneCom          = 0x0045AED0;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZEngineDataBase_SRefToPtr            = 0x0045B280;
 
         Glacier::G1ConfigurationService::G1API_FunctionAddress_CInventory_AddItem                   = 0x005C5400;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_CInventory_RemoveItem                = 0x005C5780;
@@ -130,6 +131,8 @@ namespace Hitman::BloodMoney
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZCameraSpace_Proj3D                  = 0x00439CF0;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZCameraSpace_GetLocalMatPos          = 0x00439DB0;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZCameraSpace_TransformInversMatPos   = 0x00439FC0;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_CCom_GetpVal                         = 0x004267A0;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_CCom_GetVal                          = 0x00426380;
 #pragma endregion
 #pragma region BloodMoney Configuration Table
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZPathFollower_GetClosestWaypoint      = 0x00654450;
@@ -225,6 +228,8 @@ namespace Hitman::BloodMoney
         m_patches->RegisterPatch<ZCutSequencePlayerPatch>();
         m_patches->RegisterPatch<SkinChanger>();
         m_patches->RegisterPatch<FreeFileSystemPatch>();
-        m_patches->RegisterPatch<RenderScenePatch>();
+
+        // temporary disabled
+        //m_patches->RegisterPatch<RenderScenePatch>();
     }
 }

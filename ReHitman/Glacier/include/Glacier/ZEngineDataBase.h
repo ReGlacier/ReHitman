@@ -3,6 +3,7 @@
 #include <Glacier/Glacier.h>
 #include <Glacier/ZLinkedListHeader.hpp>
 #include <Glacier/Geom/ZGEOM.h>
+#include <Glacier/CCom.h>
 
 namespace Glacier
 {
@@ -165,7 +166,8 @@ namespace Glacier
         virtual void LoadPackedStaticGameLevelData(void); //#82
 
         // API
-        std::intptr_t GetSceneCom();
+        CCom* GetSceneCom();
         std::intptr_t GetSceneVar(const char* varname);
+        std::intptr_t SRefToPtr(Glacier::ZREF sref);
     };
 }

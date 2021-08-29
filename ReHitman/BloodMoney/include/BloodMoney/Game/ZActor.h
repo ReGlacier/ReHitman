@@ -45,8 +45,8 @@ namespace Hitman::BloodMoney
         virtual void SetStopDistance(float);
         virtual void SetEndDir(const Glacier::Vector3*);
         virtual const Glacier::Vector3* GetEndDir();
-        virtual void MoveToPosition(float const*,float const*);
-        virtual void SlideToPosition(float const*,float const*);
+        virtual void MoveToPosition(Glacier::ZVector3*, Glacier::ZVector3*);
+        virtual void SlideToPosition(Glacier::ZVector3*, Glacier::ZVector3*);
         virtual void SetPathNotify(float);
         virtual void SetPathNotifySyncToCycle(bool);
         virtual void SetEndAction(bool);

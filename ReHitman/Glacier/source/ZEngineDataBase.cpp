@@ -5,12 +5,12 @@
 
 namespace Glacier
 {
-    std::intptr_t ZEngineDataBase::GetSceneCom()
+    CCom* ZEngineDataBase::GetSceneCom()
     {
         assert(G1ConfigurationService::G1API_FunctionAddress_ZEngineDataBase_GetSceneCom != G1ConfigurationService::kNotConfiguredOption);
         if (G1ConfigurationService::G1API_FunctionAddress_ZEngineDataBase_GetSceneCom != G1ConfigurationService::kNotConfiguredOption)
         {
-            return ((std::intptr_t(__thiscall*)(ZEngineDataBase*))(G1ConfigurationService::G1API_FunctionAddress_ZEngineDataBase_GetSceneCom))(this);
+            return ((CCom*(__thiscall*)(ZEngineDataBase*))(G1ConfigurationService::G1API_FunctionAddress_ZEngineDataBase_GetSceneCom))(this);
         }
 
         return 0;
@@ -25,5 +25,15 @@ namespace Glacier
         }
 
         return HF::Hook::VFHook<CCom_t>::invoke<std::intptr_t, const char*, int>(ccom, 36, varname, 2);
+    }
+
+    std::intptr_t ZEngineDataBase::SRefToPtr(Glacier::ZREF sref) {
+        assert(G1ConfigurationService::G1API_FunctionAddress_ZEngineDataBase_SRefToPtr != G1ConfigurationService::kNotConfiguredOption);
+        if (G1ConfigurationService::G1API_FunctionAddress_ZEngineDataBase_SRefToPtr != G1ConfigurationService::kNotConfiguredOption)
+        {
+            return ((std::intptr_t(__thiscall*)(ZEngineDataBase*, Glacier::ZREF))(G1ConfigurationService::G1API_FunctionAddress_ZEngineDataBase_SRefToPtr))(this, sref);
+        }
+
+        return 0;
     }
 }

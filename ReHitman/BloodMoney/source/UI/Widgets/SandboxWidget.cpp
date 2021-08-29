@@ -50,6 +50,7 @@
 #include <Glacier/ZRenderWintelD3DDll.h>
 #include <Glacier/ZPrimControlWintel.h>
 #include <Glacier/ZEngineGeomControl.h>
+#include <Glacier/CCom.h>
 
 #include <BloodMoney/Game/OnLevel/ZVCR.h>
 
@@ -79,6 +80,9 @@ namespace Hitman::BloodMoney
         auto geomBuffer = Glacier::getInterface<Glacier::ZGeomBuffer>(Globals::kGeomBufferAddr);
         if (!geomBuffer) { return; }
 
+        auto hitman = reinterpret_cast<Glacier::ZLNKWHANDS*>(gameData->m_Hitman3);
+        if (!hitman) return;
+
         ImGui::Begin("Test script");
         if (ImGui::Button("Try to dump few prims")) {
             spdlog::info("Hitman   prim {:08X}", (int)renderDll->m_primControlWintel->GetPrimData(reinterpret_cast<Glacier::ZGEOM*>(gameData->m_Hitman3)->m_baseGeom->m_primitive));
@@ -105,78 +109,76 @@ namespace Hitman::BloodMoney
 
         //-----------------------------------------------------------------------------------------------
         ImGui::Begin("TEST");
-        if (ImGui::Button("Do smth")) {
-            using Func_t = int(__cdecl*)(const char*);
-            auto func = (Func_t)0x006A8960;
+        if (ImGui::Button("Test extract vars")) {
+            auto& ccom = *engineDb->GetSceneCom();
+            Glacier::REFTAB* ccomVars = &engineDb->GetSceneCom()->m_variables;
 
-            Glacier::CConfiguration::SetCanShowSubtitles(true);
-            func("UI HACKED)))");
-        }
+            for (int i = 0; i < ccomVars->Count(); i++) {
+                auto pEnt = reinterpret_cast<Glacier::CCom::Ent*>(ccomVars->operator[](i));
+                const char* sEntName = pEnt->GetKey();
+                std::intptr_t iValue = pEnt->GetValue();
 
-//        if (ImGui::Button("Test VTBL")) {
-//            spdlog::info("WIDTH: {}", gameData->m_OSD->m_pSubtitles->GetWidth());
-//            gameData->m_OSD->m_pSubtitles->SetWidth(300);
-//            Glacier::Vector2 sv;
-//            sv.x = 1.7f;
-//            sv.y = 1.7f;
-//            Glacier::Vector3 clr;
-//            clr.x = 1.f;
-//            clr.y = 0.f;
-//            clr.z = 0.f;
-//            gameData->m_OSD->m_pSubtitles->SetScale(&sv, true);
-//            gameData->m_OSD->m_pSubtitles->SetColor(&clr);
-//            spdlog::info("WIDTH_2: {}", gameData->m_OSD->m_pSubtitles->GetWidth());
-//        }
-//
-//        if (ImGui::Button("Make fun")) {
-//            reinterpret_cast<Glacier::ZIKLNKOBJ*>(gameData->m_Hitman3)->ActivateRagdoll(true, true, true);
-//        }
-
-        {
-            using ZHitman3_GetCurrentElevatorREF_t = Glacier::ZREF(__thiscall*)(void*);
-            auto ZHitman3_GetCurrentElevatorREF = (ZHitman3_GetCurrentElevatorREF_t)0x00600EF0;
-
-            Glacier::ZREF elevatorREF = ZHitman3_GetCurrentElevatorREF(gameData->m_Hitman3);
-            auto pElevatorGroup = elevatorREF ? reinterpret_cast<Glacier::ZGROUP*>(Glacier::ZGEOM::RefToPtr(elevatorREF)) : nullptr;
-
-            if (pElevatorGroup) {
-                if (ImGui::Button("Pause current elevator")) {
-                    // 1. Take MSG from engine db
-                    auto msg = engineDb->RegisterZMsg("PauseElevator", 0, __FILE__, __LINE__);
-
-                    // 2. Send command into the group recursive
-                    pElevatorGroup->SendCommandRecursive(msg, nullptr, nullptr);
-                }
-
-                if (ImGui::Button("UnPause current elevator")) {
-                    // 1. Take MSG from engine db
-                    auto msg = engineDb->RegisterZMsg("UnPauseElevator", 0, __FILE__, __LINE__);
-
-                    // 2. Send command into the group recursive
-                    pElevatorGroup->SendCommandRecursive(msg, nullptr, nullptr);
+                switch (pEnt->m_pTypeInfo->m_eKind) {
+                    case Glacier::CCom::Ent::TypeInfo::EKind::Bool:
+                        spdlog::info("[{}] '{}' = {}", i, sEntName, static_cast<bool>(iValue));
+                        break;
+                    case Glacier::CCom::Ent::TypeInfo::EKind::Char:
+                        spdlog::info("[{}] '{}' = {}", i, sEntName, static_cast<char>(iValue));
+                        break;
+                    case Glacier::CCom::Ent::TypeInfo::EKind::Long:
+                        spdlog::info("[{}] '{}' = {}", i, sEntName, static_cast<int>(iValue));
+                        break;
+                    case Glacier::CCom::Ent::TypeInfo::EKind::Float32:
+                        spdlog::info("[{}] '{}' = {}", i, sEntName, static_cast<float>(iValue));
+                        break;
+                    case Glacier::CCom::Ent::TypeInfo::EKind::Real:
+                        spdlog::info("[{}] '{}' = {:X} (REAL)", i, sEntName, iValue);
+                        break;
+                    case Glacier::CCom::Ent::TypeInfo::EKind::P:
+                        spdlog::info("[{}] '{}' = {:X}", i, sEntName, static_cast<std::intptr_t>(iValue));
+                        break;
+                    case Glacier::CCom::Ent::TypeInfo::EKind::Vec3:
+                        spdlog::info("[{}] '{}' = VEC3? {:X}", i, sEntName, static_cast<std::intptr_t>(iValue));
+                        break;
+                    case Glacier::CCom::Ent::TypeInfo::EKind::Vec3F:
+                        spdlog::info("[{}] '{}' = VEC3F? {:X}", i, sEntName, static_cast<std::intptr_t>(iValue));
+                        break;
+                    case Glacier::CCom::Ent::TypeInfo::EKind::Mat33:
+                        spdlog::info("[{}] '{}' = MAT3x3? {:X}", i, sEntName, static_cast<std::intptr_t>(iValue));
+                        break;
+                    case Glacier::CCom::Ent::TypeInfo::EKind::Mat33F:
+                        spdlog::info("[{}] '{}' = MAT3x3F? {:X}", i, sEntName, static_cast<std::intptr_t>(iValue));
+                        break;
+                    case Glacier::CCom::Ent::TypeInfo::EKind::Str:
+                        spdlog::info("[{}] '{}' = {}", i, sEntName, reinterpret_cast<const char*>(&iValue));
+                        break;
+                    case Glacier::CCom::Ent::TypeInfo::EKind::Blk:
+                        spdlog::info("[{}] '{}' = BLK? {:X}", i, sEntName, static_cast<std::intptr_t>(iValue));
+                        break;
+                    case Glacier::CCom::Ent::TypeInfo::EKind::File:
+                        spdlog::info("[{}] '{}' = FILE? {:X}", i, sEntName, static_cast<std::intptr_t>(iValue));
+                        break;
+                    case Glacier::CCom::Ent::TypeInfo::EKind::Data:
+                        spdlog::info("[{}] '{}' = DATA? {:X}", i, sEntName, static_cast<std::intptr_t>(iValue));
+                        break;
+                    case Glacier::CCom::Ent::TypeInfo::EKind::GREF:
+                        spdlog::info("[{}] '{}' = {:8X} (GEOM REF)", i, sEntName, reinterpret_cast<std::intptr_t>(Glacier::ZGEOM::RefToPtr(iValue)));
+                        break;
+                    case Glacier::CCom::Ent::TypeInfo::EKind::GRFT:
+                        spdlog::info("[{}] '{}' = {:8X} (REF TAB)", i, sEntName, reinterpret_cast<std::intptr_t>(Glacier::ZGEOM::RefToPtr(iValue)));
+                        break;
+                    case Glacier::CCom::Ent::TypeInfo::EKind::ZMSG:
+                        spdlog::info("[{}] '{}' = {} (ZMSG)", i, sEntName, iValue);
+                        break;
+                    case Glacier::CCom::Ent::TypeInfo::EKind::SREF:
+                        spdlog::info("[{}] '{}' = {:X} (SREF?)", i, sEntName, iValue);
+                        break;
+                    default:
+                        spdlog::info("[{}] '{}' = <Bad type info> {:8X}, got type mask: '{:4X}'", i, sEntName, reinterpret_cast<std::intptr_t>(pEnt), pEnt->m_pTypeInfo->m_eKind);
+                        break;
                 }
             }
         }
-
-        if (ImGui::Button("Show custom message")) {
-            gameData->m_OSD->AddInfo("This is very important message for you because you are playing in ReHitman!", true);
-        }
-
-        if (ImGui::Button("Show custom warning")) {
-            gameData->m_OSD->AddWarning("This is very important message for you because you are playing in ReHitman!", true);
-        }
-
-        if (ImGui::Button("Show custom hint")) {
-            gameData->m_OSD->AddHint("New player connected", false, true, 0, false, nullptr);
-        }
-
-        if (ImGui::Button("Pause all actors scripts")) {
-            for (int i = 0; i < gameData->m_ActorsInPoolCount; i++) {
-                auto actorRef = gameData->m_ActorsPool[i]->GetRef();
-                ((void(__cdecl*)(Glacier::ZREF, bool))0x0059C9D0)(actorRef, true);
-            }
-        }
-
         ImGui::End();
     }
 
