@@ -16,7 +16,6 @@ namespace Hitman::BloodMoney
     DECLARE_UNKNOWN_TYPE_PTR(ZHM3GameStats);
     DECLARE_UNKNOWN_TYPE_PTR(N0000163D);
     DECLARE_UNKNOWN_TYPE_PTR(CGlobalCom);
-    DECLARE_UNKNOWN_TYPE_PTR(ZHM3WeaponUpgradeControl);
     DECLARE_UNKNOWN_TYPE_PTR(ZHM3CameraEventCameraClass);
     DECLARE_UNKNOWN_TYPE_PTR(ZClothTracker);
 
@@ -26,6 +25,7 @@ namespace Hitman::BloodMoney
     class ZGui;
     class CIngameMap;
     class ZHM3BriefingControl;
+    class ZHM3WeaponUpgradeControl;
     class ZHM3CameraClass;
     class ZBoidSystem;
 

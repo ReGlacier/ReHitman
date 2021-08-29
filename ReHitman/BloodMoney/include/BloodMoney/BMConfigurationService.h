@@ -39,6 +39,12 @@ namespace Hitman::BloodMoney
         static std::intptr_t BMAPI_FunctionAddress_ZLINEOBJ_FactoryConstructor;
         static std::intptr_t BMAPI_FunctionAddress_ZTTFONT_FactoryConstructor;
         static std::intptr_t BMAPI_FunctionAddress_ZKerningFont_FactoryConstructor;
+        static std::intptr_t BMAPI_FunctionAddress_ZHM3WeaponUpgradeControl_InitWeaponReferences;
+        static std::intptr_t BMAPI_FunctionAddress_ZHM3WeaponUpgradeControl_ApplyDefaultUpgrades;
+        static std::intptr_t BMAPI_FunctionAddress_ZHM3WeaponUpgradeControl_GetWeaponType;
+        static std::intptr_t BMAPI_FunctionAddress_ZHM3ItemWeaponCustom_ApplyUpgrades;
+        static std::intptr_t BMAPI_FunctionAddress_ZHM3ItemWeaponCustom_UpdateWeaponPartDrawStatus;
+        static std::intptr_t BMAPI_FunctionAddress_ZHM3ItemWeaponCustom_ClearUpgrades;
         static std::intptr_t BMAPI_GlobalVariableAddress_ZVCR_m_msgStealTape;
     };
 }

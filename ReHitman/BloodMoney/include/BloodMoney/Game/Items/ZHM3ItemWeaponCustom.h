@@ -11,6 +11,11 @@ namespace Hitman::BloodMoney
         virtual void GetAnims(); //Load anims inside
         virtual void* GetMuzzleVelocity(float);
 
+        // api
+        void ApplyUpgrades(char a1);
+        void UpdateWeaponPartDrawStatus();
+        void ClearUpgrades();
+
         // data (new size is 0x1C0)
         int m_field15C;
         int m_field160;

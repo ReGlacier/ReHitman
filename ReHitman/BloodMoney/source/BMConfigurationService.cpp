@@ -31,5 +31,11 @@ namespace Hitman::BloodMoney
     std::intptr_t BMConfigurationService::BMAPI_FunctionAddress_ZLINEOBJ_FactoryConstructor = BMConfigurationService::kNotConfiguredOption;
     std::intptr_t BMConfigurationService::BMAPI_FunctionAddress_ZTTFONT_FactoryConstructor = BMConfigurationService::kNotConfiguredOption;
     std::intptr_t BMConfigurationService::BMAPI_FunctionAddress_ZKerningFont_FactoryConstructor = BMConfigurationService::kNotConfiguredOption;
+    std::intptr_t BMConfigurationService::BMAPI_FunctionAddress_ZHM3WeaponUpgradeControl_InitWeaponReferences = BMConfigurationService::kNotConfiguredOption;
+    std::intptr_t BMConfigurationService::BMAPI_FunctionAddress_ZHM3WeaponUpgradeControl_ApplyDefaultUpgrades = BMConfigurationService::kNotConfiguredOption;
+    std::intptr_t BMConfigurationService::BMAPI_FunctionAddress_ZHM3WeaponUpgradeControl_GetWeaponType = BMConfigurationService::kNotConfiguredOption;
+    std::intptr_t BMConfigurationService::BMAPI_FunctionAddress_ZHM3ItemWeaponCustom_ApplyUpgrades = BMConfigurationService::kNotConfiguredOption;
+    std::intptr_t BMConfigurationService::BMAPI_FunctionAddress_ZHM3ItemWeaponCustom_UpdateWeaponPartDrawStatus = BMConfigurationService::kNotConfiguredOption;
+    std::intptr_t BMConfigurationService::BMAPI_FunctionAddress_ZHM3ItemWeaponCustom_ClearUpgrades = BMConfigurationService::kNotConfiguredOption;
     std::intptr_t BMConfigurationService::BMAPI_GlobalVariableAddress_ZVCR_m_msgStealTape = BMConfigurationService::kNotConfiguredOption;
 }

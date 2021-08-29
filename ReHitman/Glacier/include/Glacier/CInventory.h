@@ -8,6 +8,8 @@
 
 namespace Glacier
 {
+    class ZItem;
+
     class CInventory : public ZEventBase
     {
     public:
@@ -25,7 +27,7 @@ namespace Glacier
         virtual void TransferInventoryTo(ZGEOM* target);
 
         // api
-        void AddItem(Glacier::ZREF itemREF);
+        ZItem* AddItem(Glacier::ZREF itemREF);
         void RemoveItem(Glacier::ZREF itemREF);
 
         // data

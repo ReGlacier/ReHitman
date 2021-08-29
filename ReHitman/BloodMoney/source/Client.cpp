@@ -164,6 +164,12 @@ namespace Hitman::BloodMoney
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZLINEOBJ_FactoryConstructor           = 0x005558E0;
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZTTFONT_FactoryConstructor            = 0x0055B480;
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZKerningFont_FactoryConstructor       = 0x0055B5F0;
+        BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZHM3WeaponUpgradeControl_InitWeaponReferences = 0x00653820;
+        BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZHM3WeaponUpgradeControl_ApplyDefaultUpgrades = 0x00653A00;
+        BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZHM3WeaponUpgradeControl_GetWeaponType = 0x006535E0;
+        BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZHM3ItemWeaponCustom_ApplyUpgrades = 0x006505E0;
+        BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZHM3ItemWeaponCustom_UpdateWeaponPartDrawStatus = 0x00650450;
+        BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZHM3ItemWeaponCustom_ClearUpgrades = 0x00650450;
         BloodMoney::BMConfigurationService::BMAPI_GlobalVariableAddress_ZVCR_m_msgStealTape             = 0x009B3C24;
 #pragma endregion
         return true;

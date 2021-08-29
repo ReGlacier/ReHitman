@@ -1,4 +1,6 @@
 #include <BloodMoney/Game/CCheat.h>
+#include <BloodMoney/Game/ZHM3WeaponUpgradeControl.h>
+#include <BloodMoney/Game/Items/ZHM3ItemWeaponCustom.h>
 #include <BloodMoney/Game/ZHM3GameData.h>
 #include <BloodMoney/Game/Globals.h>
 
@@ -48,7 +50,19 @@ namespace Hitman::BloodMoney {
         if (!pInventory) {
             spdlog::error("Failed to locate Inventory ZEventBase instance in player (something goes wrong?), player ptr: {:08X}", reinterpret_cast<std::intptr_t>(pGameData->m_Hitman3));
         } else {
-            pInventory->AddItem(rItem);
+            auto pAddedItem = pInventory->AddItem(rItem);
+            if (!pAddedItem) {
+                return;
+            }
+
+            auto eWeaponType = ZHM3WeaponUpgradeControl::GetWeaponType(pAddedItem->m_baseGeom->entityName);
+            if (eWeaponType != EWeaponType::EW_UNKNOWN) { //TODO: Add fix for WA-2000 (It's not classified as 'custom' weapon but it is)
+                auto pCustomItem = reinterpret_cast<ZHM3ItemWeaponCustom*>(pAddedItem);
+
+                //TODO: How to remove fake upgrades from custom gun?
+//                pGameData->m_WeaponUpgradeControl->ApplyDefaultUpgrades(eWeaponType, pCustomItem);
+                pCustomItem->ClearUpgrades();
+            }
         }
     }
 

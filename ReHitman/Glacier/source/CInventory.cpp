@@ -4,12 +4,14 @@
 
 namespace Glacier
 {
-    void CInventory::AddItem(Glacier::ZREF itemREF)
+    Glacier::ZItem* CInventory::AddItem(Glacier::ZREF itemREF)
     {
         assert(G1ConfigurationService::G1API_FunctionAddress_CInventory_AddItem != G1ConfigurationService::kNotConfiguredOption);
         if (G1ConfigurationService::G1API_FunctionAddress_CInventory_AddItem != G1ConfigurationService::kNotConfiguredOption) {
-            ((void(__thiscall*)(Glacier::CInventory*, Glacier::ZREF))(G1ConfigurationService::G1API_FunctionAddress_CInventory_AddItem))(this, itemREF);
+            return ((Glacier::ZItem*(__thiscall*)(Glacier::CInventory*, Glacier::ZREF))(G1ConfigurationService::G1API_FunctionAddress_CInventory_AddItem))(this, itemREF);
         }
+
+        return 0;
     }
 
     void CInventory::RemoveItem(Glacier::ZREF itemREF)
