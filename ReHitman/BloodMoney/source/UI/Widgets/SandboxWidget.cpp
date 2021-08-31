@@ -38,6 +38,7 @@
 #include <BloodMoney/Game/CIngameMap.h>
 #include <BloodMoney/Game/ZHM3HmAs.h>
 #include <BloodMoney/Game/ZHM3ClothBundle.h>
+#include <BloodMoney/Game/ZHM3BriefingControl.h>
 #include <BloodMoney/Game/UI/ZCHAROBJ.h>
 #include <BloodMoney/Game/UI/ZWINOBJ.h>
 #include <BloodMoney/Game/UI/ZXMLGUISystem.h>

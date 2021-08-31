@@ -20,7 +20,12 @@ namespace Hitman::BloodMoney
         //vftable
         virtual void LoadSave(Glacier::ZPackedInput* packedInput, bool a2);
 
-        //data
+        //api
+        void CompleteObjective(unsigned int iObjectiveId, bool bShowOSDNotification);
+        void PlaySpeech(bool bRegisterSpeechAsSpoken);
+        void StopSpeech();
+
+        //data (total size is
         int m_field4;
         int m_field8;
         int m_fieldC;
@@ -33,7 +38,7 @@ namespace Hitman::BloodMoney
         int m_field28;
         int m_field2C;
         int m_field30;
-        int m_field34;
+        Glacier::SREF m_rSpeechSoundObjectSREF;
         int m_field38;
         int m_field3C;
         int m_field40;
@@ -45,7 +50,10 @@ namespace Hitman::BloodMoney
         int m_field58;
         int m_field5C;
         int m_field60;
-        int m_field64;
+        bool m_bIsSpeechPlaying;
+        bool m_field65;
+        bool m_field66;
+        bool m_field67;
         int m_field68;
         int m_field6C;
         char m_bSpoken;

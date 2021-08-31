@@ -167,9 +167,12 @@ namespace Hitman::BloodMoney
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZHM3WeaponUpgradeControl_InitWeaponReferences = 0x00653820;
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZHM3WeaponUpgradeControl_ApplyDefaultUpgrades = 0x00653A00;
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZHM3WeaponUpgradeControl_GetWeaponType = 0x006535E0;
-        BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZHM3ItemWeaponCustom_ApplyUpgrades = 0x006505E0;
+        BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZHM3ItemWeaponCustom_ApplyUpgrades    = 0x006505E0;
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZHM3ItemWeaponCustom_UpdateWeaponPartDrawStatus = 0x00650450;
-        BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZHM3ItemWeaponCustom_ClearUpgrades = 0x00650450;
+        BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZHM3ItemWeaponCustom_ClearUpgrades    = 0x00650450;
+        BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZHM3BriefingControl_CompleteObjective = 0x006CF120;
+        BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZHM3BriefingControl_PlaySpeech        = 0x006CF650;
+        BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZHM3BriefingControl_StopSpeech        = 0x006CEBB0;
         BloodMoney::BMConfigurationService::BMAPI_GlobalVariableAddress_ZVCR_m_msgStealTape             = 0x009B3C24;
 #pragma endregion
         return true;
