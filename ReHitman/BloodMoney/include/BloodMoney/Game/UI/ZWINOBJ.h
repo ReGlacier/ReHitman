@@ -46,6 +46,7 @@ namespace Hitman::BloodMoney
         virtual void SetPriority(uint8_t);
 
         // api
+        int GetTexture(unsigned int iTextureType);
 
         // data (total size is 0x88, base size is 0x10)
         int m_field10; //+0x10

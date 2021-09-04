@@ -26,6 +26,8 @@ namespace Hitman::BloodMoney
         {
         };
 
+        static constexpr Glacier::ZMSGID kAlarmMsg = 0x81A;
+
         // vftable
         virtual void SetActorRootTM(float const*,float const*);
         virtual void SetActorPosDir(float const*,float const*);

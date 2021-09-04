@@ -40,5 +40,21 @@ namespace Hitman::BloodMoney
     std::intptr_t BMConfigurationService::BMAPI_FunctionAddress_ZHM3BriefingControl_CompleteObjective = BMConfigurationService::kNotConfiguredOption;
     std::intptr_t BMConfigurationService::BMAPI_FunctionAddress_ZHM3BriefingControl_PlaySpeech = BMConfigurationService::kNotConfiguredOption;
     std::intptr_t BMConfigurationService::BMAPI_FunctionAddress_ZHM3BriefingControl_StopSpeech = BMConfigurationService::kNotConfiguredOption;
+    std::intptr_t BMConfigurationService::BMAPI_FunctionAddress_ZWINOBJ_GetTexture = BMConfigurationService::kNotConfiguredOption;
+    std::intptr_t BMConfigurationService::BMAPI_FunctionAddress_ZGUIBase_GetSize = BMConfigurationService::kNotConfiguredOption;
+    std::intptr_t BMConfigurationService::BMAPI_FunctionAddress_PF4_CreatePathFinder = BMConfigurationService::kNotConfiguredOption;
+    std::intptr_t BMConfigurationService::BMAPI_FunctionAddress_ZHM3InventoryMenu_InitInventoryList = BMConfigurationService::kNotConfiguredOption;
+    std::intptr_t BMConfigurationService::BMAPI_FunctionAddress_ZHM3InventoryMenu_CloseItemView = BMConfigurationService::kNotConfiguredOption;
+    std::intptr_t BMConfigurationService::BMAPI_FunctionAddress_ZHM3InventoryMenu_CloseInventoryMenu = BMConfigurationService::kNotConfiguredOption;
+    std::intptr_t BMConfigurationService::BMAPI_FunctionAddress_ZHM3InventoryMenu_UpdateItemView = BMConfigurationService::kNotConfiguredOption;
+    std::intptr_t BMConfigurationService::BMAPI_FunctionAddress_ZHM3InventoryMenu_UpdateItemInfo = BMConfigurationService::kNotConfiguredOption;
+    std::intptr_t BMConfigurationService::BMAPI_FunctionAddress_ZHM3InventoryMenu_SpinCircle = BMConfigurationService::kNotConfiguredOption;
+    std::intptr_t BMConfigurationService::BMAPI_FunctionAddress_ZHM3InventoryMenu_TurnLeft = BMConfigurationService::kNotConfiguredOption;
+    std::intptr_t BMConfigurationService::BMAPI_FunctionAddress_ZHM3InventoryMenu_TurnRight = BMConfigurationService::kNotConfiguredOption;
+    std::intptr_t BMConfigurationService::BMAPI_FunctionAddress_IGUIElement_ChangeColorSet = BMConfigurationService::kNotConfiguredOption;
+    std::intptr_t BMConfigurationService::BMAPI_FunctionAddress_IGUIElement_ChangeColor = BMConfigurationService::kNotConfiguredOption;
+    std::intptr_t BMConfigurationService::BMAPI_FunctionAddress_IGUIElement_SetColor = BMConfigurationService::kNotConfiguredOption;
+    std::intptr_t BMConfigurationService::BMAPI_FunctionAddress_IGUIElement_GetRightPosOfTextGroup = BMConfigurationService::kNotConfiguredOption;
+
     std::intptr_t BMConfigurationService::BMAPI_GlobalVariableAddress_ZVCR_m_msgStealTape = BMConfigurationService::kNotConfiguredOption;
 }

@@ -133,6 +133,7 @@ namespace Hitman::BloodMoney
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZCameraSpace_TransformInversMatPos   = 0x00439FC0;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_CCom_GetpVal                         = 0x004267A0;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_CCom_GetVal                          = 0x00426380;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZActorHeroCheckInside_IsInside       = 0x005D4BC0;
 #pragma endregion
 #pragma region BloodMoney Configuration Table
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZPathFollower_GetClosestWaypoint      = 0x00654450;
@@ -173,6 +174,21 @@ namespace Hitman::BloodMoney
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZHM3BriefingControl_CompleteObjective = 0x006CF120;
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZHM3BriefingControl_PlaySpeech        = 0x006CF650;
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZHM3BriefingControl_StopSpeech        = 0x006CEBB0;
+        BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZWINOBJ_GetTexture                    = 0x0054F2A0;
+        BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZGUIBase_GetSize                      = 0x00564040;
+        BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_PF4_CreatePathFinder                  = 0x004D8C50;
+        BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZHM3InventoryMenu_InitInventoryList   = 0x00681A10;
+        BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZHM3InventoryMenu_CloseItemView       = 0x00680DA0;
+        BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZHM3InventoryMenu_CloseInventoryMenu  = 0x00681040;
+        BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZHM3InventoryMenu_UpdateItemView      = 0x006813F0;
+        BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZHM3InventoryMenu_UpdateItemInfo      = 0x00681F10;
+        BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZHM3InventoryMenu_SpinCircle          = 0x00680E10;
+        BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZHM3InventoryMenu_TurnLeft            = 0x00680F40;
+        BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZHM3InventoryMenu_TurnRight           = 0x00680FC0;
+        BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_IGUIElement_ChangeColorSet            = 0x0055E6E0;
+        BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_IGUIElement_ChangeColor               = 0x0055E800;
+        BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_IGUIElement_SetColor                  = 0x0055E4E0;
+        BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_IGUIElement_GetRightPosOfTextGroup    = 0x0055E550;
         BloodMoney::BMConfigurationService::BMAPI_GlobalVariableAddress_ZVCR_m_msgStealTape             = 0x009B3C24;
 #pragma endregion
         return true;

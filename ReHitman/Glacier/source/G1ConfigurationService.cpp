@@ -74,6 +74,7 @@ namespace Glacier
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZCameraSpace_TransformInversMatPos  = G1ConfigurationService::kNotConfiguredOption;
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_CCom_GetpVal                        = G1ConfigurationService::kNotConfiguredOption;
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_CCom_GetVal                         = G1ConfigurationService::kNotConfiguredOption;
+    std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZActorHeroCheckInside_IsInside      = G1ConfigurationService::kNotConfiguredOption;
 
     std::intptr_t G1ConfigurationService::G1API_InstanceAddress_ZEngineGeomControl                  = G1ConfigurationService::kNotConfiguredOption;
 
