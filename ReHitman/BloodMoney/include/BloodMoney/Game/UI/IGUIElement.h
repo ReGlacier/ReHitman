@@ -11,6 +11,19 @@ namespace Hitman::BloodMoney {
 
     class IGUIElement : public ZGUIBase {
     public:
+        //pub
+        enum class EAlignment {
+            Left = 1,
+            Right = 0,
+            Center = 2
+        };
+
+        enum class EFontType {
+            Header = 0,
+            Menu = 1,
+            Text = 2
+        };
+
         //vftable
         virtual void Update(bool);
         virtual void Click(eZWUserEvents, int, ZXMLGUISystem*);
@@ -32,15 +45,18 @@ namespace Hitman::BloodMoney {
         void GetRightPosOfTextGroup(ZWINGROUP*, Glacier::Vector3* pPos, int iOffsetByX);
 
         //data (total size is 0x6C, base size is 0x48)
-        int m_field48;
+        ZColorSet* m_pColorSet;
         int m_field4C;
         int m_field50;
-        int m_field54;
-        int m_field58;
-        int m_field5C;
-        int m_field60;
+        EFontType m_eFontType;
+        EAlignment m_eAlignment;
+        int m_pButtonGraphic;
+        bool m_bShadow;
+        bool m_field61;
+        bool m_field62;
+        bool m_field63;
         int m_field64;
-        int m_field68;
+        int m_iActivateButtonKeyCode;
 
         /*
          * @note:

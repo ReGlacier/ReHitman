@@ -10,15 +10,17 @@ namespace Hitman::BloodMoney {
         virtual void ForceSetText(const char* psText);
 
         //data (total size is 0x98, base size is 0x6C)
-        int m_field6C;
-        int m_field70;
-        int m_field74;
-        int m_field78;
-        int m_field7C;
-        int m_field80;
-        int m_field84;
-        int m_field88;
-        int m_field8C;
+        char m_sText[12];
+        char m_sMoveFocus[12];
+        int m_iMoveButton;
+        bool m_bReceiveAllInput;
+        bool m_bIsLink;
+        bool m_bDisable;
+        bool m_bTakeFocus;
+        bool m_bMouseColiOnHiddenObjects;
+        bool m_field8D;
+        bool m_field8E;
+        bool m_field8F;
         int m_field90;
         int m_field94;
         /**
