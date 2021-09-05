@@ -2,6 +2,7 @@
 
 namespace Hitman::BloodMoney
 {
+    class ZGUIBase;
     class ZXMLGUISystem;
     class ZStandardMenuFactory;
     class ZHM3MenuFactory;
@@ -27,5 +28,8 @@ namespace Hitman::BloodMoney
         virtual void WindowClosed(const char* menuName);
         virtual void GetOptionsInterface();
         virtual void GetActivatedBy(int);
+
+        // === api ===
+        ZGUIBase* GetGUIElement(const char* psElementName);
     };
 }

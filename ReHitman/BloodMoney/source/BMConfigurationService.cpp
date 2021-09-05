@@ -55,6 +55,7 @@ namespace Hitman::BloodMoney
     std::intptr_t BMConfigurationService::BMAPI_FunctionAddress_IGUIElement_ChangeColor = BMConfigurationService::kNotConfiguredOption;
     std::intptr_t BMConfigurationService::BMAPI_FunctionAddress_IGUIElement_SetColor = BMConfigurationService::kNotConfiguredOption;
     std::intptr_t BMConfigurationService::BMAPI_FunctionAddress_IGUIElement_GetRightPosOfTextGroup = BMConfigurationService::kNotConfiguredOption;
+    std::intptr_t BMConfigurationService::BMAPI_FunctionAddress_ZHM3MenuElements_GetGUIElement = BMConfigurationService::kNotConfiguredOption;
 
     std::intptr_t BMConfigurationService::BMAPI_GlobalVariableAddress_ZVCR_m_msgStealTape = BMConfigurationService::kNotConfiguredOption;
 }

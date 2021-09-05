@@ -133,7 +133,11 @@ namespace Hitman::BloodMoney
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZCameraSpace_TransformInversMatPos   = 0x00439FC0;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_CCom_GetpVal                         = 0x004267A0;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_CCom_GetVal                          = 0x00426380;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZENVIRONMENT_ToggleColor             = 0x004E5A00;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZENVIRONMENT_SetDiffuseColor         = 0x004E5970;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZActorHeroCheckInside_IsInside       = 0x005D4BC0;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZGameStats_IncreaseCurrentShotCount  = 0x00463E70;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZGameStats_DecreaseCurrentShotCount  = 0x00463E90;
 #pragma endregion
 #pragma region BloodMoney Configuration Table
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZPathFollower_GetClosestWaypoint      = 0x00654450;
@@ -189,6 +193,7 @@ namespace Hitman::BloodMoney
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_IGUIElement_ChangeColor               = 0x0055E800;
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_IGUIElement_SetColor                  = 0x0055E4E0;
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_IGUIElement_GetRightPosOfTextGroup    = 0x0055E550;
+        BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZHM3MenuElements_GetGUIElement        = 0x00564710;
         BloodMoney::BMConfigurationService::BMAPI_GlobalVariableAddress_ZVCR_m_msgStealTape             = 0x009B3C24;
 #pragma endregion
         return true;

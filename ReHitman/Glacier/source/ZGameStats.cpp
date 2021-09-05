@@ -4,10 +4,16 @@
 
 namespace Glacier {
     void ZGameStats::IncreaseCurrentShotCount() {
-        //00463E70
+        assert(G1ConfigurationService::G1API_FunctionAddress_ZGameStats_IncreaseCurrentShotCount != G1ConfigurationService::kNotConfiguredOption);
+        if (G1ConfigurationService::G1API_FunctionAddress_ZGameStats_IncreaseCurrentShotCount != G1ConfigurationService::kNotConfiguredOption) {
+            ((void(__thiscall*)(ZGameStats*))G1ConfigurationService::G1API_FunctionAddress_ZGameStats_IncreaseCurrentShotCount)(this);
+        }
     }
 
     void ZGameStats::DecreaseCurrentShotCount() {
-        //00463E90
+        assert(G1ConfigurationService::G1API_FunctionAddress_ZGameStats_DecreaseCurrentShotCount != G1ConfigurationService::kNotConfiguredOption);
+        if (G1ConfigurationService::G1API_FunctionAddress_ZGameStats_DecreaseCurrentShotCount != G1ConfigurationService::kNotConfiguredOption) {
+            ((void(__thiscall*)(ZGameStats*))G1ConfigurationService::G1API_FunctionAddress_ZGameStats_DecreaseCurrentShotCount)(this);
+        }
     }
 }

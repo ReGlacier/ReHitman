@@ -13,7 +13,6 @@ namespace Hitman::BloodMoney
 {
     DECLARE_UNKNOWN_TYPE_PTR(N00001B3F);
     DECLARE_UNKNOWN_TYPE_PTR(N000033C1);
-    DECLARE_UNKNOWN_TYPE_PTR(ZHM3GameStats);
     DECLARE_UNKNOWN_TYPE_PTR(N0000163D);
     DECLARE_UNKNOWN_TYPE_PTR(CGlobalCom);
     DECLARE_UNKNOWN_TYPE_PTR(ZHM3CameraEventCameraClass);
@@ -28,6 +27,7 @@ namespace Hitman::BloodMoney
     class ZHM3WeaponUpgradeControl;
     class ZHM3CameraClass;
     class ZBoidSystem;
+    class ZHM3GameStats;
 
     class ZHM3GameData final : public Glacier::ZGameData
     {
