@@ -25,6 +25,15 @@ namespace Glacier {
         return false;
     }
 
+    bool ZCameraSpace::IsMain() {
+        assert(G1ConfigurationService::G1API_FunctionAddress_ZCameraSpace_IsMain  != G1ConfigurationService::kNotConfiguredOption);
+        if (G1ConfigurationService::G1API_FunctionAddress_ZCameraSpace_IsMain != G1ConfigurationService::kNotConfiguredOption)
+        {
+            return ((bool(__thiscall*)(ZCameraSpace*))(G1ConfigurationService::G1API_FunctionAddress_ZCameraSpace_IsMain))(this);
+        }
+        return false;
+    }
+
     void ZCameraSpace::Proj3D(Vector3* pResult, const Vector3* pPoint) {
         assert(G1ConfigurationService::G1API_FunctionAddress_ZCameraSpace_Proj3D != G1ConfigurationService::kNotConfiguredOption);
         if (G1ConfigurationService::G1API_FunctionAddress_ZCameraSpace_Proj3D != G1ConfigurationService::kNotConfiguredOption)
@@ -54,6 +63,15 @@ namespace Glacier {
         if (G1ConfigurationService::G1API_FunctionAddress_ZCameraSpace_TransformInversMatPos != G1ConfigurationService::kNotConfiguredOption)
         {
             ((void(__thiscall*)(ZCameraSpace*,Matrix3x3*,Vector3*))(G1ConfigurationService::G1API_FunctionAddress_ZCameraSpace_TransformInversMatPos))(this, mat, pos);
+        }
+    }
+
+    void ZCameraSpace::GetViewport(Vector4* pViewport) {
+        assert(pViewport != nullptr);
+        assert(G1ConfigurationService::G1API_FunctionAddress_ZCameraSpace_GetViewport != G1ConfigurationService::kNotConfiguredOption);
+
+        if (pViewport && G1ConfigurationService::G1API_FunctionAddress_ZCameraSpace_GetViewport != G1ConfigurationService::kNotConfiguredOption) {
+            ((void(__thiscall*)(ZCameraSpace*,Vector4*))G1ConfigurationService::G1API_FunctionAddress_ZCameraSpace_GetViewport)(this, pViewport);
         }
     }
 }

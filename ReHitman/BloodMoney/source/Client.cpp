@@ -127,10 +127,12 @@ namespace Hitman::BloodMoney
 
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZCameraSpace_AssignOperator          = 0x00439DE0;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZCameraSpace_IsMirror                = 0x00439C90;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZCameraSpace_IsMain                  = 0x00439CE0;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZCameraSpace_Proj2D                  = 0x00439D30;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZCameraSpace_Proj3D                  = 0x00439CF0;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZCameraSpace_GetLocalMatPos          = 0x00439DB0;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZCameraSpace_TransformInversMatPos   = 0x00439FC0;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZCameraSpace_GetViewport             = 0x00439D80;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_CCom_GetpVal                         = 0x004267A0;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_CCom_GetVal                          = 0x00426380;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZENVIRONMENT_ToggleColor             = 0x004E5A00;
