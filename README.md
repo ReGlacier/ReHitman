@@ -1,5 +1,5 @@
 <p align="center">
-	<img width="400" height="400" src="GitHub/logo.png">
+	<img width="400" height="400" src=".github/logo.png">
 </p>
 
 [![Build status](https://ci.appveyor.com/api/projects/status/300yrxlxkmeyi5le?svg=true)](https://ci.appveyor.com/project/DronCode/rehitman-9uw4c)
