@@ -1,5 +1,7 @@
 #include <BloodMoney/Game/CCheat.h>
 #include <BloodMoney/Game/ZHM3WeaponUpgradeControl.h>
+#include <BloodMoney/Game/Items/EHM3ItemType.h>
+#include <BloodMoney/Game/Items/ZHM3ItemTool.h>
 #include <BloodMoney/Game/Items/ZHM3ItemWeaponCustom.h>
 #include <BloodMoney/Game/ZHM3GameData.h>
 #include <BloodMoney/Game/Globals.h>
@@ -40,6 +42,24 @@ namespace Hitman::BloodMoney {
             "Custom_SniperRifle"
     };
 
+    static constexpr std::array<std::pair<EHM3ItemType, int>, 16> kGiveSomeList = {
+            std::make_pair(EHM3ItemType::Item_LockPick, 1),
+            std::make_pair(EHM3ItemType::Custom_Pistol, 1),
+            std::make_pair(EHM3ItemType::Equip_Bomb_01, 4),
+            std::make_pair(EHM3ItemType::Equip_BombRemote_01, 1),
+            std::make_pair(EHM3ItemType::Gun_HKusp_Silenced_01, 1),
+            std::make_pair(EHM3ItemType::CC_FiberWire_01, 1),
+            std::make_pair(EHM3ItemType::CC_Knife_Bowie_01, 1),
+            std::make_pair(EHM3ItemType::CC_Syringe_Poison_01, 4),
+            std::make_pair(EHM3ItemType::Ammo_SMG_01, 10),
+            std::make_pair(EHM3ItemType::Ammo_Pistol_01, 10),
+            std::make_pair(EHM3ItemType::Ammo_Custom_ShotGun_01, 10),
+            std::make_pair(EHM3ItemType::CC_Scythe_01, 1),
+            std::make_pair(EHM3ItemType::CC_Scythe_01, 1),
+            std::make_pair(EHM3ItemType::Equip_KevlarVest_01, 1),
+            std::make_pair(EHM3ItemType::Item_Coin_01, 4)
+    };
+
     void CCheat::GiveItem(Glacier::ZREF rItem) {
         auto pGameData = Glacier::getInterface<Hitman::BloodMoney::ZHM3GameData>(Globals::kGameDataAddr);
         if (!pGameData) {
@@ -59,9 +79,7 @@ namespace Hitman::BloodMoney {
             if (eWeaponType != EWeaponType::EW_UNKNOWN) { //TODO: Add fix for WA-2000 (It's not classified as 'custom' weapon but it is)
                 auto pCustomItem = reinterpret_cast<ZHM3ItemWeaponCustom*>(pAddedItem);
 
-                //TODO: How to remove fake upgrades from custom gun?
-//                pGameData->m_WeaponUpgradeControl->ApplyDefaultUpgrades(eWeaponType, pCustomItem);
-                pCustomItem->ClearUpgrades();
+                pCustomItem->ApplyUpgrades(true);
             }
         }
     }
@@ -121,6 +139,12 @@ namespace Hitman::BloodMoney {
         if (!pWeaponsGroup) {
             spdlog::warn("No WeaponsGroup ({}) instance presented", rWeaponsGroup);
             return;
+        }
+
+        for (const auto& [eItemType, amount]: kGiveSomeList) {
+            for (int i = 0; i < amount; i++) {
+                CCheat::GiveItem(pWeaponsGroup, ZHM3ItemTool::GetHM3ItemName(eItemType));
+            }
         }
 
         for (const auto& sItemName: kGiveSomeArray) {

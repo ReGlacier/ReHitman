@@ -7,7 +7,7 @@ namespace Hitman::BloodMoney
     class ZHM3CameraClassBase : public Glacier::ZCAMERA
     {
     public:
-
+        //vftable (no changes)
         //data (total size is 0x1A8, ZCAMERA size is 0x18C)
         int m_field18C;
         int m_field190;

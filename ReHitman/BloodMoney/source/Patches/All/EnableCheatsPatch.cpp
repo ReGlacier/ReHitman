@@ -21,6 +21,9 @@ namespace Hitman::BloodMoney
 
         static constexpr std::intptr_t kGiveSomeHookAddr = 0x0065C1C0;
         static constexpr std::array<uint8_t, 6> kGiveSomePatch = { HF::X86::NOP, HF::X86::NOP, HF::X86::NOP, HF::X86::NOP, HF::X86::NOP, HF::X86::RETN };
+
+        static constexpr std::intptr_t kPurgePrimBufferAddr = 0x0045CB20;
+        static constexpr std::array<uint8_t, 1> kPurgePrimBufferPatch = { HF::X86::RETN };
     }
 
     std::string_view EnableCheatsPatch::GetName() const { return "CheatsEnabler Patch"; }
@@ -37,6 +40,9 @@ namespace Hitman::BloodMoney
 
             process->writeMemory(Consts::kFirstPatchAddr, Consts::kFirstPatchSize, Consts::kFirstPatchPayload.data());
             process->writeMemory(Consts::kSecondPatchAddr, Consts::kSecondPatchSize, Consts::kSecondPatchPayload.data());
+
+            // Prohibit to engine cleanup prims buffer to fix bug with empty models
+            process->writeMemory(Consts::kPurgePrimBufferAddr, Consts::kPurgePrimBufferPatch.size(), &Consts::kPurgePrimBufferPatch[0]);
 
             process->writeMemory(Consts::kGiveSomeHookAddr, 6, &Consts::kGiveSomePatch[0]);
             m_giveSomeTrampoline = HF::Hook::HookFunction(process, Consts::kGiveSomeHookAddr, &Hitman::BloodMoney::CCheat::GiveSome, {}, {});

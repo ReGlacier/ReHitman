@@ -19,13 +19,15 @@
 #include <BloodMoney/Patches/All/ZCutSequencePlayerPatch.h>
 #include <BloodMoney/Patches/All/FreeFileSystemPatch.h>
 #include <BloodMoney/Patches/All/RenderScenePatch.h>
+#include <BloodMoney/Patches/All/GlacierHooksPatch.h>
 #include <BloodMoney/Patches/Mods/SkinChanger.h>
-
 
 namespace Hitman::BloodMoney
 {
     static constexpr std::string_view kDirectX9DllName = "d3d9.dll";
     static constexpr std::string_view kProcessName = "HitmanBloodMoney.exe";
+
+    Scripting::ScriptingRuntime::Ptr g_pScriptingRuntime = nullptr;
 
     bool Client::OnAttach()
     {
@@ -48,13 +50,26 @@ namespace Hitman::BloodMoney
             return false;
         }
 
+        g_pScriptingRuntime = std::make_unique<Scripting::ScriptingRuntime>();
+        if (!g_pScriptingRuntime->Setup()) {
+            spdlog::error("Failed to initialize scripting subsystem. Scripts are disabled for this session");
+            g_pScriptingRuntime = nullptr;
+        }
+        spdlog::info("Script subsystem was loaded successfully!");
+
         return true;
     }
 
     void Client::OnDestroy()
     {
+        g_pScriptingRuntime = nullptr;
+
         m_patches->Release();
         ReleaseModules();
+    }
+
+    Scripting::ScriptingRuntime* Client::GetScriptingRuntime() {
+        return g_pScriptingRuntime ? g_pScriptingRuntime.get() : nullptr;
     }
 
     bool Client::RegisterGameConfigurationForGlacier()
@@ -196,6 +211,7 @@ namespace Hitman::BloodMoney
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_IGUIElement_SetColor                  = 0x0055E4E0;
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_IGUIElement_GetRightPosOfTextGroup    = 0x0055E550;
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZHM3MenuElements_GetGUIElement        = 0x00564710;
+        BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZHM3ItemTool_GetHM3ItemName           = 0x006493D0;
         BloodMoney::BMConfigurationService::BMAPI_GlobalVariableAddress_ZVCR_m_msgStealTape             = 0x009B3C24;
 #pragma endregion
         return true;
@@ -260,6 +276,7 @@ namespace Hitman::BloodMoney
         m_patches->RegisterPatch<ZCutSequencePlayerPatch>();
         m_patches->RegisterPatch<SkinChanger>();
         m_patches->RegisterPatch<FreeFileSystemPatch>();
+        m_patches->RegisterPatch<GlacierHooksPatch>();
 
         // temporary disabled
         //m_patches->RegisterPatch<RenderScenePatch>();
