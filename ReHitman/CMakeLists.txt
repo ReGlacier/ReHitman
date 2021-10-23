@@ -15,6 +15,7 @@ add_subdirectory(Glacier)
 add_subdirectory(BloodMoney)
 add_subdirectory(Launcher)
 add_subdirectory(Client)
+add_subdirectory(ScriptingRuntime)
 
 file(GLOB_RECURSE REHITMAN_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/DLL/source/*.cpp)
 

@@ -1,9 +1,11 @@
 #pragma once
 
 #include <memory>
+#include <ScriptingRuntime.h>
 #include <Client/IClient.h>
 #include <BloodMoney/Patches/CommonPatches.h>
 #include <HF/HackingFrameworkFWD.h>
+
 
 namespace Hitman::BloodMoney
 {
@@ -12,6 +14,8 @@ namespace Hitman::BloodMoney
     public:
         bool OnAttach() override;
         void OnDestroy() override;
+
+        static Scripting::ScriptingRuntime* GetScriptingRuntime();
 
     private:
         static bool RegisterGameConfigurationForGlacier();
