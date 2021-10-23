@@ -24,6 +24,11 @@ namespace Hitman::BloodMoney {
             Text = 2
         };
 
+        struct SVector44 {
+            int m_count;
+            IGUIElement* pEntry[44];
+        };
+
         //vftable
         virtual void Update(bool);
         virtual void Click(eZWUserEvents, int, ZXMLGUISystem*);
@@ -33,7 +38,7 @@ namespace Hitman::BloodMoney {
         virtual void FocusUpdate();
         virtual void Setup(float*, ZResourceManager* pResourceManager, ZWINGROUP* pGroup);
         virtual void ReleaseResources(ZResourceManager* pResourceManager);
-        virtual void SetFocus(bool);
+        virtual bool SetFocus(bool);
         virtual void Cancel();
         virtual void Invalidate();
         virtual ZWINDOW* GetWindow();
@@ -44,19 +49,19 @@ namespace Hitman::BloodMoney {
         void SetColor(uint32_t rgba, ZWINGROUP* pGroup, uint32_t mask = 0xFFFFFFFFu);
         void GetRightPosOfTextGroup(ZWINGROUP*, Glacier::Vector3* pPos, int iOffsetByX);
 
-        //data (total size is 0x6C, base size is 0x48)
-        ZColorSet* m_pColorSet;
-        int m_field4C;
-        int m_field50;
-        EFontType m_eFontType;
-        EAlignment m_eAlignment;
-        int m_pButtonGraphic;
-        bool m_bShadow;
-        bool m_field61;
-        bool m_field62;
-        bool m_field63;
-        int m_field64;
-        int m_iActivateButtonKeyCode;
+        //data (total size is 0x70, base size is 0x4C)
+        ZColorSet* m_pColorSet; //0x4C
+        int m_field50; //0x50
+        int m_field54; //0x54
+        EFontType m_eFontType; //0x58
+        EAlignment m_eAlignment; //0x5C
+        int m_pButtonGraphic; //0x60
+        bool m_bShadow; //0x61
+        bool m_field62; //0x62
+        bool m_field63; //0x63
+        bool m_field64; //0x64
+        int  m_field68; //0x68
+        int m_iActivateButtonKeyCode; //0x6C
 
         /*
          * @note:
