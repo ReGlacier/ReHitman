@@ -13,7 +13,7 @@ namespace Glacier
         int FindScript(const char* scriptName);
 
         // data (0x38)
-        int m_field30; //m_pScriptsTable
+        int m_pScriptsTable; //+0x30
         int m_field34;
     };
 }

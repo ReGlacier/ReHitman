@@ -92,7 +92,7 @@ namespace Glacier
         virtual void GetSortPriority();
         virtual void CopyEvents(ZGEOM const*);
         virtual ZEventBase* FindEvent(char const*);
-        virtual void GetEventData(char *);
+        virtual int GetEventData(const char *);
         virtual void AddEvent(char const*);
         virtual void AttachEvent(ZEventBase &);
         virtual void EnableClassCall(uint);

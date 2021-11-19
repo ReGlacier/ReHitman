@@ -4,6 +4,7 @@
 #include <BloodMoney/Game/ZHM3GameData.h>
 #include <BloodMoney/Game/ZHM3Actor.h>
 #include <BloodMoney/Game/Globals.h>
+#include <BloodMoney/Game/CCheat.h>
 
 #include <BloodMoney/UI/ImGuiInspector.h>
 #include <BloodMoney/UI/GlacierInspectors.h>
@@ -15,8 +16,11 @@
 #include <Glacier/Geom/ZGeomBuffer.h>
 #include <Glacier/IK/ZLNKOBJ.h>
 #include <Glacier/IK/ZIKLNKOBJ.h>
+#include <Glacier/ZScriptC.h>
+#include <Glacier/CInventory.h>
 
 #include <Glacier/Fysix/CRigidBody.h>
+#include <HF/HackingFramework.hpp>
 #include <imgui.h>
 
 namespace ImGui
@@ -108,6 +112,29 @@ namespace ImGui
 
         // ===================
         {
+            if (ImGui::Button("Die"))
+            {
+                actor->Die();
+            }
+        }
+
+        // ===================
+        {
+            auto gameData = Glacier::getInterface<Hitman::BloodMoney::ZHM3GameData>(Hitman::BloodMoney::Globals::kGameDataAddr);
+            if (gameData && gameData->m_Hitman3 && ImGui::Button("Run to player"))
+            {
+                Glacier::ZVector3 pos;
+                reinterpret_cast<Glacier::ZCTRLIKLNKOBJ*>(gameData->m_Hitman3)->GetVisionPos(&pos);
+
+                actor->SetMoveSpeedMultiplier(15.f);
+                actor->MoveToPosition(&pos, &pos);
+
+                spdlog::info("Request to actor '{}' run to {};{};{}", actor->m_baseGeom->entityName, pos.x, pos.y, pos.z);
+            }
+        }
+
+        // ===================
+        {
             auto gameData = Glacier::getInterface<Hitman::BloodMoney::ZHM3GameData>(Hitman::BloodMoney::Globals::kGameDataAddr);
             if (gameData && actor->m_suitMask != Glacier::ESuitMask::NoActor && ImGui::Button("Make clone"))
             {
@@ -152,9 +179,98 @@ namespace ImGui
                 //clonedActor->SetActorState(Hitman::BloodMoney::ZActor::ACTORSTATE::STATE_2);
                 //clonedActor->SetActorState(Hitman::BloodMoney::ZActor::ACTORSTATE::STATE_3);
 
-
                 spdlog::info("TRK: {:08X}", (int)pTrackLinkObjects);
+                spdlog::info("OACT: {:08X}", (int)actor);
                 spdlog::info("Dup: {:08X} / ADup: {:08X}", (int)duplicateGroup, (int)clonedActor);
+
+                Glacier::ZScriptC* pClonedActorScript = nullptr;
+                Glacier::CInventory* pClonedActorInventory = nullptr;
+
+                {
+                    int* st = reinterpret_cast<int*>(0x009725B4);
+                    int st0 = *st;
+
+                    //*st = 0;
+                    *st = 1;
+                    pClonedActorInventory = HF::Hook::VFHook<Hitman::BloodMoney::ZHM3Actor>::invoke<Glacier::CInventory*, const char*>(clonedActor, 66, "ZGEOM_Inventory"); // Add inventory
+                    pClonedActorScript = HF::Hook::VFHook<Hitman::BloodMoney::ZHM3Actor>::invoke<Glacier::ZScriptC*, const char*>(clonedActor, 66, "ZGEOM_ScriptC"); // AddEvent
+                    *st = st0;
+                }
+
+                if (!pClonedActorScript) {
+                    spdlog::error("Failed to add ZScriptC to cloned actor");
+                } else {
+                    spdlog::info("Created & registered ZScriptC: {:08X}", (int)pClonedActorScript);
+
+                    int foundScript = ((int(__thiscall*)(Glacier::ZScriptC*, const char*))0x00549980)(pClonedActorScript, "Alllevels_Armed");
+                    //int foundScript = ((int(__thiscall*)(Glacier::ZScriptC*, const char*))0x00549980)(pClonedActorScript, "Alllevels_Human");
+                    //int foundScript = ((int(__thiscall*)(Glacier::ZScriptC*, const char*))0x00549980)(pClonedActorScript, "M05_M05_Witness");
+                    if (!foundScript) {
+                        spdlog::error("Failed to find 'Alllevels_Human' script!");
+                    } else {
+                        // And then call 'create script'
+                        int pSCT = ((int(__thiscall*)(Glacier::ZScriptC*, int))0x00549A30)(pClonedActorScript, foundScript);
+                        pClonedActorScript->m_pScriptsTable = pSCT;
+                        spdlog::info("AI script attached ({:08X})", pClonedActorScript->m_pScriptsTable);
+                        // Here we need to call internal methods
+
+                        clonedActor->Activate(true);
+
+                        // Activate
+                        ((void(__thiscall*)(Glacier::ZScriptC*,bool))0x004E14E0)(pClonedActorScript, false);
+
+//                        pClonedActorScript->m_field18 |=  0x1000;
+//                        pClonedActorScript->m_field1C &= ~0x1000;
+//                        pClonedActorScript->m_field1C |=  0x18;
+//                        pClonedActorScript->m_field28  = 0;
+
+//                        ((void(__thiscall*)(Glacier::ZScriptC*))0x004E1420)(pClonedActorScript); //ZEventBase::ChangeEventActivity
+
+                        pClonedActorScript->RegisterInstance();
+
+                        // --------
+                        struct SCRIPT_TABLE_t {
+                            int m_field0;
+                            int m_field4;
+                            int m_field8;
+                            int m_fieldC;
+                            int m_field10;
+                            int m_field14;
+                            int m_field18;
+                            int m_field1C;
+                            int m_field20;
+                            // -----------------------------------------
+                            void(__cdecl* pFN24)(int); //0x24
+                            int m_field28;
+                            void(__cdecl* pFN2C)(int); //0x2C
+                        };
+
+                        auto pFnScr = (SCRIPT_TABLE_t*)foundScript;
+                        pFnScr->pFN24(*(int*)pClonedActorScript->m_pScriptsTable);
+                        pFnScr->pFN2C(*(int*)pClonedActorScript->m_pScriptsTable);
+
+                        {
+                            pClonedActorScript->m_field18 |=  0x1000;
+                            pClonedActorScript->m_field1C &= ~0x1000;
+                            pClonedActorScript->m_field1C |=  0x18;
+                            pClonedActorScript->m_field28  = 0;
+
+                            auto sysInterface = Glacier::getInterface<Glacier::ZSysInterfaceWintel>(Hitman::BloodMoney::Globals::kSysInterfaceAddr);
+                            auto engineDb = sysInterface->m_engineDataBase;
+
+                            auto v5 = ((int(__thiscall*)(Glacier::ZEngineDataBase*))0x0045B1C0)(engineDb);
+                            auto vr = ((int(__thiscall*)(int, Glacier::ZScriptC*))0x00466180)(v5, pClonedActorScript);
+
+                            spdlog::info("VR: {:08X}", vr);
+                        }
+
+                        if (pClonedActorInventory) {
+                            Hitman::BloodMoney::CCheat::GiveItem(pClonedActorInventory, "SMG_MP7_01");
+                            Hitman::BloodMoney::CCheat::GiveItem(pClonedActorInventory, "Gun_HKusp_01");
+                            Hitman::BloodMoney::CCheat::GiveItem(pClonedActorInventory, "Ammo_SMG_01", 20);
+                        }
+                    }
+                }
             }
         }
     }

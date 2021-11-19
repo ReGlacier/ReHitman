@@ -232,6 +232,10 @@ namespace Hitman::BloodMoney
         m_d3d9Module = m_selfProcess->getModule(kDirectX9DllName);
         if (!m_d3d9Module)
         {
+            m_selfProcess->forEachModule([](const HF::Win32::Module::Ptr& pMod) {
+                spdlog::info("Available module {} at {:X} of size {:X}", pMod->getName().data(), pMod->getBaseAddress(), pMod->getSize());
+            });
+
             spdlog::error("Failed to locate {} module!", kDirectX9DllName.data());
             return false;
         }
