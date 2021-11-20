@@ -110,6 +110,12 @@ namespace Hitman::BloodMoney
 
         //-----------------------------------------------------------------------------------------------
         ImGui::Begin("TEST");
+
+//        if (gameData->m_LevelControl && ImGui::Button("Arrive enemies")) {
+//            // ZHM3LevelControlM05::GetMoreGuards()
+//            ((void(__thiscall*)(Hitman::BloodMoney::ZHM3LevelControl*))0x006BF540)(gameData->m_LevelControl);
+//        }
+
         if (ImGui::Button("Test extract vars")) {
             auto& ccom = *engineDb->GetSceneCom();
             Glacier::REFTAB* ccomVars = &engineDb->GetSceneCom()->m_variables;

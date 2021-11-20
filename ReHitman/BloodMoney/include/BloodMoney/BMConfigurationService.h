@@ -64,6 +64,7 @@ namespace Hitman::BloodMoney
         static std::intptr_t BMAPI_FunctionAddress_IGUIElement_SetColor;
         static std::intptr_t BMAPI_FunctionAddress_IGUIElement_GetRightPosOfTextGroup;
         static std::intptr_t BMAPI_FunctionAddress_ZHM3MenuElements_GetGUIElement;
+        static std::intptr_t BMAPI_FunctionAddress_ZGuardQuarterController_RegisterActor;
         static std::intptr_t BMAPI_GlobalVariableAddress_ZVCR_m_msgStealTape;
     };
 }

@@ -197,6 +197,7 @@ namespace Hitman::BloodMoney
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_IGUIElement_GetRightPosOfTextGroup    = 0x0055E550;
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZHM3MenuElements_GetGUIElement        = 0x00564710;
         BloodMoney::BMConfigurationService::BMAPI_GlobalVariableAddress_ZVCR_m_msgStealTape             = 0x009B3C24;
+        BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZGuardQuarterController_RegisterActor = 0x00656890;
 #pragma endregion
         return true;
     }
