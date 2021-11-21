@@ -82,6 +82,7 @@ namespace Glacier
         static std::intptr_t G1API_FunctionAddress_ZEventBase_DeactivateFrameUpdate;
         static std::intptr_t G1API_FunctionAddress_ZEventBase_ChangeEventActivity;
         static std::intptr_t G1API_FunctionAddress_ZEventBase_ActivateTimeUpdate;
+        static std::intptr_t G1API_FunctionAddress_ZActorCommunication_RegisterRadioUser;
 
         static std::intptr_t G1API_InstanceAddress_ZEngineGeomControl;
 

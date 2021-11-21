@@ -19,6 +19,8 @@
 #include <Glacier/IK/ZIKLNKOBJ.h>
 #include <Glacier/ZScriptC.h>
 #include <Glacier/CInventory.h>
+#include <Glacier/ZEventBuffer.h>
+#include <Glacier/ZActorCommunication.h>
 
 #include <Glacier/Fysix/CRigidBody.h>
 #include <Glacier/Geom/ZROOM.h>
@@ -263,10 +265,12 @@ namespace ImGui
                         }
 
                         // Try to register actor in actor communication network
-                        constexpr auto kRadioChannel = 3u;
-                        //TODO: Wrap this call to ZActorCommunication class when it will be reversed
-                        // Now we calling that function (ZActorCommunication::RegisterRadioUser) through script interface (SI)
-                        ((void(__cdecl*)(Glacier::ZREF, unsigned int))0x006AA2B0)(clonedActor->GetRef(), kRadioChannel);
+                        constexpr auto kRadioChannelId = 3u;
+
+                        auto pActorCommunication = Glacier::ZEventBuffer::EventRefToInstance<Glacier::ZActorCommunication>(gameData->m_rActorCommunicationComponentID);
+                        if (pActorCommunication) {
+                            pActorCommunication->RegisterRadioUser(clonedActor->GetRef(), kRadioChannelId);
+                        }
                     }
                 }
             }

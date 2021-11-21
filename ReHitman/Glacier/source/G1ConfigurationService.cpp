@@ -91,6 +91,8 @@ namespace Glacier
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZEventBase_ChangeEventActivity      = G1ConfigurationService::kNotConfiguredOption;
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZEventBase_ActivateTimeUpdate       = G1ConfigurationService::kNotConfiguredOption;
 
+    std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZActorCommunication_RegisterRadioUser = G1ConfigurationService::kNotConfiguredOption;
+
     std::intptr_t G1ConfigurationService::G1API_InstanceAddress_ZEngineGeomControl                  = G1ConfigurationService::kNotConfiguredOption;
 
     std::intptr_t G1ConfigurationService::G1API_InstanceAddress_CConfiguration_bSubtitles           = G1ConfigurationService::kNotConfiguredOption;
