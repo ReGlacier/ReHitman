@@ -56,5 +56,15 @@ namespace Glacier
         virtual void SchedUpdate();                                                     //#33 | +84
         virtual void InitBaseConRout(Glacier::ZROUTCLASSINFO*);                         //#34 | +88
         virtual void UnknownCommand(Glacier::ZMSGID command, Glacier::ZDATA data);      //#35 | +8C
+
+        // api
+        void ActivateFrameUpdate(bool a1);
+        void DeactivateFrameUpdate();
+        void ChangeEventActivity();
+        void ActivateTimeUpdate(float);
+
+        // static helpers
+        static int* GetDefaultStatus();
+
     }; //Size: 0x0030
 }

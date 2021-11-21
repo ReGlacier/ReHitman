@@ -118,13 +118,16 @@ namespace Hitman::BloodMoney
 
         Glacier::G1ConfigurationService::G1API_FunctionAddress_GetGQC                               = 0x00461A20;
 
-        Glacier::G1ConfigurationService::G1ConfigurationService::G1API_FunctionAddress_ZScriptC_FindScript = 0x00549980;
+        Glacier::G1ConfigurationService::G1ConfigurationService::G1API_FunctionAddress_ZScriptC_FindScript   = 0x00549980;
+        Glacier::G1ConfigurationService::G1ConfigurationService::G1API_FunctionAddress_ZScriptC_CreateScript = 0x00549A30;
+
         Glacier::G1ConfigurationService::G1ConfigurationService::G1API_FunctionAddress_ZAction_AddAction = 0x005D3C10; //another func 0x00549980
         Glacier::G1ConfigurationService::G1ConfigurationService::G1API_FunctionAddress_ZAction_Show = 0x0052BC30;
         Glacier::G1ConfigurationService::G1ConfigurationService::G1API_FunctionAddress_ZAction_Hide = 0x0052B070;
 
         Glacier::G1ConfigurationService::G1API_InstanceAddress_ZEngineGeomControl                   = 0x007F5AA8;
         Glacier::G1ConfigurationService::G1API_InstanceAddress_CConfiguration_bSubtitles            = 0x008ACA9C;
+        Glacier::G1ConfigurationService::G1API_InstanceAddress_ZEventBase_m_DefaultStatus           = 0x009725B4;
 
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZCameraSpace_AssignOperator          = 0x00439DE0;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZCameraSpace_IsMirror                = 0x00439C90;
@@ -144,6 +147,11 @@ namespace Hitman::BloodMoney
 
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZScheduledUpdate_AddEvent            = 0x00466180;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZScheduledUpdate_RemoveEvent         = 0x00465EF0;
+
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZEventBase_ActivateFrameUpdate       = 0x004E14E0;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZEventBase_DeactivateFrameUpdate     = 0x004E1510;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZEventBase_ChangeEventActivity       = 0x004E1420;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZEventBase_ActivateTimeUpdate        = 0x004E1520;
 #pragma endregion
 #pragma region BloodMoney Configuration Table
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZPathFollower_GetClosestWaypoint      = 0x00654450;

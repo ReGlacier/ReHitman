@@ -194,17 +194,6 @@ namespace ImGui
 
                 spdlog::info("Cloned actor ptr is {:08X}", reinterpret_cast<std::intptr_t>(clonedActor));
 
-                if (Hitman::BloodMoney::ZGuardQuarterController::g_pCurrentLevelGuardControl) {
-                    Hitman::BloodMoney::ZGuardQuarterController::g_pCurrentLevelGuardControl->RegisterActor(clonedActor->GetRef());
-                }
-
-                // And try to register this actor in ZDllSound::ActorRegister
-                auto sysInterface = Glacier::getInterface<Glacier::ZSysInterfaceWintel>(Hitman::BloodMoney::Globals::kSysInterfaceAddr);
-                if (sysInterface && sysInterface->m_soundWintelDLL) {
-                    //sysInterface->m_soundWintelDLL
-                    ((void(__thiscall*)(int, Glacier::ZGEOM*))0x004C60E0)(sysInterface->m_soundWintelDLL, reinterpret_cast<Glacier::ZGEOM*>(clonedActor));
-                }
-
                 // ------------ ENABLE AI SCRIPTS ------------
                 spdlog::info("TRK: {:08X}", (int)pTrackLinkObjects);
                 spdlog::info("OACT: {:08X}", (int)actor);
@@ -213,15 +202,20 @@ namespace ImGui
                 Glacier::ZScriptC* pClonedActorScript = nullptr;
                 Glacier::CInventory* pClonedActorInventory = nullptr;
 
-                {
-                    int* st = reinterpret_cast<int*>(0x009725B4);
-                    int st0 = *st;
 
-                    //*st = 0;
-                    *st = 1;
+                {
+                    int* pDefaultStatus = Glacier::ZEventBase::GetDefaultStatus();
+                    const int oldDefaultStatus = *pDefaultStatus;
+
+                    // Here we need to change default status to fix ZScriptC event creation
+                    *pDefaultStatus = 1;
+
+                    //TODO: Here we need to fix ZGEOM vftable. One method is lost between FindEvent and AddEvent
                     pClonedActorInventory = HF::Hook::VFHook<Hitman::BloodMoney::ZHM3Actor>::invoke<Glacier::CInventory*, const char*>(clonedActor, 66, "ZGEOM_Inventory"); // Add inventory
                     pClonedActorScript = HF::Hook::VFHook<Hitman::BloodMoney::ZHM3Actor>::invoke<Glacier::ZScriptC*, const char*>(clonedActor, 66, "ZGEOM_ScriptC"); // AddEvent
-                    *st = st0;
+
+                    // And don't forget to restore it back to avoid other issues
+                    *pDefaultStatus = oldDefaultStatus;
                 }
 
                 if (!pClonedActorScript) {
@@ -229,29 +223,42 @@ namespace ImGui
                 } else {
                     spdlog::info("Created & registered ZScriptC: {:08X}", (int)pClonedActorScript);
 
-                    int foundScript = ((int(__thiscall*)(Glacier::ZScriptC*, const char*))0x00549980)(pClonedActorScript, "Alllevels_Armed");
-                    //int foundScript = ((int(__thiscall*)(Glacier::ZScriptC*, const char*))0x00549980)(pClonedActorScript, "Alllevels_Human");
-                    //int foundScript = ((int(__thiscall*)(Glacier::ZScriptC*, const char*))0x00549980)(pClonedActorScript, "M05_M05_Witness");
+                    constexpr const char* psRequiredScriptName = "Alllevels_Armed";
+                    int foundScript = pClonedActorScript->FindScript(psRequiredScriptName);
                     if (!foundScript) {
-                        spdlog::error("Failed to find 'Alllevels_Human' script!");
+                        spdlog::error("Failed to find '{}' script!", psRequiredScriptName);
                     } else {
                         // And then call 'create script'
-                        int pSCT = ((int(__thiscall*)(Glacier::ZScriptC*, int))0x00549A30)(pClonedActorScript, foundScript);
-                        pClonedActorScript->m_pScriptsTable = pSCT;
+                        pClonedActorScript->m_pScriptsTable = pClonedActorScript->CreateScript(foundScript);
                         spdlog::info("AI script attached ({:08X})", pClonedActorScript->m_pScriptsTable);
-                        // Here we need to call internal methods
 
+                        // Here we need to call internal methods
                         clonedActor->Activate(true);
 
                         // Activate
-                        ((void(__thiscall*)(Glacier::ZScriptC*,bool))0x004E14E0)(pClonedActorScript, false);
+                        pClonedActorScript->ActivateFrameUpdate(false);
+                        //pClonedActorScript->ActivateTimeUpdate(0.0f);
 
                         pClonedActorScript->RegisterInstance();
 
+                        // Give some weapons
                         if (pClonedActorInventory) {
                             Hitman::BloodMoney::CCheat::GiveItem(pClonedActorInventory, "SMG_MP7_01");
                             Hitman::BloodMoney::CCheat::GiveItem(pClonedActorInventory, "Gun_HKusp_01");
                             Hitman::BloodMoney::CCheat::GiveItem(pClonedActorInventory, "Ammo_SMG_01", 20);
+                        }
+
+                        // Register in some places
+                        if (Hitman::BloodMoney::ZGuardQuarterController::g_pCurrentLevelGuardControl) {
+                            Hitman::BloodMoney::ZGuardQuarterController::g_pCurrentLevelGuardControl->RegisterActor(clonedActor->GetRef());
+                            spdlog::info("Cloned actor was register in guard quarter control");
+                        }
+
+                        // And try to register this actor in ZDllSound::ActorRegister
+                        auto sysInterface = Glacier::getInterface<Glacier::ZSysInterfaceWintel>(Hitman::BloodMoney::Globals::kSysInterfaceAddr);
+                        if (sysInterface && sysInterface->m_soundWintelDLL) {
+                            ((void(__thiscall*)(int, Glacier::ZGEOM*))0x004C60E0)(sysInterface->m_soundWintelDLL, reinterpret_cast<Glacier::ZGEOM*>(clonedActor));
+                            spdlog::info("Cloned actor was register in sound subsystem as sound emitter");
                         }
                     }
                 }

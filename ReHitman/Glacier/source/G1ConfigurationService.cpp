@@ -62,6 +62,7 @@ namespace Glacier
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_GetGQC                              = G1ConfigurationService::kNotConfiguredOption;
 
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZScriptC_FindScript                 = G1ConfigurationService::kNotConfiguredOption;
+    std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZScriptC_CreateScript               = G1ConfigurationService::kNotConfiguredOption;
 
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZAction_AddAction                   = G1ConfigurationService::kNotConfiguredOption;
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZAction_Show                        = G1ConfigurationService::kNotConfiguredOption;
@@ -85,7 +86,14 @@ namespace Glacier
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZScheduledUpdate_AddEvent           = G1ConfigurationService::kNotConfiguredOption;
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZScheduledUpdate_RemoveEvent        = G1ConfigurationService::kNotConfiguredOption;
 
+    std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZEventBase_ActivateFrameUpdate      = G1ConfigurationService::kNotConfiguredOption;
+    std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZEventBase_DeactivateFrameUpdate    = G1ConfigurationService::kNotConfiguredOption;
+    std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZEventBase_ChangeEventActivity      = G1ConfigurationService::kNotConfiguredOption;
+    std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZEventBase_ActivateTimeUpdate       = G1ConfigurationService::kNotConfiguredOption;
+
     std::intptr_t G1ConfigurationService::G1API_InstanceAddress_ZEngineGeomControl                  = G1ConfigurationService::kNotConfiguredOption;
 
     std::intptr_t G1ConfigurationService::G1API_InstanceAddress_CConfiguration_bSubtitles           = G1ConfigurationService::kNotConfiguredOption;
+
+    std::intptr_t G1ConfigurationService::G1API_InstanceAddress_ZEventBase_m_DefaultStatus          = G1ConfigurationService::kNotConfiguredOption;
 }

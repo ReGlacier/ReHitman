@@ -57,6 +57,7 @@ namespace Glacier
         static std::intptr_t G1API_FunctionAddress_ZSNDOBJ_AttachToDefaultRoom;
         static std::intptr_t G1API_FunctionAddress_GetGQC;
         static std::intptr_t G1API_FunctionAddress_ZScriptC_FindScript;
+        static std::intptr_t G1API_FunctionAddress_ZScriptC_CreateScript;
         static std::intptr_t G1API_FunctionAddress_ZAction_AddAction;
         static std::intptr_t G1API_FunctionAddress_ZAction_Show;
         static std::intptr_t G1API_FunctionAddress_ZAction_Hide;
@@ -77,9 +78,15 @@ namespace Glacier
         static std::intptr_t G1API_FunctionAddress_ZActorHeroCheckInside_IsInside;
         static std::intptr_t G1API_FunctionAddress_ZScheduledUpdate_AddEvent;
         static std::intptr_t G1API_FunctionAddress_ZScheduledUpdate_RemoveEvent;
+        static std::intptr_t G1API_FunctionAddress_ZEventBase_ActivateFrameUpdate;
+        static std::intptr_t G1API_FunctionAddress_ZEventBase_DeactivateFrameUpdate;
+        static std::intptr_t G1API_FunctionAddress_ZEventBase_ChangeEventActivity;
+        static std::intptr_t G1API_FunctionAddress_ZEventBase_ActivateTimeUpdate;
 
         static std::intptr_t G1API_InstanceAddress_ZEngineGeomControl;
 
         static std::intptr_t G1API_InstanceAddress_CConfiguration_bSubtitles;
+
+        static std::intptr_t G1API_InstanceAddress_ZEventBase_m_DefaultStatus;
     };
 }
