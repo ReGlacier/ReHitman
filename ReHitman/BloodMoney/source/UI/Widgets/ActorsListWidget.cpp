@@ -280,7 +280,6 @@ namespace ImGui
                             pClonedActorScript->m_field18 |=  0x1000;
                             pClonedActorScript->m_field1C &= ~0x1000;
                             pClonedActorScript->m_field1C |=  0x18;
-                            pClonedActorScript->m_field28  = 0;
 
                             auto sysInterface = Glacier::getInterface<Glacier::ZSysInterfaceWintel>(Hitman::BloodMoney::Globals::kSysInterfaceAddr);
                             auto engineDb = sysInterface->m_engineDataBase;
