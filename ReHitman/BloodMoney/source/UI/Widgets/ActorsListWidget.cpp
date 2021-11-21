@@ -4,6 +4,7 @@
 #include <BloodMoney/Game/ZHM3GameData.h>
 #include <BloodMoney/Game/ZHM3Actor.h>
 #include <BloodMoney/Game/Globals.h>
+#include <BloodMoney/Game/ZGuardQuarterController.h>
 #include <BloodMoney/Game/CCheat.h>
 
 #include <BloodMoney/UI/ImGuiInspector.h>
@@ -179,6 +180,32 @@ namespace ImGui
                 //clonedActor->SetActorState(Hitman::BloodMoney::ZActor::ACTORSTATE::STATE_2);
                 //clonedActor->SetActorState(Hitman::BloodMoney::ZActor::ACTORSTATE::STATE_3);
 
+                // ----------- PRETTY PRINT SOME INFOS -------------
+                spdlog::info("TRK: {:08X}", (int)pTrackLinkObjects);
+                spdlog::info("OACT: {:08X}", (int)actor);
+                spdlog::info("Dup: {:08X} / ADup: {:08X}", (int)duplicateGroup, (int)clonedActor);
+
+                // ----------- REGISTER ACTOR SOMEWHERE ------------
+                clonedActor->SetActorState(((Hitman::BloodMoney::ZActor::ACTORSTATE(__thiscall*)(Hitman::BloodMoney::ZHM3Actor*))0x005029A0)(actor));
+
+                clonedActor->m_Mask1 = actor->m_Mask1;
+                clonedActor->m_field91C = actor->m_field91C;
+                clonedActor->m_fieldA3C = actor->m_fieldA3C;
+
+                spdlog::info("Cloned actor ptr is {:08X}", reinterpret_cast<std::intptr_t>(clonedActor));
+
+                if (Hitman::BloodMoney::ZGuardQuarterController::g_pCurrentLevelGuardControl) {
+                    Hitman::BloodMoney::ZGuardQuarterController::g_pCurrentLevelGuardControl->RegisterActor(clonedActor->GetRef());
+                }
+
+                // And try to register this actor in ZDllSound::ActorRegister
+                auto sysInterface = Glacier::getInterface<Glacier::ZSysInterfaceWintel>(Hitman::BloodMoney::Globals::kSysInterfaceAddr);
+                if (sysInterface && sysInterface->m_soundWintelDLL) {
+                    //sysInterface->m_soundWintelDLL
+                    ((void(__thiscall*)(int, Glacier::ZGEOM*))0x004C60E0)(sysInterface->m_soundWintelDLL, reinterpret_cast<Glacier::ZGEOM*>(clonedActor));
+                }
+
+                // ------------ ENABLE AI SCRIPTS ------------
                 spdlog::info("TRK: {:08X}", (int)pTrackLinkObjects);
                 spdlog::info("OACT: {:08X}", (int)actor);
                 spdlog::info("Dup: {:08X} / ADup: {:08X}", (int)duplicateGroup, (int)clonedActor);
