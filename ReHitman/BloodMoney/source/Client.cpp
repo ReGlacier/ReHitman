@@ -110,6 +110,7 @@ namespace Hitman::BloodMoney
 
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZEngineDataBase_GetSceneCom          = 0x0045AED0;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZEngineDataBase_SRefToPtr            = 0x0045B280;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZEngineDataBase_GetEventScheduler    = 0x0045B1C0;
 
         Glacier::G1ConfigurationService::G1API_FunctionAddress_CInventory_AddItem                   = 0x005C5400;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_CInventory_RemoveItem                = 0x005C5780;
@@ -140,6 +141,9 @@ namespace Hitman::BloodMoney
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZActorHeroCheckInside_IsInside       = 0x005D4BC0;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZGameStats_IncreaseCurrentShotCount  = 0x00463E70;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZGameStats_DecreaseCurrentShotCount  = 0x00463E90;
+
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZScheduledUpdate_AddEvent            = 0x00466180;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZScheduledUpdate_RemoveEvent         = 0x00465EF0;
 #pragma endregion
 #pragma region BloodMoney Configuration Table
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZPathFollower_GetClosestWaypoint      = 0x00654450;

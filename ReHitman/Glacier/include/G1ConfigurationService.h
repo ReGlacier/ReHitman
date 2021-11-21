@@ -51,6 +51,7 @@ namespace Glacier
         static std::intptr_t G1API_FunctionAddress_ZHash_int_SMatPos_Find;
         static std::intptr_t G1API_FunctionAddress_ZEngineDataBase_GetSceneCom;
         static std::intptr_t G1API_FunctionAddress_ZEngineDataBase_SRefToPtr;
+        static std::intptr_t G1API_FunctionAddress_ZEngineDataBase_GetEventScheduler;
         static std::intptr_t G1API_FunctionAddress_CInventory_AddItem;
         static std::intptr_t G1API_FunctionAddress_CInventory_RemoveItem;
         static std::intptr_t G1API_FunctionAddress_ZSNDOBJ_AttachToDefaultRoom;
@@ -74,6 +75,8 @@ namespace Glacier
         static std::intptr_t G1API_FunctionAddress_ZGameStats_IncreaseCurrentShotCount;
         static std::intptr_t G1API_FunctionAddress_ZGameStats_DecreaseCurrentShotCount;
         static std::intptr_t G1API_FunctionAddress_ZActorHeroCheckInside_IsInside;
+        static std::intptr_t G1API_FunctionAddress_ZScheduledUpdate_AddEvent;
+        static std::intptr_t G1API_FunctionAddress_ZScheduledUpdate_RemoveEvent;
 
         static std::intptr_t G1API_InstanceAddress_ZEngineGeomControl;
 

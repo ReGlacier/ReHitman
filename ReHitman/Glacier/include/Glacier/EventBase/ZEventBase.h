@@ -3,6 +3,7 @@
 #include <Glacier/ZSTL/ZRTTI.h>
 #include <Glacier/GlacierFWD.h>
 #include <Glacier/ZListNodeBase.h>
+#include <Glacier/ZScheduledScript.h>
 
 namespace Glacier
 {
@@ -15,7 +16,7 @@ namespace Glacier
         int32_t m_field1C; //0x001C
         int32_t m_field20; //0x0020
         Glacier::ZGEOM* m_geom; //0x0024
-        int32_t m_field28; //0x0028
+        Glacier::ZScheduledScript* m_pScheduledScript; //+0x0028
         Glacier::ZRTTI* m_runtimeTypeInfo; //0x002C
 
         /// === vftable ===

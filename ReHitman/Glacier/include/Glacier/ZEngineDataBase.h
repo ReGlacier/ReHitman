@@ -2,6 +2,7 @@
 
 #include <Glacier/Glacier.h>
 #include <Glacier/ZLinkedListHeader.hpp>
+#include <Glacier/ZScheduledUpdate.h>
 #include <Glacier/Geom/ZGEOM.h>
 #include <Glacier/CCom.h>
 
@@ -74,7 +75,7 @@ namespace Glacier
         ZLinkedListHeader<void> m_unknownClass2_LinkedList; //0x0084
 
         /// ---{ LINKED LIST GOD RAY END }---
-        ZScheduledScript* m_ppScheduledScript; //0x008C
+        ZScheduledUpdate* m_pEventScheduler; //0x008C
         ZROOM* m_root; //0x0090
         char pad_0094[4]; //0x0094
         ResourceCollection* m_resourceCollection; //0x0098
@@ -169,5 +170,6 @@ namespace Glacier
         CCom* GetSceneCom();
         std::intptr_t GetSceneVar(const char* varname);
         std::intptr_t SRefToPtr(Glacier::ZREF sref);
+        ZScheduledUpdate* GetEventScheduler();
     };
 }
