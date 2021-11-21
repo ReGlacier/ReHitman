@@ -21,6 +21,7 @@
 #include <Glacier/CInventory.h>
 
 #include <Glacier/Fysix/CRigidBody.h>
+#include <Glacier/Geom/ZROOM.h>
 #include <HF/HackingFramework.hpp>
 #include <imgui.h>
 
@@ -260,6 +261,12 @@ namespace ImGui
                             ((void(__thiscall*)(int, Glacier::ZGEOM*))0x004C60E0)(sysInterface->m_soundWintelDLL, reinterpret_cast<Glacier::ZGEOM*>(clonedActor));
                             spdlog::info("Cloned actor was register in sound subsystem as sound emitter");
                         }
+
+                        // Try to register actor in actor communication network
+                        constexpr auto kRadioChannel = 3u;
+                        //TODO: Wrap this call to ZActorCommunication class when it will be reversed
+                        // Now we calling that function (ZActorCommunication::RegisterRadioUser) through script interface (SI)
+                        ((void(__cdecl*)(Glacier::ZREF, unsigned int))0x006AA2B0)(clonedActor->GetRef(), kRadioChannel);
                     }
                 }
             }

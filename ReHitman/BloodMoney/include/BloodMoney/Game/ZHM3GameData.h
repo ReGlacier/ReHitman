@@ -60,9 +60,10 @@ namespace Hitman::BloodMoney
         ZHM3WeaponUpgradeControl* m_WeaponUpgradeControl; //0x6970
         ZHM3CameraEventCameraClass* m_CameraEventCameraClass; //0x6974
         ZHM3CameraClass* m_CameraClass; //0x6978
-        char pad_697C[24]; //0x697C
-        int m_FightControllerComponentID; //0x6994
-        int m_field6998;	//0x6998
+        char pad_697C[20]; //0x697C
+        int m_rActorCommunicationComponentID; //0x6990
+        int m_rFightControllerComponentID; //0x6994
+        int m_rCoverListComponentID;	//0x6998
         ZClothTracker* m_ClothTracker; //0x699C
         char pad_69A0[8]; //0x69A0
         ZHM3DialogControl* m_DialogControl; //0x69A8
