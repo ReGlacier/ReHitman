@@ -246,49 +246,7 @@ namespace ImGui
                         // Activate
                         ((void(__thiscall*)(Glacier::ZScriptC*,bool))0x004E14E0)(pClonedActorScript, false);
 
-//                        pClonedActorScript->m_field18 |=  0x1000;
-//                        pClonedActorScript->m_field1C &= ~0x1000;
-//                        pClonedActorScript->m_field1C |=  0x18;
-//                        pClonedActorScript->m_field28  = 0;
-
-//                        ((void(__thiscall*)(Glacier::ZScriptC*))0x004E1420)(pClonedActorScript); //ZEventBase::ChangeEventActivity
-
                         pClonedActorScript->RegisterInstance();
-
-                        // --------
-                        struct SCRIPT_TABLE_t {
-                            int m_field0;
-                            int m_field4;
-                            int m_field8;
-                            int m_fieldC;
-                            int m_field10;
-                            int m_field14;
-                            int m_field18;
-                            int m_field1C;
-                            int m_field20;
-                            // -----------------------------------------
-                            void(__cdecl* pFN24)(int); //0x24
-                            int m_field28;
-                            void(__cdecl* pFN2C)(int); //0x2C
-                        };
-
-                        auto pFnScr = (SCRIPT_TABLE_t*)foundScript;
-                        pFnScr->pFN24(*(int*)pClonedActorScript->m_pScriptsTable);
-                        pFnScr->pFN2C(*(int*)pClonedActorScript->m_pScriptsTable);
-
-                        {
-                            pClonedActorScript->m_field18 |=  0x1000;
-                            pClonedActorScript->m_field1C &= ~0x1000;
-                            pClonedActorScript->m_field1C |=  0x18;
-
-                            auto sysInterface = Glacier::getInterface<Glacier::ZSysInterfaceWintel>(Hitman::BloodMoney::Globals::kSysInterfaceAddr);
-                            auto engineDb = sysInterface->m_engineDataBase;
-
-                            auto v5 = ((int(__thiscall*)(Glacier::ZEngineDataBase*))0x0045B1C0)(engineDb);
-                            auto vr = ((int(__thiscall*)(int, Glacier::ZScriptC*))0x00466180)(v5, pClonedActorScript);
-
-                            spdlog::info("VR: {:08X}", vr);
-                        }
 
                         if (pClonedActorInventory) {
                             Hitman::BloodMoney::CCheat::GiveItem(pClonedActorInventory, "SMG_MP7_01");
