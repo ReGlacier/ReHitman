@@ -191,9 +191,9 @@ namespace ImGui
                 // ----------- REGISTER ACTOR SOMEWHERE ------------
                 clonedActor->SetActorState(((Hitman::BloodMoney::ZActor::ACTORSTATE(__thiscall*)(Hitman::BloodMoney::ZHM3Actor*))0x005029A0)(actor));
 
-                clonedActor->m_Mask1 = actor->m_Mask1;
-                clonedActor->m_field91C = actor->m_field91C;
-                clonedActor->m_fieldA3C = actor->m_fieldA3C;
+//                clonedActor->m_Mask1 = actor->m_Mask1;
+//                clonedActor->m_field91C = actor->m_field91C;
+//                clonedActor->m_fieldA3C = actor->m_fieldA3C;
 
                 spdlog::info("Cloned actor ptr is {:08X}", reinterpret_cast<std::intptr_t>(clonedActor));
 
