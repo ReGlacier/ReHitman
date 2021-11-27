@@ -45,6 +45,7 @@ namespace Hitman::BloodMoney
         static std::intptr_t BMAPI_FunctionAddress_ZHM3ItemWeaponCustom_ApplyUpgrades;
         static std::intptr_t BMAPI_FunctionAddress_ZHM3ItemWeaponCustom_UpdateWeaponPartDrawStatus;
         static std::intptr_t BMAPI_FunctionAddress_ZHM3ItemWeaponCustom_ClearUpgrades;
+        static std::intptr_t BMAPI_FunctionAddress_ZHM3ItemWeaponCustom_SetSilencerType;
         static std::intptr_t BMAPI_FunctionAddress_ZHM3BriefingControl_CompleteObjective;
         static std::intptr_t BMAPI_FunctionAddress_ZHM3BriefingControl_PlaySpeech;
         static std::intptr_t BMAPI_FunctionAddress_ZHM3BriefingControl_StopSpeech;

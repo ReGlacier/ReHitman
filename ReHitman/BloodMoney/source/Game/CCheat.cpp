@@ -58,6 +58,7 @@ namespace Hitman::BloodMoney {
             auto eWeaponType = ZHM3WeaponUpgradeControl::GetWeaponType(pAddedItem->m_baseGeom->entityName);
             if (eWeaponType != EWeaponType::EW_UNKNOWN) { //TODO: Add fix for WA-2000 (It's not classified as 'custom' weapon but it is)
                 auto pCustomItem = reinterpret_cast<ZHM3ItemWeaponCustom*>(pAddedItem);
+                pCustomItem->SetSilencerType(ESilencerType::eSilentOver20); // Just for test
 
                 //TODO: How to remove fake upgrades from custom gun?
 //                pGameData->m_WeaponUpgradeControl->ApplyDefaultUpgrades(eWeaponType, pCustomItem);

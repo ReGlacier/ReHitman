@@ -1,6 +1,7 @@
 #pragma once
 
 #include <BloodMoney/Game/Items/ZHM3ItemWeapon.h>
+#include <BloodMoney/Game/Items/ESilencerType.h>
 
 namespace Hitman::BloodMoney
 {
@@ -15,6 +16,7 @@ namespace Hitman::BloodMoney
         void ApplyUpgrades(char a1);
         void UpdateWeaponPartDrawStatus();
         void ClearUpgrades();
+        void SetSilencerType(ESilencerType type);
 
         // data (new size is 0x1C0)
         int m_field15C;
@@ -37,7 +39,7 @@ namespace Hitman::BloodMoney
         int m_field1A0;
         int m_field1A4;
         int m_field1A8;
-        int m_field1AC;
+        ESilencerType m_eSilencerType;
         int m_anim_Reload_Bolt;
         int m_anim_Reload_DoubleClip;
         int m_anim_Reload_100shot;
