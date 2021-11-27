@@ -1,11 +1,15 @@
 #include <BloodMoney/Delegates/DX9Delegate.h>
 #include <BloodMoney/UI/DebugTools.h>
 
+// Debug widgets
 #include <BloodMoney/UI/Widgets/SandboxWidget.h>
 #include <BloodMoney/UI/Widgets/ActorsListWidget.h>
 #include <BloodMoney/UI/Widgets/CutSequencePlayerWidget.h>
 #include <BloodMoney/UI/Widgets/SceneViewer.h>
 #include <BloodMoney/UI/Widgets/PlayerTeleportWidget.h>
+
+// Gizmos
+#include <BloodMoney/Debug/Gizmo/ActorsDebugGizmo.h>
 
 #include <BloodMoney/Game/Globals.h>
 #include <BloodMoney/Game/ZHM3Actor.h>
@@ -58,12 +62,18 @@ namespace Hitman::BloodMoney
 
         Globals::g_pDebugTools = std::make_unique<DebugTools>();
 
+        // Register widgets
         {
             Globals::g_pDebugTools->addChild(std::make_shared<SandboxWidget>());
             Globals::g_pDebugTools->addChild(std::make_shared<ActorsListWidget>());
             Globals::g_pDebugTools->addChild(std::make_shared<CutSequencePlayerWidget>());
             Globals::g_pDebugTools->addChild(std::make_shared<SceneViewer>());
             Globals::g_pDebugTools->addChild(std::make_shared<PlayerTeleportWidget>());
+        }
+
+        // Register gizmos
+        {
+            RegisterGizmo(Debug::EGizmoLayer::ImGui_AfterUI, Debug::ActorDebugGizmo::OnDrawGizmo);
         }
 
         spdlog::info("DX9Delegate initialised!");
@@ -85,63 +95,8 @@ namespace Hitman::BloodMoney
 
     void DX9Delegate::OnPresent(IDirect3DDevice9* device)
     {
+        DrawGizmo(Debug::EGizmoLayer::Scene_OnEnd, device);
         DrawDebugUI(device);
-    }
-
-    void DX9Delegate::DrawGizmos() {
-        /// ---- INTERFACES & DATA
-        auto systemInterface = Glacier::getInterface<Glacier::ZSysInterfaceWintel>(Globals::kSysInterfaceAddr);
-        if (!systemInterface) return;
-
-        auto gameData = Glacier::getInterface<Hitman::BloodMoney::ZHM3GameData>(Globals::kGameDataAddr);
-        if (!gameData || !gameData->m_Hitman3 || !gameData->m_ActorsInPoolCount) return;
-
-        auto pCamera = reinterpret_cast<Glacier::ZCAMERA*>(gameData->m_CameraClass);
-        if (!pCamera || !pCamera->IsActive()) return;
-
-        auto pD3DDll = Glacier::getInterface<Glacier::ZRenderWintelD3DDll>(Globals::kD3DDllAddr);
-        if (!pD3DDll) return;
-
-        auto pPrimControl = pD3DDll->m_primControlWintel;
-        if (!pPrimControl) return;
-
-        Glacier::ZCameraSpace cameraSpace {};
-        cameraSpace = pCamera;
-
-        using vmmul_t = void(__fastcall*)(Glacier::Vector3*, Glacier::Vector3*, Glacier::ZMat3x3*);
-        auto vmmul = (vmmul_t)0x00435F50;
-
-        using v3add_t = void(__fastcall*)(Glacier::ZVector3*,Glacier::ZVector3*);
-        auto v3add = (v3add_t)0x00428740;
-
-        struct ZHitman3AutoAim_t {
-            int pad0 { 0 };
-            Glacier::ZCAMERA* pCamera { nullptr };
-        };
-
-        using ZHitman3AutoAim_GetScreenCoord_t = bool(__thiscall*)(ZHitman3AutoAim_t*,Hitman::BloodMoney::ZHM3Actor*,Glacier::ZVector3*);
-        auto ZHitman3AutoAim_GetScreenCoord = (ZHitman3AutoAim_GetScreenCoord_t)0x00631A80;
-
-        ZHitman3AutoAim_t autoAim {};
-        autoAim.pCamera = pCamera;
-
-        // And now try to draw actor's model
-        for (int iActor = 0; iActor < gameData->m_ActorsInPoolCount; iActor++) {
-            Hitman::BloodMoney::ZHM3Actor* pActor = gameData->m_ActorsPool[iActor];
-
-            if (!pActor->m_boneModify) {
-                // Actor not loaded completely. It's better to avoid work with it
-                continue;
-            }
-
-            Glacier::Vector3 position;
-            if (!ZHitman3AutoAim_GetScreenCoord(&autoAim, pActor, &position)) {
-                continue;
-            }
-
-            //FIXME: Here we have wrong calculations of position' transform in 2d space. I will fix it later
-            ImGui::GetOverlayDrawList()->AddCircleFilled(ImVec2 { position.x, position.y }, 5.f, IM_COL32(255, 0, 0, 255));
-        }
     }
 
     void DX9Delegate::DrawDebugUI(IDirect3DDevice9* device) {
@@ -162,13 +117,13 @@ namespace Hitman::BloodMoney
 
             if (isDebugToolsVisible)
             {
+                DrawGizmo(Debug::EGizmoLayer::ImGui_BeforeUI, device);
                 Globals::g_pDebugTools->draw();
+                DrawGizmo(Debug::EGizmoLayer::ImGui_AfterUI, device);
             }
 
             io.MouseDrawCursor = isDebugToolsVisible;
         }
-
-        DrawGizmos();
 
         ImGui::EndFrame();
         device->SetRenderState(D3DRS_ZENABLE, false);
