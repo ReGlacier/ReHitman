@@ -150,6 +150,11 @@ namespace Glacier
         // API
         void GetRootTM(Glacier::ZMat3x3* mat, Glacier::ZVector3* pos);
         void GetMatPos(Glacier::ZMat3x3* mat, Glacier::ZVector3* pos);
+        void GetRootPoint(Glacier::ZVector3* pos);
+        void GetCen(Glacier::ZVector3* pos);
+        void GetRootMatPos(Glacier::ZMat3x3* mat, Glacier::ZVector3* pos);
+        void GetLocalPoint(Glacier::ZVector3* pos);
+        void Zvmmul(Glacier::ZVector3* pos);
         ZREF GetRef();
 
         // Static API

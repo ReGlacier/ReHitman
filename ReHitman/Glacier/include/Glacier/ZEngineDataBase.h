@@ -79,7 +79,9 @@ namespace Glacier
         ZROOM* m_root; //0x0090
         char pad_0094[4]; //0x0094
         ResourceCollection* m_resourceCollection; //0x0098
-        char pad_009C[56]; //0x009C
+        char pad_009C[48]; //0x009C
+        int m_fieldCC; //0xCC
+        int m_fieldD0; //0xD0
         char* m_gms; //0x00D4
 
         /// VFTABLE

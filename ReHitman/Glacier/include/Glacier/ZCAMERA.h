@@ -38,7 +38,7 @@ namespace Glacier
         virtual void SetCamPrio(int); //nullstub
         virtual void SetCamTarget(Vector3*, float);
         virtual void SetCam6ClipPlanes(float,float,float,int,int,float);
-        virtual void Proj2D(ZVector2*, const ZVector2*);
+        virtual void Proj2D(ZVector2*, const ZVector3*);
         virtual void Proj3D(ZVector3*, const ZVector3*);
         virtual void Proj2D3D(ZVector3*, const ZVector3*);
         virtual void SetCameraRoot(unsigned int);

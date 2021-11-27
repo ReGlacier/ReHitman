@@ -19,6 +19,11 @@ namespace Glacier
         static std::intptr_t G1API_FunctionAddress_ZGEOM_GetRootTM;
         static std::intptr_t G1API_FunctionAddress_ZGEOM_RefToPtr;
         static std::intptr_t G1API_FunctionAddress_ZGEOM_GetRef;
+        static std::intptr_t G1API_FunctionAddress_ZGEOM_GetRootPoint;
+        static std::intptr_t G1API_FunctionAddress_ZGEOM_GetCen;
+        static std::intptr_t G1API_FunctionAddress_ZGEOM_GetRootMatPos;
+        static std::intptr_t G1API_FunctionAddress_ZGEOM_GetLocalPoint;
+        static std::intptr_t G1API_FunctionAddress_ZGEOM_Zvmmul;
         static std::intptr_t G1API_FunctionAddress_ZHumanBoid_SetTarget;
         static std::intptr_t G1API_FunctionAddress_ZBaseGeom_DoInit;
         static std::intptr_t G1API_FunctionAddress_ZBaseGeom_ParentGroup;

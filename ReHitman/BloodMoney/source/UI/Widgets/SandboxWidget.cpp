@@ -32,6 +32,8 @@
 #include <Glacier/Geom/ZTreeGroup.h>
 #include <Glacier/ZTypeTraits.h>
 #include <Glacier/ZRenderWintelD3D.h>
+#include <Glacier/ZPrimControlWintel.h>
+#include <Glacier/ZSTL/ZLIST.h>
 
 #include <BloodMoney/Game/ZHM3Actor.h>
 
@@ -110,6 +112,50 @@ namespace Hitman::BloodMoney
 
         //-----------------------------------------------------------------------------------------------
         ImGui::Begin("TEST");
+
+        if (ImGui::Button("Toggle AIM")) {
+            const bool v = *reinterpret_cast<bool*>(((std::intptr_t)gameData->m_Hitman3) + 0xB58);
+            *reinterpret_cast<bool*>(((std::intptr_t)gameData->m_Hitman3) + 0xB58) = !v;
+        }
+
+        if (ImGui::Button("Dump actor #0 matpos")) {
+            Glacier::ZMat3x3 mat;
+            Glacier::ZVector3 pos;
+
+            gameData->m_ActorsPool[0]->GetRootMatPos(&mat, &pos);
+
+            spdlog::info("Actor #0: ");
+            spdlog::info("Pos     : {};{};{}", pos.x, pos.y, pos.z);
+            spdlog::info("Mat     : {};{};{}", mat.data[0], mat.data[1], mat.data[2]);
+            spdlog::info("        : {};{};{}", mat.data[3], mat.data[4], mat.data[5]);
+            spdlog::info("        : {};{};{}", mat.data[6], mat.data[7], mat.data[8]);
+        }
+
+        if (ImGui::Button("Test bone dumper")) {
+            spdlog::info("--------------- BEGIN DUMP -----------------");
+
+            auto pD3DDll = Glacier::getInterface<Glacier::ZRenderWintelD3DDll>(Globals::kD3DDllAddr);
+            auto pPrimControl = pD3DDll->m_primControlWintel;
+
+            auto pActor = gameData->m_ActorsPool[0];
+            const int iBonesCount = HF::Hook::VFHook<Glacier::ZPrimControlWintel>::invoke<int, int>(pPrimControl, 41, pActor->m_baseGeom->m_primitive);
+            spdlog::info("Bones count: {}", iBonesCount);
+
+            for (int boneIx = 0; boneIx < iBonesCount; boneIx++) {
+                Glacier::Matrix3x3 mat {};
+                Glacier::Vector3 cenPos, pos;
+
+                pActor->GetBoneCenter(boneIx, &cenPos);
+                pActor->GetBoneMatPos(&mat, &pos, boneIx);
+
+                spdlog::info("Bone[{}] = {}", boneIx, pActor->GetBoneName(boneIx));
+                spdlog::info("Center: {};{};{}", cenPos.x, cenPos.y, cenPos.z);
+                spdlog::info("Pos   : {};{};{}", pos.x, pos.y, pos.z);
+                spdlog::info("Mat   : {};{};{}", mat.data[0], mat.data[1], mat.data[2]);
+                spdlog::info("        {};{};{}", mat.data[3], mat.data[4], mat.data[5]);
+                spdlog::info("        {};{};{}", mat.data[6], mat.data[7], mat.data[8]);
+            }
+        }
 
 //        if (gameData->m_LevelControl && ImGui::Button("Arrive enemies")) {
 //            // ZHM3LevelControlM05::GetMoreGuards()

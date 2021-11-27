@@ -12,5 +12,9 @@ namespace Hitman::BloodMoney
         void OnReset(IDirect3DDevice9* device) override;
         void OnDeviceRestored(IDirect3DDevice9* device) override;
         void OnPresent(IDirect3DDevice9* device) override;
+
+    private:
+        void DrawGizmos();
+        void DrawDebugUI(IDirect3DDevice9* device);
     };
 }

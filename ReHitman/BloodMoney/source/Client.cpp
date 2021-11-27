@@ -70,6 +70,11 @@ namespace Hitman::BloodMoney
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZGEOM_GetRootTM       = 0x004E6990;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZGEOM_RefToPtr        = 0x004E5BE0;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZGEOM_GetRef          = 0x004E5BC0;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZGEOM_GetRootPoint    = 0x004E68E0;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZGEOM_GetCen          = 0x004E5E10;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZGEOM_GetRootMatPos   = 0x004E6970;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZGEOM_GetLocalPoint   = 0x004E6920;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZGEOM_Zvmmul          = 0x004E5E80;
 
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZHumanBoid_SetTarget  = 0x00585670;
 
