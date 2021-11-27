@@ -94,5 +94,7 @@ namespace Glacier
         static std::intptr_t G1API_InstanceAddress_CConfiguration_bSubtitles;
 
         static std::intptr_t G1API_InstanceAddress_ZEventBase_m_DefaultStatus;
+
+        static std::intptr_t G1API_InstanceAddress_CCom_g_globalCom;
     };
 }

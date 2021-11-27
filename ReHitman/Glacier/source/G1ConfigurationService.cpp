@@ -103,4 +103,6 @@ namespace Glacier
     std::intptr_t G1ConfigurationService::G1API_InstanceAddress_CConfiguration_bSubtitles           = G1ConfigurationService::kNotConfiguredOption;
 
     std::intptr_t G1ConfigurationService::G1API_InstanceAddress_ZEventBase_m_DefaultStatus          = G1ConfigurationService::kNotConfiguredOption;
+
+    std::intptr_t G1ConfigurationService::G1API_InstanceAddress_CCom_g_globalCom                    = G1ConfigurationService::kNotConfiguredOption;
 }

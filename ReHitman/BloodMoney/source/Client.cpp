@@ -133,6 +133,7 @@ namespace Hitman::BloodMoney
         Glacier::G1ConfigurationService::G1API_InstanceAddress_ZEngineGeomControl                   = 0x007F5AA8;
         Glacier::G1ConfigurationService::G1API_InstanceAddress_CConfiguration_bSubtitles            = 0x008ACA9C;
         Glacier::G1ConfigurationService::G1API_InstanceAddress_ZEventBase_m_DefaultStatus           = 0x009725B4;
+        Glacier::G1ConfigurationService::G1API_InstanceAddress_CCom_g_globalCom                     = 0x00820830;
 
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZCameraSpace_AssignOperator          = 0x00439DE0;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZCameraSpace_IsMirror                = 0x00439C90;

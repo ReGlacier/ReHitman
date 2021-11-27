@@ -47,4 +47,14 @@ namespace Glacier
 
         return nullptr;
     }
+
+    CCom* ZEngineDataBase::GetGlobalCom() {
+        assert(G1ConfigurationService::G1API_InstanceAddress_CCom_g_globalCom != G1ConfigurationService::kNotConfiguredOption);
+
+        if (G1ConfigurationService::G1API_InstanceAddress_CCom_g_globalCom != G1ConfigurationService::kNotConfiguredOption) {
+            return reinterpret_cast<Glacier::CCom*>(G1ConfigurationService::G1API_InstanceAddress_CCom_g_globalCom);
+        }
+
+        return nullptr;
+    }
 }
