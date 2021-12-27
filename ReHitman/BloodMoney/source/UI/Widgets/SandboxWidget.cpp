@@ -34,6 +34,9 @@
 #include <Glacier/ZRenderWintelD3D.h>
 #include <Glacier/ZPrimControlWintel.h>
 #include <Glacier/ZSTL/ZLIST.h>
+#include <Glacier/Items/ZItemTemplateAmmo.h>
+#include <Glacier/Items/ZItemTemplateWeapon.h>
+#include <Glacier/Items/ZItemWeapon.h>
 
 #include <BloodMoney/Game/ZHM3Actor.h>
 
@@ -56,6 +59,7 @@
 #include <Glacier/CCom.h>
 
 #include <BloodMoney/Game/OnLevel/ZVCR.h>
+#include <BloodMoney/Game/Items/ZHM3ItemWeaponCustom.h>
 
 
 namespace Hitman::BloodMoney
@@ -113,9 +117,102 @@ namespace Hitman::BloodMoney
         //-----------------------------------------------------------------------------------------------
         ImGui::Begin("TEST");
 
+        if (ImGui::Button("Give MP7 with tranquilizer ammo")) {
+            auto engineDB = sysInterface->m_engineDataBase;
+            if (!engineDB) {
+                return;
+            }
+
+            std::vector<Glacier::ZGEOM*> ammoEntries;
+            std::vector<Glacier::ZGEOM*> gunWeaponTemplates;
+
+            auto findEntriesExactOfType = [engineDb](const char* psGroupName, std::intptr_t pTypeMask, std::intptr_t pTypeId, std::string_view sEntityName, std::vector<Glacier::ZGEOM*>& result) {
+                auto pId = reinterpret_cast<std::intptr_t*>(pTypeId);
+                auto pMask = reinterpret_cast<std::intptr_t*>(pTypeMask);
+
+                if (!pId || !pMask) {
+                    spdlog::error("Bad type id ({:08X}) or mask ({:08X}) pointer(s)", pTypeId, pTypeMask);
+                    return;
+                }
+
+                std::intptr_t rpGroup = engineDb->GetSceneVar(psGroupName);
+                if (!rpGroup) {
+                    spdlog::warn("No '{}' group ptr presented", psGroupName);
+                    return;
+                }
+
+                Glacier::ZREF rGroup = *reinterpret_cast<Glacier::ZREF*>(rpGroup);
+                if (!rGroup) {
+                    spdlog::warn("No '{}' group valid ptr presented", psGroupName);
+                    return;
+                }
+
+                auto pGroup = reinterpret_cast<Glacier::ZGROUP*>(Glacier::ZGEOM::RefToPtr(rGroup));
+                if (!pGroup) {
+                    spdlog::warn("No {} instance presented", psGroupName);
+                    return;
+                }
+
+                Glacier::ZEntityLocator* pCurrentEnt = pGroup->m_baseGeom;
+                Glacier::ZGEOM* pCurrentGeom = nullptr;
+
+                do {
+                    pCurrentGeom = reinterpret_cast<Glacier::ZGEOM*>(pCurrentEnt->m_assignedTo);
+
+                    const bool isAcceptable = (sEntityName.empty() ? true : (std::string_view { pCurrentEnt->entityName } == sEntityName)) && (((*pMask) & pCurrentGeom->GetObjectId()) == *(pId));
+                    if (isAcceptable) {
+                        result.emplace_back(pCurrentGeom);
+                    }
+
+                    pGroup->RecurGetNext(&pCurrentEnt);
+                }
+                while (pCurrentEnt != nullptr);
+            };
+
+            findEntriesExactOfType("WeaponsGroup", 0x0099BF34, 0x0099BF30, "Rifle_Airrifle_Tranquilizer_01", gunWeaponTemplates); //4
+            //findEntriesExactOfType("WeaponsGroup", 0x0099BF34, 0x0099BF30, "Custom_ShotGun", gunWeaponTemplates);
+            //findEntriesExactOfType("WeaponsGroup", 0x0099BF34, 0x0099BF30, "SMG_MP7_01", gunWeaponTemplates);
+
+            if (gunWeaponTemplates.empty()) {
+                spdlog::warn("No required gun template on level!");
+            } else {
+                auto pGameData = Glacier::getInterface<Hitman::BloodMoney::ZHM3GameData>(Globals::kGameDataAddr);
+                if (!pGameData) {
+                    spdlog::error("No game data? U srsly??");
+                    return;
+                }
+
+                auto pInventory = reinterpret_cast<Glacier::CInventory*>(reinterpret_cast<Glacier::ZGEOM*>(pGameData->m_Hitman3)->FindEvent(Glacier::CInventory::Name));
+                if (!pInventory) {
+                    spdlog::error("Failed to locate Inventory ZEventBase instance in player (something goes wrong?), player ptr: {:08X}", reinterpret_cast<std::intptr_t>(pGameData->m_Hitman3));
+                } else {
+                    auto pGunItem = pInventory->AddItem(gunWeaponTemplates[0]->GetRef());
+                    if (!pGunItem) {
+                        spdlog::error("Failed to give a gun to player :(");
+                    }
+
+                    auto pGun = reinterpret_cast<Glacier::ZItemWeapon*>(pGunItem);
+
+                    spdlog::info("PWPNO: {:08X}", reinterpret_cast<Glacier::ZItemTemplateWeapon*>(pGun->GetItemTemplate())->m_pWeaponOperations);
+
+                    reinterpret_cast<Glacier::ZItemTemplateWeapon*>(pGun->GetItemTemplate())->m_pWeaponOperations = Glacier::EWeaponOperation::WO_FULLAUTO;
+                    //spdlog::info("GT: {:08X}", reinterpret_cast<Glacier::ZItemTemplateWeapon*>(pGun->GetItemTemplate())->m_weaponType);
+                    reinterpret_cast<Glacier::ZItemTemplateWeapon*>(pGun->GetItemTemplate())->m_weaponType = 0;
+
+                    pGun->m_nextOperation = Glacier::EWeaponOperation::WO_FULLAUTO;
+
+                    pGun->SetProjectilesInMagazine(999);
+                }
+            }
+        }
+
         if (ImGui::Button("Toggle AIM")) {
             const bool v = *reinterpret_cast<bool*>(((std::intptr_t)gameData->m_Hitman3) + 0xB58);
             *reinterpret_cast<bool*>(((std::intptr_t)gameData->m_Hitman3) + 0xB58) = !v;
+        }
+
+        if (ImGui::Button("Dump render draw")) {
+            spdlog::info("RenderDraw at {:08X}", sysInterface->m_renderer->m_pRenderDraw);
         }
 
         if (ImGui::Button("Dump actor #0 matpos")) {

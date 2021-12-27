@@ -21,6 +21,8 @@
 
 namespace Hitman::BloodMoney::Debug {
     void ActorDebugGizmo::OnDrawGizmo(EGizmoLayer layer, IDirect3DDevice9 *device) {
+        return;
+
         /// ---- INTERFACES & DATA
         auto systemInterface = Glacier::getInterface<Glacier::ZSysInterfaceWintel>(Globals::kSysInterfaceAddr);
         if (!systemInterface) return;
@@ -51,28 +53,39 @@ namespace Hitman::BloodMoney::Debug {
             Glacier::ZCAMERA* pCamera { nullptr };
         };
 
-        using ZHitman3AutoAim_GetScreenCoord_t = bool(__thiscall*)(ZHitman3AutoAim_t*,Hitman::BloodMoney::ZHM3Actor*,Glacier::ZVector3*);
-        auto ZHitman3AutoAim_GetScreenCoord = (ZHitman3AutoAim_GetScreenCoord_t)0x00631A80;
+        Glacier::ZMat3x3 mHeadMat, mPlayerMat;
+        Glacier::ZVector3 vHeadPos, vPlayerPos;
+        Glacier::ZVector2 vHeadPos4;
 
-        ZHitman3AutoAim_t autoAim {};
-        autoAim.pCamera = pCamera;
+        auto pPlayer = reinterpret_cast<Glacier::ZLNKWHANDS*>(gameData->m_Hitman3);
+        if (!pPlayer->m_boneModify) return;
 
-        // And now try to draw actor's model
-        for (int iActor = 0; iActor < gameData->m_ActorsInPoolCount; iActor++) {
-            Hitman::BloodMoney::ZHM3Actor* pActor = gameData->m_ActorsPool[iActor];
+        pPlayer->GetRootCenter(&mPlayerMat, &vPlayerPos);
 
-            if (!pActor->m_boneModify) {
-                // Actor not loaded completely. It's better to avoid work with it
-                continue;
+        // Get self bone
+        auto iHeadBoneIdx = pPlayer->HeadBoneIndex();
+        pPlayer->GetBoneMatPos(&mHeadMat, &vHeadPos, iHeadBoneIdx);
+
+        // Envy
+        ImGui::Begin("Player debug");
+        {
+            ImGui::Text("Head bone index: %u", iHeadBoneIdx);
+            ImGui::InputFloat3("Head pos : ", &vHeadPos.x);
+            ImGui::InputFloat2("Head pos4: ", &vHeadPos4.x);
+            ImGui::InputFloat3("Head mat[0]: ", &mHeadMat.data[0]);
+            ImGui::InputFloat3("Head mat[1]: ", &mHeadMat.data[3]);
+            ImGui::InputFloat3("Head mat[2]: ", &mHeadMat.data[6]);
+            ImGui::Separator();
+            ImGui::InputFloat3("Player pos: ", &vPlayerPos.x);
+            ImGui::InputFloat3("Player mat[0]: ", &mPlayerMat.data[0]);
+            ImGui::InputFloat3("Player mat[1]: ", &mPlayerMat.data[3]);
+            ImGui::InputFloat3("Player mat[2]: ", &mPlayerMat.data[6]);
+
+            if (ImGui::Button("Rotate head by 90"))
+            {
+                ((void(__fastcall*)(Glacier::ZMat3x3*, int, float, float, float, float))0x00435B40)(&mHeadMat, 0, 90.f, vHeadPos.x, vHeadPos.y, vHeadPos.z);
             }
-
-            Glacier::Vector3 position;
-            if (!ZHitman3AutoAim_GetScreenCoord(&autoAim, pActor, &position)) {
-                continue;
-            }
-
-            //FIXME: Here we have wrong calculations of position' transform in 2d space. I will fix it later
-            ImGui::GetOverlayDrawList()->AddCircleFilled(ImVec2 { position.x, position.y }, 5.f, IM_COL32(255, 0, 0, 255));
         }
+        ImGui::End();
     }
 }
