@@ -13,8 +13,8 @@ add_subdirectory(Modules/gtest)
 
 add_subdirectory(Glacier)
 add_subdirectory(BloodMoney)
-add_subdirectory(Launcher)
 add_subdirectory(Client)
+add_subdirectory(NVCPL)
 
 file(GLOB_RECURSE REHITMAN_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/DLL/source/*.cpp)
 
@@ -27,3 +27,5 @@ target_link_libraries(ReHitman PUBLIC G1::Core ReHitman::IClient spdlog fmt::fmt
 # For BloodMoney only (TODO: Create abstraction for this later)
 target_link_libraries(ReHitman PRIVATE Hitman::BloodMoney ImGui::Core ImGui::DX9)
 target_compile_definitions(ReHitman PRIVATE -DREHITMAN_BLOOD_MONEY_PROJECT=1) #Build for HitmanBloodMoney
+
+add_dependencies(ReHitman NVCPL)

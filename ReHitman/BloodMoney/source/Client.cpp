@@ -70,6 +70,11 @@ namespace Hitman::BloodMoney
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZGEOM_GetRootTM       = 0x004E6990;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZGEOM_RefToPtr        = 0x004E5BE0;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZGEOM_GetRef          = 0x004E5BC0;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZGEOM_GetRootPoint    = 0x004E68E0;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZGEOM_GetCen          = 0x004E5E10;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZGEOM_GetRootMatPos   = 0x004E6970;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZGEOM_GetLocalPoint   = 0x004E6920;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZGEOM_Zvmmul          = 0x004E5E80;
 
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZHumanBoid_SetTarget  = 0x00585670;
 
@@ -110,6 +115,7 @@ namespace Hitman::BloodMoney
 
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZEngineDataBase_GetSceneCom          = 0x0045AED0;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZEngineDataBase_SRefToPtr            = 0x0045B280;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZEngineDataBase_GetEventScheduler    = 0x0045B1C0;
 
         Glacier::G1ConfigurationService::G1API_FunctionAddress_CInventory_AddItem                   = 0x005C5400;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_CInventory_RemoveItem                = 0x005C5780;
@@ -117,13 +123,17 @@ namespace Hitman::BloodMoney
 
         Glacier::G1ConfigurationService::G1API_FunctionAddress_GetGQC                               = 0x00461A20;
 
-        Glacier::G1ConfigurationService::G1ConfigurationService::G1API_FunctionAddress_ZScriptC_FindScript = 0x00549980;
+        Glacier::G1ConfigurationService::G1ConfigurationService::G1API_FunctionAddress_ZScriptC_FindScript   = 0x00549980;
+        Glacier::G1ConfigurationService::G1ConfigurationService::G1API_FunctionAddress_ZScriptC_CreateScript = 0x00549A30;
+
         Glacier::G1ConfigurationService::G1ConfigurationService::G1API_FunctionAddress_ZAction_AddAction = 0x005D3C10; //another func 0x00549980
         Glacier::G1ConfigurationService::G1ConfigurationService::G1API_FunctionAddress_ZAction_Show = 0x0052BC30;
         Glacier::G1ConfigurationService::G1ConfigurationService::G1API_FunctionAddress_ZAction_Hide = 0x0052B070;
 
         Glacier::G1ConfigurationService::G1API_InstanceAddress_ZEngineGeomControl                   = 0x007F5AA8;
         Glacier::G1ConfigurationService::G1API_InstanceAddress_CConfiguration_bSubtitles            = 0x008ACA9C;
+        Glacier::G1ConfigurationService::G1API_InstanceAddress_ZEventBase_m_DefaultStatus           = 0x009725B4;
+        Glacier::G1ConfigurationService::G1API_InstanceAddress_CCom_g_globalCom                     = 0x00820830;
 
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZCameraSpace_AssignOperator          = 0x00439DE0;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZCameraSpace_IsMirror                = 0x00439C90;
@@ -140,6 +150,15 @@ namespace Hitman::BloodMoney
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZActorHeroCheckInside_IsInside       = 0x005D4BC0;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZGameStats_IncreaseCurrentShotCount  = 0x00463E70;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZGameStats_DecreaseCurrentShotCount  = 0x00463E90;
+
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZScheduledUpdate_AddEvent            = 0x00466180;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZScheduledUpdate_RemoveEvent         = 0x00465EF0;
+
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZEventBase_ActivateFrameUpdate       = 0x004E14E0;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZEventBase_DeactivateFrameUpdate     = 0x004E1510;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZEventBase_ChangeEventActivity       = 0x004E1420;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZEventBase_ActivateTimeUpdate        = 0x004E1520;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZActorCommunication_RegisterRadioUser    = 0x00654920;
 #pragma endregion
 #pragma region BloodMoney Configuration Table
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZPathFollower_GetClosestWaypoint      = 0x00654450;
@@ -177,6 +196,7 @@ namespace Hitman::BloodMoney
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZHM3ItemWeaponCustom_ApplyUpgrades    = 0x006505E0;
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZHM3ItemWeaponCustom_UpdateWeaponPartDrawStatus = 0x00650450;
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZHM3ItemWeaponCustom_ClearUpgrades    = 0x00650450;
+        BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZHM3ItemWeaponCustom_SetSilencerType  = 0x0064C820;
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZHM3BriefingControl_CompleteObjective = 0x006CF120;
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZHM3BriefingControl_PlaySpeech        = 0x006CF650;
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZHM3BriefingControl_StopSpeech        = 0x006CEBB0;
@@ -233,6 +253,10 @@ namespace Hitman::BloodMoney
         m_d3d9Module = m_selfProcess->getModule(kDirectX9DllName);
         if (!m_d3d9Module)
         {
+            m_selfProcess->forEachModule([](const HF::Win32::Module::Ptr& pMod) {
+                spdlog::info("Available module {} at {:X} of size {:X}", pMod->getName().data(), pMod->getBaseAddress(), pMod->getSize());
+            });
+
             spdlog::error("Failed to locate {} module!", kDirectX9DllName.data());
             return false;
         }

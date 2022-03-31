@@ -10,4 +10,5 @@ namespace Hitman::BloodMoney::Globals
     static constexpr std::uintptr_t kGeomBufferAddr    = 0x008BA0C0;
     static constexpr std::uintptr_t kActionManagerAddr = 0x008ACAC4;
     static constexpr std::uintptr_t kD3DDllAddr        = 0x008ACA30;
+    static constexpr std::uintptr_t kSysInputAddr      = 0x008ACAA0;
 }

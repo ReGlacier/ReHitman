@@ -58,6 +58,7 @@ namespace Hitman::BloodMoney {
             auto eWeaponType = ZHM3WeaponUpgradeControl::GetWeaponType(pAddedItem->m_baseGeom->entityName);
             if (eWeaponType != EWeaponType::EW_UNKNOWN) { //TODO: Add fix for WA-2000 (It's not classified as 'custom' weapon but it is)
                 auto pCustomItem = reinterpret_cast<ZHM3ItemWeaponCustom*>(pAddedItem);
+                pCustomItem->SetSilencerType(ESilencerType::eSilentOver20); // Just for test
 
                 //TODO: How to remove fake upgrades from custom gun?
 //                pGameData->m_WeaponUpgradeControl->ApplyDefaultUpgrades(eWeaponType, pCustomItem);
@@ -84,6 +85,68 @@ namespace Hitman::BloodMoney {
                 }
                 else {
                     CCheat::GiveItem(pCurrentGeom->GetRef());
+                }
+
+                return;
+            }
+
+            pWeaponsGroup->RecurGetNext(&pCurrentEnt);
+        }
+        while (pCurrentEnt);
+    }
+
+    void CCheat::GiveItem(Glacier::CInventory *pInventory, std::string_view sItemName, unsigned int iCount) {
+        if (!pInventory || sItemName.empty() || !iCount) {
+            return;
+        }
+
+        auto sysInterface = Glacier::getInterface<Glacier::ZSysInterfaceWintel>(Globals::kSysInterfaceAddr);
+        if (!sysInterface) {
+            return;
+        }
+
+        auto engineDB = sysInterface->m_engineDataBase;
+        if (!engineDB) {
+            return;
+        }
+
+        std::intptr_t rpWeaponsGroup = engineDB->GetSceneVar("WeaponsGroup");
+        if (!rpWeaponsGroup) {
+            spdlog::warn("No WeaponsGroup presented");
+            return;
+        }
+
+        Glacier::ZREF rWeaponsGroup = *reinterpret_cast<Glacier::ZREF*>(rpWeaponsGroup);
+        if (!rWeaponsGroup) {
+            spdlog::warn("No WeaponsGroup value presented");
+            return;
+        }
+
+        auto pWeaponsGroup = reinterpret_cast<Glacier::ZGROUP*>(Glacier::ZGEOM::RefToPtr(rWeaponsGroup));
+        if (!pWeaponsGroup) {
+            spdlog::warn("No WeaponsGroup ({}) instance presented", rWeaponsGroup);
+            return;
+        }
+
+        Glacier::ZEntityLocator* pCurrentEnt = pWeaponsGroup->m_baseGeom;
+        Glacier::ZGEOM* pCurrentGeom = nullptr;
+
+        do {
+            pCurrentGeom = reinterpret_cast<Glacier::ZGEOM*>(pCurrentEnt->m_assignedTo);
+
+            auto kZItemTemplate_Id = reinterpret_cast<std::intptr_t*>(0x0099BF30);
+            auto kZItemTemplate_Mask = reinterpret_cast<std::intptr_t*>(0x0099BF34);
+            const bool isItemTemplate = ((*kZItemTemplate_Mask) & pCurrentGeom->GetObjectId() )== *(kZItemTemplate_Id);
+            const std::string_view sCurrentItemName { pCurrentEnt->entityName };
+
+            if (sCurrentItemName == sItemName) {
+                if (!isItemTemplate) {
+                    spdlog::warn("Unable to give item '{}', it's not a ZItemTemplate thing", sItemName.data());
+                }
+                else {
+                    for (unsigned int i = 0; i < iCount; i++) {
+                        pInventory->AddItem(pCurrentGeom->GetRef());
+                    }
                 }
 
                 return;

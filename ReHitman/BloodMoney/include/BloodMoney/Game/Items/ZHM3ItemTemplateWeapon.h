@@ -2,10 +2,12 @@
 
 #include <Glacier/Items/ZItemTemplateWeapon.h>
 #include <BloodMoney/Game/Items/EHM3ItemType.h>
+#include <BloodMoney/Game/Items/EHM3WeaponScope.h>
+#include <BloodMoney/Game/Items/ESilencerType.h>
 
 namespace Hitman::BloodMoney
 {
-    class ZHM3ItemTemplateWeapon : Glacier::ZItemTemplateWeapon
+    class ZHM3ItemTemplateWeapon : public Glacier::ZItemTemplateWeapon
     {
     public:
         //vftable
@@ -16,8 +18,8 @@ namespace Hitman::BloodMoney
         virtual void* GetLaserIndicator();
         virtual void* GetRedDot();
         virtual bool CanPackIntoSuitcase();
-        virtual void* GetScope();
-        virtual int GetSilencerType();
+        virtual EHM3WeaponScope GetScope();
+        virtual ESilencerType GetSilencerType();
         virtual float GetWeaponStrength();
         virtual int Get1stPersonAimId();
         virtual int Get1stPersonRecoilId();
@@ -27,13 +29,13 @@ namespace Hitman::BloodMoney
 
         //data (total size is 0x1A0, ZItemTemplateWeapon size is 0x15C)
         int m_field15C;
-        int m_field160;
+        EHM3ItemType m_eWeaponType;
         int m_field164;
         int m_field168;
         int m_field16C;
-        int m_field170;
-        int m_field174;
-        int m_field178;
+        float m_fRecoilStrengthX;
+        float m_fRecoilStrengthY;
+        EHM3WeaponScope m_eScopeType;
         int m_field17C;
         int m_field180;
         int m_field184;
@@ -42,6 +44,6 @@ namespace Hitman::BloodMoney
         int m_field190;
         int m_field194;
         int m_field198;
-        int m_field19C;
+        ESilencerType m_eSilencerType;
     };
 }

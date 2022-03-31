@@ -1,5 +1,7 @@
 #include <BloodMoney/Patches/All/InputDevicesPatches.h>
 #include <BloodMoney/Delegates/IInputDelegate.h>
+#include <BloodMoney/Game/Globals.h>
+#include <Glacier/ZSysInterfaceWintel.h>
 #include <Glacier/ZInputDevice.h>
 #include <Windows.h>
 
@@ -7,10 +9,12 @@
 
 namespace Hitman::BloodMoney
 {
+    struct ZSysInputCustom;
+
     namespace Consts
     {
-        static constexpr std::intptr_t ZWintelMouse_Constructor = 0x0045007C;
-        static constexpr size_t ZInputDevice_OnUpdateIndex = 26;
+      static constexpr size_t ZSysInput_OnUpdateIndex = 1;
+      static constexpr size_t ZInputDevice_OnUpdateIndex = 26;
 
         static constexpr std::intptr_t kOriginalWndProcAddr = 0x004513E0;
         static constexpr std::intptr_t kRegisterClassExAddr = 0x00453E68;
@@ -19,53 +23,12 @@ namespace Hitman::BloodMoney
 
     namespace Globals
     {
-        static std::unique_ptr<HF::Hook::VFHook<Glacier::ZInputDevice>> g_pZMouseWintelOnUpdate = nullptr;
         static std::unique_ptr<IInputDelegate> g_pInputDelegate = nullptr;
+        static std::unique_ptr<HF::Hook::VFHook<ZSysInputCustom>> g_sysInputOnUpdateHook = nullptr;
     }
 
     namespace Callbacks
     {
-        struct ZMouseWintel
-        {
-            ///
-            /// REVERSED DATA [READ ONLY, DO NOT CHANGE THE STRUCTURE]
-            ///
-            char pad_0000[44]; //0x0000
-            uint32_t m_mouseState; //0x002C
-            char pad_0030[60]; //0x0030
-            uint32_t m_directInput; //0x006C
-            uint32_t m_device2; //0x0070
-            char pad_0074[540]; //0x0074
-            int32_t m_x; //0x0290
-            int32_t m_y; //0x0294
-            int32_t m_wheel; //0x0298
-            uint8_t m_leftButton; //0x029C
-            uint8_t m_rightButton; //0x029D
-            uint8_t m_midButton; //0x029E
-            char pad_029F[177]; //0x029F
-
-            int OnUpdate()
-            {
-                HF::Hook::VFHook<Glacier::ZInputDevice>& hook = *Globals::g_pZMouseWintelOnUpdate;
-                int result = hook.invoke<int>();
-
-                if (Globals::g_pInputDelegate)
-                {
-                    Globals::g_pInputDelegate->setMouseKeyState(0, m_leftButton);
-                    Globals::g_pInputDelegate->setMouseKeyState(1, m_rightButton);
-                    Globals::g_pInputDelegate->setMouseWheelState(static_cast<float>(m_wheel) / Consts::kWheelDelta);
-                }
-
-                return result;
-            }
-        };
-
-        static void __stdcall OnZWintelMouse_Constructed(Glacier::ZInputDevice* inputDevice)
-        {
-            spdlog::info("Mouse device at {:08X}", (int)inputDevice);
-            Globals::g_pZMouseWintelOnUpdate = HF::Hook::HookVirtualFunction<Glacier::ZInputDevice, Consts::ZInputDevice_OnUpdateIndex>(inputDevice, &ZMouseWintel::OnUpdate);
-        }
-
         LRESULT WINAPI Glacier_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
         {
             typedef LRESULT(__stdcall* GlacierWndProc_t)(HWND, UINT, WPARAM, LPARAM);
@@ -91,15 +54,82 @@ namespace Hitman::BloodMoney
 
             return glacierResult;
         }
-
-        ATOM __stdcall RegisterClassExA_Hooked(WNDCLASSEXA* wndClass)
-        {
-            spdlog::info("Window class registered! Event loop function hooked!");
-            wndClass->lpfnWndProc = Glacier_WndProc;
-            return RegisterClassExA(wndClass);
-        }
-
     }
+
+    struct ZMouseWintel {
+	    ///
+		/// REVERSED DATA [READ ONLY, DO NOT CHANGE THE STRUCTURE]
+		///
+		char pad_0000[44]; //0x0000
+		uint32_t m_mouseState; //0x002C
+		char pad_0030[60]; //0x0030
+		uint32_t m_directInput; //0x006C
+		uint32_t m_device2; //0x0070
+		char pad_0074[540]; //0x0074
+		int32_t m_x; //0x0290
+		int32_t m_y; //0x0294
+		int32_t m_wheel; //0x0298
+		uint8_t m_leftButton; //0x029C
+		uint8_t m_rightButton; //0x029D
+		uint8_t m_midButton; //0x029E
+		char pad_029F[177]; //0x029F
+    };
+
+    struct ZSysInputCustom {
+        struct ZInputDevice {
+            int* vtbl;
+        };
+
+        static constexpr int kMouseIndex = 0;
+
+        /**
+         * @fn OnUpdate
+         * @brief Called by Glacier when engine wants to update input devices
+         */
+		bool OnUpdate() {
+			if (m_attachedDevicesCount) {
+				for (int i = 0; i < m_attachedDevicesCount; i++) {
+					if (!m_devices.allDevices[i]) {
+						continue;
+					}
+
+					// Call OnUpdate of each input device if it's points valid
+					(reinterpret_cast<void(__thiscall*)(ZInputDevice*)>(m_devices.allDevices[i]->vtbl[Consts::ZInputDevice_OnUpdateIndex]))(m_devices.allDevices[i]);
+				}
+
+				UpdateMouse();
+			}
+
+			return true;
+		}
+
+    private:
+    	void UpdateMouse() {
+		    if (m_devices.mapped.m_mouse && Globals::g_pInputDelegate) {
+			    Globals::g_pInputDelegate->setMouseKeyState(0, m_devices.mapped.m_mouse->m_leftButton);
+			    Globals::g_pInputDelegate->setMouseKeyState(1, m_devices.mapped.m_mouse->m_rightButton);
+			    Globals::g_pInputDelegate->setMouseWheelState(static_cast<float>(m_devices.mapped.m_mouse->m_wheel) / Consts::kWheelDelta);
+		    }
+		}
+
+    public:
+		int vtbl { 0 };
+		int m_unk4 { 0 };
+		int m_unk8 { 0 };
+		int m_unkC { 0 };
+		union {
+		  ZInputDevice* allDevices[32];
+		  struct  {
+			ZMouseWintel* m_mouse;
+			int m_keyboard;
+			// other devices here
+			// ...
+		  } mapped;
+		} m_devices; //+0x10
+		int m_attachedDevicesCount { 0 };
+		int* m_field94 { nullptr };
+    };
+    static_assert(offsetof(ZSysInputCustom, m_field94) == 0x94, "ZSysInput bad offset!");
 
     InputDevicesPatches::InputDevicesPatches(std::unique_ptr<IInputDelegate>&& delegate)
     {
@@ -112,43 +142,14 @@ namespace Hitman::BloodMoney
     {
         if (auto process = modules.process.lock())
         {
-            m_wintelMouseCtorHook = HF::Hook::HookFunction(process, Consts::ZWintelMouse_Constructor, &Callbacks::OnZWintelMouse_Constructed,
-                {
-                    HF::X86::PUSH_AD,
-                    HF::X86::PUSH_FD,
-                    HF::X86::PUSH_EAX
-                },
-                {
-                    HF::X86::POP_FD,
-                    HF::X86::POP_AD
-                });
+            auto sysInterface = Glacier::getInterface<Glacier::ZSysInterfaceWintel>(Globals::kSysInterfaceAddr);
+            SetWindowLongPtr((HWND)sysInterface->m_appWindowHWND, GWL_WNDPROC, (LONG)(LONG_PTR)Callbacks::Glacier_WndProc);
 
-            if (!m_wintelMouseCtorHook->setup())
-            {
-                spdlog::error("Failed to setup patch to ZMouseWintel::ctor!");
-                return false;
-            }
-
-            // Do not revert this patch!
-            if (!HF::Hook::FillMemoryByNOPs(process, Consts::kRegisterClassExAddr, kRegisterClassExPatchSize))
-            {
-                m_wintelMouseCtorHook->remove();
-                spdlog::error("Failed to cleanup memory");
-                return false;
-            }
-
-            m_registerClassExHook = HF::Hook::HookFunction<ATOM(__stdcall*)(WNDCLASSEXA*), kRegisterClassExPatchSize>(
-                    process,
-                    Consts::kRegisterClassExAddr,
-                    &Callbacks::RegisterClassExA_Hooked,
-                    {},
-                    {});
-
-            if (!m_registerClassExHook->setup())
-            {
-                m_wintelMouseCtorHook->remove();
-                spdlog::error("Failed to setup patch to RegisterClassEx!");
-                return false;
+            // Override vtbl of SysInput method
+            auto sysInput = Glacier::getInterface<ZSysInputCustom>(Hitman::BloodMoney::Globals::kSysInputAddr);
+            if (sysInput) {
+	            Globals::g_sysInputOnUpdateHook = HF::Hook::HookVirtualFunction<ZSysInputCustom, Consts::ZSysInput_OnUpdateIndex>(sysInput, &ZSysInputCustom::OnUpdate);
+	            spdlog::info("ZSysInput::OnUpdate hook inited!");
             }
 
             return BasicPatch::Apply(modules);
@@ -161,9 +162,7 @@ namespace Hitman::BloodMoney
     {
         BasicPatch::Revert(modules);
 
-        m_wintelMouseCtorHook->remove();
-        m_registerClassExHook->remove();
-        Globals::g_pZMouseWintelOnUpdate.reset(nullptr);
+	    Globals::g_sysInputOnUpdateHook.reset(nullptr);
         Globals::g_pInputDelegate.reset(nullptr);
     }
 }

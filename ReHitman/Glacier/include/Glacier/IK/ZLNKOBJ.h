@@ -82,7 +82,7 @@ namespace Glacier
         virtual void GetDefaultBones(ZBone*, unsigned int);
         virtual void SetDefaultBones(ZBone const*,SBoneDefinition const*);
         virtual void GetAnimDeltaBones(Animation::Header *);
-        virtual void GetBoneMatPos(float *,float *, unsigned int);
+        virtual void GetBoneMatPos(Glacier::ZMat3x3*,Glacier::ZVector3*, unsigned int);
         virtual void AttachBaseGeomToBone(ZEntityLocator const*,unsigned int,float const*,float const*);
         virtual void DetachBaseGeomFromBone(ZEntityLocator const*,unsigned int);
         virtual void GetAttachedBaseGeomBoneId(ZEntityLocator const*);
@@ -95,7 +95,7 @@ namespace Glacier
         virtual void GetRootFocusMatPos(float *,float *);
         virtual void GetBoneNrFromId(unsigned short );
         virtual void GetBoneFromPoint(float const*);
-        virtual void GetBoneNrFromName(char const*);
+        virtual int GetBoneNrFromName(char const*);
         virtual const char* GetBoneName(int);
         virtual void GetOrigLocalBones(void);
         virtual void* GetBoneDefinitions(void);
@@ -118,8 +118,8 @@ namespace Glacier
         virtual void ResetInactiveBones(void);
         virtual void ExecuteCallBack(char const*);
         virtual void GetBoneVolume(int);
-        virtual void GetBoneSize(int,float *);
-        virtual void GetBoneCenter(int,float *);
+        virtual void GetBoneSize(int, Glacier::Vector3*);
+        virtual void GetBoneCenter(int, Glacier::Vector3*);
         virtual void AnimEnd(Animation::ActiveAnimation *,int);
         virtual void UpdateAnimationsAndGroundLink(float);
         virtual void UpdatePoseAnimation();

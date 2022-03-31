@@ -25,10 +25,12 @@ namespace ReHitman
         {
             const auto msg = fmt::format(
                     "ASSERTION FAILED!\n\n"
+                    "Message  : {}\n"
                     "Condition: {}\n"
-                    "Function: {}\n"
+                    "Function : {}\n"
                     "Line: {}\n"
                     "File: {}\n",
+                    message.data(),
                     condition_str.data(),
                     function.data(),
                     line,

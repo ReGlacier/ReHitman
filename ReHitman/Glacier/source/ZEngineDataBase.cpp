@@ -1,4 +1,5 @@
 #include <Glacier/ZEngineDataBase.h>
+#include <Glacier/ZScheduledUpdate.h>
 #include <G1ConfigurationService.h>
 #include <HF/HackingFramework.hpp>
 #include <cassert>
@@ -35,5 +36,25 @@ namespace Glacier
         }
 
         return 0;
+    }
+
+    ZScheduledUpdate* ZEngineDataBase::GetEventScheduler() {
+        assert(G1ConfigurationService::G1API_FunctionAddress_ZEngineDataBase_GetEventScheduler != G1ConfigurationService::kNotConfiguredOption);
+
+        if (G1ConfigurationService::G1API_FunctionAddress_ZEngineDataBase_GetEventScheduler != G1ConfigurationService::kNotConfiguredOption) {
+            return ((ZScheduledUpdate*(__thiscall*)(ZEngineDataBase*))(G1ConfigurationService::G1API_FunctionAddress_ZEngineDataBase_GetEventScheduler))(this);
+        }
+
+        return nullptr;
+    }
+
+    CCom* ZEngineDataBase::GetGlobalCom() {
+        assert(G1ConfigurationService::G1API_InstanceAddress_CCom_g_globalCom != G1ConfigurationService::kNotConfiguredOption);
+
+        if (G1ConfigurationService::G1API_InstanceAddress_CCom_g_globalCom != G1ConfigurationService::kNotConfiguredOption) {
+            return reinterpret_cast<Glacier::CCom*>(G1ConfigurationService::G1API_InstanceAddress_CCom_g_globalCom);
+        }
+
+        return nullptr;
     }
 }

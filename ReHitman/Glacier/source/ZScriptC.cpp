@@ -11,4 +11,13 @@ namespace Glacier
         }
         return 0;
     }
+
+    int ZScriptC::CreateScript(int pScriptCreator) {
+        assert(G1ConfigurationService::G1API_FunctionAddress_ZScriptC_CreateScript != G1ConfigurationService::kNotConfiguredOption);
+        if (G1ConfigurationService::G1API_FunctionAddress_ZScriptC_CreateScript != G1ConfigurationService::kNotConfiguredOption) {
+            return ((int(__thiscall*)(ZScriptC*, int))(G1ConfigurationService::G1API_FunctionAddress_ZScriptC_CreateScript))(this, pScriptCreator);
+        }
+
+        return 0;
+    }
 }

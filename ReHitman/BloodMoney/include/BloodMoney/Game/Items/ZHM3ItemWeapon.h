@@ -42,7 +42,7 @@ namespace Hitman::BloodMoney
         int m_field118;
         int m_field11C;
         int m_field120;
-        Glacier::ZLNKOBJ* m_field124;
+        Glacier::ZGEOM* m_pRootGeom;
         int m_field128;
         int m_field12C;
         int m_field130;

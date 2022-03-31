@@ -12,6 +12,11 @@ namespace Glacier
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZGEOM_GetRootTM                     = G1ConfigurationService::kNotConfiguredOption;
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZGEOM_RefToPtr                      = G1ConfigurationService::kNotConfiguredOption;
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZGEOM_GetRef                        = G1ConfigurationService::kNotConfiguredOption;
+    std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZGEOM_GetRootPoint                  = G1ConfigurationService::kNotConfiguredOption;
+    std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZGEOM_GetCen                        = G1ConfigurationService::kNotConfiguredOption;
+    std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZGEOM_GetRootMatPos                 = G1ConfigurationService::kNotConfiguredOption;
+    std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZGEOM_GetLocalPoint                 = G1ConfigurationService::kNotConfiguredOption;
+    std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZGEOM_Zvmmul                        = G1ConfigurationService::kNotConfiguredOption;
 
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZHumanBoid_SetTarget                = G1ConfigurationService::kNotConfiguredOption;
 
@@ -52,6 +57,7 @@ namespace Glacier
 
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZEngineDataBase_GetSceneCom         = G1ConfigurationService::kNotConfiguredOption;
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZEngineDataBase_SRefToPtr           = G1ConfigurationService::kNotConfiguredOption;
+    std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZEngineDataBase_GetEventScheduler   = G1ConfigurationService::kNotConfiguredOption;
 
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_CInventory_AddItem                  = G1ConfigurationService::kNotConfiguredOption;
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_CInventory_RemoveItem               = G1ConfigurationService::kNotConfiguredOption;
@@ -61,6 +67,7 @@ namespace Glacier
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_GetGQC                              = G1ConfigurationService::kNotConfiguredOption;
 
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZScriptC_FindScript                 = G1ConfigurationService::kNotConfiguredOption;
+    std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZScriptC_CreateScript               = G1ConfigurationService::kNotConfiguredOption;
 
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZAction_AddAction                   = G1ConfigurationService::kNotConfiguredOption;
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZAction_Show                        = G1ConfigurationService::kNotConfiguredOption;
@@ -81,8 +88,21 @@ namespace Glacier
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZGameStats_IncreaseCurrentShotCount = G1ConfigurationService::kNotConfiguredOption;
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZGameStats_DecreaseCurrentShotCount = G1ConfigurationService::kNotConfiguredOption;
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZActorHeroCheckInside_IsInside      = G1ConfigurationService::kNotConfiguredOption;
+    std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZScheduledUpdate_AddEvent           = G1ConfigurationService::kNotConfiguredOption;
+    std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZScheduledUpdate_RemoveEvent        = G1ConfigurationService::kNotConfiguredOption;
+
+    std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZEventBase_ActivateFrameUpdate      = G1ConfigurationService::kNotConfiguredOption;
+    std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZEventBase_DeactivateFrameUpdate    = G1ConfigurationService::kNotConfiguredOption;
+    std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZEventBase_ChangeEventActivity      = G1ConfigurationService::kNotConfiguredOption;
+    std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZEventBase_ActivateTimeUpdate       = G1ConfigurationService::kNotConfiguredOption;
+
+    std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZActorCommunication_RegisterRadioUser = G1ConfigurationService::kNotConfiguredOption;
 
     std::intptr_t G1ConfigurationService::G1API_InstanceAddress_ZEngineGeomControl                  = G1ConfigurationService::kNotConfiguredOption;
 
     std::intptr_t G1ConfigurationService::G1API_InstanceAddress_CConfiguration_bSubtitles           = G1ConfigurationService::kNotConfiguredOption;
+
+    std::intptr_t G1ConfigurationService::G1API_InstanceAddress_ZEventBase_m_DefaultStatus          = G1ConfigurationService::kNotConfiguredOption;
+
+    std::intptr_t G1ConfigurationService::G1API_InstanceAddress_CCom_g_globalCom                    = G1ConfigurationService::kNotConfiguredOption;
 }

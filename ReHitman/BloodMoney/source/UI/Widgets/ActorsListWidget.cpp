@@ -5,6 +5,7 @@
 #include <BloodMoney/Game/ZHM3Actor.h>
 #include <BloodMoney/Game/Globals.h>
 #include <BloodMoney/Game/ZGuardQuarterController.h>
+#include <BloodMoney/Game/CCheat.h>
 
 #include <BloodMoney/UI/ImGuiInspector.h>
 #include <BloodMoney/UI/GlacierInspectors.h>
@@ -16,8 +17,14 @@
 #include <Glacier/Geom/ZGeomBuffer.h>
 #include <Glacier/IK/ZLNKOBJ.h>
 #include <Glacier/IK/ZIKLNKOBJ.h>
+#include <Glacier/ZScriptC.h>
+#include <Glacier/CInventory.h>
+#include <Glacier/ZEventBuffer.h>
+#include <Glacier/ZActorCommunication.h>
 
 #include <Glacier/Fysix/CRigidBody.h>
+#include <Glacier/Geom/ZROOM.h>
+#include <HF/HackingFramework.hpp>
 #include <imgui.h>
 
 namespace ImGui
@@ -109,6 +116,29 @@ namespace ImGui
 
         // ===================
         {
+            if (ImGui::Button("Die"))
+            {
+                actor->Die();
+            }
+        }
+
+        // ===================
+        {
+            auto gameData = Glacier::getInterface<Hitman::BloodMoney::ZHM3GameData>(Hitman::BloodMoney::Globals::kGameDataAddr);
+            if (gameData && gameData->m_Hitman3 && ImGui::Button("Run to player"))
+            {
+                Glacier::ZVector3 pos;
+                reinterpret_cast<Glacier::ZCTRLIKLNKOBJ*>(gameData->m_Hitman3)->GetVisionPos(&pos);
+
+                actor->SetMoveSpeedMultiplier(15.f);
+                actor->MoveToPosition(&pos, &pos);
+
+                spdlog::info("Request to actor '{}' run to {};{};{}", actor->m_baseGeom->entityName, pos.x, pos.y, pos.z);
+            }
+        }
+
+        // ===================
+        {
             auto gameData = Glacier::getInterface<Hitman::BloodMoney::ZHM3GameData>(Hitman::BloodMoney::Globals::kGameDataAddr);
             if (gameData && actor->m_suitMask != Glacier::ESuitMask::NoActor && ImGui::Button("Make clone"))
             {
@@ -153,23 +183,95 @@ namespace ImGui
                 //clonedActor->SetActorState(Hitman::BloodMoney::ZActor::ACTORSTATE::STATE_2);
                 //clonedActor->SetActorState(Hitman::BloodMoney::ZActor::ACTORSTATE::STATE_3);
 
+                // ----------- PRETTY PRINT SOME INFOS -------------
+                spdlog::info("TRK: {:08X}", (int)pTrackLinkObjects);
+                spdlog::info("OACT: {:08X}", (int)actor);
+                spdlog::info("Dup: {:08X} / ADup: {:08X}", (int)duplicateGroup, (int)clonedActor);
+
+                // ----------- REGISTER ACTOR SOMEWHERE ------------
                 clonedActor->SetActorState(((Hitman::BloodMoney::ZActor::ACTORSTATE(__thiscall*)(Hitman::BloodMoney::ZHM3Actor*))0x005029A0)(actor));
 
-                clonedActor->m_Mask1 = actor->m_Mask1;
-                clonedActor->m_field91C = actor->m_field91C;
-                clonedActor->m_fieldA3C = actor->m_fieldA3C;
+//                clonedActor->m_Mask1 = actor->m_Mask1;
+//                clonedActor->m_field91C = actor->m_field91C;
+//                clonedActor->m_fieldA3C = actor->m_fieldA3C;
 
                 spdlog::info("Cloned actor ptr is {:08X}", reinterpret_cast<std::intptr_t>(clonedActor));
 
-                if (Hitman::BloodMoney::ZGuardQuarterController::g_pCurrentLevelGuardControl) {
-                    Hitman::BloodMoney::ZGuardQuarterController::g_pCurrentLevelGuardControl->RegisterActor(clonedActor->GetRef());
+                // ------------ ENABLE AI SCRIPTS ------------
+                spdlog::info("TRK: {:08X}", (int)pTrackLinkObjects);
+                spdlog::info("OACT: {:08X}", (int)actor);
+                spdlog::info("Dup: {:08X} / ADup: {:08X}", (int)duplicateGroup, (int)clonedActor);
+
+                Glacier::ZScriptC* pClonedActorScript = nullptr;
+                Glacier::CInventory* pClonedActorInventory = nullptr;
+
+
+                {
+                    int* pDefaultStatus = Glacier::ZEventBase::GetDefaultStatus();
+                    const int oldDefaultStatus = *pDefaultStatus;
+
+                    // Here we need to change default status to fix ZScriptC event creation
+                    *pDefaultStatus = 1;
+
+                    //TODO: Here we need to fix ZGEOM vftable. One method is lost between FindEvent and AddEvent
+                    pClonedActorInventory = HF::Hook::VFHook<Hitman::BloodMoney::ZHM3Actor>::invoke<Glacier::CInventory*, const char*>(clonedActor, 66, "ZGEOM_Inventory"); // Add inventory
+                    pClonedActorScript = HF::Hook::VFHook<Hitman::BloodMoney::ZHM3Actor>::invoke<Glacier::ZScriptC*, const char*>(clonedActor, 66, "ZGEOM_ScriptC"); // AddEvent
+
+                    // And don't forget to restore it back to avoid other issues
+                    *pDefaultStatus = oldDefaultStatus;
                 }
 
-                // And try to register this actor in ZDllSound::ActorRegister
-                auto sysInterface = Glacier::getInterface<Glacier::ZSysInterfaceWintel>(Hitman::BloodMoney::Globals::kSysInterfaceAddr);
-                if (sysInterface && sysInterface->m_soundWintelDLL) {
-                    //sysInterface->m_soundWintelDLL
-                    ((void(__thiscall*)(int, Glacier::ZGEOM*))0x004C60E0)(sysInterface->m_soundWintelDLL, reinterpret_cast<Glacier::ZGEOM*>(clonedActor));
+                if (!pClonedActorScript) {
+                    spdlog::error("Failed to add ZScriptC to cloned actor");
+                } else {
+                    spdlog::info("Created & registered ZScriptC: {:08X}", (int)pClonedActorScript);
+
+                    constexpr const char* psRequiredScriptName = "Alllevels_Armed";
+                    int foundScript = pClonedActorScript->FindScript(psRequiredScriptName);
+                    if (!foundScript) {
+                        spdlog::error("Failed to find '{}' script!", psRequiredScriptName);
+                    } else {
+                        // And then call 'create script'
+                        pClonedActorScript->m_pScriptsTable = pClonedActorScript->CreateScript(foundScript);
+                        spdlog::info("AI script attached ({:08X})", pClonedActorScript->m_pScriptsTable);
+
+                        // Here we need to call internal methods
+                        clonedActor->Activate(true);
+
+                        // Activate
+                        pClonedActorScript->ActivateFrameUpdate(false);
+                        //pClonedActorScript->ActivateTimeUpdate(0.0f);
+
+                        pClonedActorScript->RegisterInstance();
+
+                        // Give some weapons
+                        if (pClonedActorInventory) {
+                            Hitman::BloodMoney::CCheat::GiveItem(pClonedActorInventory, "SMG_MP7_01");
+                            Hitman::BloodMoney::CCheat::GiveItem(pClonedActorInventory, "Gun_HKusp_01");
+                            Hitman::BloodMoney::CCheat::GiveItem(pClonedActorInventory, "Ammo_SMG_01", 20);
+                        }
+
+                        // Register in some places
+                        if (Hitman::BloodMoney::ZGuardQuarterController::g_pCurrentLevelGuardControl) {
+                            Hitman::BloodMoney::ZGuardQuarterController::g_pCurrentLevelGuardControl->RegisterActor(clonedActor->GetRef());
+                            spdlog::info("Cloned actor was register in guard quarter control");
+                        }
+
+                        // And try to register this actor in ZDllSound::ActorRegister
+                        auto sysInterface = Glacier::getInterface<Glacier::ZSysInterfaceWintel>(Hitman::BloodMoney::Globals::kSysInterfaceAddr);
+                        if (sysInterface && sysInterface->m_soundWintelDLL) {
+                            ((void(__thiscall*)(int, Glacier::ZGEOM*))0x004C60E0)(sysInterface->m_soundWintelDLL, reinterpret_cast<Glacier::ZGEOM*>(clonedActor));
+                            spdlog::info("Cloned actor was register in sound subsystem as sound emitter");
+                        }
+
+                        // Try to register actor in actor communication network
+                        constexpr auto kRadioChannelId = 3u;
+
+                        auto pActorCommunication = Glacier::ZEventBuffer::EventRefToInstance<Glacier::ZActorCommunication>(gameData->m_rActorCommunicationComponentID);
+                        if (pActorCommunication) {
+                            pActorCommunication->RegisterRadioUser(clonedActor->GetRef(), kRadioChannelId);
+                        }
+                    }
                 }
             }
         }

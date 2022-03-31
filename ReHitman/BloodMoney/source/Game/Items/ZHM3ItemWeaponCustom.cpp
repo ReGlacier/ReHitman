@@ -27,4 +27,12 @@ namespace Hitman::BloodMoney
             ((void(__thiscall*)(ZHM3ItemWeaponCustom*))BMConfigurationService::BMAPI_FunctionAddress_ZHM3ItemWeaponCustom_ClearUpgrades)(this);
         }
     }
+
+    void ZHM3ItemWeaponCustom::SetSilencerType(ESilencerType type) {
+        assert(BMConfigurationService::BMAPI_FunctionAddress_ZHM3ItemWeaponCustom_SetSilencerType != BMConfigurationService::kNotConfiguredOption);
+
+        if (BMConfigurationService::BMAPI_FunctionAddress_ZHM3ItemWeaponCustom_SetSilencerType != BMConfigurationService::kNotConfiguredOption) {
+            ((void(__thiscall*)(ZHM3ItemWeaponCustom*,ESilencerType))BMConfigurationService::BMAPI_FunctionAddress_ZHM3ItemWeaponCustom_SetSilencerType)(this, type);
+        }
+    }
 }
