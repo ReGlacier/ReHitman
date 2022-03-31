@@ -142,15 +142,8 @@ namespace Hitman::BloodMoney
     {
         if (auto process = modules.process.lock())
         {
-            // Do not revert this patch!
-            if (!HF::Hook::FillMemoryByNOPs(process, Consts::kRegisterClassExAddr, kRegisterClassExPatchSize))
-            {
-                spdlog::error("Failed to cleanup memory");
-                return false;
-            }
-
             auto sysInterface = Glacier::getInterface<Glacier::ZSysInterfaceWintel>(Globals::kSysInterfaceAddr);
-	        SetWindowLongPtr((HWND)sysInterface->m_appWindowHWND, GWL_WNDPROC, (LONG)(LONG_PTR)Callbacks::Glacier_WndProc);
+            SetWindowLongPtr((HWND)sysInterface->m_appWindowHWND, GWL_WNDPROC, (LONG)(LONG_PTR)Callbacks::Glacier_WndProc);
 
             // Override vtbl of SysInput method
             auto sysInput = Glacier::getInterface<ZSysInputCustom>(Hitman::BloodMoney::Globals::kSysInputAddr);

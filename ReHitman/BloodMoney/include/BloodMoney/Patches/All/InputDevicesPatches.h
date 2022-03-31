@@ -9,10 +9,6 @@ namespace Hitman::BloodMoney
 
     class InputDevicesPatches final : public BasicPatch
     {
-        static constexpr size_t kRegisterClassExPatchSize = 6;
-
-        HF::Hook::TrampolinePtr<kRegisterClassExPatchSize> m_registerClassExHook;
-
     public:
         InputDevicesPatches() = default;
         explicit InputDevicesPatches(std::unique_ptr<IInputDelegate>&& delegate);
