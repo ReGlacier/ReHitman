@@ -11,7 +11,6 @@ namespace Hitman::BloodMoney
     {
         static constexpr size_t kRegisterClassExPatchSize = 6;
 
-        HF::Hook::TrampolineBasicPtr m_wintelMouseCtorHook;
         HF::Hook::TrampolinePtr<kRegisterClassExPatchSize> m_registerClassExHook;
 
     public:
