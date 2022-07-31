@@ -7,6 +7,8 @@ constexpr const char* kTargetDllName = "ReHitman.dll";
 
 BOOL WINAPI DllMain(HINSTANCE, DWORD, LPVOID) { return TRUE; }
 
+//
+// Exported thing :thinking:
 extern "C" __declspec(dllexport) bool __cdecl NvCplGetDataInt(int, int*) {
 	if (IsDebuggerPresent()) {
 		/**
