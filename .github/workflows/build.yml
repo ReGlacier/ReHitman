@@ -12,7 +12,7 @@ on:
 jobs:
   build_windows:
     name: Build (Windows)
-    runs-on: windows-latest
+    runs-on: windows-2019
 
     steps:
     - name: Checkout
