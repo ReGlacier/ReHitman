@@ -1,6 +1,7 @@
 #include <BloodMoney/Patches/All/EnableCheatsPatch.h>
 #include <BloodMoney/Delegates/IInputDelegate.h>
 #include <BloodMoney/Game/CCheat.h>
+#include <Glacier/Items/ZItem.h>
 
 #include <spdlog/spdlog.h>
 
@@ -21,6 +22,9 @@ namespace Hitman::BloodMoney
 
         static constexpr std::intptr_t kGiveSomeHookAddr = 0x0065C1C0;
         static constexpr std::array<uint8_t, 6> kGiveSomePatch = { HF::X86::NOP, HF::X86::NOP, HF::X86::NOP, HF::X86::NOP, HF::X86::NOP, HF::X86::RETN };
+
+        static constexpr std::intptr_t kOnlineStrAddr = 0x007A5698;
+        static constexpr std::array<uint8_t, 1> kOnlineStrPatch = { 'o' };
     }
 
     std::string_view EnableCheatsPatch::GetName() const { return "CheatsEnabler Patch"; }
@@ -37,6 +41,9 @@ namespace Hitman::BloodMoney
 
             process->writeMemory(Consts::kFirstPatchAddr, Consts::kFirstPatchSize, Consts::kFirstPatchPayload.data());
             process->writeMemory(Consts::kSecondPatchAddr, Consts::kSecondPatchSize, Consts::kSecondPatchPayload.data());
+
+			// fix online menu
+            process->writeMemory(Consts::kOnlineStrAddr, Consts::kOnlineStrPatch.size(), Consts::kOnlineStrPatch.data()); // Override '_' to 'o'
 
             process->writeMemory(Consts::kGiveSomeHookAddr, 6, &Consts::kGiveSomePatch[0]);
             m_giveSomeTrampoline = HF::Hook::HookFunction(process, Consts::kGiveSomeHookAddr, &Hitman::BloodMoney::CCheat::GiveSome, {}, {});

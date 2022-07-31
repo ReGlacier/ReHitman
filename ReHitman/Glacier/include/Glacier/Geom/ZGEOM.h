@@ -2,6 +2,7 @@
 
 #include <Glacier/GlacierFWD.h>
 #include <Glacier/ZSTL/ZMath.h>
+#include <Glacier/ZSTL/ZOldTypeInfo.h>
 
 namespace Glacier
 {
@@ -159,5 +160,6 @@ namespace Glacier
 
         // Static API
         static ZGEOM* RefToPtr(unsigned int REF);
+        static ZOldTypeInfo** GetFactory();
     };
 }

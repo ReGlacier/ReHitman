@@ -1,4 +1,4 @@
-#include <Glacier/ZEventBuffer.h>
+#include <Glacier/EventBase/ZEventBuffer.h>
 #include <G1ConfigurationService.h>
 #include <cassert>
 

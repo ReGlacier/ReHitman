@@ -11,7 +11,7 @@
 #include <Glacier/ZEngineDataBase.h>
 #include <Glacier/Geom/ZROOM.h>
 #include <Glacier/IK/ZLNKOBJ.h>
-#include <Glacier/ZEventBuffer.h>
+#include <Glacier/EventBase/ZEventBuffer.h>
 
 #include <spdlog/spdlog.h>
 
@@ -39,7 +39,7 @@ namespace Hitman::BloodMoney
                 reinterpret_cast<Glacier::ZLNKOBJ*>(playerGeom)->CopyGeometryFrom(pSelf->m_baseGeom->m_primitive);
                 reinterpret_cast<Glacier::ZLNKOBJ*>(playerGeom)->UpdateGeometry(true);
 
-                ((void(__cdecl*)(Glacier::ZGEOM*, const char*))0x005D3BA0)(pSelf, "Take clothes");
+                ((void(__cdecl*)(Glacier::ZGEOM*, const char*))0x005D3BA0)(pSelf, "Take clothes"); //RemoveCUIAction
                 return 0;
             }
 

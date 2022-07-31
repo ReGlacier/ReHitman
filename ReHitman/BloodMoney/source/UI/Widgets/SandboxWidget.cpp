@@ -57,9 +57,14 @@
 #include <Glacier/ZPrimControlWintel.h>
 #include <Glacier/ZEngineGeomControl.h>
 #include <Glacier/CCom.h>
+#include <Glacier/EventBase/ZEventBuffer.h>
 
 #include <BloodMoney/Game/OnLevel/ZVCR.h>
 #include <BloodMoney/Game/Items/ZHM3ItemWeaponCustom.h>
+#include <BloodMoney/Game/ZCheatMenu.h>
+
+#include <BloodMoney/Engine/ZHM3Camera.h>
+#include <BloodMoney/Engine/ZHM3CameraConsole.h>
 
 
 namespace Hitman::BloodMoney
@@ -206,6 +211,25 @@ namespace Hitman::BloodMoney
             }
         }
 
+        if (ImGui::Button("ZOMBIE MODE: ON!!!")) {
+        	gameData->m_LevelControl->Command(0x952, nullptr);
+//	        reinterpret_cast<Glacier::ZEventBase*>(gameData->m_LevelControl)->Command(0x918, nullptr);
+//	        reinterpret_cast<Glacier::ZEventBase*>(gameData->m_LevelControl)->Command(0x917, nullptr);
+        }
+
+		ImGui::Text("Tutorial highlighting:");
+		if (ImGui::Button("T0")) { gameData->m_OSD->m_field8F0 = 0; } ImGui::SameLine(0.f, 0.5f);
+		if (ImGui::Button("T1")) { gameData->m_OSD->m_field8F0 = 1; } ImGui::SameLine(0.f, 0.5f);
+		if (ImGui::Button("T2")) { gameData->m_OSD->m_field8F0 = 2; } ImGui::SameLine(0.f, 0.5f);
+		if (ImGui::Button("T3")) { gameData->m_OSD->m_field8F0 = 3; } ImGui::SameLine(0.f, 0.5f);
+		if (ImGui::Button("T4")) { gameData->m_OSD->m_field8F0 = 4; } ImGui::SameLine(0.f, 0.5f);
+		if (ImGui::Button("T5")) { gameData->m_OSD->m_field8F0 = 5; } ImGui::SameLine(0.f, 0.5f);
+		if (ImGui::Button("T6")) { gameData->m_OSD->m_field8F0 = 6; }
+
+		if (ImGui::Button("DEBUG")) {
+			spdlog::info("AUX: {:08X}", gameData->m_OSD->m_pHealthFrame);
+		}
+
         if (ImGui::Button("Toggle AIM")) {
             const bool v = *reinterpret_cast<bool*>(((std::intptr_t)gameData->m_Hitman3) + 0xB58);
             *reinterpret_cast<bool*>(((std::intptr_t)gameData->m_Hitman3) + 0xB58) = !v;
@@ -329,7 +353,69 @@ namespace Hitman::BloodMoney
                 }
             }
         }
-        ImGui::End();
+
+		if (gameData->m_Hitman3 && ImGui::Begin("Camera offset & focus demo"))
+		{
+			auto pCamera = reinterpret_cast<Hitman::BloodMoney::ZHM3Camera*>(*reinterpret_cast<uint8_t**>(reinterpret_cast<uint8_t*>(gameData->m_Hitman3) + 0xB50));
+			if (pCamera) {
+				ImGui::Text("Common");
+
+				if (pCamera->m_geom) {
+					if (ImGui::Button("Set")) {
+						reinterpret_cast<Glacier::ZCAMERA *>(pCamera->m_geom)->m_field1C |= 0x1000000u;
+					}
+					ImGui::SameLine(0.f, 5.f);
+					if (ImGui::Button("UnSet")) {
+						reinterpret_cast<Glacier::ZCAMERA *>(pCamera->m_geom)->m_field1C &= ~0x1000000u;
+					}
+				}
+
+				ImGui::Checkbox("IsFreeCam", &pCamera->m_bIsFreeCam);
+				ImGui::Checkbox("IsActive", &pCamera->m_bIsActive);
+				ImGui::Checkbox("IsEnabled", &pCamera->m_bEnabled);
+
+				ImGui::InputFloat3("m_vPos", &pCamera->m_vPos.x);
+				ImGui::InputFloat3("m_vPoseOffset", &pCamera->m_vPoseOffset.x);
+				ImGui::InputFloat3("m_vCurrentLookAtPoint", &pCamera->m_vCurrentLookAtPoint.x);
+
+				ImGui::DragFloat("m_fAngleYaw", &pCamera->m_fAngleYaw, 0.5f, 0.f, 360.f);
+				ImGui::DragFloat("m_fAnglePitch", &pCamera->m_fAnglePitch, 0.5f, 0.f, 360.f);
+				ImGui::DragFloat("m_fAngleRoll", &pCamera->m_fAngleRoll, 0.5f, 0.f, 360.f);
+
+				if (pCamera->m_pCameraConsole)
+				{
+					ImGui::Separator();
+
+					ImGui::InputFloat3("m_pCameraConsole->m_vFocalPoint", &pCamera->m_pCameraConsole->m_vFocalPoint.x);
+					ImGui::InputFloat3("m_pCameraConsole->m_vField17C", &pCamera->m_pCameraConsole->m_vField17C.x);
+				}
+			} else {
+				ImGui::TextColored(ImVec4 { 1.f, 1.f, 0.f, 1.f }, "No camera instance!");
+			}
+
+			ImGui::End();
+		}
+
+		if (gameData->m_OSD && gameData->m_OSD->m_pCheatMenu && ImGui::Begin("Cheat Menu Editor Demo")) {
+			if (ImGui::Button("Add menu entry")) {
+				Glacier::REFTAB* pEntries = &gameData->m_OSD->m_pCheatMenu->m_options;
+
+				auto onZombieModActivation = []() {
+					auto gameData = Glacier::getInterface<Hitman::BloodMoney::ZHM3GameData>(Globals::kGameDataAddr);
+					if (gameData && gameData->m_LevelControl)
+					{
+						gameData->m_LevelControl->Command(0x952, nullptr);
+					}
+				};
+
+				auto ent = reinterpret_cast<ZCheatMenu::SEntry*>(pEntries->Add(0));
+				ent->pName = "Run Zombie Mode";
+				ent->eType = ZCheatMenu::ECheatMenuEntryType::MENU_TOGGLE_CALLABLE_OPTION;
+				ent->uOption.pFunction = onZombieModActivation;
+			}
+
+			ImGui::End();
+		}
     }
 
     bool SandboxWidget::g_bIsVisible = false;

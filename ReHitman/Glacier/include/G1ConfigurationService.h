@@ -24,6 +24,7 @@ namespace Glacier
         static std::intptr_t G1API_FunctionAddress_ZGEOM_GetRootMatPos;
         static std::intptr_t G1API_FunctionAddress_ZGEOM_GetLocalPoint;
         static std::intptr_t G1API_FunctionAddress_ZGEOM_Zvmmul;
+        static std::intptr_t G1API_FunctionAddress_ZGEOM_GetFactory;
         static std::intptr_t G1API_FunctionAddress_ZHumanBoid_SetTarget;
         static std::intptr_t G1API_FunctionAddress_ZBaseGeom_DoInit;
         static std::intptr_t G1API_FunctionAddress_ZBaseGeom_ParentGroup;
@@ -57,6 +58,7 @@ namespace Glacier
         static std::intptr_t G1API_FunctionAddress_ZEngineDataBase_GetSceneCom;
         static std::intptr_t G1API_FunctionAddress_ZEngineDataBase_SRefToPtr;
         static std::intptr_t G1API_FunctionAddress_ZEngineDataBase_GetEventScheduler;
+        static std::intptr_t G1API_FunctionAddress_ZEngineDataBase_GeomGeomClassInfo;
         static std::intptr_t G1API_FunctionAddress_CInventory_AddItem;
         static std::intptr_t G1API_FunctionAddress_CInventory_RemoveItem;
         static std::intptr_t G1API_FunctionAddress_ZSNDOBJ_AttachToDefaultRoom;
@@ -88,6 +90,7 @@ namespace Glacier
         static std::intptr_t G1API_FunctionAddress_ZEventBase_ChangeEventActivity;
         static std::intptr_t G1API_FunctionAddress_ZEventBase_ActivateTimeUpdate;
         static std::intptr_t G1API_FunctionAddress_ZActorCommunication_RegisterRadioUser;
+        static std::intptr_t G1API_FunctionAddress_ZBaseConRout_GetFactory;
 
         static std::intptr_t G1API_InstanceAddress_ZEngineGeomControl;
 

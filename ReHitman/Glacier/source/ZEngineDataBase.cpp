@@ -48,6 +48,16 @@ namespace Glacier
         return nullptr;
     }
 
+	ZOldTypeInfo* ZEngineDataBase::GetGeomClassInfo(uint32_t typeId)
+	{
+    	assert(G1ConfigurationService::G1API_FunctionAddress_ZEngineDataBase_GeomGeomClassInfo != G1ConfigurationService::kNotConfiguredOption);
+    	if (G1ConfigurationService::G1API_FunctionAddress_ZEngineDataBase_GeomGeomClassInfo != G1ConfigurationService::kNotConfiguredOption) {
+		    return ((ZOldTypeInfo*(__thiscall*)(ZEngineDataBase*, uint32_t))(G1ConfigurationService::G1API_FunctionAddress_ZEngineDataBase_GeomGeomClassInfo))(this, typeId);
+    	}
+
+    	return nullptr;
+	}
+
     CCom* ZEngineDataBase::GetGlobalCom() {
         assert(G1ConfigurationService::G1API_InstanceAddress_CCom_g_globalCom != G1ConfigurationService::kNotConfiguredOption);
 

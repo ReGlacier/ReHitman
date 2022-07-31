@@ -12,7 +12,7 @@ namespace Glacier
         static constexpr uint32_t kItemGroupId = 0x4954454D;
 
         // vftable
-        virtual ZItem* CreateItem(ZGROUP*, unsigned int, bool isVisibleForNPC, bool);
+        virtual ZItem* CreateItem(ZGROUP*, unsigned int, bool bOverrideVisibleForNPC, bool bVisibleForNPC);
         virtual ZItem* CreateItemAndActuallyUseDestinationParameter(ZGROUP* group, unsigned int, bool isVisibleForNPC, bool);
         virtual int GetItemClassId();
         virtual void StateNotify(ZGEOM*, int);

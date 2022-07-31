@@ -75,6 +75,7 @@ namespace Hitman::BloodMoney
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZGEOM_GetRootMatPos   = 0x004E6970;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZGEOM_GetLocalPoint   = 0x004E6920;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZGEOM_Zvmmul          = 0x004E5E80;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZGEOM_GetFactory      = 0x004E8A60;
 
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZHumanBoid_SetTarget  = 0x00585670;
 
@@ -116,6 +117,7 @@ namespace Hitman::BloodMoney
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZEngineDataBase_GetSceneCom          = 0x0045AED0;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZEngineDataBase_SRefToPtr            = 0x0045B280;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZEngineDataBase_GetEventScheduler    = 0x0045B1C0;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZEngineDataBase_GeomGeomClassInfo    = 0x0045F040;
 
         Glacier::G1ConfigurationService::G1API_FunctionAddress_CInventory_AddItem                   = 0x005C5400;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_CInventory_RemoveItem                = 0x005C5780;
@@ -159,6 +161,7 @@ namespace Hitman::BloodMoney
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZEventBase_ChangeEventActivity       = 0x004E1420;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZEventBase_ActivateTimeUpdate        = 0x004E1520;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZActorCommunication_RegisterRadioUser    = 0x00654920;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZBaseConRout_GetFactory              = 0x004E15F0;
 #pragma endregion
 #pragma region BloodMoney Configuration Table
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZPathFollower_GetClosestWaypoint      = 0x00654450;

@@ -81,7 +81,7 @@ namespace Glacier
         int field_3C;
         int field_40;
         int field_44;
-        int field_48;
+        int field_48;  // Flags, |= 1u - invisible
         unsigned short field_4C;
         Glacier::ZMSGID m_actionHideMSG;
         Glacier::ZMSGID m_actionShowMSG;

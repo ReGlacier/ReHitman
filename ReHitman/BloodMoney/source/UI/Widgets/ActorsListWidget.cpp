@@ -19,7 +19,7 @@
 #include <Glacier/IK/ZIKLNKOBJ.h>
 #include <Glacier/ZScriptC.h>
 #include <Glacier/CInventory.h>
-#include <Glacier/ZEventBuffer.h>
+#include <Glacier/EventBase/ZEventBuffer.h>
 #include <Glacier/ZActorCommunication.h>
 
 #include <Glacier/Fysix/CRigidBody.h>

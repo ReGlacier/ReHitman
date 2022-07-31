@@ -20,6 +20,13 @@ Executable String:
 
 	blood-build3-20060616-26123
 
+Install
+-------
+
+ 1. Download the latest release
+ 2. Unpack `NVCPL.dll` & `ReHitman.dll` into the game folder
+ 3. Launch HitmanBloodMoney.exe
+
 FAQ
 ---------------
  * [Wiki.](https://github.com/ReGlacier/ReHitman/wiki)

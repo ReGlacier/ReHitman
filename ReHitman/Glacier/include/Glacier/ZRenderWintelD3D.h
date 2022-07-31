@@ -63,7 +63,7 @@ namespace Glacier
         virtual void Function35(); //+0x8c
         virtual void Function36(); //+0x90
         virtual void Function37(); //+0x94
-        virtual std::uintptr_t getCameraIdByIndex(int); //+0x98
+        virtual Glacier::ZREF GetCameraIdByIndex(int); //+0x98
         virtual void Function39(); //+0x9c
         virtual void Function40(); //+0xa0
         virtual void Function41(); //+0xa4

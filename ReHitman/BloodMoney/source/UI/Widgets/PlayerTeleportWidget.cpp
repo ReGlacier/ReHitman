@@ -7,7 +7,7 @@
 #include <Glacier/ZSysInterfaceWintel.h>
 #include <Glacier/ZEngineDataBase.h>
 #include <Glacier/ZCTRLIKLNKOBJ.h>
-#include <Glacier/ZEventBuffer.h>
+#include <Glacier/EventBase/ZEventBuffer.h>
 
 #include <Glacier/ZSTL/ZLIST.h>
 #include <Glacier/ZSTL/ZMath.h>

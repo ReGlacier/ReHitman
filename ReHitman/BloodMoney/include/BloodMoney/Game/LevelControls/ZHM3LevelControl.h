@@ -253,7 +253,13 @@ namespace Hitman::BloodMoney
         Glacier::REFTAB32 m_reftab32_524;
         int m_field5D0;
         int m_field5D4;
-        int m_field5D8;
-        int m_field5DC;
+        bool m_field5D8;
+        bool m_field5D9;
+        bool m_field5DA;
+        bool m_field5DB;
+        bool m_field5DC;
+        bool m_field5DD;
+        bool m_field5DE;
+        bool m_field5DF;
     };
 }

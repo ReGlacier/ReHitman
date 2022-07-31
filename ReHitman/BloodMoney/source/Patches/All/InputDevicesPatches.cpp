@@ -2,58 +2,73 @@
 #include <BloodMoney/Delegates/IInputDelegate.h>
 #include <BloodMoney/Game/Globals.h>
 #include <Glacier/ZSysInterfaceWintel.h>
+#include <Glacier/ZSysInputWintel.h>
 #include <Glacier/ZInputDevice.h>
-#include <Windows.h>
 
 #include <spdlog/spdlog.h>
+
+#include <imgui.h>
+
+#include <Windows.h>
+#include <dinput.h>
+
 
 namespace Hitman::BloodMoney
 {
     struct ZSysInputCustom;
 
+	struct SKeyCodeRepr
+	{
+		uint32_t directInputKeyCode;
+		uint32_t winApiKeyCode;
+		ImGuiKey imGuiCode;
+
+		[[nodiscard]] explicit operator bool() const noexcept { return directInputKeyCode != 0 || winApiKeyCode != 0; }
+
+		static SKeyCodeRepr DirectInput(uint32_t dik) { return SKeyCodeRepr { dik, 0, ImGuiKey_COUNT }; }
+	};
+
+	//
+	// Stored all 'special' key codes. Other codes are 'ascii' representable and could be converted via MapVirtualKeyA method
+	static const std::unordered_map<uint32_t, SKeyCodeRepr> s_GlacierKeyCodesTable = {
+		{ 0x0, SKeyCodeRepr { DIK_PRIOR, 0, 0 } },
+		{ 0x1, SKeyCodeRepr { DIK_NEXT, 0, 0 } },
+		{ 0x3, SKeyCodeRepr { 0, VK_HOME, ImGuiKey_Home } },
+		{ 0x4, SKeyCodeRepr { 0, VK_END, ImGuiKey_End } },
+		{ 0x5, SKeyCodeRepr { DIK_UP, 0, ImGuiKey_UpArrow } },
+		{ 0x6, SKeyCodeRepr { DIK_DOWN, 0, ImGuiKey_DownArrow } },
+		{ 0x7, SKeyCodeRepr { DIK_LEFT, 0, ImGuiKey_LeftArrow } },
+		{ 0x8, SKeyCodeRepr { DIK_RIGHT, 0, ImGuiKey_RightArrow } },
+		{ 0x9, SKeyCodeRepr { 0, VK_RETURN, ImGuiKey_Enter } },
+		{ 0xA, SKeyCodeRepr { DIK_GRAVE, VK_OEM_5, 0 } },
+		{ 0xB, SKeyCodeRepr { DIK_DELETE, 0, ImGuiKey_Delete } },
+		{ 0xC, SKeyCodeRepr { 0, VK_BACK, ImGuiKey_Backspace } },
+		{ 0xE, SKeyCodeRepr { 0, VK_TAB, ImGuiKey_Tab } },
+		{ 0xF, SKeyCodeRepr::DirectInput(DIK_F1) },
+		{ 0x10, SKeyCodeRepr::DirectInput(DIK_F2) },
+		{ 0x11, SKeyCodeRepr::DirectInput(DIK_F3) },
+		{ 0x12, SKeyCodeRepr::DirectInput(DIK_F4) },
+		{ 0x13, SKeyCodeRepr::DirectInput(DIK_F5) },
+		{ 0x14, SKeyCodeRepr::DirectInput(DIK_F6) },
+		{ 0x15, SKeyCodeRepr::DirectInput(DIK_F7) },
+		{ 0x16, SKeyCodeRepr::DirectInput(DIK_F8) },
+		{ 0x17, SKeyCodeRepr::DirectInput(DIK_F9) },
+		{ 0x18, SKeyCodeRepr::DirectInput(DIK_F10) },
+		{ 0x19, SKeyCodeRepr::DirectInput(DIK_F11) },
+		{ 0x1A, SKeyCodeRepr::DirectInput(DIK_F12) },
+		{ 0x1E, SKeyCodeRepr { DIK_INSERT, 0, ImGuiKey_Insert } }
+	};
+
     namespace Consts
     {
       static constexpr size_t ZSysInput_OnUpdateIndex = 1;
-      static constexpr size_t ZInputDevice_OnUpdateIndex = 26;
-
-        static constexpr std::intptr_t kOriginalWndProcAddr = 0x004513E0;
-        static constexpr std::intptr_t kRegisterClassExAddr = 0x00453E68;
-        static constexpr float kWheelDelta = WHEEL_DELTA;
+	  static constexpr float kWheelDelta = WHEEL_DELTA;
     }
 
     namespace Globals
     {
         static std::unique_ptr<IInputDelegate> g_pInputDelegate = nullptr;
         static std::unique_ptr<HF::Hook::VFHook<ZSysInputCustom>> g_sysInputOnUpdateHook = nullptr;
-    }
-
-    namespace Callbacks
-    {
-        LRESULT WINAPI Glacier_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
-        {
-            typedef LRESULT(__stdcall* GlacierWndProc_t)(HWND, UINT, WPARAM, LPARAM);
-            auto glacierWndProc = (GlacierWndProc_t)Consts::kOriginalWndProcAddr;
-
-            if (Globals::g_pInputDelegate)
-            {
-                switch (msg)
-                {
-                    case WM_KEYDOWN:
-                        Globals::g_pInputDelegate->setKeyState(static_cast<int>(wParam), true);
-                        break;
-                    case WM_KEYUP:
-                        Globals::g_pInputDelegate->setKeyState(static_cast<int>(wParam), false);
-                        break;
-                    default: /* unhandled event */ break;
-                }
-
-                Globals::g_pInputDelegate->onWindowsEvent(hWnd, msg, wParam, lParam);
-            }
-
-            const bool glacierResult = glacierWndProc(hWnd, msg, wParam, lParam);
-
-            return glacierResult;
-        }
     }
 
     struct ZMouseWintel {
@@ -75,11 +90,84 @@ namespace Hitman::BloodMoney
 		char pad_029F[177]; //0x029F
     };
 
-    struct ZSysInputCustom {
-        struct ZInputDevice {
-            int* vtbl;
-        };
+    static int __cdecl GlacierKeyboardHandler(unsigned int key, int mask, void* pData) {
+		// Detect pressed keys and classify 'em
+    	const unsigned int keyId     = (key & 0xFFFu); // Identifier of key with modifier
+		const unsigned int applyMask = (key & 0xFFFFF000u); // mask of key (sometimes contains other values, need to research)
+    	const int deviceIndex = reinterpret_cast<int>(pData);
+    	const bool isASCIIRepresentable = (keyId & 0x700) != 0;
 
+    	/**
+    	 * Known modifiers
+    	 */
+    	enum KeyModifier : unsigned int {
+    		NO_MODIFIER = 0x0u,
+    		L_SHIFT = 0x1u,
+    		R_SHIFT = 0x2u,
+		    L_CTRL = 0x8u,
+		    R_CTRL = 0x10u,
+		    L_ALT = 0x40u,
+		    R_ALT = 0x80u,
+		    PRESSED = 0x200u,
+	    };
+
+	    //const unsigned int modifier = (mask & 0xFu); // It's a mask based on KeyModifier
+
+	    //spdlog::info("G1HDL[{}]: CC={:08X}({}) (CID={:X}, AM={:X}) MSK={:08X} MOD={:01X} IP={}", deviceIndex, key, (char)((keyId & 0xFFu)), keyId, applyMask, mask, modifier, ((mask & KeyModifier::PRESSED) ? "P": "/"));
+
+		if (ImGui::GetCurrentContext()) {
+			auto& io = ImGui::GetIO();
+
+			io.KeyCtrl = (mask & KeyModifier::L_CTRL) || (mask & KeyModifier::R_CTRL);
+			io.KeyShift = (mask & KeyModifier::L_SHIFT) || (mask & KeyModifier::R_SHIFT);
+			io.KeyAlt = (mask & KeyModifier::L_ALT) || (mask & KeyModifier::R_ALT);
+
+			auto g1code = static_cast<UINT>(static_cast<unsigned char>(keyId & 0xFFu));
+			if (auto it = s_GlacierKeyCodesTable.find(g1code); it != s_GlacierKeyCodesTable.end())
+			{
+				// It's a special key, use mappings
+				const auto& vk = it->second.winApiKeyCode;
+				const auto& dik = it->second.directInputKeyCode;
+				const auto& im = it->second.imGuiCode;
+
+				if (vk)
+				{
+					io.KeysDown[vk] = (mask & KeyModifier::PRESSED);
+				}
+				else if (im != ImGuiKey_COUNT)
+				{
+					io.KeysDown[io.KeyMap[im]] = (mask & KeyModifier::PRESSED);
+				}
+
+				if (dik == DIK_F3 && Globals::g_pInputDelegate && ((mask & KeyModifier::PRESSED))) {
+					Globals::g_pInputDelegate->setKeyState(VK_F3, 0);
+				}
+			} else if (isASCIIRepresentable)
+			{
+				// Normalize key from lower to upper case
+				if (g1code >= 'a' && g1code <= 'z')
+					g1code = (g1code - static_cast<UINT>('a')) + static_cast<UINT>('A');
+
+				// It's ascii code, need to re-map it
+				const auto vkCode = MapVirtualKeyA(g1code, MAPVK_VSC_TO_VK_EX);
+				if (vkCode != 0x0)
+				{
+					io.KeysDown[vkCode] = (mask & KeyModifier::PRESSED);
+
+					if (mask & KeyModifier::PRESSED) {
+						io.AddInputCharacter(static_cast<unsigned char>(keyId & 0xFFu));
+					}
+				}
+				else spdlog::warn("Failed to translate key code from g1 ascii code {:02X} ({})", g1code, g1code);
+			}
+		}
+
+		//
+		// Always return 1 because Glacier will remove this handler if we will return 0
+    	return 1;
+    }
+
+    struct ZSysInputCustom : public Glacier::ZSysInputWintel {
         static constexpr int kMouseIndex = 0;
 
         /**
@@ -89,15 +177,27 @@ namespace Hitman::BloodMoney
 		bool OnUpdate() {
 			if (m_attachedDevicesCount) {
 				for (int i = 0; i < m_attachedDevicesCount; i++) {
-					if (!m_devices.allDevices[i]) {
+					if (!m_devices[i]) {
 						continue;
 					}
 
 					// Call OnUpdate of each input device if it's points valid
-					(reinterpret_cast<void(__thiscall*)(ZInputDevice*)>(m_devices.allDevices[i]->vtbl[Consts::ZInputDevice_OnUpdateIndex]))(m_devices.allDevices[i]);
+					m_devices[i]->Update();
 				}
 
 				UpdateMouse();
+
+				static bool g_kbHandlerAttached = false;
+				if (!g_kbHandlerAttached) {
+					int kbDeviceIndex = GetPrimaryDevice(Glacier::EDeviceType::KEYBOARD);
+					g_kbHandlerAttached = InstallHandler(kbDeviceIndex, GlacierKeyboardHandler, (void*)kbDeviceIndex);
+					if (g_kbHandlerAttached) {
+						spdlog::info("Keyboard handler added!");
+					} else {
+						g_kbHandlerAttached = false;
+						spdlog::warn("Failed to install handler to keyboard");
+					}
+				}
 			}
 
 			return true;
@@ -105,31 +205,15 @@ namespace Hitman::BloodMoney
 
     private:
     	void UpdateMouse() {
-		    if (m_devices.mapped.m_mouse && Globals::g_pInputDelegate) {
-			    Globals::g_pInputDelegate->setMouseKeyState(0, m_devices.mapped.m_mouse->m_leftButton);
-			    Globals::g_pInputDelegate->setMouseKeyState(1, m_devices.mapped.m_mouse->m_rightButton);
-			    Globals::g_pInputDelegate->setMouseWheelState(static_cast<float>(m_devices.mapped.m_mouse->m_wheel) / Consts::kWheelDelta);
+			auto mouseDevice = reinterpret_cast<ZMouseWintel*>(GetPrimaryDevicePtr(Glacier::EDeviceType::MOUSE));
+
+		    if (mouseDevice && Globals::g_pInputDelegate) {
+			    Globals::g_pInputDelegate->setMouseKeyState(0, mouseDevice->m_leftButton);
+			    Globals::g_pInputDelegate->setMouseKeyState(1, mouseDevice->m_rightButton);
+			    Globals::g_pInputDelegate->setMouseWheelState(static_cast<float>(mouseDevice->m_wheel) / Consts::kWheelDelta);
 		    }
 		}
-
-    public:
-		int vtbl { 0 };
-		int m_unk4 { 0 };
-		int m_unk8 { 0 };
-		int m_unkC { 0 };
-		union {
-		  ZInputDevice* allDevices[32];
-		  struct  {
-			ZMouseWintel* m_mouse;
-			int m_keyboard;
-			// other devices here
-			// ...
-		  } mapped;
-		} m_devices; //+0x10
-		int m_attachedDevicesCount { 0 };
-		int* m_field94 { nullptr };
     };
-    static_assert(offsetof(ZSysInputCustom, m_field94) == 0x94, "ZSysInput bad offset!");
 
     InputDevicesPatches::InputDevicesPatches(std::unique_ptr<IInputDelegate>&& delegate)
     {
@@ -140,22 +224,14 @@ namespace Hitman::BloodMoney
 
     bool InputDevicesPatches::Apply(const ModPack& modules)
     {
-        if (auto process = modules.process.lock())
-        {
-            auto sysInterface = Glacier::getInterface<Glacier::ZSysInterfaceWintel>(Globals::kSysInterfaceAddr);
-            SetWindowLongPtr((HWND)sysInterface->m_appWindowHWND, GWL_WNDPROC, (LONG)(LONG_PTR)Callbacks::Glacier_WndProc);
+	    // Override vtbl of SysInput method
+	    auto sysInput = Glacier::getInterface<ZSysInputCustom>(Hitman::BloodMoney::Globals::kSysInputAddr);
+	    if (sysInput) {
+		    Globals::g_sysInputOnUpdateHook = HF::Hook::HookVirtualFunction<ZSysInputCustom, Consts::ZSysInput_OnUpdateIndex>(sysInput, &ZSysInputCustom::OnUpdate);
+		    spdlog::info("ZSysInput::OnUpdate hook inited!");
+	    }
 
-            // Override vtbl of SysInput method
-            auto sysInput = Glacier::getInterface<ZSysInputCustom>(Hitman::BloodMoney::Globals::kSysInputAddr);
-            if (sysInput) {
-	            Globals::g_sysInputOnUpdateHook = HF::Hook::HookVirtualFunction<ZSysInputCustom, Consts::ZSysInput_OnUpdateIndex>(sysInput, &ZSysInputCustom::OnUpdate);
-	            spdlog::info("ZSysInput::OnUpdate hook inited!");
-            }
-
-            return BasicPatch::Apply(modules);
-        }
-
-        return false;
+	    return BasicPatch::Apply(modules);
     }
 
     void InputDevicesPatches::Revert(const ModPack& modules)

@@ -173,6 +173,7 @@ namespace Glacier
         std::intptr_t GetSceneVar(const char* varname);
         std::intptr_t SRefToPtr(Glacier::ZREF sref);
         ZScheduledUpdate* GetEventScheduler();
+	    ZOldTypeInfo* GetGeomClassInfo(uint32_t typeId);
 
         // Static methods
         static CCom* GetGlobalCom();

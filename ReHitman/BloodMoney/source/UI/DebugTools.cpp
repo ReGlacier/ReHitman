@@ -104,6 +104,7 @@ namespace Hitman::BloodMoney
 
                 if (ImGui::MenuItem(name.data()))
                 {
+                	engineDb->UnloadScene();
                     engineDb->LoadScene(scene.data());
                 }
             }

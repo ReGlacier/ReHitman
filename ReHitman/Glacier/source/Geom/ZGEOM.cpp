@@ -37,6 +37,11 @@ namespace Glacier
         return ((ZGEOM*(__cdecl*)(unsigned int))(G1ConfigurationService::G1API_FunctionAddress_ZGEOM_RefToPtr))(REF);
     }
 
+	ZOldTypeInfo** ZGEOM::GetFactory()
+	{
+		return ((ZOldTypeInfo**(__stdcall*)())(G1ConfigurationService::G1API_FunctionAddress_ZGEOM_GetFactory))();
+	}
+
     ZREF ZGEOM::GetRef() {
         return ((ZREF(__thiscall*)(ZGEOM*))(G1ConfigurationService::G1API_FunctionAddress_ZGEOM_GetRef))(this);
     }

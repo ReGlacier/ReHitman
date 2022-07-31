@@ -17,6 +17,7 @@ namespace Glacier
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZGEOM_GetRootMatPos                 = G1ConfigurationService::kNotConfiguredOption;
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZGEOM_GetLocalPoint                 = G1ConfigurationService::kNotConfiguredOption;
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZGEOM_Zvmmul                        = G1ConfigurationService::kNotConfiguredOption;
+    std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZGEOM_GetFactory                    = G1ConfigurationService::kNotConfiguredOption;
 
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZHumanBoid_SetTarget                = G1ConfigurationService::kNotConfiguredOption;
 
@@ -58,6 +59,7 @@ namespace Glacier
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZEngineDataBase_GetSceneCom         = G1ConfigurationService::kNotConfiguredOption;
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZEngineDataBase_SRefToPtr           = G1ConfigurationService::kNotConfiguredOption;
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZEngineDataBase_GetEventScheduler   = G1ConfigurationService::kNotConfiguredOption;
+    std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZEngineDataBase_GeomGeomClassInfo   = G1ConfigurationService::kNotConfiguredOption;
 
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_CInventory_AddItem                  = G1ConfigurationService::kNotConfiguredOption;
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_CInventory_RemoveItem               = G1ConfigurationService::kNotConfiguredOption;
@@ -97,6 +99,8 @@ namespace Glacier
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZEventBase_ActivateTimeUpdate       = G1ConfigurationService::kNotConfiguredOption;
 
     std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZActorCommunication_RegisterRadioUser = G1ConfigurationService::kNotConfiguredOption;
+
+    std::intptr_t G1ConfigurationService::G1API_FunctionAddress_ZBaseConRout_GetFactory             = G1ConfigurationService::kNotConfiguredOption;
 
     std::intptr_t G1ConfigurationService::G1API_InstanceAddress_ZEngineGeomControl                  = G1ConfigurationService::kNotConfiguredOption;
 

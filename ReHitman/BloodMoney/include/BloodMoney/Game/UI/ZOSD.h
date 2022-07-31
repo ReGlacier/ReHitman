@@ -8,6 +8,7 @@
 namespace Hitman::BloodMoney
 {
     class ZLINEOBJ;
+	class ZCheatMenu;
 
     class ZOSD : public Glacier::ZSTDOBJ
     {
@@ -105,9 +106,9 @@ namespace Hitman::BloodMoney
         Glacier::ZVector3 m_vInfoDisplayPosition;
         int m_rInfoDisplay;
         int m_pInfoDisplay;
-        int m_fieldBC;
+        float m_fHitpoints;
         int m_fieldC0_REF;
-        int m_fieldC4;
+        int m_pHealthFrame;
         int m_fieldC8_REF;
         int m_fieldCC;
         int m_fieldD0_REF;
@@ -165,7 +166,7 @@ namespace Hitman::BloodMoney
         int m_field1A0;
         int m_field1A4;
         int m_rCheatMenu;
-        int m_pCheatMenu;
+	    ZCheatMenu* m_pCheatMenu;
         int m_vPickupMenuPosition;
         int m_field1B4;
         int m_field1B8;

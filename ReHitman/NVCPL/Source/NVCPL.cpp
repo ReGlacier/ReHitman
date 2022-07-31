@@ -8,6 +8,18 @@ constexpr const char* kTargetDllName = "ReHitman.dll";
 BOOL WINAPI DllMain(HINSTANCE, DWORD, LPVOID) { return TRUE; }
 
 extern "C" __declspec(dllexport) bool __cdecl NvCplGetDataInt(int, int*) {
+	if (IsDebuggerPresent()) {
+		/**
+		 * This part was made because IDA Pro does not like ReHitman.dll injection method and it can throw SEH exceptions and break our debug process.
+		 * Because of that we need to ask user about this, maybe we want to debug ReHitman or maybe not.
+		 */
+		DWORD dwResult = MessageBoxA(nullptr, "Looks like you wants to debug Hitman Blood Money.\n"
+										"Would you like to load ReHitman.dll?", "IDA or Ghidra?", MB_ICONQUESTION | MB_YESNO);
+		if (dwResult == IDNO) {
+			return false; // Do nothing
+		}
+	}
+
 	const DWORD targetDllAttribs = GetFileAttributesA(kTargetDllName);
 
 	if (targetDllAttribs == INVALID_FILE_ATTRIBUTES || (targetDllAttribs & FILE_ATTRIBUTE_DIRECTORY)) {
