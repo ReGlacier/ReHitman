@@ -82,7 +82,8 @@ namespace Hitman::BloodMoney
         {
             using LevelNameToLevelScene = std::pair<std::string_view, std::string_view>;
 
-            std::array<LevelNameToLevelScene, 13> levels = {
+            std::array<LevelNameToLevelScene, 14> levels = {
+                    LevelNameToLevelScene { "Hideout", "hideout/hideout_main.gms" },
                     LevelNameToLevelScene { "M00", "M00/M00_main.gms" },
                     LevelNameToLevelScene { "M01", "M01/M01_main.gms" },
                     LevelNameToLevelScene { "M02", "M02/M02_main.gms" },

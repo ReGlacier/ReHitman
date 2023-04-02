@@ -76,6 +76,8 @@ namespace Glacier
         static std::intptr_t G1API_FunctionAddress_ZCameraSpace_GetLocalMatPos;
         static std::intptr_t G1API_FunctionAddress_ZCameraSpace_TransformInversMatPos;
         static std::intptr_t G1API_FunctionAddress_ZCameraSpace_GetViewport;
+        static std::intptr_t G1API_FunctionAddress_ZCAMERA_SetFogEnabled;
+        static std::intptr_t G1API_FunctionAddress_ZCAMERA_IsFogEnabled;
         static std::intptr_t G1API_FunctionAddress_CCom_GetpVal;
         static std::intptr_t G1API_FunctionAddress_CCom_GetVal;
         static std::intptr_t G1API_FunctionAddress_ZENVIRONMENT_ToggleColor;

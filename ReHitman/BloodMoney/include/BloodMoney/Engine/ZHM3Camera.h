@@ -12,8 +12,8 @@ namespace Hitman::BloodMoney {
 		virtual bool IsActive();
 
 		//data (base size is 0x40, current size is 0x14C)
-		Glacier::Vector3 m_vPos;
-		Glacier::Matrix3x3 m_mMat;
+		Glacier::Vector3 m_vPos; //0x40
+		Glacier::Matrix3x3 m_mMat; //0x4C
 		int m_eCameraMode;
 		float m_fAngleYaw;
 		float m_fAnglePitch;

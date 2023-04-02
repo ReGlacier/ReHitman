@@ -49,6 +49,10 @@ namespace Glacier
         virtual void SetWideScreen(bool);
         virtual void FindCurrentRoom(ZROOM** room, unsigned int searchLimit);
 
+		// API
+		void SetFogEnabled(bool* bEnabled);
+		bool IsFogEnabled();
+
         //data (total size is 0x18C, ZGEOM size is 0x10)
         int m_field10;
         int m_field14;

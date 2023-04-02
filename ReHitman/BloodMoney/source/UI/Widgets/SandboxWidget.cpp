@@ -117,6 +117,31 @@ namespace Hitman::BloodMoney
             }
         }
 
+		{
+			static int g_typeId { 0 };
+
+			ImGui::InputInt("Geom type id: ", &g_typeId); ImGui::SameLine(0.f, .5f);
+			if (ImGui::Button("FIND"))
+			{
+				auto tp = engineDb->GetGeomClassInfo(g_typeId);
+
+				if (!tp)
+				{
+					spdlog::error("No type found of id {}", g_typeId);
+				}
+				else
+				{
+					spdlog::info("Found type '{}' (of id {})", tp->m_psName, g_typeId);
+
+					spdlog::info("TypeID : {}", tp->m_iTypeId);
+					spdlog::info("Mask   : {}", *tp->m_piMask);
+					spdlog::info("ID     : {}", *tp->m_piID);
+				}
+
+				g_typeId = 0;
+			}
+		}
+
         ImGui::End();
 
         //-----------------------------------------------------------------------------------------------
