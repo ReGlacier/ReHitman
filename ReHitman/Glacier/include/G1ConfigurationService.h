@@ -16,8 +16,17 @@ namespace Glacier
         static std::intptr_t G1API_FunctionAddress_ZGROUP_CreateGeom;
         static std::intptr_t G1API_FunctionAddress_ZGROUP_IsRoot;
         static std::intptr_t G1API_FunctionAddress_ZGEOM_GetMatPos;
+        static std::intptr_t G1API_FunctionAddress_ZGEOM_GetRootTM;
         static std::intptr_t G1API_FunctionAddress_ZGEOM_RefToPtr;
+        static std::intptr_t G1API_FunctionAddress_ZGEOM_GetRef;
+        static std::intptr_t G1API_FunctionAddress_ZGEOM_GetRootPoint;
+        static std::intptr_t G1API_FunctionAddress_ZGEOM_GetCen;
+        static std::intptr_t G1API_FunctionAddress_ZGEOM_GetRootMatPos;
+        static std::intptr_t G1API_FunctionAddress_ZGEOM_GetLocalPoint;
+        static std::intptr_t G1API_FunctionAddress_ZGEOM_Zvmmul;
+        static std::intptr_t G1API_FunctionAddress_ZGEOM_GetFactory;
         static std::intptr_t G1API_FunctionAddress_ZHumanBoid_SetTarget;
+        static std::intptr_t G1API_FunctionAddress_ZBaseGeom_DoInit;
         static std::intptr_t G1API_FunctionAddress_ZBaseGeom_ParentGroup;
         static std::intptr_t G1API_FunctionAddress_ZBaseGeom_SetName;
         static std::intptr_t G1API_FunctionAddress_ZBaseGeom_SetPrim;
@@ -46,5 +55,51 @@ namespace Glacier
         static std::intptr_t G1API_FunctionAddress_ZHash_int_SMatPos_Put;
         static std::intptr_t G1API_FunctionAddress_ZHash_int_SMatPos_Clear;
         static std::intptr_t G1API_FunctionAddress_ZHash_int_SMatPos_Find;
+        static std::intptr_t G1API_FunctionAddress_ZEngineDataBase_GetSceneCom;
+        static std::intptr_t G1API_FunctionAddress_ZEngineDataBase_SRefToPtr;
+        static std::intptr_t G1API_FunctionAddress_ZEngineDataBase_GetEventScheduler;
+        static std::intptr_t G1API_FunctionAddress_ZEngineDataBase_GeomGeomClassInfo;
+        static std::intptr_t G1API_FunctionAddress_CInventory_AddItem;
+        static std::intptr_t G1API_FunctionAddress_CInventory_RemoveItem;
+        static std::intptr_t G1API_FunctionAddress_ZSNDOBJ_AttachToDefaultRoom;
+        static std::intptr_t G1API_FunctionAddress_GetGQC;
+        static std::intptr_t G1API_FunctionAddress_ZScriptC_FindScript;
+        static std::intptr_t G1API_FunctionAddress_ZScriptC_CreateScript;
+        static std::intptr_t G1API_FunctionAddress_ZAction_AddAction;
+        static std::intptr_t G1API_FunctionAddress_ZAction_Show;
+        static std::intptr_t G1API_FunctionAddress_ZAction_Hide;
+        static std::intptr_t G1API_FunctionAddress_ZCameraSpace_AssignOperator;
+        static std::intptr_t G1API_FunctionAddress_ZCameraSpace_IsMirror;
+        static std::intptr_t G1API_FunctionAddress_ZCameraSpace_IsMain;
+        static std::intptr_t G1API_FunctionAddress_ZCameraSpace_Proj2D;
+        static std::intptr_t G1API_FunctionAddress_ZCameraSpace_Proj3D;
+        static std::intptr_t G1API_FunctionAddress_ZCameraSpace_GetLocalMatPos;
+        static std::intptr_t G1API_FunctionAddress_ZCameraSpace_TransformInversMatPos;
+        static std::intptr_t G1API_FunctionAddress_ZCameraSpace_GetViewport;
+        static std::intptr_t G1API_FunctionAddress_ZCAMERA_SetFogEnabled;
+        static std::intptr_t G1API_FunctionAddress_ZCAMERA_IsFogEnabled;
+        static std::intptr_t G1API_FunctionAddress_CCom_GetpVal;
+        static std::intptr_t G1API_FunctionAddress_CCom_GetVal;
+        static std::intptr_t G1API_FunctionAddress_ZENVIRONMENT_ToggleColor;
+        static std::intptr_t G1API_FunctionAddress_ZENVIRONMENT_SetDiffuseColor;
+        static std::intptr_t G1API_FunctionAddress_ZGameStats_IncreaseCurrentShotCount;
+        static std::intptr_t G1API_FunctionAddress_ZGameStats_DecreaseCurrentShotCount;
+        static std::intptr_t G1API_FunctionAddress_ZActorHeroCheckInside_IsInside;
+        static std::intptr_t G1API_FunctionAddress_ZScheduledUpdate_AddEvent;
+        static std::intptr_t G1API_FunctionAddress_ZScheduledUpdate_RemoveEvent;
+        static std::intptr_t G1API_FunctionAddress_ZEventBase_ActivateFrameUpdate;
+        static std::intptr_t G1API_FunctionAddress_ZEventBase_DeactivateFrameUpdate;
+        static std::intptr_t G1API_FunctionAddress_ZEventBase_ChangeEventActivity;
+        static std::intptr_t G1API_FunctionAddress_ZEventBase_ActivateTimeUpdate;
+        static std::intptr_t G1API_FunctionAddress_ZActorCommunication_RegisterRadioUser;
+        static std::intptr_t G1API_FunctionAddress_ZBaseConRout_GetFactory;
+
+        static std::intptr_t G1API_InstanceAddress_ZEngineGeomControl;
+
+        static std::intptr_t G1API_InstanceAddress_CConfiguration_bSubtitles;
+
+        static std::intptr_t G1API_InstanceAddress_ZEventBase_m_DefaultStatus;
+
+        static std::intptr_t G1API_InstanceAddress_CCom_g_globalCom;
     };
 }

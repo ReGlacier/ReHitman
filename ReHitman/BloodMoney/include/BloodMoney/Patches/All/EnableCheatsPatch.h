@@ -8,6 +8,7 @@ namespace Hitman::BloodMoney
     class EnableCheatsPatch final : public BasicPatch
     {
         HF::Patch m_firstPatch, m_secondPatch;
+        HF::Hook::TrampolineBasicPtr m_giveSomeTrampoline;
     public:
         EnableCheatsPatch() = default;
 

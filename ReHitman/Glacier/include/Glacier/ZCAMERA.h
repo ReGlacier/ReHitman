@@ -8,6 +8,7 @@ namespace Glacier
     class ZROOM;
     class ZRender;
     class ZEntityLocator;
+    struct SScreenSelect;
 
     class ZCAMERA : public ZGEOM
     {
@@ -37,7 +38,7 @@ namespace Glacier
         virtual void SetCamPrio(int); //nullstub
         virtual void SetCamTarget(Vector3*, float);
         virtual void SetCam6ClipPlanes(float,float,float,int,int,float);
-        virtual void Proj2D(ZVector2*, const ZVector2*);
+        virtual void Proj2D(ZVector2*, const ZVector3*);
         virtual void Proj3D(ZVector3*, const ZVector3*);
         virtual void Proj2D3D(ZVector3*, const ZVector3*);
         virtual void SetCameraRoot(unsigned int);
@@ -47,6 +48,10 @@ namespace Glacier
         virtual void* GetScreenSelect(SScreenSelect*, bool, unsigned int, float);
         virtual void SetWideScreen(bool);
         virtual void FindCurrentRoom(ZROOM** room, unsigned int searchLimit);
+
+		// API
+		void SetFogEnabled(bool* bEnabled);
+		bool IsFogEnabled();
 
         //data (total size is 0x18C, ZGEOM size is 0x10)
         int m_field10;

@@ -2,11 +2,21 @@
 
 #include <Glacier/GlacierFWD.h>
 #include <Glacier/ZSTL/ZMath.h>
+#include <Glacier/ZSTL/ZOldTypeInfo.h>
 
 namespace Glacier
 {
     class ZRTTI;
     class ZEntityLocator;
+
+    /**
+     * @brief Reversed from cRTP::Properties container
+     */
+    enum EBoundingBox {
+        BOUNDING_Static = 0,
+        BOUNDING_Dynamic = 1,
+        BOUNDING_DynamicAutoAssign = 2,
+    };
 
     class ZGEOM
     {
@@ -14,7 +24,8 @@ namespace Glacier
         // Data
         ZEntityLocator* m_baseGeom; //+0x4
         int m_field8;               //+0x8
-        int m_fieldC;               //+0xC
+        uint16_t m_fieldC;          //+0xC
+        uint16_t m_fieldE;          //+0xE
 
         // VFTable
         virtual void Release(bool);
@@ -49,9 +60,9 @@ namespace Glacier
         virtual void FreeExData();
         virtual void CopyExData(ZGEOM const*);
         virtual void GetChunkData(int);
-        virtual void RecurGetNext(ZBaseGeom const**);
+        virtual void RecurGetNext(ZEntityLocator**);
         virtual void DisableParentBoundAdjust();
-        virtual void ExpandBounds(float *,float *,float *,ZBaseGeom *);
+        virtual void ExpandBounds(float *,float *,float *,ZEntityLocator *);
         virtual void SetMat(const Glacier::ZMat3x3*);                    //#35 at 0x0076A200
         virtual void SetPos(const Glacier::ZVector3*);                   //#36 at 0x0076A204
         virtual void SetMatPos(const Glacier::ZMat3x3* mat, const Glacier::Vector3* pos);               //#37 at 0x0076A208
@@ -60,19 +71,20 @@ namespace Glacier
         virtual void Display(bool);                                      //#40 at 0x0076A214
         virtual void Select(bool);                                       //#41 at 0x0076A218
         virtual void Hide(bool);                                         //#42 at 0x0076A21C
+        virtual void UnknownMethod(bool flag);
         virtual void HideRecursive(bool);                                //#43 at 0x0076A220
         virtual void Freeze(bool);                                       //#44 at 0x0076A224
         virtual void DispBound(bool);                                    //#45 at 0x0076A228
         virtual void SetMoving(bool);
         virtual void RequestCustomDraw();
         virtual void HasOwnerDraw();
-        virtual void OwnerDraw(ZBaseGeom *,uint,ZDrawBuffer *,ZCAMERA *,float const*,float const*,void const*);
-        virtual void CorrectOwnerDrawMatrix(float *,float *,ZBaseGeom *,uint);
-        virtual void CorrectOwnerDrawPartMatrix(ZMat4x4 *,ZBaseGeom *,ZBone *);
+        virtual void OwnerDraw(ZEntityLocator *,uint,ZDrawBuffer *,ZCAMERA *,float const*,float const*,void const*);
+        virtual void CorrectOwnerDrawMatrix(float *,float *,ZEntityLocator *,uint);
+        virtual void CorrectOwnerDrawPartMatrix(ZMat4x4 *,ZEntityLocator *,ZBone *);
         virtual void WantDrawBufferControl();
         virtual void DrawUpdate();
         virtual void DrawBufferViewUpdate(ZDrawBuffer *,ZCameraSpace *);
-        virtual void DrawBufferViewUpdate(ZDrawBuffer *,ZBaseGeom *,uint);
+        virtual void DrawBufferViewUpdate(ZDrawBuffer *,ZEntityLocator *,uint);
         virtual void WantViewPrimHideUnhideRequest();
         virtual void WantViewPrimHide(uchar,bool);
         virtual void WantViewPrimHideMirrors(uchar);
@@ -81,7 +93,7 @@ namespace Glacier
         virtual void GetSortPriority();
         virtual void CopyEvents(ZGEOM const*);
         virtual ZEventBase* FindEvent(char const*);
-        virtual void GetEventData(char *);
+        virtual int GetEventData(const char *);
         virtual void AddEvent(char const*);
         virtual void AttachEvent(ZEventBase &);
         virtual void EnableClassCall(uint);
@@ -111,14 +123,14 @@ namespace Glacier
         virtual void CheckPointInside(float const*,float);
         virtual void CheckPointInsideBound(float const*);
         virtual void CheckBoxInside(float const*,float const*,float const*);
-        virtual void GetPointInsideDistance(float const*);
-        virtual void Visible();
-        virtual void Invisible();
-        virtual void PushState();
-        virtual void PopState();
+        virtual float GetPointInsideDistance(float const*); /// OK
+        virtual void Visible();   /// NOP
+        virtual void Invisible(); /// NOP
+        virtual void PushState(); /// NOP
+        //virtual void PopState();  /// NOP
         virtual void DuplicateData(ZGEOM*);
         virtual ZGEOM* Duplicate(ZGROUP *,char const*,bool);
-        virtual void DuplicateInit(ZGROUP* to, const Glacier::ZMat3x3* mat, const Glacier::ZVector3* pos, char const* name, bool f4);
+        virtual ZGEOM* DuplicateInit(ZGROUP* to, const Glacier::ZMat3x3* mat, const Glacier::ZVector3* pos, char const* name, bool f4);
         virtual void DuplicateToResource(ZGROUP *,uint,char const*,bool);
         virtual void DuplicateToResourceInit(ZGROUP *,uint,float const*,float const*,char const*,bool);
         virtual void CopyData(ZGEOM const*);
@@ -133,13 +145,22 @@ namespace Glacier
         virtual bool IsAttached();
         virtual void SetAttachedTo(ZLNKOBJ *);
         virtual ZLNKOBJ* GetAttachedTo();
-        virtual void IsLinkBaseObj();
+        virtual bool IsLinkBaseObj();
         virtual void OnCameraEnter();
 
         // API
+        void GetRootTM(Glacier::ZMat3x3* mat, Glacier::ZVector3* pos);
         void GetMatPos(Glacier::ZMat3x3* mat, Glacier::ZVector3* pos);
+        void GetRootPoint(Glacier::ZVector3* pos);
+        void GetCen(Glacier::ZVector3* pos);
+        void GetRootMatPos(Glacier::ZMat3x3* mat, Glacier::ZVector3* pos);
+        void GetLocalPoint(Glacier::ZVector3* pos);
+        void Zvmmul(Glacier::ZVector3* pos);
+        ZREF GetRef();
 
         // Static API
         static ZGEOM* RefToPtr(unsigned int REF);
+		template <typename T> static T* RefCast(Glacier::ZREF rRef) { return reinterpret_cast<T*>(RefToPtr(rRef)); }
+        static ZOldTypeInfo** GetFactory();
     };
 }

@@ -1,7 +1,11 @@
 #pragma once
 
+#include <Glacier/ZSTL/ZMath.h>
+
 namespace Glacier
 {
+    using SMouseColi = Glacier::Vector4;
+
     enum EWMEventType
     {
         OPEN_WINDOW = 0x100,

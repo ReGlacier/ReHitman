@@ -115,9 +115,13 @@ namespace ReHitman
 
         g_ClientInterface->Run();
 
-        while (g_ClientInterface->IsOnline())
-        {
-        }
+		while (true)
+		{
+		}
+
+//        while (g_ClientInterface->IsOnline())
+//        {
+//        }
 
         g_ClientInterface->OnDestroy();
 

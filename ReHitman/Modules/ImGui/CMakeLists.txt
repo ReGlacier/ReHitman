@@ -13,6 +13,7 @@ add_library(ImGui STATIC ${CMAKE_CURRENT_SOURCE_DIR}/imgui/imgui.h
                          ${CMAKE_CURRENT_SOURCE_DIR}/imgui/imstb_rectpack.h)
 add_library(ImGui::Core ALIAS ImGui)
 target_include_directories(ImGui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/imgui)
+target_compile_definitions(ImGui PRIVATE -DIMGUI_IMPL_WIN32_DISABLE_LINKING_XINPUT=1 -DIMGUI_IMPL_WIN32_DISABLE_GAMEPAD=1)
 
 # Extensions (DirectX 9 support)
 add_library(ImGuiDx9 STATIC ${CMAKE_CURRENT_SOURCE_DIR}/imgui/examples/imgui_impl_dx9.cpp
@@ -20,3 +21,4 @@ add_library(ImGuiDx9 STATIC ${CMAKE_CURRENT_SOURCE_DIR}/imgui/examples/imgui_imp
 add_library(ImGui::DX9 ALIAS ImGuiDx9)
 target_include_directories(ImGuiDx9 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/imgui/examples)
 target_link_libraries(ImGuiDx9 PUBLIC ImGui kernel32.lib d3d9.lib)
+target_compile_definitions(ImGuiDx9 PRIVATE -DIMGUI_IMPL_WIN32_DISABLE_LINKING_XINPUT=1 -DIMGUI_IMPL_WIN32_DISABLE_GAMEPAD=1)

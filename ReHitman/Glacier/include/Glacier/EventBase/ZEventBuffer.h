@@ -17,18 +17,27 @@ namespace Glacier
         char pad_0014[44]; //0x0014
 
         /// === vftable ===
-        virtual void Function_0000(); //#0 +0 .rdata:00760fd8
-        virtual void Function_0001(); //#1 +4 .rdata:00760fdc
-        virtual void Function_0002(); //#2 +8 .rdata:00760fe0
-        virtual void Function_0003(); //#3 +c .rdata:00760fe4
-        virtual void Function_0004(); //#4 +10 .rdata:00760fe8
-        virtual void Function_0005(); //#5 +14 .rdata:00760fec
-        virtual void Function_0006(); //#6 +18 .rdata:00760ff0
-        virtual void Function_0007(); //#7 +1c .rdata:00760ff4
-        virtual void Function_0008(); //#8 +20 .rdata:00760ff8
-        virtual void Function_0009(); //#9 +24 .rdata:00760ffc
-        virtual void Function_0010(); //#10 +28 .rdata:00761000
-        virtual void Function_0011(); //#11 +2c .rdata:00761004
+        virtual void Release(bool);
+	    virtual void PreSave(ZPackedInput*);
+	    virtual void PostSave(ZPackedInput*);
+	    virtual void PreLoad(ZPackedInput*);
+	    virtual void PostLoad(ZPackedInput*);
+	    virtual void PostProcess(int, int);
+	    virtual void LoadSave(ZPackedInput*, bool);
+	    virtual void LoadObject(IInputSerializerStream*);
+	    virtual void SaveObject(IOutputSerializerStream*);
+	    virtual void ExchangeObject(ZPackedInput*);
+	    virtual void SetToDefault();
+	    virtual int GetTypeID();
+
+    public:
+	    // Custom API
+	    static std::intptr_t GetGQC(Glacier::ZREF ref);
+
+	    template <typename TEntity>
+	    static TEntity* EventRefToInstance(Glacier::ZREF ref) {
+		    return reinterpret_cast<TEntity*>(ZEventBuffer::GetGQC(ref));
+	    }
     };
 
 }

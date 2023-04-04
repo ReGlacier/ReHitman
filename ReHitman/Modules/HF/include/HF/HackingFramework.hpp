@@ -8,9 +8,11 @@
 #include <unordered_map>
 #include <system_error>
 #include <functional>
+#include <algorithm>
 #include <utility>
 #include <memory>
 #include <vector>
+#include <cctype>
 
 #include <Windows.h>
 #include <Psapi.h>
@@ -21,6 +23,8 @@
 #endif
 
 #define LAMBDA(x) (+x)
+
+#define CUT_HERE() printf(" --- CUT HERE %d (%d aka 0x%X)\n", __LINE__, GetLastError(), GetLastError());
 
 /**
  * @brief this is my hacker framework
@@ -35,6 +39,7 @@ namespace HF
     {
         static constexpr uint8_t  NOP       = 0x90;
         static constexpr uint8_t  INT3      = 0xCC;
+        static constexpr uint8_t  RETN      = 0xC3;
         static constexpr uint8_t  CALL_NEAR = 0xE8;
         static constexpr uint8_t  JMP_NEAR  = 0xE9;
         static constexpr uint16_t CALL_ABS  = 0xFF15;
@@ -214,7 +219,10 @@ namespace HF
 
             [[nodiscard]] Module::Ptr getModule(const std::string& name) const
             {
-                auto it = m_modules.find(name);
+                std::string nameInLowerCase { name };
+                std::transform(name.begin(), name.end(), nameInLowerCase.begin(), [](uint8_t b) { return std::tolower(b); });
+
+                auto it = m_modules.find(nameInLowerCase);
                 if (it != std::end(m_modules))
                 {
                     return it->second;
@@ -233,7 +241,7 @@ namespace HF
                 if (!m_valid)
                     return nullptr;
 
-                return m_modules.at(m_name);
+                return getModule(m_name);
             }
 
             void forEachModule(const std::function<void(const Module::Ptr&)>& predicate)
@@ -251,15 +259,19 @@ namespace HF
 
             size_t readMemory(std::uintptr_t addr, size_t size, uint8_t* buffer) const
             {
+                std::memcpy((void*)buffer, (void*)addr, size);
+                return size;
                 SIZE_T readBytes = 0x0;
-                ReadProcessMemory(m_handle, (LPCVOID)addr, (LPVOID)buffer, (SIZE_T)size, &readBytes);
+                ReadProcessMemory(GetCurrentProcess(), (LPCVOID)addr, (LPVOID)buffer, (SIZE_T)size, &readBytes);
+//                ReadProcessMemory(m_handle, (LPCVOID)addr, (LPVOID)buffer, (SIZE_T)size, &readBytes);
                 return readBytes;
             }
 
             size_t writeMemory(std::uintptr_t addr, size_t size, const uint8_t* buffer)
             {
                 SIZE_T writtenBytes = 0x0;
-                WriteProcessMemory(m_handle, (LPVOID)addr, (LPCVOID)buffer, (SIZE_T)size, &writtenBytes);
+//                WriteProcessMemory(m_handle, (LPVOID)addr, (LPCVOID)buffer, (SIZE_T)size, &writtenBytes);
+                WriteProcessMemory(GetCurrentProcess(), (LPVOID)addr, (LPCVOID)buffer, (SIZE_T)size, &writtenBytes);
                 return writtenBytes;
             }
 
@@ -275,7 +287,8 @@ namespace HF
                     buffer[i] = byte;
 
                 SIZE_T readyBytes = 0;
-                if (!WriteProcessMemory(m_handle, (LPVOID)addr, (LPCVOID)buffer.get(), count * sizeof(uint8_t), &readyBytes))
+//                if (!WriteProcessMemory(m_handle, (LPVOID)addr, (LPCVOID)buffer.get(), count * sizeof(uint8_t), &readyBytes))
+                if (!WriteProcessMemory(GetCurrentProcess(), (LPVOID)addr, (LPCVOID)buffer.get(), count * sizeof(uint8_t), &readyBytes))
                 {
                     return false;
                 }
@@ -352,6 +365,11 @@ namespace HF
                 do
                 {
                     std::string key { entry.szModule };
+                    std::transform(key.begin(),
+                                   key.end(),
+                                   key.begin(),
+                                   [](uint8_t b) { return std::tolower(b); });
+
                     std::string modName { entry.szModule };
                     std::string modPath { entry.szExePath };
                     m_modules[key] = std::make_shared<Module>(
@@ -421,7 +439,7 @@ namespace HF
 
     namespace Hook
     {
-        template <typename ClassT>
+        template <typename ClassT = int, bool ResetToOriginal = true>
         class VFHook final
         {
             std::intptr_t m_originalFunction { 0x0 };
@@ -449,7 +467,9 @@ namespace HF
 
             ~VFHook()
             {
-                remove();
+                if constexpr (ResetToOriginal) {
+                    remove();
+                }
             }
 
             [[nodiscard]] std::intptr_t getOriginalPtr() const { return m_originalFunction; }
@@ -471,6 +491,34 @@ namespace HF
                 typedef Ret(__thiscall* Function_t)(ClassT*, Args&&...);
                 auto func = (Function_t)m_originalFunction;
                 return func(m_instance, std::forward<Args>(args)...);
+            }
+
+            template <typename Ret, typename... Args>
+            static auto invoke(ClassT* instance, size_t index, Args... args)
+            {
+                typedef Ret(__thiscall* Function_t)(ClassT*, Args...);
+                auto func = (Function_t)getMethodAddrByIndex(instance, index);
+                return func(instance, args...);
+            }
+
+            template <typename FuncT>
+            static std::intptr_t makeHook(ClassT* instance, size_t index, FuncT* dest)
+            {
+                std::intptr_t ptr = *reinterpret_cast<std::intptr_t*>(instance);
+                std::intptr_t entity = ptr + sizeof(std::intptr_t) * index;
+                std::intptr_t org = *reinterpret_cast<std::intptr_t*>(entity);
+
+                {
+                    MEMORY_BASIC_INFORMATION mbi;
+                    VirtualQuery((LPCVOID)entity, &mbi, sizeof(mbi));
+
+                    Win32::VProtect protect(reinterpret_cast<uint32_t>(mbi.BaseAddress),
+                                            mbi.RegionSize,
+                                            PAGE_READWRITE);
+                    *reinterpret_cast<std::intptr_t*>(entity) = GET_ADDR_FROM_MEMBER_OR_ENTITY(dest);
+                }
+
+                return org;
             }
 
         private:
@@ -571,7 +619,17 @@ namespace HF
 
                 if (!m_trampolineBuffer)
                 {
+                    CUT_HERE();
                     return false;
+                }
+
+                {
+                    DWORD _oldProt = 0x0;
+
+                    if (!VirtualProtect(m_trampolineBuffer, m_trampolineAllocatedSpaceSize, PAGE_EXECUTE_READWRITE, &_oldProt)) {
+                        CUT_HERE();
+                        return false;
+                    }
                 }
 
                 // So, here we will generate your inlined trampoline
@@ -581,6 +639,7 @@ namespace HF
                 if (process->readMemory(m_targetAddr, PayloadSize, &m_originalBuffer[0]) != PayloadSize)
                 {
                     // We have not enough bytes. Something goes wrong
+                    CUT_HERE();
                     return false;
                 }
 
@@ -589,8 +648,17 @@ namespace HF
                 // So, we have an original bytes here. After that we should allocate the body of trampoline
                 // First: place original code
                 {
-                    if (process->writeMemory(pTrampolineHead, PayloadSize, (uint8_t*)&m_originalBuffer[0]) != PayloadSize)
+                    if (auto written = process->writeMemory(pTrampolineHead, PayloadSize, (uint8_t*)&m_originalBuffer[0]); written != PayloadSize)
                     {
+                        CUT_HERE();
+                        const DWORD lastErr = GetLastError();
+
+                        printf("Failed to write trampoline head:\n\trequested to write %d bytes at 0x%X\n\twritten: %d bytes\n\tGetLastError() = %d (0x%X)\n",
+                               PayloadSize,
+                               (std::intptr_t)(pTrampolineHead),
+                               written,
+                               lastErr,
+                               lastErr);
                         return false;
                     }
                     pTrampolineHead += PayloadSize;
@@ -601,6 +669,7 @@ namespace HF
                 {
                     if (process->writeMemory(pTrampolineHead, m_payloadBefore.size(), m_payloadBefore.data()) != m_payloadBefore.size())
                     {
+                        CUT_HERE();
                         return false;
                     }
                     pTrampolineHead += m_payloadBefore.size();
@@ -613,6 +682,7 @@ namespace HF
                     nearCall.endpoint = X86::calculateNearOffset(m_trampolineEndpointAddr, sourceAddr);
                     if (process->writeMemory(pTrampolineHead, sizeof(X86::NearCall), (uint8_t*)&nearCall) != sizeof(X86::NearCall))
                     {
+                        CUT_HERE();
                         return false;
                     }
                     pTrampolineHead += sizeof(X86::NearCall);
@@ -623,6 +693,7 @@ namespace HF
                 {
                     if (process->writeMemory(pTrampolineHead, m_payloadAfter.size(), m_payloadAfter.data()) != m_payloadAfter.size())
                     {
+                        CUT_HERE();
                         return false;
                     }
                     pTrampolineHead += m_payloadAfter.size();
@@ -634,6 +705,7 @@ namespace HF
                     jumpBack.endpoint = X86::calculateNearOffset(m_targetAddr + sizeof(X86::NearJump), (Addr)pTrampolineHead);
                     if (process->writeMemory(pTrampolineHead, sizeof(X86::NearJump), (uint8_t*)&jumpBack) != sizeof(X86::NearJump))
                     {
+                        CUT_HERE();
                         return false;
                     }
                 }
@@ -641,6 +713,7 @@ namespace HF
                 // Sixth: fill original entry point by NOPs
                 if (!process->fillMemory(m_targetAddr, X86::NOP, PayloadSize))
                 {
+                    CUT_HERE();
                     return false;
                 }
 
@@ -650,6 +723,7 @@ namespace HF
                     jumpInto.endpoint = X86::calculateNearOffset((Addr)&m_trampolineBuffer[0], (Addr)m_targetAddr);
                     if (process->writeMemory(m_targetAddr, sizeof(X86::NearJump), (uint8_t*)&jumpInto) != sizeof(X86::NearJump))
                     {
+                        CUT_HERE();
                         return false;
                     }
                 }
@@ -750,6 +824,12 @@ namespace HF
             return std::make_unique<VFHook<TargetClass>>(instance, MethodIndex, GET_ADDR_FROM_MEMBER_OR_ENTITY(target));
         }
 
+        template <typename TargetClass, size_t MethodIndex, typename Functor>
+        static std::unique_ptr<VFHook<TargetClass, false>> HookVirtualFunctionWithoutRestore(TargetClass* instance, Functor target)
+        {
+            return std::make_unique<VFHook<TargetClass, false>>(instance, MethodIndex, GET_ADDR_FROM_MEMBER_OR_ENTITY(target));
+        }
+
         static bool FillMemoryByNOPs(const std::shared_ptr<Win32::Process>& process, std::intptr_t addr, size_t size)
         {
             if (!process || !size)
@@ -774,3 +854,5 @@ namespace HF
         }
     }
 }
+
+#undef CUT_HERE

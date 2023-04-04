@@ -12,7 +12,7 @@ namespace Glacier
         // Data
         ZMat3x3 m_transform;
         ZVector3 position;
-        ZVector3 field_30;
+        ZVector3 m_vCenter;
         int field_3C;
         int field_40;
         Glacier::ZVector3 field_44;
@@ -31,6 +31,7 @@ namespace Glacier
         int field_7C;
 
         // API
+        void DoInit();
         ZGROUP* ParentGroup();
         void SetName(const char* name);
         bool SetPrim(int primId);

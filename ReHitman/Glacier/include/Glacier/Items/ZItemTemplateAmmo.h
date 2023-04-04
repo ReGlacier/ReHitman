@@ -2,6 +2,7 @@
 
 #include <Glacier/GlacierFWD.h>
 #include <Glacier/Items/ZItemTemplate.h>
+#include <Glacier/Items/EDamageType.h>
 
 namespace Glacier
 {
@@ -19,7 +20,7 @@ namespace Glacier
         virtual ZGEOM* GetProjectile();
         virtual ZGEOM* GetCartridge();
         virtual ZGEOM* GetProjectileInstance();
-        virtual int GetDamageType();
+        virtual EDamageType GetDamageType();
 
         // data (total size is 0xA4, ZItemTemplate size is 0x74)
         int m_defaultProjectilesPerMagazine;
@@ -33,7 +34,7 @@ namespace Glacier
         int m_materialEnumID;
         Glacier::ZREF m_projectileRef;
         Glacier::ZREF m_cartridgeRef;
-        int m_damageType;
+        EDamageType m_damageType;
         int m_field98;
         int m_field9C;
         int m_fieldA0;

@@ -16,7 +16,7 @@ namespace Glacier
         virtual void GetMainItemRootTM(float *,float *);
         virtual void GetState();
         virtual void SetState(ITEMSTATE, CCom*);
-        virtual void Place(float const*,float const*);
+        virtual void Place(float const*, float const*);
         virtual void SetMain(uint);
         virtual void GetMain();
         virtual void GetMainMatPos(float *,float *,uint);
@@ -39,7 +39,7 @@ namespace Glacier
         virtual void UpdateDeactivate();
 
         // data (total size is 0x84, ZGROUP size is 0x4C)
-        int m_field4C;
+        int m_lState;
         int m_field50;
         bool m_isVisibleForNPCs;
         bool m_field55;

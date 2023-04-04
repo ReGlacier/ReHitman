@@ -7,10 +7,39 @@
 
 namespace Hitman::BloodMoney
 {
+    class ZLINEOBJ;
+	class ZCheatMenu;
+
     class ZOSD : public Glacier::ZSTDOBJ
     {
     public:
         //vftable (no custom methods here)
+        // custom api
+        /**
+         * @brief Show notification message
+         * @param message
+         * @param shouldPlayNotificationSound
+         */
+        void AddInfo(const char* message, bool shouldPlayNotificationSound);
+
+        /**
+         * @brief Show warning message in-game
+         * @param message
+         * @param shouldPlayNotificationSound
+         */
+        void AddWarning(const char* message, bool shouldPlayNotificationSound);
+
+        /**
+         * @brief Show hint in-game
+         * @param message message in brief window
+         * @param a2 unknown flag
+         * @param shouldPlayNotificationSound - true - play sound
+         * @param osdElement - unknown value, but looks like it's not used
+         * @param a6 - unknown, but it's used only for M00
+         * @param tutorialId - if not null will be used localization from m00/Tutorials/{tutorialId}
+         */
+        void AddHint(const char* message, bool a2, bool shouldPlayNotificationSound, int osdElement, bool a6, const char* tutorialId);
+
         //data (total size is 0x8FC, base size is 0x10)
         char m_field10;
         char field_11;
@@ -47,7 +76,7 @@ namespace Hitman::BloodMoney
         int m_field48;
         int m_field4C_REF;
         int m_field50_REF;
-        int m_field54;
+        ZLINEOBJ* m_pSubtitles;
         int m_field58;
         int m_field5C;
         int m_field60;
@@ -77,9 +106,9 @@ namespace Hitman::BloodMoney
         Glacier::ZVector3 m_vInfoDisplayPosition;
         int m_rInfoDisplay;
         int m_pInfoDisplay;
-        int m_fieldBC;
+        float m_fHitpoints;
         int m_fieldC0_REF;
-        int m_fieldC4;
+        int m_pHealthFrame;
         int m_fieldC8_REF;
         int m_fieldCC;
         int m_fieldD0_REF;
@@ -137,7 +166,7 @@ namespace Hitman::BloodMoney
         int m_field1A0;
         int m_field1A4;
         int m_rCheatMenu;
-        int m_pCheatMenu;
+	    ZCheatMenu* m_pCheatMenu;
         int m_vPickupMenuPosition;
         int m_field1B4;
         int m_field1B8;

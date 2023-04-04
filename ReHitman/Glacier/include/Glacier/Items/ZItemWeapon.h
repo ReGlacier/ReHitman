@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Glacier/Items/ZItem.h>
+#include <Glacier/Items/EWeaponOperation.h>
 #include <Glacier/GlacierFWD.h>
 
 namespace Glacier
@@ -54,7 +55,7 @@ namespace Glacier
         int m_field9C;
         int m_fieldA0;
         int m_fieldA4;
-        int m_nextOperation;
+        EWeaponOperation m_nextOperation;
         int m_fieldAC;
         int m_fieldB0;
         int m_fieldB4;

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Glacier/GlacierFWD.h>
+#include <BloodMoney/Engine/ZDirect3DDevice.h>
 #include <d3d9.h>
 
 namespace Glacier
@@ -48,7 +49,7 @@ namespace Glacier
 
         // data
         char m_buffer[kLocalBufferSize]; //0x4
-        ZDirect3DDevice* m_device; //0x22004
+        Hitman::BloodMoney::Engine::ZDirect3DDevice* m_device; //0x22004
         int field_22008;
         int field_2200C;
         int field_22010;

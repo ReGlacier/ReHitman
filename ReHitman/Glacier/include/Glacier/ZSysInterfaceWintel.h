@@ -38,7 +38,18 @@ namespace Glacier
         int32_t m_heroControlMode; //0x093C
         char pad_0940[20]; //0x0940
         bool m_disableLight; //0x0954
-        char pad_0955[39]; //0x0955
+        bool m_field0955;
+        bool m_field0956;
+        bool m_field0957;
+        int m_field958;
+        int m_field95C;
+        int m_field960;
+        int m_field964;
+        int m_field968;
+        int m_field96C;
+        int m_appWindowHWND;
+        int m_field974;
+        int m_field978;
         ZRenderWintelD3D* m_renderer; //0x097C
         char pad_0980[132]; //0x0980
         char* m_iniPath0; //0x0A04

@@ -17,6 +17,8 @@
 // Widgets
 #include <BloodMoney/UI/Widgets/ActorsListWidget.h>
 #include <BloodMoney/UI/Widgets/CutSequencePlayerWidget.h>
+#include <BloodMoney/UI/Widgets/SceneViewer.h>
+#include <BloodMoney/UI/Widgets/PlayerTeleportWidget.h>
 
 namespace Hitman::BloodMoney
 {
@@ -80,7 +82,8 @@ namespace Hitman::BloodMoney
         {
             using LevelNameToLevelScene = std::pair<std::string_view, std::string_view>;
 
-            std::array<LevelNameToLevelScene, 13> levels = {
+            std::array<LevelNameToLevelScene, 14> levels = {
+                    LevelNameToLevelScene { "Hideout", "hideout/hideout_main.gms" },
                     LevelNameToLevelScene { "M00", "M00/M00_main.gms" },
                     LevelNameToLevelScene { "M01", "M01/M01_main.gms" },
                     LevelNameToLevelScene { "M02", "M02/M02_main.gms" },
@@ -102,6 +105,7 @@ namespace Hitman::BloodMoney
 
                 if (ImGui::MenuItem(name.data()))
                 {
+                	engineDb->UnloadScene();
                     engineDb->LoadScene(scene.data());
                 }
             }
@@ -122,8 +126,9 @@ namespace Hitman::BloodMoney
             {
                 ImGui::MenuItem("Actors viewer", nullptr, &ActorsListWidget::g_bIsOpened);
                 ImGui::MenuItem("Cut Sequences player", nullptr, &CutSequencePlayerWidget::g_bIsShowed);
+                ImGui::MenuItem("Scene viewer", nullptr, &SceneViewer::g_bIsVisible);
+                ImGui::MenuItem("Teleport", nullptr, &PlayerTeleportWidget::g_bIsShowed);
                 ImGui::MenuItem("Inventory editor", nullptr, &showInventoryEditor);
-                ImGui::MenuItem("GEOM viewer", nullptr, &showGeomViewer);
                 ImGui::Separator();
                 if (ImGui::MenuItem("Close game"))
                 {
@@ -140,11 +145,6 @@ namespace Hitman::BloodMoney
         if (showInventoryEditor)
         {
 //            showInventoryEditorWindow(&showInventoryEditor);
-        }
-
-        if (showGeomViewer)
-        {
-//            showGeomViewerWindow(&showGeomViewer);
         }
     }
 }

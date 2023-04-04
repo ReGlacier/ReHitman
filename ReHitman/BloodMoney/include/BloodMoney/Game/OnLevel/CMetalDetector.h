@@ -13,7 +13,7 @@ namespace Hitman::BloodMoney
         void DoAlarm();
 
         // data (total size is 0xA8, ZEventBase size is 0x30)
-        Glacier::REFTAB m_reftab0;
+        Glacier::REFTAB m_pAttachedActorsRefTab;
         int field_4C;
         Glacier::REFTAB m_reftab1;
         Glacier::REFTAB m_reftab2;

@@ -2,6 +2,7 @@
 
 #include <Glacier/GlacierFWD.h>
 #include <Glacier/Items/ZItemTemplate.h>
+#include <Glacier/Items/EWeaponOperation.h>
 
 namespace Glacier
 {
@@ -17,7 +18,7 @@ namespace Glacier
         virtual void SetCanFireProjectiles(bool);
         virtual bool HasSniperMode();
         virtual int GetWeaponType();
-        virtual int GetWeaponOperations();
+        virtual EWeaponOperation GetWeaponOperations();
         virtual int GetTimeBetweenShots();
         virtual ZItemTemplateAmmo* GetAmmoTemplate(int ammoIndex);
         virtual float GetMuzzleVelocity();
@@ -47,7 +48,7 @@ namespace Glacier
         int m_field94;
         int m_field98;
         int m_field9C;
-        int m_pWeaponOperations;
+        EWeaponOperation m_pWeaponOperations;
         int m_weaponType;
         REFTAB m_allowedAmmoTypes;
         float m_fMuzzleVelocity;

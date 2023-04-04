@@ -2,6 +2,7 @@
 #include <HF/HackingFramework.hpp>
 #include <spdlog/spdlog.h>
 
+
 namespace Hitman::BloodMoney
 {
     CommonPatches::CommonPatches(
@@ -30,14 +31,14 @@ namespace Hitman::BloodMoney
             {
                 if (!patch->Apply(modPack))
                 {
-                    spdlog::warn("Failed to apply patch {}", patch->GetName());
+                    spdlog::warn("Failed to apply patch {}", patch->GetName().data());
                 }
                 else
                 {
-                    spdlog::info("Patch {} applied!", patch->GetName());
+                    spdlog::info("Patch {} applied!", patch->GetName().data());
                     if (!patch->IsApplied())
                     {
-                        spdlog::error("BAD PATCH IMPLEMENTATION! PATCH {} MUST BE APPLIED BUT IT DOESN'T!", patch->GetName());
+                        spdlog::error("BAD PATCH IMPLEMENTATION! PATCH {} MUST BE APPLIED BUT IT DOESN'T!", patch->GetName().data());
                         continue;
                     }
                 }
@@ -63,7 +64,7 @@ namespace Hitman::BloodMoney
 
                 if (patch->IsApplied())
                 {
-                    spdlog::error("BAD PATCH IMPLEMENTATION! PATCH {} MUST BE REVERTED BUT IT DOESN'T!", patch->GetName());
+                    spdlog::error("BAD PATCH IMPLEMENTATION! PATCH {} MUST BE REVERTED BUT IT DOESN'T!", patch->GetName().data());
                 }
             }
 

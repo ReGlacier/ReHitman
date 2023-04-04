@@ -10,9 +10,10 @@ namespace Glacier
     using ZMSGID = unsigned short;
     using ZDATA = void*;
     using ZREF = unsigned int;
+    using SREF = unsigned int;
     using ZWM_MESSAGE = signed int; //Less that 0x1000!
 
-    using RefRun = void*;
+    struct RefRun;
     using TabBlk = void*;
 
     /// FWD
@@ -63,7 +64,6 @@ namespace Glacier
     class CHUNK;
     class REFTAB;
     class REFTAB32;
-    class ZDirect3DDevice;
     class ZOffsetAlloc;
     class ZEventBuffer;
     class ZGeomBufferPoolEntity;
@@ -76,15 +76,20 @@ namespace Glacier
     struct SInputActionDefinition;
     struct SExtendedImpactInfo;
     struct SRigidBodyVelocity;
-    struct SMouseColi;
 
     enum ALLOCSEQUENCESTATUS {};
-    struct ITEMHANDS {};
     struct LocomotionInfo;
+
+    enum class ITEMHANDS : uint32_t  {
+	    IH_FORCE32 = 0x7FFFFFFFu,
+	    IH_TWOHANDED = 2u,
+	    IH_ONEHANDED = 1u,
+	    IH_NONE = 0u
+    };
 
     using ITEMSTATE = int;
     struct WEAPONOPERATION {};
-    enum EFootSide {};
+    enum EFootSide;
 
     class ZCheckPointBuffer; // NOT AVAILABLE FOR PC ?
 
