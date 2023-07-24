@@ -6,6 +6,7 @@
 #include <Glacier/ResourceCollection.h>
 #include <Glacier/ZEngineDataBase.h>
 #include <Glacier/ZSysInterfaceWintel.h>
+#include <Glacier/ZActionManager.h>
 
 #include <Glacier/Geom/ZGEOM.h>
 
@@ -52,6 +53,10 @@ namespace Hitman::BloodMoney
     void DebugTools::toggleVisibility()
     {
         m_bIsVisible = !m_bIsVisible;
+
+        Glacier::ZActionManager* actionManager = Glacier::getInterface<Glacier::ZActionManager>(Hitman::BloodMoney::Globals::kActionManagerAddr);
+
+        actionManager->m_isEnabled = !m_bIsVisible;
     }
 
     bool DebugTools::isVisible() const
