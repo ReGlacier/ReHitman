@@ -441,6 +441,8 @@ namespace Hitman::BloodMoney
 
 			ImGui::End();
 		}
+
+        ImGui::End();
     }
 
     bool SandboxWidget::g_bIsVisible = false;
