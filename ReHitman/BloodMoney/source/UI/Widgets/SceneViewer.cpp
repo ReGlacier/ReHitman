@@ -29,8 +29,6 @@
 
 namespace Hitman::BloodMoney
 {
-    static int g_nodeId = 0;
-
     static void PrepareGroup(Glacier::ZGROUP* currentGroup)
     {
         if (!currentGroup) return;
@@ -44,7 +42,7 @@ namespace Hitman::BloodMoney
                 continue;
             }
 
-            ImGui::PushID(g_nodeId);
+            ImGui::PushID(currentEntity->m_id);
 
             auto classInfo = assignedTo->GetOldClassInfo();
             std::string_view type = "N/A";
@@ -90,7 +88,6 @@ namespace Hitman::BloodMoney
                 }
             }
             ImGui::PopID();
-            ++g_nodeId;
 
             //ImGui::Separator();
             currentEntity = currentEntity->Next();
@@ -112,7 +109,6 @@ namespace Hitman::BloodMoney
         ImGui::Text("Scene Inspector");
         ImGui::Separator();
 
-        g_nodeId = 0;
         PrepareGroup(engineDb->m_root);
 
         ImGui::End();
