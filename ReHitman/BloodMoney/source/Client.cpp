@@ -162,6 +162,11 @@ namespace Hitman::BloodMoney
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZEventBase_ActivateTimeUpdate        = 0x004E1520;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZActorCommunication_RegisterRadioUser    = 0x00654920;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZBaseConRout_GetFactory              = 0x004E15F0;
+
+        // ZGeomBuffer
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZGeomBuffer_GeomPtrToRef_ZGEOM      = 0x00462A00;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZGeomBuffer_GeomPtrToRef_ZGeomBase  = 0x004629E0;
+
 #pragma endregion
 #pragma region BloodMoney Configuration Table
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZPathFollower_GetClosestWaypoint      = 0x00654450;

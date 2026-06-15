@@ -64,11 +64,11 @@ namespace Hitman::BloodMoney
 
         // Register widgets
         {
-            Globals::g_pDebugTools->addChild(std::make_shared<SandboxWidget>());
+//            Globals::g_pDebugTools->addChild(std::make_shared<SandboxWidget>());
             Globals::g_pDebugTools->addChild(std::make_shared<ActorsListWidget>());
-            Globals::g_pDebugTools->addChild(std::make_shared<CutSequencePlayerWidget>());
-            Globals::g_pDebugTools->addChild(std::make_shared<SceneViewer>());
-            Globals::g_pDebugTools->addChild(std::make_shared<PlayerTeleportWidget>());
+//            Globals::g_pDebugTools->addChild(std::make_shared<CutSequencePlayerWidget>());
+//            Globals::g_pDebugTools->addChild(std::make_shared<SceneViewer>());
+//            Globals::g_pDebugTools->addChild(std::make_shared<PlayerTeleportWidget>());
         }
 
         // Register gizmos

@@ -13,7 +13,13 @@ namespace Glacier
         ZMat3x3 m_transform;
         ZVector3 position;
         ZVector3 m_vCenter;
-        int field_3C;
+
+		/**
+		 * @brief Meaning some engine specific stuff
+		 *
+		 * Coli bits: m_iFlags & 0xFF
+		 */
+		uint32_t m_iFlags; // +0x3C
         int field_40;
         Glacier::ZVector3 field_44;
         ZEntityLocator *parent; //+0x50
@@ -29,6 +35,8 @@ namespace Glacier
         int field_74;
         int field_78;
         int field_7C;
+
+		// ColiBits 0x100000 - transform changed (RT)
 
         // API
         void DoInit();

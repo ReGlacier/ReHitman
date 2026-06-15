@@ -7,6 +7,19 @@
 
 namespace Glacier
 {
+    enum EStatus : uint8_t
+    {
+        STATUS_New = 0x0,
+        STATUS_Init = 0x1,
+        STATUS_Init2 = 0x2,
+        STATUS_Loaded = 0x3,
+        STATUS_PostInit = 0x4,
+        STATUS_PostInit2 = 0x5,
+        STATUS_OK = 0x5,
+        STATUS_Remove = 0x6,
+        STATUS_End = 0x7,
+    };
+
     class ZEventBase : public ZListNodeBase
     {
     public:

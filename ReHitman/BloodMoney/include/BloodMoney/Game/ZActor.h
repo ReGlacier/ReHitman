@@ -12,10 +12,11 @@ namespace Hitman::BloodMoney
         // pub
         enum ACTORSTATE
         {
-            STATE_0 = 0,
-            STATE_1 = 1,
-            STATE_2 = 2,
-            STATE_3  =3
+            // from ACTORSTATE:t5835=eACTORSTATE_DEAD:0,ACTORSTATE_AWAKE:1,ACTORSTATE_UNCONSCIOUS:2,ACTORSTATE_SLEEPING:3,
+            eACTORSTATE_DEAD = 0,
+            ACTORSTATE_AWAKE = 1, 
+            ACTORSTATE_UNCONSCIOUS = 2,
+            ACTORSTATE_SLEEPING = 3
         };
 
         enum PATH_CANCEL_REASONS

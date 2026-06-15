@@ -2,11 +2,13 @@
 #include <BloodMoney/Game/Globals.h>
 #include <BloodMoney/Game/ZHM3GameData.h>
 #include <BloodMoney/Game/CIngameMap.h>
+#include <BloodMoney/Game/Items/ZHM3ItemTemplate.h>
 
 #include <Glacier/ResourceCollection.h>
 #include <Glacier/ZEngineDataBase.h>
 #include <Glacier/ZSysInterfaceWintel.h>
 #include <Glacier/ZActionManager.h>
+#include <Glacier/CInventory.h>
 
 #include <Glacier/Geom/ZGEOM.h>
 
@@ -147,9 +149,141 @@ namespace Hitman::BloodMoney
             ImGui::EndMainMenuBar();
         }
 
-        if (showInventoryEditor)
+        showUpgradesEditor();
+    }
+
+    void DebugTools::showUpgradesEditor() {
+        static const char* upgradeNames[] = {
+            "UT_Dummy", "UT_AmmoACP", "UT_AmmoArmorPiercing", "UT_Ammo127mm", "UT_AmmoMagnum",
+            "UT_AmmoFlechetteSlugs", "UT_AmmoGaugesSlugs", "UT_AmmoLowVelocity", "UT_Magazine",
+            "UT_Silencer1", "UT_Silencer2", "UT_LaserSight", "UT_DualAction", "UT_DualActionAuto",
+            "UT_DoubleCapMag", "UT_FullAuto", "UT_ReloadBoost", "UT_BeltFeeding", "UT_BiPod",
+            "UT_ScopeType1", "UT_ScopeType2", "UT_ScopeType3", "UT_NightVision", "UT_Lightweight",
+            "UT_DefaultAmmo", "UT_DefaultNoScope", "UT_DefaultBarrel", "UT_DefaultMagazine",
+            "UT_RailMount", "UT_CarbonBarrel", "UT_Buttstock", "UT_Suitcase", "UT_DefaultButtStock",
+            "UT_DefaultGrip", "UT_DefaultHandguard", "UT_DefaultHandle", "UT_DefaultSight",
+            "UT_BoltAction", "UT_RedDotSight", "UT_ShortBarrel", "UT_PistolGrip", "UT_HandGuard",
+            "UT_RapidFire", "UT_LongSlide", "UT_ClipX2", "UT_ClipX3", "UT_ClipX4"
+        };
+
+        using ZHM3ItemTool_GetHM3ItemTemplateWeapon_t = Hitman::BloodMoney::ZHM3ItemTemplate* (__stdcall*)(Glacier::ZItem*);
+        using ZHM3ItemTool_IsCustomWeapon_t = bool(__cdecl*)(Hitman::BloodMoney::EHM3ItemType);
+        using ZHM3ItemTool_GetHM3Type_t = Hitman::BloodMoney::EHM3ItemType(__cdecl*)(Glacier::ZItem*);
+        using ZHM3ItemWeaponCustom_ClearUpgrades_t = int(__thiscall*)(void*);
+        using ZHM3ItemWeaponCustom_AddUpgrade_t = int(__thiscall*)(void*, EUpgradeType);
+        using ZHM3ItemWeaponCustom_ApplyUpgrades_t = void(__thiscall*)(void*, bool);
+        using ZHM3ItemWeaponCustom_UpdateWeaponPartDrawStatus_t = void(__thiscall*)(void*);
+
+        auto ZHM3ItemTool_GetHM3ItemTemplateWeapon = reinterpret_cast<ZHM3ItemTool_GetHM3ItemTemplateWeapon_t>(0x00518D00);
+        auto ZHM3ItemTool_IsCustomWeapon = reinterpret_cast<ZHM3ItemTool_IsCustomWeapon_t>(0x00649610);
+        auto ZHM3ItemTool_GetHM3Type = reinterpret_cast<ZHM3ItemTool_GetHM3Type_t>(0x0064D190);
+        auto ZHM3ItemWeaponCustom_ClearUpgrades = reinterpret_cast<ZHM3ItemWeaponCustom_ClearUpgrades_t>(0x00650520);
+        auto ZHM3ItemWeaponCustom_AddUpgrade = reinterpret_cast<ZHM3ItemWeaponCustom_AddUpgrade_t>(0x0064A7C0);
+        auto ZHM3ItemWeaponCustom_ApplyUpgrades = reinterpret_cast<ZHM3ItemWeaponCustom_ApplyUpgrades_t>(0x006505E0);
+        auto ZHM3ItemWeaponCustom_UpdateWeaponPartDrawStatus = reinterpret_cast<ZHM3ItemWeaponCustom_UpdateWeaponPartDrawStatus_t>(0x00650450);
+
+        // Is game ready
+        auto gameData = Glacier::getInterface<Hitman::BloodMoney::ZHM3GameData>(Globals::kGameDataAddr);
+        if (!gameData || !gameData->m_Hitman3) { return; }
+
+        auto inventory = reinterpret_cast<Glacier::CInventory*>(reinterpret_cast<Glacier::ZGEOM*>(gameData->m_Hitman3)->FindEvent(Glacier::CInventory::Name));
+        if (!inventory) { return; }
+
+        // State
+        static bool g_bShowInventoryMods = false;
+        static int selectedWeaponIdx = -1;
+        static bool selectedUpgrades[UT_NumUpgradeTypes] = { false };
+
+        if (ImGui::Begin("Upgrade editor", &g_bShowInventoryMods))
         {
-//            showInventoryEditorWindow(&showInventoryEditor);
+            auto* reftab = inventory->GetInventoryList();
+
+            ImGui::Columns(2, "WeaponEditorColumns", true);
+
+            // Left side
+            ImGui::Text("Custom Weapons:");
+            ImGui::Separator();
+
+            Glacier::ZGEOM* selectedGeom = nullptr;
+
+            for (size_t i = 0; i < reftab->Count(); ++i)
+            {
+                auto* geom = Glacier::ZGEOM::RefToPtr(reftab->GetRefNr(i));
+                if (!geom) continue;
+
+                auto type = ZHM3ItemTool_GetHM3Type(reinterpret_cast<Glacier::ZItem*>(geom));
+                if (!ZHM3ItemTool_IsCustomWeapon(type)) { continue; }
+
+                char label[128]{ '\x00' };
+                snprintf(label, sizeof(label), "%s##%d", geom->m_baseGeom->entityName, static_cast<int>(i));
+
+                if (ImGui::Selectable(label, selectedWeaponIdx == static_cast<int>(i))) {
+                    selectedWeaponIdx = static_cast<int>(i);
+                }
+
+                if (selectedWeaponIdx == static_cast<int>(i)) {
+                    selectedGeom = geom;
+                }
+            }
+
+            ImGui::NextColumn();
+
+            // Right side
+            ImGui::Text("Upgrade Setup:");
+            ImGui::Separator();
+
+            if (selectedGeom != nullptr)
+            {
+                static int lastSelectedWeaponIdx = -1;
+
+                if (selectedWeaponIdx != lastSelectedWeaponIdx)
+                {
+                    memset(selectedUpgrades, 0, sizeof(selectedUpgrades));
+                    lastSelectedWeaponIdx = selectedWeaponIdx;
+                }
+
+                ImGui::Text("Weapon: %s", selectedGeom->m_baseGeom->entityName);
+                ImGui::Spacing();
+
+                ImGui::Text("Select upgrades to apply:");
+                ImGui::BeginChild("UpgradesListList", ImVec2(0, -40), true);
+                {
+                    for (int i = 1; i < UT_NumUpgradeTypes; ++i)
+                    {
+                        ImGui::Checkbox(upgradeNames[i], &selectedUpgrades[i]);
+                    }
+                }
+                ImGui::EndChild();
+
+                // Apply changes
+                if (ImGui::Button("Apply Selected Upgrades", ImVec2(-1, 30)))
+                {
+                    void* customWeaponInstance = reinterpret_cast<void*>(selectedGeom);
+
+                    // Clear upgrades
+                    ZHM3ItemWeaponCustom_ClearUpgrades(customWeaponInstance);
+
+                    // Apply new upgrades
+                    for (int i = 1; i < UT_NumUpgradeTypes; ++i)
+                    {
+                        if (selectedUpgrades[i])
+                        {
+                            ZHM3ItemWeaponCustom_AddUpgrade(customWeaponInstance, static_cast<EUpgradeType>(i));
+                        }
+                    }
+
+                    // Update upgrades & view
+                    ZHM3ItemWeaponCustom_ApplyUpgrades(customWeaponInstance, true);
+                    ZHM3ItemWeaponCustom_UpdateWeaponPartDrawStatus(customWeaponInstance);
+                }
+            }
+            else
+            {
+                ImGui::TextColored(ImVec4(0.6f, 0.6f, 0.6f, 1.0f), "Select a weapon from the left list.");
+            }
+
+            ImGui::Columns(1);
+            ImGui::End();
         }
     }
 }

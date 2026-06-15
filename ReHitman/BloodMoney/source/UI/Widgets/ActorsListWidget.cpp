@@ -5,6 +5,8 @@
 #include <BloodMoney/Game/ZHM3Actor.h>
 #include <BloodMoney/Game/Globals.h>
 #include <BloodMoney/Game/ZGuardQuarterController.h>
+#include <BloodMoney/Game/PF4/PF4RunTime.h>
+#include <BloodMoney/Game/ZScriptC.h>
 #include <BloodMoney/Game/CCheat.h>
 
 #include <BloodMoney/UI/ImGuiInspector.h>
@@ -17,9 +19,9 @@
 #include <Glacier/Geom/ZGeomBuffer.h>
 #include <Glacier/IK/ZLNKOBJ.h>
 #include <Glacier/IK/ZIKLNKOBJ.h>
-#include <Glacier/ZScriptC.h>
 #include <Glacier/CInventory.h>
 #include <Glacier/EventBase/ZEventBuffer.h>
+#include <Glacier/Geom/ZGeomBuffer.h>
 #include <Glacier/ZActorCommunication.h>
 
 #include <Glacier/Fysix/CRigidBody.h>
@@ -70,6 +72,42 @@ namespace ImGui
         ImGui::Inspector<Glacier::CInventory>::Draw("Actor.Inventory", reinterpret_cast<Glacier::CInventory*>(actor->FindEvent(Glacier::CInventory::Name)));
         ImGui::Inspector<Glacier::ESuitMask>::Draw("Actor.SuitMask", &actor->m_suitMask);
 
+		// ColiBits
+		{
+			static bool g_ColiBits[8] { false, false, false, false, false, false, false, false };
+			bool bBitsChanged = false;
+
+			// Show current bits
+			*reinterpret_cast<uint8_t*>(&g_ColiBits[0]) = static_cast<uint8_t>(actor->m_baseGeom->m_iFlags & 0xFFu);
+
+			ImGui::Text("ColiBits: ");
+			bBitsChanged = ImGui::Checkbox("BIT_0", &g_ColiBits[0]) || bBitsChanged;
+			bBitsChanged = ImGui::Checkbox("BIT_1", &g_ColiBits[1]) || bBitsChanged;
+			bBitsChanged = ImGui::Checkbox("BIT_2", &g_ColiBits[2]) || bBitsChanged;
+			bBitsChanged = ImGui::Checkbox("BIT_3", &g_ColiBits[3]) || bBitsChanged;
+			bBitsChanged = ImGui::Checkbox("BIT_4", &g_ColiBits[4]) || bBitsChanged;
+			bBitsChanged = ImGui::Checkbox("BIT_5", &g_ColiBits[5]) || bBitsChanged;
+			bBitsChanged = ImGui::Checkbox("BIT_6", &g_ColiBits[6]) || bBitsChanged;
+			bBitsChanged = ImGui::Checkbox("BIT_7", &g_ColiBits[7]) || bBitsChanged;
+
+			if (bBitsChanged)
+			{
+				uint8_t coliBitsNew = 0u;
+#define SETBIT(where, idx, v) do { if (v) { where |= (1 << idx); } else { where &= ~(1 << idx); }  } while (0);
+				SETBIT(coliBitsNew, 0, g_ColiBits[0]);
+				SETBIT(coliBitsNew, 1, g_ColiBits[1]);
+				SETBIT(coliBitsNew, 2, g_ColiBits[2]);
+				SETBIT(coliBitsNew, 3, g_ColiBits[3]);
+				SETBIT(coliBitsNew, 4, g_ColiBits[4]);
+				SETBIT(coliBitsNew, 5, g_ColiBits[5]);
+				SETBIT(coliBitsNew, 6, g_ColiBits[6]);
+				SETBIT(coliBitsNew, 7, g_ColiBits[7]);
+#undef SETBIT
+
+				actor->m_baseGeom->m_iFlags = (actor->m_baseGeom->m_iFlags & 0x00FFFFFFu) | (static_cast<uint32_t>(coliBitsNew) << 24);
+			}
+		}
+
         /// ==================
         {
             auto gameData = Glacier::getInterface<Hitman::BloodMoney::ZHM3GameData>(Hitman::BloodMoney::Globals::kGameDataAddr);
@@ -102,6 +140,53 @@ namespace ImGui
             }
         }
 
+        if (auto path = reinterpret_cast<Hitman::BloodMoney::PF4RunTime::ZPath*>(&actor->m_field534); path && path->m_Size > 1)
+        {
+            using ZPlayer_GetCamera_t = Glacier::ZCAMERA* (__thiscall*)(int*);
+            using GetLocalPoint_t = void(__thiscall*)(Glacier::ZCAMERA* pCamera, Glacier::ZVector3* pInOutPoint);
+            using Proj2D_t = void(__thiscall*)(Glacier::ZCAMERA* pCamera, Glacier::ZVector2* pOutScreen, Glacier::ZVector3* pInLocalPoint);
+
+            ZPlayer_GetCamera_t ZPlayer_GetCamera = (ZPlayer_GetCamera_t)0x00528AA0;
+            GetLocalPoint_t GetLocalPoint = (GetLocalPoint_t)0x004E6920;
+            Proj2D_t Proj2D = (Proj2D_t)0x004E40A0;
+
+            auto gameData = Glacier::getInterface<Hitman::BloodMoney::ZHM3GameData>(Hitman::BloodMoney::Globals::kGameDataAddr);
+            auto cam = ZPlayer_GetCamera((int*)gameData->m_Hitman3);
+            Glacier::ZMat3x3 camMat;
+            Glacier::ZVector3 camPos;
+            cam->GetMatPos(&camMat, &camPos);
+
+            for (int i = 1; i < path->m_Size; ++i)
+            {
+                ImVec2 l0, l1;
+                Glacier::ZVector2 v0, v1;
+                Glacier::ZVector3 p0, p1;
+
+                path->GetPosition(i - 1, p0);
+                path->GetPosition(i - 0, p1);
+
+                GetLocalPoint(cam, &p0);
+                GetLocalPoint(cam, &p1);
+
+                Proj2D(cam, &v0, &p0);
+                Proj2D(cam, &v1, &p1);
+
+                ImVec2 display_size = ImGui::GetIO().DisplaySize;
+                float cx = display_size.x * 0.5f;
+                float cy = display_size.y * 0.5f;
+
+                float custom_scale = 2.0f;
+
+                l0.x = cx + (v0.x * cx * custom_scale);
+                l0.y = cy + (v0.y * cy * custom_scale);
+
+                l1.x = cx + (v1.x * cx * custom_scale);
+                l1.y = cy + (v1.y * cy * custom_scale);
+
+                ImGui::GetForegroundDrawList()->AddLine(l0, l1, 0xFF'00'FF'FF, 2.f);
+            }
+        }
+
         // ===================
         {
             auto gameData = Glacier::getInterface<Hitman::BloodMoney::ZHM3GameData>(Hitman::BloodMoney::Globals::kGameDataAddr);
@@ -120,7 +205,25 @@ namespace ImGui
             {
                 actor->Die();
             }
+
+            ImGui::SameLine();
         }
+
+        {
+            if (ImGui::Button("Knockout"))
+            {
+                actor->Knockout();
+            }
+
+            ImGui::SameLine();
+        }
+
+		{
+			if (ImGui::Button("Revive"))
+			{
+				actor->Revive();
+			}
+		}
 
         // ===================
         {
@@ -176,24 +279,18 @@ namespace ImGui
                 reinterpret_cast<Glacier::ZIKLNKOBJ*>(clonedActor)->EnableIK();
                 reinterpret_cast<Glacier::ZIKLNKOBJ*>(clonedActor)->EnableControls();
 
+                // Actorcommunication__Registerradiouser
                 ((void(__cdecl*)(Glacier::ZREF, bool))0x006AA2B0)(reinterpret_cast<Glacier::ZGEOM*>(clonedActor)->GetRef(), true);
 
-                //clonedActor->SetActorState(Hitman::BloodMoney::ZActor::ACTORSTATE::STATE_0);
-                clonedActor->SetActorState(Hitman::BloodMoney::ZActor::ACTORSTATE::STATE_1);
-                //clonedActor->SetActorState(Hitman::BloodMoney::ZActor::ACTORSTATE::STATE_2);
-                //clonedActor->SetActorState(Hitman::BloodMoney::ZActor::ACTORSTATE::STATE_3);
+                clonedActor->SetActorState(Hitman::BloodMoney::ZActor::ACTORSTATE::ACTORSTATE_SLEEPING);
 
                 // ----------- PRETTY PRINT SOME INFOS -------------
                 spdlog::info("TRK: {:08X}", (int)pTrackLinkObjects);
                 spdlog::info("OACT: {:08X}", (int)actor);
                 spdlog::info("Dup: {:08X} / ADup: {:08X}", (int)duplicateGroup, (int)clonedActor);
 
-                // ----------- REGISTER ACTOR SOMEWHERE ------------
-                clonedActor->SetActorState(((Hitman::BloodMoney::ZActor::ACTORSTATE(__thiscall*)(Hitman::BloodMoney::ZHM3Actor*))0x005029A0)(actor));
-
-//                clonedActor->m_Mask1 = actor->m_Mask1;
-//                clonedActor->m_field91C = actor->m_field91C;
-//                clonedActor->m_fieldA3C = actor->m_fieldA3C;
+                // Just for debug (copy state from original actor)
+                clonedActor->SetActorState(((Hitman::BloodMoney::ZActor::ACTORSTATE(__thiscall*)(Hitman::BloodMoney::ZHM3Actor*))0x005029A0)(actor)); // ZActor::GetActorState
 
                 spdlog::info("Cloned actor ptr is {:08X}", reinterpret_cast<std::intptr_t>(clonedActor));
 
@@ -202,9 +299,8 @@ namespace ImGui
                 spdlog::info("OACT: {:08X}", (int)actor);
                 spdlog::info("Dup: {:08X} / ADup: {:08X}", (int)duplicateGroup, (int)clonedActor);
 
-                Glacier::ZScriptC* pClonedActorScript = nullptr;
+                Hitman::BloodMoney::ZScriptC* pClonedActorScript = nullptr;
                 Glacier::CInventory* pClonedActorInventory = nullptr;
-
 
                 {
                     int* pDefaultStatus = Glacier::ZEventBase::GetDefaultStatus();
@@ -215,7 +311,10 @@ namespace ImGui
 
                     //TODO: Here we need to fix ZGEOM vftable. One method is lost between FindEvent and AddEvent
                     pClonedActorInventory = HF::Hook::VFHook<Hitman::BloodMoney::ZHM3Actor>::invoke<Glacier::CInventory*, const char*>(clonedActor, 66, "ZGEOM_Inventory"); // Add inventory
-                    pClonedActorScript = HF::Hook::VFHook<Hitman::BloodMoney::ZHM3Actor>::invoke<Glacier::ZScriptC*, const char*>(clonedActor, 66, "ZGEOM_ScriptC"); // AddEvent
+                    pClonedActorScript = HF::Hook::VFHook<Hitman::BloodMoney::ZHM3Actor>::invoke<Hitman::BloodMoney::ZScriptC*, const char*>(clonedActor, 66, "ZGEOM_ScriptC"); // AddEvent
+
+					// And PathFollower
+					HF::Hook::VFHook<Hitman::BloodMoney::ZHM3Actor>::invoke<Hitman::BloodMoney::ZScriptC*, const char*>(clonedActor, 66, "ZGEOM_PathFollower"); // AddEvent
 
                     // And don't forget to restore it back to avoid other issues
                     *pDefaultStatus = oldDefaultStatus;
@@ -226,20 +325,22 @@ namespace ImGui
                 } else {
                     spdlog::info("Created & registered ZScriptC: {:08X}", (int)pClonedActorScript);
 
-                    constexpr const char* psRequiredScriptName = "Alllevels_Armed";
-                    int foundScript = pClonedActorScript->FindScript(psRequiredScriptName);
+                    static const char* psRequiredScriptName = "Alllevels_Armed";
+                    auto* foundScript = pClonedActorScript->FindScript(psRequiredScriptName);
                     if (!foundScript) {
                         spdlog::error("Failed to find '{}' script!", psRequiredScriptName);
                     } else {
                         // And then call 'create script'
-                        pClonedActorScript->m_pScriptsTable = pClonedActorScript->CreateScript(foundScript);
-                        spdlog::info("AI script attached ({:08X})", pClonedActorScript->m_pScriptsTable);
+						spdlog::info("Script found, start attach...");
+
+                        pClonedActorScript->m_pScriptCreator = pClonedActorScript->CreateScript(foundScript);
+                        spdlog::info("AI script attached ({:08X})", (std::intptr_t)(pClonedActorScript->m_pScriptCreator));
 
                         // Here we need to call internal methods
                         clonedActor->Activate(true);
 
                         // Activate
-                        pClonedActorScript->ActivateFrameUpdate(false);
+                        pClonedActorScript->ActivateFrameUpdate(true);
                         //pClonedActorScript->ActivateTimeUpdate(0.0f);
 
                         pClonedActorScript->RegisterInstance();
@@ -260,16 +361,9 @@ namespace ImGui
                         // And try to register this actor in ZDllSound::ActorRegister
                         auto sysInterface = Glacier::getInterface<Glacier::ZSysInterfaceWintel>(Hitman::BloodMoney::Globals::kSysInterfaceAddr);
                         if (sysInterface && sysInterface->m_soundWintelDLL) {
+                            // ZDllSound::ActorRegister
                             ((void(__thiscall*)(int, Glacier::ZGEOM*))0x004C60E0)(sysInterface->m_soundWintelDLL, reinterpret_cast<Glacier::ZGEOM*>(clonedActor));
                             spdlog::info("Cloned actor was register in sound subsystem as sound emitter");
-                        }
-
-                        // Try to register actor in actor communication network
-                        constexpr auto kRadioChannelId = 3u;
-
-                        auto pActorCommunication = Glacier::ZEventBuffer::EventRefToInstance<Glacier::ZActorCommunication>(gameData->m_rActorCommunicationComponentID);
-                        if (pActorCommunication) {
-                            pActorCommunication->RegisterRadioUser(clonedActor->GetRef(), kRadioChannelId);
                         }
                     }
                 }
@@ -349,10 +443,10 @@ namespace Hitman::BloodMoney
 
         auto sysInterface = Glacier::getInterface<Glacier::ZSysInterfaceWintel>(Globals::kSysInterfaceAddr);
         if (!sysInterface) { return; }
-
+        
         auto engineDb = sysInterface->m_engineDataBase;
         if (!engineDb) { return; }
-
+        
         auto gameData = Glacier::getInterface<Hitman::BloodMoney::ZHM3GameData>(Globals::kGameDataAddr);
 
         if (!gameData)

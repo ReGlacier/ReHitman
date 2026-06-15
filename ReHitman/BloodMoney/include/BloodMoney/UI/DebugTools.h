@@ -20,5 +20,6 @@ namespace Hitman::BloodMoney
 
         void drawLevelsTopMenu();
         void drawTopMenu();
+        void showUpgradesEditor();
     };
 }

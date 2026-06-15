@@ -21,11 +21,26 @@ namespace Glacier
     class ZGEOM
     {
     public:
+        // Types
+        enum EStatus : uint8_t
+        {
+            STATUS_New = 0x0,
+            STATUS_Init = 0x1,
+            STATUS_Init2 = 0x2,
+            STATUS_Loaded = 0x3,
+            STATUS_PostInit = 0x4,
+            STATUS_PostInit2 = 0x5,
+            STATUS_OK = 0x5, // Rly, same to PostInit2, weird shit
+            STATUS_Remove = 0x6,
+            STATUS_End = 0x7,
+        };
+
         // Data
         ZEntityLocator* m_baseGeom; //+0x4
-        int m_field8;               //+0x8
-        uint16_t m_fieldC;          //+0xC
-        uint16_t m_fieldE;          //+0xE
+        int pExData; //+0x8
+        uint16_t m_lGeomControl; //+0xC
+        EStatus m_eStatus; //+0xD
+        uint8_t m_fieldE; //+0xE
 
         // VFTable
         virtual void Release(bool);

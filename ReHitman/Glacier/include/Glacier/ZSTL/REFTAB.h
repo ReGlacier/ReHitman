@@ -13,6 +13,14 @@ namespace Glacier
 
     class REFTAB
     {
+    public: // members
+        void* TabFirstPtr;
+        void* TabBlockPtr;
+        int m_lRefsPrBlk;
+        int BlkSize;
+        int EleCount;
+        int EleSize;
+
     public:
         virtual REFTAB* Release(bool doFreeMem);   //#0 +0 .rdata:007569ec
         virtual void* Add(unsigned int);            //#1 +4 .rdata:007569f0
@@ -50,4 +58,6 @@ namespace Glacier
         virtual void DeleteBlock(TabBlk *);        //#33 +84 .rdata:00756a70
         virtual void* NewBlock(void);              //#34 +88 .rdata:00756a74
     };
+
+    static_assert(sizeof(REFTAB) == 0x1C, "Bad size of REFTAB");
 }

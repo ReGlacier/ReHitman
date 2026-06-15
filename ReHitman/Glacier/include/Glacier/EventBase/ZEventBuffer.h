@@ -6,29 +6,30 @@
 
 namespace Glacier
 {
-    class ZEventBuffer
+    class ZEventBuffer // total size is 0x1C
     {
     public:
         // members
-        char pad_0004[4]; //0x0004
-        ZEventBase* m_events; //0x0008
-        char pad_000C[4]; //0x000C
-        ZOffsetAlloc* m_offsetAlloc; //0x0010
-        char pad_0014[44]; //0x0014
+		void* m_EventRefs;
+		void* m_pEventRam;
+		int m_lEventRamSize;
+		ZOffsetAlloc* m_pEventAlloc;
+		int m_lAllocatedEventsRam;
+		int m_lNrAllocatedEvents;
 
         /// === vftable ===
         virtual void Release(bool);
-	    virtual void PreSave(ZPackedInput*);
-	    virtual void PostSave(ZPackedInput*);
-	    virtual void PreLoad(ZPackedInput*);
-	    virtual void PostLoad(ZPackedInput*);
-	    virtual void PostProcess(int, int);
-	    virtual void LoadSave(ZPackedInput*, bool);
-	    virtual void LoadObject(IInputSerializerStream*);
-	    virtual void SaveObject(IOutputSerializerStream*);
-	    virtual void ExchangeObject(ZPackedInput*);
-	    virtual void SetToDefault();
-	    virtual int GetTypeID();
+        virtual void PreSave(ISerializerStream&);
+        virtual void PostSave(ISerializerStream&);
+        virtual void PreLoad(ISerializerStream&);
+        virtual bool PostLoad(ISerializerStream&);
+        virtual bool PostProcess(unsigned int, unsigned int);
+        virtual void LoadSave(ISerializerStream&, bool);
+        virtual void LoadObject(IInputSerializerStream&);
+        virtual void SaveObject(IOutputSerializerStream&);
+        virtual void ExchangeObject(ISerializerStream&);
+        virtual void SetToDefault();
+        virtual unsigned int GetTypeID();
 
     public:
 	    // Custom API

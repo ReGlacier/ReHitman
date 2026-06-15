@@ -30,7 +30,7 @@ namespace Hitman::BloodMoney::Debug {
         auto gameData = Glacier::getInterface<Hitman::BloodMoney::ZHM3GameData>(Globals::kGameDataAddr);
         if (!gameData || !gameData->m_Hitman3 || !gameData->m_ActorsInPoolCount) return;
 
-        auto pCamera = reinterpret_cast<Glacier::ZCAMERA*>(gameData->m_CameraClass);
+        auto pCamera = reinterpret_cast<Glacier::ZCAMERA*>(gameData->m_pMainCamera);
         if (!pCamera || !pCamera->IsActive()) return;
 
         auto pD3DDll = Glacier::getInterface<Glacier::ZRenderWintelD3DDll>(Globals::kD3DDllAddr);

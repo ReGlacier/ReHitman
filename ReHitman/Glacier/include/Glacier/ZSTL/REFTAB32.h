@@ -30,7 +30,7 @@ namespace Glacier
         virtual bool Exists(unsigned int); //#0010 at 001175B8 org REFTAB::Exists(unsigned int)const
         virtual bool Exists(unsigned int *); //#0011 at 00117628 org REFTAB::Exists(unsigned int *)const
         virtual void* Find(unsigned int); //#0012 at 00117718 org REFTAB::Find(unsigned int)
-        virtual void* GetRefNr(int); //#0013 at 00117788 org REFTAB::GetRefNr(int)const
+        virtual int GetRefNr(int); //#0013 at 00117788 org REFTAB::GetRefNr(int)const
         virtual void* GetRefPtrNr(int); //#0014 at 001177E0 org REFTAB::GetRefPtrNr(int)const
         virtual size_t GetIndex(unsigned int); //#0015 at 00117698 org REFTAB::GetIndex(unsigned int)const
         virtual void Remove(unsigned int); //#0016 at 00117834 org REFTAB::Remove(unsigned int)
