@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Glacier/GlacierFWD.h>
-#include <Glacier/EventBase/ZEventBase.h>
+#include <Glacier/ZBaseConRout.h>
 #include <Glacier/ZSTL/REFTAB.h>
 #include <Glacier/ZSTL/REFTAB32.h>
 #include <Glacier/ZSDOwner.h>
@@ -19,7 +19,7 @@ namespace Hitman::BloodMoney
 
     class ZMusicController;
 
-    class ZHM3LevelControl : public Glacier::ZEventBase
+    class ZHM3LevelControl : public Glacier::ZBaseConRout
     {
     public:
         // vftable
@@ -262,4 +262,5 @@ namespace Hitman::BloodMoney
         bool m_field5DE;
         bool m_field5DF;
     };
+    RE_VERIFY_OFFSET(ZHM3LevelControl, m_field30, 0x30);
 }

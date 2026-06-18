@@ -1,10 +1,10 @@
 #pragma once
 
 #include <Glacier/Glacier.h>
-#include <Glacier/EventBase/ZEventBase.h>
+#include <Glacier/ZBaseConRout.h>
 
 namespace Hitman::BloodMoney {
-    class CTelePortList : public Glacier::ZEventBase {
+    class CTelePortList : public Glacier::ZBaseConRout {
     public:
         // size is 0x3C
         int m_field30;
@@ -14,4 +14,5 @@ namespace Hitman::BloodMoney {
         // public API
         void TeleportToPointAtIndex(int index);
     };
+    RE_VERIFY_OFFSET(CTelePortList, m_field30, 0x30);
 }

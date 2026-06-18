@@ -36,13 +36,13 @@ namespace Hitman::BloodMoney
         Glacier::ZEntityLocator* currentEntity = currentGroup->m_pEntity0;
 
         while (currentEntity) {
-            auto assignedTo = reinterpret_cast<Glacier::ZGEOM*>(currentEntity->m_assignedTo);
+            auto assignedTo = reinterpret_cast<Glacier::ZGEOM*>(currentEntity->m_pExtraGeom);
             if (!assignedTo) {
                 currentEntity = currentEntity->Next();
                 continue;
             }
 
-            ImGui::PushID(currentEntity->m_id);
+            ImGui::PushID(currentEntity->m_iEntryIndex);
 
             auto classInfo = assignedTo->GetOldClassInfo();
             std::string_view type = "N/A";
@@ -55,7 +55,7 @@ namespace Hitman::BloodMoney
                 if (!childGroup) {
                     ImGui::TextColored(ImVec4{1.f, 0.f, 0.f, 1.f}, "Bad group pointer!");
                 } else {
-                    if (ImGui::TreeNode(fmt::format("Group \"{}\" (type: {} of {}, ID: {:08X})", currentEntity->entityName, type, parent, assignedTo->GetRef()).c_str())) {
+                    if (ImGui::TreeNode(fmt::format("Group \"{}\" (type: {} of {}, ID: {:08X})", currentEntity->m_Name, type, parent, assignedTo->GetRef()).c_str())) {
                         ImGui::Inspector<Glacier::ZEntityLocator>::Draw("NONE", assignedTo->m_baseGeom);
                         ImGui::Separator();
                         PrepareGroup(childGroup);
@@ -64,25 +64,25 @@ namespace Hitman::BloodMoney
                 }
             }
             else if (Glacier::ZCast<Hitman::BloodMoney::ZHM3Actor>::IsBasedOn(assignedTo)) {
-                if (ImGui::TreeNode(fmt::format("Actor \"{}\" (type: {} of {}, ID: {:08X})", currentEntity->entityName, type, parent, assignedTo->GetRef()).c_str())) {
+                if (ImGui::TreeNode(fmt::format("Actor \"{}\" (type: {} of {}, ID: {:08X})", currentEntity->m_Name, type, parent, assignedTo->GetRef()).c_str())) {
                     ImGui::Inspector<Hitman::BloodMoney::ZHM3Actor>::Draw("NONE", reinterpret_cast<Hitman::BloodMoney::ZHM3Actor*>(assignedTo));
                     ImGui::TreePop();
                 }
             }
             else if (Glacier::ZCast<Glacier::ZCAMERA>::IsBasedOn(assignedTo)) {
-                if (ImGui::TreeNode(fmt::format("ZCamera \"{}\" (type: {} of {}, ID: {:08X})", currentEntity->entityName, type, parent, assignedTo->GetRef()).c_str())) {
+                if (ImGui::TreeNode(fmt::format("ZCamera \"{}\" (type: {} of {}, ID: {:08X})", currentEntity->m_Name, type, parent, assignedTo->GetRef()).c_str())) {
                     ImGui::Inspector<Glacier::ZCAMERA>::Draw("None", reinterpret_cast<Glacier::ZCAMERA*>(assignedTo));
                     ImGui::TreePop();
                 }
             }
             else if (Glacier::ZCast<Glacier::ZSNDOBJ>::IsBasedOn(assignedTo)) {
-                if (ImGui::TreeNode(fmt::format("ZSoundObject \"{}\" (type: {} of {}, ID: {:08X})", currentEntity->entityName, type, parent, assignedTo->GetRef()).c_str())) {
+                if (ImGui::TreeNode(fmt::format("ZSoundObject \"{}\" (type: {} of {}, ID: {:08X})", currentEntity->m_Name, type, parent, assignedTo->GetRef()).c_str())) {
                     ImGui::Inspector<Glacier::ZSNDOBJ>::Draw("None", reinterpret_cast<Glacier::ZSNDOBJ*>(assignedTo));
                     ImGui::TreePop();
                 }
             }
             else {
-                if (ImGui::TreeNode(fmt::format("Entity \"{}\" (type: {} of {}, type ptr: {:08X}, ID: {:08X})", currentEntity->entityName, type, parent, (int)classInfo, assignedTo->GetRef()).c_str())) {
+                if (ImGui::TreeNode(fmt::format("Entity \"{}\" (type: {} of {}, type ptr: {:08X}, ID: {:08X})", currentEntity->m_Name, type, parent, (int)classInfo, assignedTo->GetRef()).c_str())) {
                     ImGui::Inspector<Glacier::ZEntityLocator>::Draw("NONE", currentEntity);
                     ImGui::TreePop();
                 }

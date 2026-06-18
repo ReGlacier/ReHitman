@@ -28,7 +28,7 @@ namespace Hitman::BloodMoney::Debug {
         if (!systemInterface) return;
 
         auto gameData = Glacier::getInterface<Hitman::BloodMoney::ZHM3GameData>(Globals::kGameDataAddr);
-        if (!gameData || !gameData->m_Hitman3 || !gameData->m_ActorsInPoolCount) return;
+        if (!gameData || !gameData->m_Hitman3 || !gameData->m_ActorsPool.m_iSize) return;
 
         auto pCamera = reinterpret_cast<Glacier::ZCAMERA*>(gameData->m_pMainCamera);
         if (!pCamera || !pCamera->IsActive()) return;

@@ -215,7 +215,7 @@ namespace Hitman::BloodMoney
                 if (!ZHM3ItemTool_IsCustomWeapon(type)) { continue; }
 
                 char label[128]{ '\x00' };
-                snprintf(label, sizeof(label), "%s##%d", geom->m_baseGeom->entityName, static_cast<int>(i));
+                snprintf(label, sizeof(label), "%s##%d", geom->m_baseGeom->m_Name, static_cast<int>(i));
 
                 if (ImGui::Selectable(label, selectedWeaponIdx == static_cast<int>(i))) {
                     selectedWeaponIdx = static_cast<int>(i);
@@ -242,7 +242,7 @@ namespace Hitman::BloodMoney
                     lastSelectedWeaponIdx = selectedWeaponIdx;
                 }
 
-                ImGui::Text("Weapon: %s", selectedGeom->m_baseGeom->entityName);
+                ImGui::Text("Weapon: %s", selectedGeom->m_baseGeom->m_Name);
                 ImGui::Spacing();
 
                 ImGui::Text("Select upgrades to apply:");

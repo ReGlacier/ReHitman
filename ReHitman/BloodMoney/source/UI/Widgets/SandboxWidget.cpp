@@ -97,21 +97,21 @@ namespace Hitman::BloodMoney
 
         ImGui::Begin("Test script");
         if (ImGui::Button("Try to dump few prims")) {
-            spdlog::info("Hitman   prim {:08X}", (int)renderDll->m_primControlWintel->GetPrimData(reinterpret_cast<Glacier::ZGEOM*>(gameData->m_Hitman3)->m_baseGeom->m_primitive));
-            spdlog::info("Actor[0] prim {:08X}", (int)renderDll->m_primControlWintel->GetPrimData(gameData->m_ActorsPool[0]->m_baseGeom->m_primitive));
-            spdlog::info("Actor[1] prim {:08X}", (int)renderDll->m_primControlWintel->GetPrimData(gameData->m_ActorsPool[1]->m_baseGeom->m_primitive));
+            spdlog::info("Hitman   prim {:08X}", (int)renderDll->m_primControlWintel->GetPrimData(reinterpret_cast<Glacier::ZGEOM*>(gameData->m_Hitman3)->m_baseGeom->m_lPrim));
+            spdlog::info("Actor[0] prim {:08X}", (int)renderDll->m_primControlWintel->GetPrimData(gameData->m_ActorsPool[0]->m_baseGeom->m_lPrim));
+            spdlog::info("Actor[1] prim {:08X}", (int)renderDll->m_primControlWintel->GetPrimData(gameData->m_ActorsPool[1]->m_baseGeom->m_lPrim));
 
             char buffer[512] { 0 };
 
             using GetPrimStats_t = int(__thiscall*)(int, char*, int, int);
             auto GetPrimStats = (GetPrimStats_t)0x00487740;
 
-            auto r = GetPrimStats((int)renderDll->m_primControlWintel, &buffer[0], 511, reinterpret_cast<Glacier::ZGEOM*>(gameData->m_Hitman3)->m_baseGeom->m_primitive);
+            auto r = GetPrimStats((int)renderDll->m_primControlWintel, &buffer[0], 511, reinterpret_cast<Glacier::ZGEOM*>(gameData->m_Hitman3)->m_baseGeom->m_lPrim);
             spdlog::info("R: {:08X}| {}", r, buffer);
             std::memset(&buffer[0], 0x0, 512);
 
-            for (int i = 0; i < gameData->m_ActorsInPoolCount; i++) {
-                GetPrimStats((int)renderDll->m_primControlWintel, &buffer[0], 511, gameData->m_ActorsPool[i]->m_baseGeom->m_primitive);
+            for (int i = 0; i < gameData->m_ActorsPool.m_iSize; i++) {
+                GetPrimStats((int)renderDll->m_primControlWintel, &buffer[0], 511, gameData->m_ActorsPool[i]->m_baseGeom->m_lPrim);
                 spdlog::info("Actor[{}]: {}", i, buffer);
                 std::memset(&buffer[0], 0x0, 512);
             }
@@ -187,9 +187,9 @@ namespace Hitman::BloodMoney
                 Glacier::ZGEOM* pCurrentGeom = nullptr;
 
                 do {
-                    pCurrentGeom = reinterpret_cast<Glacier::ZGEOM*>(pCurrentEnt->m_assignedTo);
+                    pCurrentGeom = pCurrentEnt->m_pExtraGeom;
 
-                    const bool isAcceptable = (sEntityName.empty() ? true : (std::string_view { pCurrentEnt->entityName } == sEntityName)) && (((*pMask) & pCurrentGeom->GetObjectId()) == *(pId));
+                    const bool isAcceptable = (sEntityName.empty() ? true : (std::string_view { pCurrentEnt->m_Name } == sEntityName)) && (((*pMask) & pCurrentGeom->GetObjectId()) == *(pId));
                     if (isAcceptable) {
                         result.emplace_back(pCurrentGeom);
                     }
@@ -252,7 +252,7 @@ namespace Hitman::BloodMoney
 		if (ImGui::Button("T6")) { gameData->m_OSD->m_field8F0 = 6; }
 
 		if (ImGui::Button("DEBUG")) {
-			spdlog::info("AUX: {:08X}", gameData->m_OSD->m_pHealthFrame);
+			spdlog::info("AUX: {:08X}", reinterpret_cast<std::intptr_t>(gameData->m_OSD->m_pHealthFrame));
 		}
 
         if (ImGui::Button("Toggle AIM")) {
@@ -284,7 +284,7 @@ namespace Hitman::BloodMoney
             auto pPrimControl = pD3DDll->m_primControlWintel;
 
             auto pActor = gameData->m_ActorsPool[0];
-            const int iBonesCount = HF::Hook::VFHook<Glacier::ZPrimControlWintel>::invoke<int, int>(pPrimControl, 41, pActor->m_baseGeom->m_primitive);
+            const int iBonesCount = HF::Hook::VFHook<Glacier::ZPrimControlWintel>::invoke<int, int>(pPrimControl, 41, pActor->m_baseGeom->m_lPrim);
             spdlog::info("Bones count: {}", iBonesCount);
 
             for (int boneIx = 0; boneIx < iBonesCount; boneIx++) {
@@ -385,13 +385,13 @@ namespace Hitman::BloodMoney
 			if (pCamera) {
 				ImGui::Text("Common");
 
-				if (pCamera->m_geom) {
+				if (pCamera->m_pBaseGeom) {
 					if (ImGui::Button("Set")) {
-						reinterpret_cast<Glacier::ZCAMERA *>(pCamera->m_geom)->m_field1C |= 0x1000000u;
+						reinterpret_cast<Glacier::ZCAMERA *>(pCamera->m_pBaseGeom)->m_field1C |= 0x1000000u;
 					}
 					ImGui::SameLine(0.f, 5.f);
 					if (ImGui::Button("UnSet")) {
-						reinterpret_cast<Glacier::ZCAMERA *>(pCamera->m_geom)->m_field1C &= ~0x1000000u;
+						reinterpret_cast<Glacier::ZCAMERA *>(pCamera->m_pBaseGeom)->m_field1C &= ~0x1000000u;
 					}
 				}
 
@@ -421,9 +421,9 @@ namespace Hitman::BloodMoney
 			ImGui::End();
 		}
 
-		if (gameData->m_OSD && gameData->m_OSD->m_pCheatMenu && ImGui::Begin("Cheat Menu Editor Demo")) {
+		if (gameData->m_OSD && gameData->m_OSD->m_pCheatsMenu && ImGui::Begin("Cheat Menu Editor Demo")) {
 			if (ImGui::Button("Add menu entry")) {
-				Glacier::REFTAB* pEntries = &gameData->m_OSD->m_pCheatMenu->m_options;
+				Glacier::REFTAB* pEntries = &gameData->m_OSD->m_pCheatsMenu->m_options;
 
 				auto onZombieModActivation = []() {
 					auto gameData = Glacier::getInterface<Hitman::BloodMoney::ZHM3GameData>(Globals::kGameDataAddr);

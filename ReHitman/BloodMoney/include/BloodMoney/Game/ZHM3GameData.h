@@ -8,6 +8,7 @@
 #include <Glacier/ZGameData.h>
 #include <Glacier/ZSTL/ZArray.h>
 #include <Glacier/ZSTL/REFTAB.h>
+#include <Glacier/ZBaseConRout.h>
 
 #define DECLARE_UNKNOWN_TYPE_PTR(name) using name = std::uintptr_t;
 #define VERIFY_FIELD_POS(cls, fld, expected) static_assert(offsetof(cls, fld) == (expected), "Bad offset of " #cls "::" #fld);
@@ -16,6 +17,17 @@ namespace Glacier
 {
     class ZWINDOW;
     class ZPlayer;
+
+    class ZGameDataFactoryBase
+    {
+    public:
+        virtual void CreateGameData();
+        virtual void DestroyGameData();
+    };
+
+    class ZGameDataFactory : ZGameDataFactoryBase
+    {
+    };
 
     class ZGameStats
     {
@@ -30,6 +42,15 @@ namespace Glacier
 
     VERIFY_FIELD_POS(ZGameStats, m_iStats_CurrentShotCount, 0x4);
     VERIFY_FIELD_POS(ZGameStats, m_iStats_LastShotTime, 0x8);
+
+    template <typename T, size_t N>
+    struct ZStaticVector
+    {
+        uint32_t m_iSize;
+        T m_Data[N];
+
+        T& operator[](size_t i) { return m_Data[i]; }
+    };
 }
 
 namespace Hitman::BloodMoney
@@ -278,7 +299,7 @@ namespace Hitman::BloodMoney
         bool m_bPad[2];
     };
 
-    struct ZClothTracker : public Glacier::ZEventBase
+    struct ZClothTracker : public Glacier::ZBaseConRout
     {
         Glacier::ZArray<SClothInfo> m_Clothes;
         Glacier::ZArray<SInspector> m_Inspectors;
@@ -302,10 +323,11 @@ namespace Hitman::BloodMoney
         // >>>>>>>>>>> ZGameData <<<<<<<<<<<
         // DronCode: Need to move that members to Glacier::ZGameData but it refs to HM3 stuff, need reverse base classes, will do it later
         ZBoidSystem* m_BoidSystem; //0x0004
-        int32_t m_ActorsInPoolCount; //0x0008
-        ZHM3Actor* m_ActorsPool[512]; //0x000C
+        Glacier::ZStaticVector<ZHM3Actor*, 512> m_ActorsPool;
         Glacier::ZLIST* m_AllActorsAndPlayerList; //0x080C
-        int m_pItems[130]; // I'm not sure that this is really ZItem or item at all. Need to debug it
+        Glacier::ZStaticVector<Glacier::ZGEOM*, 128> m_ItemsPool;
+        bool m_bDisableDust;
+        RE_ADD_PADDING(3);
         Glacier::REFTAB* m_ParticleTemplatesList; //0x0A18
         ZHM3MenuElements* m_MenuElements; //0x0A1C
         Glacier::ZPlayer* m_apPlayers[4];
@@ -361,22 +383,32 @@ namespace Hitman::BloodMoney
         bool m_bForceBriefingM00;
         bool m_pad6A4F;
 
-        // >>> NOTE: Idk what's happening since this line. In PC version a lot of crap bytes in memory and no info in constructor :C <<<
-        float m_fHeartBeatTimer;
-        float m_fHeartBeatAmplitude;
-        float m_fHeartBeatAmplitudeMultiplier;
-        char pp[0x2C];
-    }; // Total size is 0x6A88
+        // Exclude anims shit
+        // (I Still don't know what the fuck is happening here)
+        struct ZExcludedAnimList {
+            void* m_pSentinelNode;    // 0x00
+            uint32_t m_iSize;         // 0x04
+            uint32_t m_pUnusedPadding;// 0x08
+        };
+        static_assert(sizeof(ZExcludedAnimList) == 12, "Bad size of ZExcludedAnimList");
 
-    static_assert(sizeof(ZHM3GameData) == 0x6A88, "Bad size of ZHM3GameData");
+        ZExcludedAnimList m_aExcluded[4]; // 0x6A50
+        
+        uint8_t  m_bAnimContainerFlag;    // 0x6A80
+        char     m_pad6A81;               // 0x6A81
+        char     m_pad6A82;               // 0x6A82
+        char     m_pad6A83;               // 0x6A83
+        uint32_t m_alwaysZeroed;          // 0x6A84
+    }; // Total size is 0x6A88 (27272)
 
-    VERIFY_FIELD_POS(ZHM3GameData, m_ParticleTemplatesList, 0x0A18);
-    VERIFY_FIELD_POS(ZHM3GameData, m_Hitman3, 0x0A40);
-    VERIFY_FIELD_POS(ZHM3GameData, m_Gui, 0x0A50);
-    VERIFY_FIELD_POS(ZHM3GameData, m_rActorCommunication, 0x6990);
-    VERIFY_FIELD_POS(ZHM3GameData, m_pClothTracker, 0x699C);
-    VERIFY_FIELD_POS(ZHM3GameData, m_DialogControl, 0x69A8);
-    VERIFY_FIELD_POS(ZHM3GameData, m_pWeaponUpgradeUtils, 0x69C8);
+    RE_VERIFY_SIZE(ZHM3GameData, 0x6A88);
+    RE_VERIFY_OFFSET(ZHM3GameData, m_ParticleTemplatesList, 0x0A18);
+    RE_VERIFY_OFFSET(ZHM3GameData, m_Hitman3, 0x0A40);
+    RE_VERIFY_OFFSET(ZHM3GameData, m_Gui, 0x0A50);
+    RE_VERIFY_OFFSET(ZHM3GameData, m_rActorCommunication, 0x6990);
+    RE_VERIFY_OFFSET(ZHM3GameData, m_pClothTracker, 0x699C);
+    RE_VERIFY_OFFSET(ZHM3GameData, m_DialogControl, 0x69A8);
+    RE_VERIFY_OFFSET(ZHM3GameData, m_pWeaponUpgradeUtils, 0x69C8);
 }
 
 #undef DECLARE_UNKNOWN_TYPE_PTR

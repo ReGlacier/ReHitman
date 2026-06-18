@@ -36,7 +36,7 @@ namespace Hitman::BloodMoney
             if (gameData && msg == g_ChangeSuitMSGID) {
                 auto playerGeom = reinterpret_cast<Glacier::ZGEOM*>(gameData->m_Hitman3);
 
-                reinterpret_cast<Glacier::ZLNKOBJ*>(playerGeom)->CopyGeometryFrom(pSelf->m_baseGeom->m_primitive);
+                reinterpret_cast<Glacier::ZLNKOBJ*>(playerGeom)->CopyGeometryFrom(pSelf->m_baseGeom->m_lPrim);
                 reinterpret_cast<Glacier::ZLNKOBJ*>(playerGeom)->UpdateGeometry(true);
 
                 ((void(__cdecl*)(Glacier::ZGEOM*, const char*))0x005D3BA0)(pSelf, "Take clothes"); //RemoveCUIAction

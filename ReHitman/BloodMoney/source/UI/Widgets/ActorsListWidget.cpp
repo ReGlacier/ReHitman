@@ -78,7 +78,7 @@ namespace ImGui
 			bool bBitsChanged = false;
 
 			// Show current bits
-			*reinterpret_cast<uint8_t*>(&g_ColiBits[0]) = static_cast<uint8_t>(actor->m_baseGeom->m_iFlags & 0xFFu);
+			*reinterpret_cast<uint8_t*>(&g_ColiBits[0]) = static_cast<uint8_t>(actor->m_baseGeom->m_lControl & 0xFFu);
 
 			ImGui::Text("ColiBits: ");
 			bBitsChanged = ImGui::Checkbox("BIT_0", &g_ColiBits[0]) || bBitsChanged;
@@ -104,7 +104,7 @@ namespace ImGui
 				SETBIT(coliBitsNew, 7, g_ColiBits[7]);
 #undef SETBIT
 
-				actor->m_baseGeom->m_iFlags = (actor->m_baseGeom->m_iFlags & 0x00FFFFFFu) | (static_cast<uint32_t>(coliBitsNew) << 24);
+				actor->m_baseGeom->m_lControl = (actor->m_baseGeom->m_lControl & 0x00FFFFFFu) | (static_cast<uint32_t>(coliBitsNew) << 24);
 			}
 		}
 
@@ -116,8 +116,8 @@ namespace ImGui
                 auto actorGeom = reinterpret_cast<Glacier::ZGEOM*>(actor);
                 auto playerGeom = reinterpret_cast<Glacier::ZGEOM*>(gameData->m_Hitman3);
 
-                const int actorPrimId  = actorGeom->m_baseGeom->m_primitive;
-                const int playerPrimId = playerGeom->m_baseGeom->m_primitive;
+                const int actorPrimId  = actorGeom->m_baseGeom->m_lPrim;
+                const int playerPrimId = playerGeom->m_baseGeom->m_lPrim;
 
                 reinterpret_cast<Glacier::ZLNKOBJ*>(actor)->CopyGeometryFrom(playerPrimId);
                 reinterpret_cast<Glacier::ZLNKOBJ*>(actor)->UpdateGeometry(true);
@@ -236,7 +236,7 @@ namespace ImGui
                 actor->SetMoveSpeedMultiplier(15.f);
                 actor->MoveToPosition(&pos, &pos);
 
-                spdlog::info("Request to actor '{}' run to {};{};{}", actor->m_baseGeom->entityName, pos.x, pos.y, pos.z);
+                spdlog::info("Request to actor '{}' run to {};{};{}", actor->m_baseGeom->m_Name, pos.x, pos.y, pos.z);
             }
         }
 
@@ -249,8 +249,8 @@ namespace ImGui
                 auto actorRootGroup = reinterpret_cast<Glacier::ZGEOM*>(actorOwnerGroup)->m_baseGeom->ParentGroup();
 
                 spdlog::info("Owner: {} / Root: {}",
-                             reinterpret_cast<Glacier::ZGEOM*>(actorOwnerGroup)->m_baseGeom->entityName,
-                             reinterpret_cast<Glacier::ZGEOM*>(actorRootGroup)->m_baseGeom->entityName);
+                             reinterpret_cast<Glacier::ZGEOM*>(actorOwnerGroup)->m_baseGeom->m_Name,
+                             reinterpret_cast<Glacier::ZGEOM*>(actorRootGroup)->m_baseGeom->m_Name);
 
                 Glacier::ZMat3x3 ownerMat;
                 Glacier::ZVector3 ownerPos;
@@ -260,7 +260,7 @@ namespace ImGui
                         actorRootGroup,
                         &ownerMat,
                         &ownerPos,
-                        fmt::format("Actor!CloneOf!{}", reinterpret_cast<Glacier::ZGEOM*>(actorOwnerGroup)->m_baseGeom->entityName).c_str(),
+                        fmt::format("Actor!CloneOf!{}", reinterpret_cast<Glacier::ZGEOM*>(actorOwnerGroup)->m_baseGeom->m_Name).c_str(),
                         true);
                 auto clonedActor = reinterpret_cast<Hitman::BloodMoney::ZHM3Actor*>(reinterpret_cast<Glacier::ZGROUP*>(duplicateGroup)->FindGeom("Ground", nullptr));
 
@@ -407,12 +407,16 @@ namespace Hitman::BloodMoney
 
              //Left side
             static int selectedIndex = 0;
+
+            // crash fix for level reload
+            if (selectedIndex >= gameData->m_ActorsPool.m_iSize)
+                selectedIndex = 0;
+
             ImGui::BeginChild("$leftside", ImVec2(300, 0), true);
-            for (int actorIndex = 0; actorIndex < gameData->m_ActorsInPoolCount; actorIndex++)
+            for (int actorIndex = 0; actorIndex < gameData->m_ActorsPool.m_iSize; actorIndex++)
             {
                 auto entityName = fmt::format("#{:2d} {}",
-                                              (actorIndex + 1),
-                                              gameData->m_ActorsPool[actorIndex]->m_baseGeom->ParentGroup()->m_baseGeom->entityName);
+                                              (actorIndex + 1), gameData->m_ActorsPool.m_Data[actorIndex]->m_baseGeom->ParentGroup()->m_baseGeom->m_Name);
                 if (ImGui::Selectable(entityName.data(), selectedIndex == actorIndex))
                 {
                     selectedIndex = actorIndex;
@@ -422,7 +426,7 @@ namespace Hitman::BloodMoney
             ImGui::SameLine();
 
             //Right side
-            Hitman::BloodMoney::ZHM3Actor* currentActor = gameData->m_ActorsPool[selectedIndex];
+            Hitman::BloodMoney::ZHM3Actor* currentActor = gameData->m_ActorsPool.m_Data[selectedIndex];
 
             ImGui::BeginGroup();
             ImGui::BeginChild("$itemview", ImVec2(0, -ImGui::GetFrameHeightWithSpacing()));
@@ -455,7 +459,7 @@ namespace Hitman::BloodMoney
             return;
         }
 
-        if (!gameData->m_ActorsInPoolCount)
+        if (!gameData->m_ActorsPool.m_iSize)
         {
             DrawErrorDialog("NO ACTORS ON THIS SCENE");
             return;

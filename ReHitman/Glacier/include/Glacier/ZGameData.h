@@ -4,6 +4,8 @@
 
 namespace Glacier
 {
+    class ZActor;
+
     class ZGameData
     {
     public:

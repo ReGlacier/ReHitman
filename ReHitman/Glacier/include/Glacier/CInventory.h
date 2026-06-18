@@ -2,7 +2,7 @@
 
 #include <Glacier/Geom/ZGEOM.h>
 #include <Glacier/Geom/ZGROUP.h>
-#include <Glacier/EventBase/ZEventBase.h>
+#include <Glacier/ZBaseConRout.h>
 #include <Glacier/ZSTL/REFTAB.h>
 #include <Glacier/ZSTL/REFTAB32.h>
 
@@ -10,7 +10,7 @@ namespace Glacier
 {
     class ZItem;
 
-    class CInventory : public ZEventBase
+    class CInventory : public ZBaseConRout
     {
     public:
         // const

@@ -10,33 +10,23 @@ namespace Glacier
     {
     public:
         // Data
-        ZMat3x3 m_transform;
-        ZVector3 position;
-        ZVector3 m_vCenter;
-
-		/**
-		 * @brief Meaning some engine specific stuff
-		 *
-		 * Coli bits: m_iFlags & 0xFF
-		 */
-		uint32_t m_iFlags; // +0x3C
-        int field_40;
-        Glacier::ZVector3 field_44;
-        ZEntityLocator *parent; //+0x50
-        int field_54;           //+0x54
-        uint16_t field_58;      //+0x58
-        uint16_t m_id;          //+0x5A
-        uint32_t m_Instance;    //+0x5C
-        uint32_t m_assignedTo;  //+0x60
-        int field_64;           //+0x64
-        int m_primitive;        //+0x68
-        const char *entityName; //+0x6C
-        int field_70;
-        int field_74;
-        int field_78;
-        int field_7C;
-
-		// ColiBits 0x100000 - transform changed (RT)
+        ZMat3x3 m_mMat;
+        ZVector3 m_vPos;
+        ZVector3 m_vCen;
+        unsigned int m_lControl;
+        ZVector3 m_vSize;
+        float m_fRadius;
+        ZEntityLocator * m_pParent;
+        uint32_t m_uListID : 24;
+        uint32_t m_lPotentialLightListChange : 7;
+        uint32_t m_bFreezeLightList : 1;
+        uint16_t m_lDrawId;
+        uint16_t m_lDrawEntryId;
+        int m_iEntryIndex;
+        class ZGEOM* m_pExtraGeom;
+        int m_pDynId;
+        int m_lPrim;
+        const char* m_Name;
 
         // API
         void DoInit();
@@ -48,5 +38,11 @@ namespace Glacier
         void SetNext(ZEntityLocator* next);
         ZEntityLocator* GetPrev();
         void SetPrev(ZEntityLocator* prev);
-    }; //Size: 0x0080
+    }; //Size: 0x0070
+
+    static_assert(sizeof(ZEntityLocator) == 0x70, "Bad size of ZEntityLocator (ZBaseGeom)");
+
+    // Need to refactor whole codebase and use ZBaseGeom instead of ZEntityLocator
+    // That name is incorrect
+    using ZBaseGeom = ZEntityLocator;
 }

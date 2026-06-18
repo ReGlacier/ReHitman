@@ -101,7 +101,6 @@ namespace Glacier
     }
 
     class ZEntityLocator;
-    class ZBaseGeom; //ZEntityLocator implements this by old design
     class FsZip_t;
 
     using AnimCallback_t = bool(ZGEOM::*)(void*, float, float, unsigned int);

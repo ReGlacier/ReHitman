@@ -147,11 +147,11 @@ namespace ImGui
                 return;
             }
 
-            ImGui::Text("ID: %X", entity->m_Instance);
-            ImGui::Text("Name: "); ImGui::SameLine(0.f, 0.4f); ImGui::TextColored(ImVec4 { 0.f, 1.f, 0.f, 1.f }, "%s", entity->entityName);
-            ImGui::Inspector<Glacier::ZMat3x3>::Draw("Transform", &entity->m_transform);
-            ImGui::Inspector<Glacier::ZVector3>::Draw("Position", &entity->position);
-            ImGui::Text("Primitive ID: %d", entity->m_primitive);
+            ImGui::Text("ID: %X", entity->m_iEntryIndex);
+            ImGui::Text("Name: "); ImGui::SameLine(0.f, 0.4f); ImGui::TextColored(ImVec4 { 0.f, 1.f, 0.f, 1.f }, "%s", entity->m_Name);
+            ImGui::Inspector<Glacier::ZMat3x3>::Draw("Transform", &entity->m_mMat);
+            ImGui::Inspector<Glacier::ZVector3>::Draw("Position", &entity->m_vPos);
+            ImGui::Text("Primitive ID: %d", entity->m_lPrim);
         }
     };
 
@@ -168,7 +168,7 @@ namespace ImGui
             ImGui::Text(" GROUP INFO ");
             ImGui::Separator();
 
-            ImGui::Text("Name   : %s", group->m_baseGeom->entityName);
+            ImGui::Text("Name   : %s", group->m_baseGeom->m_Name);
             ImGui::Text("Depth  : %d", group->GroupDepth()); // await jump to 004EA2D0
             ImGui::Text("IsRoot : %s", (group->IsRoot() ? "YES" : "NO"));
 
@@ -178,7 +178,7 @@ namespace ImGui
                 // Show parent node
                 if (parentGroup && ImGui::TreeNode("Parent"))
                 {
-                    ImGui::Inspector<Glacier::ZGROUP>::Draw(parentGroup->m_baseGeom->entityName, parentGroup);
+                    ImGui::Inspector<Glacier::ZGROUP>::Draw(parentGroup->m_baseGeom->m_Name, parentGroup);
                     ImGui::TreePop();
                 }
             }

@@ -4,12 +4,12 @@ namespace Glacier
 {
     struct ZSDOwner
     {
-        int m_field0;
-        char m_field4;
-        char m_field5;
-        char m_field6;
-        char m_field7;
-        int m_field8;
-        int m_fieldC;
+        int m_iSoundDefinitionIndex;
+        bool m_bEnsureOneChannel;
+        char pad[3];
+        float m_Time_AllowedToPlay;
+        unsigned int m_rLastPlayed;
     };
+
+    static_assert(sizeof(ZSDOwner) == 16, "Bad size of ZSDOwner");
 }

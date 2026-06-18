@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Glacier/ReGlacier.h>
 #include <Glacier/ZSTL/ZRTTI.h>
 #include <Glacier/GlacierFWD.h>
 #include <Glacier/ZListNodeBase.h>
@@ -7,68 +8,104 @@
 
 namespace Glacier
 {
-    enum EStatus : uint8_t
+    namespace RTP
     {
-        STATUS_New = 0x0,
-        STATUS_Init = 0x1,
-        STATUS_Init2 = 0x2,
-        STATUS_Loaded = 0x3,
-        STATUS_PostInit = 0x4,
-        STATUS_PostInit2 = 0x5,
-        STATUS_OK = 0x5,
-        STATUS_Remove = 0x6,
-        STATUS_End = 0x7,
+        struct cNode
+        {
+            struct cNode* m_Next;
+            const char* m_Name;
+            unsigned int m_Filter;
+        };
+
+        struct ZPropertyInfo
+        {
+            cNode* First;
+            ZPropertyInfo* Super;
+            const char* Name;
+        };
+    }
+
+    struct TIMETYPE
+    {
+        int secs;
     };
 
-    class ZEventBase : public ZListNodeBase
+    class ZEventBase : public ZListNode<ZEventBase, 0>
     {
+    public: // Types
+        enum EEventPriority : uint32_t
+        {
+            PRIORITY_Normal = 0x0,
+            PRIORITY_AboveNormal = 0x1,
+            PRIORITY_Elevator = 0x2,
+            PRIORITY_High = 0x3,
+            PRIORITY_VeryHigh = 0x4,
+            PRIORITY_SuperHigh = 0x5,
+            PRIORITY_BaseCamera = 0x6,
+            PRIORITY_PostFilter = 0x7,
+            PRIORITY_PostFilterHigh = 0x8,
+            INACTIVE_LIST = 0x9,
+            NUMBER_OF_EVENT_LISTS = 0xA,
+        };
+
+        enum EStatus : uint8_t
+        {
+            STATUS_New = 0x0,
+            STATUS_Init = 0x1,
+            STATUS_Init2 = 0x2,
+            STATUS_Loaded = 0x3,
+            STATUS_PostInit = 0x4,
+            STATUS_PostInit2 = 0x5,
+            STATUS_OK = 0x5,
+            STATUS_Remove = 0x6,
+            STATUS_End = 0x7,
+        };
+
     public:
-        /// === members ===
-        int32_t m_field14; //0x0014
-        int32_t m_field18; //0x0018
-        int32_t m_field1C; //0x001C
-        int32_t m_field20; //0x0020
-        Glacier::ZGEOM* m_geom; //0x0024
-        Glacier::ZScheduledScript* m_pScheduledScript; //+0x0028
-        Glacier::ZRTTI* m_runtimeTypeInfo; //0x002C
+        uint32_t m_Ref;
+        float m_TimerInterval;
+        TIMETYPE m_fTimePassed;
+        uint32_t m_lRoutCases;
+        uint32_t m_lEventLists;
+        uint8_t m_ClassCall;
+        EStatus m_Status;
+        unsigned __int16 m_lEventAllocSize;
+        ZGEOM * m_pBaseGeom;
+        ZScheduledEvent* m_pScheduleEvent;
 
         /// === vftable ===
-        virtual void Release(bool);                                                     //#00 | +0
-        virtual void PreSave(int&);                                                     //#01 | +4
-        virtual void PostSave(int&);                                                    //#02 | +8
-        virtual void PreLoad(int&);                                                     //#03 | +C
-        virtual void PostLoad(int&);                                                    //#04 | +10
-        virtual void PostProcess(int, int);                                             //#05 | +14
-        virtual void LoadSave(Glacier::ZPackedInput*, bool);                            //#06 | +18
-        virtual void LoadObject(int&);                                                  //#07 | +1C
-        virtual void SaveObject(int&);                                                  //#08 | +20
-        virtual void ExchangeObject(Glacier::ZPackedInput*);                            //#09 | +24
-        virtual void SetToDefault();                                                    //#10 | +28
-        virtual int GetTypeID();                                                        //#11 | +2C
-        virtual void* GetProperties();                                                  //#12 | +30
-        virtual int GetEventPriority();                                                 //#13 | +34
-        virtual void Init();                                                            //#14 | +38
-        virtual void Init2();                                                           //#15 | +3C
-        virtual void PostInit();                                                        //#16 | +40
-        virtual void PostInit2();                                                       //#17 | +44
-        virtual void CopyData(const ZEventBase*);                                       //#18 | +48
-        virtual const char* EventName();                                                //#19 | +4C
-        virtual void ExpandBounds(float*, float*, float*, Glacier::ZEntityLocator*);    //#20 | +50
-        virtual void PreSaveGame();                                                     //#21 | +54
-        virtual void RegisterInstance();                                                //#22 | +58
-        virtual void CheckPointSave(int&);                                              //#23 | +5C
-        virtual void CheckPointLoad(int&);                                              //#24 | +60
-        virtual void Reset();                                                           //#25 | +64
-        virtual void TimeUpdate();                                                      //#26 | +68
-        virtual void FrameUpdate();                                                     //#27 | +6C
-        virtual void Command(Glacier::ZMSGID command, Glacier::ZDATA data);             //#28 | +70
-        virtual void DoEvent(int, int, void*);                                          //#29 | +74
-        virtual void End();                                                             //#30 | +78
-        virtual void EditorCommand(Glacier::ZMSGID command, Glacier::ZDATA data);       //#31 | +7C
-        virtual void Remove();                                                          //#32 | +80
-        virtual void SchedUpdate();                                                     //#33 | +84
-        virtual void InitBaseConRout(Glacier::ZROUTCLASSINFO*);                         //#34 | +88
-        virtual void UnknownCommand(Glacier::ZMSGID command, Glacier::ZDATA data);      //#35 | +8C
+        virtual ~ZEventBase();
+        virtual void PreSave(ISerializerStream*);
+        virtual void PostSave(ISerializerStream*);
+        virtual void PreLoad(ISerializerStream*);
+        virtual bool PostLoad(ISerializerStream*);
+        virtual bool PostProcess(const unsigned int, const unsigned int);
+        virtual void LoadObject(IOutputSerializerStream*);
+        virtual void ExchangeObject(ISerializerStream*);
+        virtual void SetToDefault();
+        virtual unsigned int GetTypeID();
+        virtual RTP::ZPropertyInfo* GetProperties();
+        virtual EEventPriority GetEventPriority();
+        virtual void Init();
+        virtual void Init2();
+        virtual void PostInit();
+        virtual void PostInit2();
+        virtual void CopyData(const ZEventBase*);
+        virtual const char* EventName();
+        virtual void ExpandBounds(float*, float*, float*, Glacier::ZEntityLocator*);
+        virtual void PreSaveGame();
+        virtual void RegisterInstance();
+        virtual void CheckPointSave(int&);
+        virtual void CheckPointLoad(int&);
+        virtual void Reset();
+        virtual void TimeUpdate();
+        virtual void FrameUpdate();
+        virtual int Command(Glacier::ZMSGID command, Glacier::ZDATA data);
+        virtual int DoEvent(int, int, void*);
+        virtual void End();
+        virtual void EditorCommand(Glacier::ZMSGID command, Glacier::ZDATA data);
+        virtual void Remove();
+        virtual void SchedUpdate();
 
         // api
         void ActivateFrameUpdate(bool a1);
@@ -80,4 +117,12 @@ namespace Glacier
         static int* GetDefaultStatus();
 
     }; //Size: 0x0030
+    RE_VERIFY_SIZE(ZEventBase, 0x2C);
+    RE_VERIFY_OFFSET(ZEventBase, m_Ref, 0xC);
+
+    /// <summary>
+    /// Dummy class to check that offset is OK, do not use in your code!
+    /// </summary>
+    struct DummyEventChld : public ZEventBase { int m_Dummy; };
+    RE_VERIFY_OFFSET(DummyEventChld, m_Dummy, 0x2C);
 }

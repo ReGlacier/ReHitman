@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Glacier/ReGlacier.h>
 #include <Glacier/GlacierFWD.h>
 #include <Glacier/ZSTL/ZMath.h>
 #include <Glacier/ZSTL/ZOldTypeInfo.h>
@@ -178,4 +179,5 @@ namespace Glacier
 		template <typename T> static T* RefCast(Glacier::ZREF rRef) { return reinterpret_cast<T*>(RefToPtr(rRef)); }
         static ZOldTypeInfo** GetFactory();
     };
+    RE_VERIFY_SIZE(ZGEOM, 0x10);
 }

@@ -58,7 +58,7 @@ namespace Hitman::BloodMoney {
         ImGui::Text("Teleport at: ");
         ImGui::InputFloat3("New position", reinterpret_cast<float*>(&teleportAt)); ImGui::SameLine(0.f, 5.f);
         if (ImGui::Button("TELEPORT")) {
-            hitman->MoveToMatPos(reinterpret_cast<const float*>(&hitman->m_baseGeom->m_transform.data),
+            hitman->MoveToMatPos(reinterpret_cast<const float*>(&hitman->m_baseGeom->m_mMat.data),
                                  reinterpret_cast<const float*>(&teleportAt));
         }
 
@@ -78,7 +78,7 @@ namespace Hitman::BloodMoney {
         auto pTeleportList = Glacier::ZEventBuffer::EventRefToInstance<CTelePortList>(rTeleportListREF);
         if (pTeleportList) {
             ImGui::Separator();
-            auto teleportPoints = reinterpret_cast<Glacier::ZLIST*>(pTeleportList->m_geom)->m_entries;
+            auto teleportPoints = reinterpret_cast<Glacier::ZLIST*>(pTeleportList->m_pBaseGeom)->m_entries;
             const int totalTeleportPoints = teleportPoints->Count();
             ImGui::Text("Teleport points (%d):", totalTeleportPoints);
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Glacier/EventBase/ZEventBase.h>
+#include <Glacier/ZBaseConRout.h>
 #include <Glacier/Geom/ZGEOM.h>
 #include <cstdint>
 
@@ -114,7 +114,7 @@ namespace Hitman::BloodMoney
         ScriptState *m_pCurrentScriptState;
     };
 
-    class ZScriptC : public Glacier::ZEventBase
+    class ZScriptC : public Glacier::ZBaseConRout
     {
     public:
         static constexpr const char* Name = "ScriptC";

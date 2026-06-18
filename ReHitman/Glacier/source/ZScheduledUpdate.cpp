@@ -10,7 +10,7 @@ namespace Glacier {
         assert(pHolder != nullptr);
 
         if (!pHolder) return nullptr;
-        if (pHolder->m_pScheduledScript) return nullptr;
+        if (pHolder->m_pScheduleEvent) return nullptr;
 
         if (G1ConfigurationService::G1API_FunctionAddress_ZScheduledUpdate_AddEvent != G1ConfigurationService::kNotConfiguredOption) {
             return ((ZScheduledEvent*(__thiscall*)(ZScheduledUpdate*, ZEventBase*))G1ConfigurationService::G1API_FunctionAddress_ZScheduledUpdate_AddEvent)(this, pHolder);
@@ -24,7 +24,7 @@ namespace Glacier {
         assert(pHolder != nullptr);
 
         if (!pHolder) return;
-        if (!pHolder->m_pScheduledScript) return;
+        if (!pHolder->m_pScheduleEvent) return;
 
         if (G1ConfigurationService::G1API_FunctionAddress_ZScheduledUpdate_AddEvent != G1ConfigurationService::kNotConfiguredOption) {
             ((void(__thiscall*)(ZScheduledUpdate*, ZEventBase*))G1ConfigurationService::G1API_FunctionAddress_ZScheduledUpdate_RemoveEvent)(this, pHolder);

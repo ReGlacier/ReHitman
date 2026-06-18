@@ -11,7 +11,8 @@
 
 namespace Hitman::BloodMoney
 {
-    enum EActorMapRole : int {
+    enum EActorMapRole : int 
+    {
         Civilian                 = 0,
         Enemy                    = 1,
         VIP                      = 2,
