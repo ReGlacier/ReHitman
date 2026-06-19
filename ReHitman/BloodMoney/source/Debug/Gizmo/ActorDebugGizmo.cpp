@@ -58,7 +58,7 @@ namespace Hitman::BloodMoney::Debug {
         Glacier::ZVector2 vHeadPos4;
 
         auto pPlayer = reinterpret_cast<Glacier::ZLNKWHANDS*>(gameData->m_Hitman3);
-        if (!pPlayer->m_boneModify) return;
+        if (!pPlayer->m_pBoneModify) return;
 
         pPlayer->GetRootCenter(&mPlayerMat, &vPlayerPos);
 

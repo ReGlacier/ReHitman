@@ -29,7 +29,7 @@ namespace Hitman::BloodMoney {
                 return;
             }
 
-            auto pGeom = reinterpret_cast<Glacier::ZGEOM*>(pEntityLocator->m_assignedTo);
+            auto pGeom = reinterpret_cast<Glacier::ZGEOM*>(pEntityLocator->m_pExtraGeom);
             if (!pGeom) {
                 return;
             }

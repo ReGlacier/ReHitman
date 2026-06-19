@@ -269,11 +269,6 @@ namespace ImGui
         }
     };
 
-    template <> struct Inspector<Glacier::ESuitMask>
-    {
-        static void Draw(const char* id, Glacier::ESuitMask* mask);
-    };
-
     /// BloodMoney stuff
     template <> struct Inspector<Hitman::BloodMoney::ZHM3Actor>
     {

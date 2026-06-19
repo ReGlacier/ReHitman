@@ -31,35 +31,6 @@
 
 namespace ImGui
 {
-    void Inspector<Glacier::ESuitMask>::Draw(const char* id, Glacier::ESuitMask* mask) {
-        switch (*mask) {
-            case Glacier::ESuitMask::NoActor:
-                ImGui::Text("ESuitMask::NoActor");
-                break;
-            case Glacier::ESuitMask::SkinChangerNotSupported:
-                ImGui::Text("ESuitMask::SkinChangerNotSupported");
-                break;
-            case Glacier::ESuitMask::Nude:
-                ImGui::Text("ESuitMask::Nude");
-                break;
-            case Glacier::ESuitMask::Invisible:
-                ImGui::Text("ESuitMask::Invisible");
-                break;
-            case Glacier::ESuitMask::OriginalView:
-                ImGui::Text("ESuitMask::OriginalView");
-                break;
-            case Glacier::ESuitMask::Agent47_WithoutHeaddress:
-                ImGui::Text("ESuitMask::Agent47_WithoutHeaddress");
-                break;
-            case Glacier::ESuitMask::Agent47_WithHeaddress:
-                ImGui::Text("ESuitMask::Agent47_WithHeaddress");
-                break;
-            default:
-                ImGui::TextColored(ImVec4 { 1.f, 1.f, 0.f, 1.f }, "Unknown value: %d", *mask);
-                break;
-        }
-    }
-
     void Inspector<Hitman::BloodMoney::ZHM3Actor>::Draw(const char* id, Hitman::BloodMoney::ZHM3Actor* actor) {
         //ImGui::Inspector<Glacier::ZEntityLocator>::Draw("actor.entity", actor->ActorInformation->location);
         ImGui::Inspector<Glacier::ZEntityLocator>::Draw("actor.entity", actor->m_baseGeom);
@@ -70,7 +41,6 @@ namespace ImGui
         ImGui::Inspector<Glacier::ZGROUP>::Draw("ActorGroup", actor->m_baseGeom->ParentGroup());
         ImGui::Inspector<Hitman::BloodMoney::ZPathFollower>::Draw("Actor.PathFollower", reinterpret_cast<Hitman::BloodMoney::ZPathFollower*>(actor->FindEvent(Hitman::BloodMoney::ZPathFollower::Name)));
         ImGui::Inspector<Glacier::CInventory>::Draw("Actor.Inventory", reinterpret_cast<Glacier::CInventory*>(actor->FindEvent(Glacier::CInventory::Name)));
-        ImGui::Inspector<Glacier::ESuitMask>::Draw("Actor.SuitMask", &actor->m_suitMask);
 
 		// ColiBits
 		{
@@ -107,25 +77,6 @@ namespace ImGui
 				actor->m_baseGeom->m_lControl = (actor->m_baseGeom->m_lControl & 0x00FFFFFFu) | (static_cast<uint32_t>(coliBitsNew) << 24);
 			}
 		}
-
-        /// ==================
-        {
-            auto gameData = Glacier::getInterface<Hitman::BloodMoney::ZHM3GameData>(Hitman::BloodMoney::Globals::kGameDataAddr);
-            if (gameData && actor->m_suitMask != Glacier::ESuitMask::NoActor && ImGui::Button("Swap bodies"))
-            {
-                auto actorGeom = reinterpret_cast<Glacier::ZGEOM*>(actor);
-                auto playerGeom = reinterpret_cast<Glacier::ZGEOM*>(gameData->m_Hitman3);
-
-                const int actorPrimId  = actorGeom->m_baseGeom->m_lPrim;
-                const int playerPrimId = playerGeom->m_baseGeom->m_lPrim;
-
-                reinterpret_cast<Glacier::ZLNKOBJ*>(actor)->CopyGeometryFrom(playerPrimId);
-                reinterpret_cast<Glacier::ZLNKOBJ*>(actor)->UpdateGeometry(true);
-
-                reinterpret_cast<Glacier::ZLNKOBJ*>(playerGeom)->CopyGeometryFrom(actorPrimId);
-                reinterpret_cast<Glacier::ZLNKOBJ*>(playerGeom)->UpdateGeometry(true);
-            }
-        }
 
         // ==================
         {
@@ -190,7 +141,8 @@ namespace ImGui
         // ===================
         {
             auto gameData = Glacier::getInterface<Hitman::BloodMoney::ZHM3GameData>(Hitman::BloodMoney::Globals::kGameDataAddr);
-            if (gameData && actor->m_suitMask != Glacier::ESuitMask::NoActor && ImGui::Button("Start human shield with"))
+            // NOTE: Need to check ability to start human shield by another way
+            if (gameData && ImGui::Button("Start human shield with"))
             {
                 using StartActionHumanShield_t = void(__thiscall*)(std::intptr_t*, Hitman::BloodMoney::ZHM3Actor*);
                 auto StartActionHumanShield = (StartActionHumanShield_t)0x00600590;
@@ -243,7 +195,8 @@ namespace ImGui
         // ===================
         {
             auto gameData = Glacier::getInterface<Hitman::BloodMoney::ZHM3GameData>(Hitman::BloodMoney::Globals::kGameDataAddr);
-            if (gameData && actor->m_suitMask != Glacier::ESuitMask::NoActor && ImGui::Button("Make clone"))
+            // TODO: Find another way to check ability of clone op
+            if (gameData && ImGui::Button("Make clone"))
             {
                 auto actorOwnerGroup = reinterpret_cast<Glacier::ZGEOM*>(actor)->m_baseGeom->ParentGroup();
                 auto actorRootGroup = reinterpret_cast<Glacier::ZGEOM*>(actorOwnerGroup)->m_baseGeom->ParentGroup();

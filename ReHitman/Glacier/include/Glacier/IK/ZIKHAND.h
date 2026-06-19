@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Glacier/ReGlacier.h>
 #include <Glacier/ZSTL/ZMath.h>
 
 namespace Glacier
@@ -8,14 +9,35 @@ namespace Glacier
     class ZItemTemplate;
     class ZIKLNKOBJ;
 
-    enum class HandType {
-        LeftHand	= 32,
-        RightHand	= 31,
-        RatUnk0		= 20,
-        RatUnk1		= 25
-    };
+    struct ZTARGET
+    {
+        // FIXME: Fix vtbl method
+        virtual ~ZTARGET();
 
-    class ZIKHAND
+        uint8_t m_pad0[4]; // PADDING
+        bool m_bEnabled;
+        uint8_t m_pad1[3]; // PADDING
+        ZMat3x3 m_mTarget;
+        ZVector3 m_vTarget;
+        float m_fTime;
+        float m_fStartTime;
+        uint32_t m_rGeom;
+        int m_lBoneId;
+        ZLNKOBJ* m_pLnkObj;
+        void(*m_Callback[4])(ZLNKOBJ*);
+    };
+    RE_VERIFY_SIZE(ZTARGET, 0x60);
+    RE_VERIFY_OFFSET(ZTARGET, m_bEnabled, 0x8); // See ZTARGET::ZTARGET for details (PC at 0x0050CA30)
+
+    struct SHandInfo
+    {
+        uint32_t m_rItem;
+        bool m_bIKItemEnabled;
+        bool m_pad5[3];
+    };
+    RE_VERIFY_SIZE(SHandInfo, 0x8);
+
+    class ZIKHAND : public ZTARGET
     {
     public:
         virtual void LoadSave(ZPackedInput*, bool);
@@ -27,30 +49,11 @@ namespace Glacier
         virtual void SetTarget(ZIKLNKOBJ* owner, const Matrix4x4* transform, const Vector3* point, float veliocity, void* callback);
 
         // data
-        int field_4;
-        char m_bEnabled;
-        char field_9;
-        char field_A;
-        char field_B;
-        Glacier::ZMat3x3 m_mTarget;
-        Glacier::ZVector3 m_vTarget;
-        float m_fTime;
-        float m_fStartTime;
-        Glacier::ZREF m_rGeom;
-        int m_lBoneId;
-        int field_4C;
-        int field_50;
-        int field_54;
-        int field_58;
-        int field_5C;
-        int m_itemId;
-        bool m_hasItem;
-        char field_65;
-        char field_66;
-        char field_67;
-        HandType m_handType;
+        SHandInfo m_HandInfo;
+        unsigned int m_lBoneId;
         Glacier::ZVector3 m_vItemOffset;
-        int MSG_INVERTORYSETACTIVELEFT;
-        int field_7C;
+        uint16_t m_msgInventorySetActive;
+        uint8_t m_pad2[6];
     };
+    RE_VERIFY_SIZE(ZIKHAND, 0x80); // Verified for PC
 }

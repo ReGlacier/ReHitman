@@ -2,57 +2,111 @@
 
 #include <Glacier/Geom/ZSTDOBJ.h>
 #include <Glacier/Glacier.h>
+#include <Glacier/ReGlacier.h>
+#include <Glacier/ZSTL/ZRTStringObject.h>
 #include <Glacier/ZSTL/ZMath.h>
 
 namespace Glacier
 {
-    struct ZAnimVariationHandle {
-        int m_field0;
-        int m_field4;
-        int m_field8;
-    };
+    namespace Animation
+    {
+        struct Model;
+    }
 
-    struct ActiveAnimation {
-        int m_field0;
-        int m_field4;
-        int m_field8;
-        int m_fieldC;
-        int m_field10;
-        int m_field14;
-        int m_field18;
-        int m_field1C;
-        int m_field20;
-        int m_field24;
-        int m_field28;
-    }; //Size 0x2C
+    RE_PACKED_STRUCT(1)
+    struct SPoseKey {
+        uint16_t Frame;             //+0x00
+        uint8_t Strength;           //+0x02
+    } RE_PACKED_STRUCT_END;
+    RE_VERIFY_SIZE(SPoseKey, 0x3);
 
-    struct Model {
-        int m_field0;
-        int m_field4;
-        int m_field8;
-        int m_fieldC;
-        int m_field10;
-        int m_field14;
-        int m_field18;
-        int m_field1C;
-        int m_field20;
-        ActiveAnimation m_animationsPool[4];
-        //Not completed!
+    struct alignas(4) ZPoseModel
+    {
+        uint8_t m_cName;
+        SPoseKey* m_pPoseKeys;
+        uint16_t m_dwIndex;
+        uint16_t m_dwSize;
+        bool m_bActive;
+        bool m_bLoaded;
     };
+    RE_VERIFY_SIZE(ZPoseModel, 0x10);
 
-    enum class ESuitMask : int32_t {
-        NoActor					 = 0b0000'0000'0000'0000'0000'0000'0000'0000,	///< This is not an actor (M13, wheelchair gui subactor kind)
-        SkinChangerNotSupported	 = 0b0000'0000'0000'0000'0000'0000'0000'0001,	///< This actor does not supports skin changer
-        Nude					 = 0b0000'0000'0000'0000'0000'0000'0000'0010,	///< Nude view of model (works only if the actor can share their suit, in other case works as Inivisble)
-        Invisible				 = 0b0000'0000'0000'0000'0000'0000'0000'0100,	///< Invisible view of the actor (possible model loading failure, I don't know)
-        OriginalView			 = 0b0000'0000'0000'0000'0000'0000'0000'0101,	///< Just original view of actor
-        Agent47_WithoutHeaddress = 0b0000'0000'0000'0000'0000'0000'0000'0110,	///< Sometimes works if suit have headdress (in other case will work as invisible)
-        Agent47_WithHeaddress	 = 0b0000'0000'0000'0000'0000'0000'0000'0111	///< Works in 99% of situations with actors who can share their suit
+    struct ZPoseAnim
+    {
+        uint32_t m_rHost;
+        uint32_t m_dwID;
+        uint8_t m_lCount;
+        uint8_t m_lStartCount;
+        uint8_t m_lActivePoses;
+        uint8_t m_padB;
+        float m_fStartTime;
+        float m_fTimeMultiplier;
+        float m_fEndTime;
+        uint32_t m_lPoseSize;
+        float m_fFrameTime;
+        float m_fFrameStartTime;
+        uint8_t m_iUpdate;
+        uint8_t m_pad25;
+        uint16_t m_lEmotionID;
+        ZPoseModel* m_pPoseList;
     };
+    RE_VERIFY_SIZE(ZPoseAnim, 0x2C);
+
+    struct ActBoneMotion2
+    {
+        union
+        {
+            char _DefaultLocalQuat[4];
+            uint32_t m_PackedQuat;
+        };
+    };
+    RE_VERIFY_SIZE(ActBoneMotion2, 0x4);
+
+    struct ZBone
+    {
+        ZMat3x3 _Mat;
+        ZVector3 _Pos;
+    };
+    RE_VERIFY_SIZE(ZBone, 0x30);
+
+    struct GameEntity
+    {
+        ZGEOM* m_pGeom;
+        // Need finish this part
+    };
+    // RE_VERIFY_SIZE(GameEntity, 0x18);
+
+    struct ZAnimVariationBuffer
+    {
+        const char* m_pBuffer;
+        int* m_AnimList;
+    };
+    RE_VERIFY_SIZE(ZAnimVariationBuffer, 0x8);
+
+    struct ZAnimTemplatesNames
+    {
+        const char* m_pBuffer;
+    };
+    RE_VERIFY_SIZE(ZAnimTemplatesNames, 0x4);
+
+    struct ZDeltaBone
+    {
+        float m_OffsetQuat[4];
+        float m_OffsetPos[3];
+    };
+    RE_VERIFY_SIZE(ZDeltaBone, 0x1C);
 
     class ZLNKOBJ : public ZSTDOBJ
     {
     public:
+        // types
+        struct SAnimSound
+        {
+            unsigned int m_rAnimationSound;
+            int m_lSequenceID;
+        };
+        RE_VERIFY_SIZE(SAnimSound, 0x8);
+
         //vftable
         virtual void InitObjMatBone();
         virtual void CloseObjMatBone();
@@ -130,66 +184,36 @@ namespace Glacier
         virtual void LoadSaveAnimations(ZPackedInput*, bool);
 
         //data (total size is 0xF4, base size is 0x10)
-        int field_10;
-        int field_14;
-        int field_18;
-        ZMat3x3 m_matrix1C;
-        int field_40;
-        int field_44;
-        int field_48;
-        ESuitMask m_suitMask;
-        int field_50;
-        int field_54;
-        int field_58;
-        int field_5C;
-        int field_60;
-        int field_64;
-        char field_68;
-        char field_69;
-        char field_6A;
-        char field_6B;
-        Model* m_animationModel;
-        int field_70;
-        int field_74;
-        int field_78;
-        int field_7C;
-        char m_iAnimVariationFlags;
-        char field_81;
-        char field_82;
-        char field_83;
-        int m_boneModify;
-        char m_bIsInCutSequence;
-        char field_89;
-        char field_8A;
-        char field_8B;
-        int field_8C;
-        int field_90;
-        int field_94;
-        int field_98;
-        int field_9C;
-        int field_A0;
-        int field_A4;
-        int field_A8;
-        int field_AC;
-        int field_B0;
-        int field_B4;
-        int field_B8;
-        int field_BC;
-        int field_C0;
-        int field_C4;
-        int field_C8;
-        int field_CC;
-        int field_D0;
-        int field_D4;
-        int field_D8;
-        int field_DC;
-        int m_GroundAnimDestStartFrame;
-        int m_GroundAnimDestEndFrame;
-        int m_fPelvisBoneOffset;
-        int field_EC;
-        char m_LODMask;
-        char m_bUseLODMASK;
-        char m_FramesReset;
-        char m_bMetaKeyCallBacks;
+        ZPoseAnim* m_pPoseAnim;
+        ActBoneMotion2* m_pMotions2;
+        int m_pMotions2BoneCount;
+        ZBone m_Ground;
+        unsigned int m_lVariantId;
+        GameEntity* m_pGameEntity;
+        SAnimSound m_AnimSound[2];
+        unsigned int m_SoundMappingMaterial;
+        unsigned char m_iVisionID;
+        uint8_t m_pad69[3];
+        Animation::Model* m_Model;
+        ZRTString animCollectionName;
+        ZAnimVariationBuffer m_AnimVariations;
+        ZAnimTemplatesNames m_TemplateNames;
+        uint32_t m_iAnimVariationFlags;
+        int m_pBoneModify;
+        bool m_bCutSequence;
+        bool m_bHideInThisView;
+        bool m_pad8A[2];
+        ZDeltaBone m_QGroundAnimDestOld;
+        ZDeltaBone m_QGroundAnimDest;
+        ZDeltaBone m_QGroundAnimCurrent;
+        float m_GroundAnimDestStartFrame;
+        float m_GroundAnimDestEndFrame;
+        float m_fPelvisBoneOffset;
+        struct ZLNKOBJ* m_pAttachedTo;
+        uint8_t m_LODMask;
+        bool m_bUseLODMASK;
+        bool m_FramesReset;
+        bool m_bMetaKeyCallBacks;
     };
+    RE_VERIFY_SIZE(ZLNKOBJ, 0xF4);
 }
