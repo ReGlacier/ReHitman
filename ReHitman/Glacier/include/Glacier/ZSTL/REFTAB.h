@@ -2,6 +2,8 @@
 
 #include <Glacier/Glacier.h>
 #include <Glacier/GlacierFWD.h>
+#include <Glacier/ReGlacier.h>
+
 
 namespace Glacier
 {
@@ -58,6 +60,5 @@ namespace Glacier
         virtual void DeleteBlock(TabBlk *);        //#33 +84 .rdata:00756a70
         virtual void* NewBlock(void);              //#34 +88 .rdata:00756a74
     };
-
-    static_assert(sizeof(REFTAB) == 0x1C, "Bad size of REFTAB");
+    RE_VERIFY_SIZE(REFTAB, 0x1C);
 }

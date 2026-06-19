@@ -1,8 +1,12 @@
 #pragma once
 
+#include <Glacier/ReGlacier.h>
+
 
 namespace Glacier
 {
+    class REFTAB;
+
     class ZOffsetAlloc
     {
     public:
@@ -23,6 +27,5 @@ namespace Glacier
         virtual int GetFreeTotal() const;
         virtual void GetFreeList(REFTAB* pRefTab) const;
     };
-
-    static_assert(sizeof(ZOffsetAlloc) == 0x14, "Bad size of ZOffsetAlloc");
+    RE_VERIFY_SIZE(ZOffsetAlloc, 0x14);
 }

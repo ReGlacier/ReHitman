@@ -95,11 +95,6 @@ namespace Glacier
 
     using zstring = std::string; /// I GUESS, CAUSE INSIDE ZSTRING USED STD::BASIC_STRING<CHAR, ...>
 
-    namespace PF4
-    {
-        class Interface;
-    }
-
     class ZEntityLocator;
     class FsZip_t;
 

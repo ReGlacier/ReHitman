@@ -6,7 +6,7 @@ namespace Glacier
 {
     class ResourceCollection {
     public:
-        uint32_t m_field4;
+        uint8_t* m_pBuffer;
 
         virtual void* GetResourceText(char const*); //#0000 at 00550F58
         virtual void* GetResourceText(char const*,char const*); //#0001 at 0014CD94 org ResourceCollection::GetResourceText(char const*,char const*)

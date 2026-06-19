@@ -3,6 +3,7 @@
 #include <cstdint>
 
 #include <Glacier/GlacierFWD.h>
+#include <Glacier/PF4/Fwd.h>
 
 namespace Hitman::BloodMoney
 {
@@ -19,7 +20,7 @@ namespace Hitman::BloodMoney
         ZBoid** m_boidsPool; //0x0000
         int32_t m_pFreeAvailableMemForPoolBegin; //0x0004
         int32_t m_pFreeAvailableMemForPoolEnd; //0x0008
-        Glacier::PF4::Interface* m_pPF4Interface; //0x000C (always nullptr, maybe unused)
+        Glacier::PF4::ZInterface* m_pPF4Interface; //0x000C (always nullptr, maybe unused)
         int32_t m_totalBoids; //0x0010
         int32_t m_unknownField; //0x0014
 

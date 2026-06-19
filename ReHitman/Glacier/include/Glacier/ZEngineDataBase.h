@@ -1,88 +1,170 @@
 #pragma once
 
-#include <Glacier/Glacier.h>
-#include <Glacier/ZLinkedListHeader.hpp>
-#include <Glacier/ZScheduledUpdate.h>
-#include <Glacier/Geom/ZGEOM.h>
 #include <Glacier/CCom.h>
+#include <Glacier/Glacier.h>
+#include <Glacier/ReGlacier.h>
+#include <Glacier/Geom/ZEntityLocator.h> // ZBaseGeom
+#include <Glacier/ZLinkedListHeader.hpp>
+#include <Glacier/ZListNodeBase.h>
+#include <Glacier/ZScheduledUpdate.h>
+
+#include <Glacier/PF4/Fwd.h>
+
+#include <Glacier/ZSTL/ZRTStringObject.h>
+#include <Glacier/ZSTL/LINKREFTAB.h>
+#include <Glacier/ZSTL/CMemPool.h>
+#include <Glacier/ZSTL/ZHash.h>
+#include <Glacier/ZSTL/MYSTR.h>
+
+#include <Glacier/Geom/ZGEOM.h>
 
 namespace Glacier
 {
     class ZIOInputStream;
+    struct ZGEOMCLASSINFO;
+
+    struct SDynBlock
+    {
+        unsigned int* pNode1;
+        unsigned int* pNode2;
+        unsigned int* pNode3;
+        unsigned int* pNextBlock;
+    };
+    RE_VERIFY_SIZE(SDynBlock, 0x10);
+
+    struct CListUser : CMemPool
+    {
+        // vtbl
+        virtual void AnalyzeCatch(unsigned int, void*);
+        virtual bool IsNodeInList(unsigned int, void*);
+        virtual unsigned int* UnfoldList(unsigned int*, unsigned int);
+        virtual unsigned int* GetCatchBuffer(unsigned int*);
+        virtual void DisconnectFromAllMembers(void*);
+        virtual void NotifyAllMembers(void*);
+        virtual bool DisconnectNodeFromNode(ZBaseGeom*, ZBaseGeom*);
+        virtual void ConvertOffsetsToRefs(const unsigned int*);
+        virtual unsigned int GetTotalBufferSize();
+        virtual unsigned int* GetFullBuffer();
+        virtual unsigned int AddRuntimeMember(void*);
+        virtual void RemoveRuntimeMember(void*);
+
+        // members
+        unsigned int m_uSizeOfStaticBuf;
+        unsigned int* m_pStaticBuf;
+        unsigned int m_uSizeOfDynamicBuf;
+        SDynBlock* m_pDynamicBuf;
+        unsigned int m_uSizeOfRuntimeBuf;
+        CMemPool* m_pGetDynEntryPool;
+        unsigned int m_uMaxLength;
+        unsigned int* m_pCollidedWith;
+        unsigned int* m_pInternalListUnfold;
+        unsigned int* m_pInternalOutBuf;
+    };
+    RE_VERIFY_SIZE(CListUser, 0x44);
+
+    struct ZEventList
+    {
+        unsigned int m_NumberOfEvents;
+        ZList<ZEventBase, 0, 0> m_EventLists[10];
+        ZListIterator<ZEventBase, 0> m_Iterator;
+        ZEventBase* m_pCurrentEvent;
+    };
+    RE_VERIFY_SIZE(ZEventList, 0x5C);
+
+    struct ZScene
+    {
+        bool m_Changing;
+        bool m_Loaded;
+        char m_SceneName[260];
+        LINKREFTAB* _pBigFiles;
+        ZROOM* _pRoot;
+        unsigned int _rEnvionmentRef;
+        REFTAB* _pDisplayRouts;
+        ZGEOMCLASSINFO* _pClassFirst;
+        ZGEOMCLASSINFO* _pClassLast;
+        CCom* _pSceneCom;
+        float _FrameTime;
+        float _PreFrameTime;
+        float _ActTime;
+        struct ZInputActions* _pInputActions;
+        struct MMCHK* _pAllGroupsMMChk;
+        uint8_t* _pStaticBuffer;
+        int _lStaticBufferLength;
+        CHUNKFILE* _pPackedAnims;
+        int _lPackedAnimsLength;
+        ZGeomBuffer* _pGeomBuffer;
+        int _lLockMinMax;
+        uint8_t* _pPackedTreeData;
+        ZEventList* _pFrameUpdateList;
+        uint8_t* m_WordTable;
+    };
+
+    struct ZEntityTracker
+    {
+        PF4::ZInterface* m_PathFinder;
+        int m_ActorTypeId;
+        int m_HeroTypeId;
+        int m_ReservedPointId;
+    };
+    RE_VERIFY_SIZE(ZEntityTracker, 0x10);
 
     class ZEngineDataBase
     {
     public:
         /// === members ===
-        int32_t m_field4; //0x0004
-        int32_t m_field8; //0x0008
-        int32_t m_fieldC; //0x000C
-        ZGeomBuffer* m_geomBuffer; //0x0010
-        uint32_t m_pf4runtime__data; //0x0014
-        AnimationManager* m_animUnknown; //0x0018
-        uint32_t m_ppPF4Runtime__Data; //0x001C
-        int32_t m_field20; //0x0020
-        int32_t m_field24; //0x0024
-        void* m_ANMBufferPtr; //0x0028
-        int32_t m_ANMBufferSize; //0x002C
-        int32_t m_field30; //0x0030
-        /// ---{ LINKED LIST GOD RAY BEGIN }---
-
-        ///TODO: Use ZLinkedList<T> for this we need to implement ZEventBase, CWinEvent<ZWINDOW>, ZLIST, ZGEOM, ZCAMERA, CBaseEvent<ZGEOM> and ZPostFilterBoxEvent
-
-        //uint32_t m_ZEventBase_LinkedList_EndPtr; //0x0034
-        //uint32_t m_ZEventBase_LinkedList_BeginPtr; //0x0038
-        ZLinkedListHeader<ZEventBase> m_eventBase_LinkedList; //0x0034
-
-        //uint32_t m_CWinEvent_LinkedList_EndPtr; //0x003C
-        //uint32_t m_CWinEvent_LinkedList_BeginPtr; //0x0040
-        ZLinkedListHeader<ZEventBase> m_cWinEvent_LinkedList; //0x003C
-
-        //uint32_t m_UnknownClass0_LinkedListPtr_EndPtr_BP; //0x0044
-        //uint32_t m_UnknownClass0_LinkedListPtr_BeginPtr_BP; //0x0048
-        ZLinkedListHeader<void> m_unknownClass0_LinkedList; //0x0044
-
-        //uint32_t m_ZLIST_LinkedList_EndPtr; //0x004C
-        //uint32_t m_ZLIST_LinkedList_BeginPtr; //0x0050
-        ZLinkedListHeader<ZLIST> m_zList_LinkedList; //0x004C
-
-        //uint32_t m_ZGEOM_LinkedList_EndPtr; //0x0054
-        //uint32_t m_ZGEOM_LinkedList_BeginPtr; //0x0058
-        ZLinkedListHeader<ZGEOM> m_zGeom_LinkedList; //0x0054
-
-        //uint32_t m_UnknownClass1_LinkedListPtr_EndPtr_BP; //0x005C
-        //uint32_t m_UnknownClass1_LinkedListPtr_BeginPtr_BP; //0x0060
-        ZLinkedListHeader<void> m_unknownClass1_LinkedList; //0x005C
-
-        //uint32_t m_ZCAMERA_LinkedList_EndPtr; //0x0064
-        //uint32_t m_ZCAMERA_LinkedList_BeginPtr; //0x0068
-        ZLinkedListHeader<ZCAMERA> m_zCamera_LinkedList; //0x0064
-
-        //uint32_t m_ZGEOMPostFilterEvent_LinkedList_EndPtr; //0x006C
-        //uint32_t m_ZGEOMPostFilterEvent_LinkedList_BeginPtr; //0x0070
-        ZLinkedListHeader<ZGEOM> m_zGeomPostFilterEvent_LinkedList; //0x006C
-
-        //uint32_t m_ZCAMERAPostFilterEvent_LinkedList_EndPtr; //0x0074
-        //uint32_t m_ZCAMERAPostFilterEvent_LinkedList_BeginPtr; //0x0078
-        ZLinkedListHeader<ZCAMERA> m_zCameraPostFilterEvent_LinkedList; //0x0074
-
-        //uint32_t ZGEOM2_LinkedList_EndPtr; //0x007C
-        //uint32_t ZGEOM2_LinkedList_BeginPtr; //0x0080
-        ZLinkedListHeader<ZGEOM> m_zGeom2_LinkedList; //0x0074
-
-        //uint32_t m_unk_LinkedList_EndPtr; //0x0084
-        //uint32_t m_unk_LinkedList_BeginPtr; //0x0088
-        ZLinkedListHeader<void> m_unknownClass2_LinkedList; //0x0084
-
-        /// ---{ LINKED LIST GOD RAY END }---
-        ZScheduledUpdate* m_pEventScheduler; //0x008C
-        ZROOM* m_root; //0x0090
-        char pad_0094[4]; //0x0094
-        ResourceCollection* m_resourceCollection; //0x0098
-        char pad_009C[48]; //0x009C
-        int m_fieldCC; //0xCC
-        int m_fieldD0; //0xD0
-        char* m_gms; //0x00D4
+        bool m_SavingGame;
+        bool m_LoadingGame;
+        struct ILoadCallBack* m_pLoadCallBack;
+        struct ZSaveClass* m_pSaveObject;
+        struct ZGeomBuffer* m_pGeomBuffer;
+        PF4::ZInterface* m_pPathfinder4Data;
+        Animation::Manager* m_AnimationManager;
+        ZEntityTracker* m_pEntityTracker;
+        uint32_t m_rParticleControllerGeom;
+        ZScene* m_pScene;
+        CHUNKFILE* m_pPackedAnims;
+        uint32_t m_lPackedAnimsLength;
+        ZEventList m_EventList;
+        ZScheduledUpdate* m_pScheduledUpdate;
+        ZROOM* m_pRoot;
+        float m_fEvenOutTimers;
+        ResourceCollection* m_pLocaleResources;
+        uint32_t m_lPackedTreeDataLength;
+        uint8_t* m_pPackedTreeData;
+        uint32_t m_lGlobalColiTreeLength;
+        uint8_t* m_pGlobalColiTreeData;
+        uint32_t m_lGlobalStripColiTreeLength;
+        uint8_t* m_pGlobalStripColiTreeData;
+        bool m_bInfAmmo;
+        bool m_bLightDisplay;
+        bool m_bCameraDisplay;
+        bool m_bSoundDisplay;
+        int m_lDontDrawFrame;
+        bool m_bPause;
+        bool m_bFrozen;
+        uint8_t* m_pRoomColiTreeData;
+        uint8_t* m_pRoomInsideTreeData;
+        bool m_bRunTime;
+        bool m_bPackTime;
+        float m_fDisplayPercent;
+        int m_lLockMinMax;
+        MYSTR m_FileName;
+        ZRTString m_ZMsgStrings[1024];
+        ZPStrHash* m_pZMessageHash;
+        uint32_t m_iNumRegisteredMessages;
+        uint8_t* m_pStaticBuffer;
+        int m_lStaticBufferLength;
+        CCom m_SceneCom;
+        int m_lSceneDepth;
+        int m_lNrEvents;
+        bool m_bDrawGizmoEnabled[5];
+        int m_iDrawColiMask;
+        bool m_bStripViewEnabled;
+        bool m_bWaterRenderingEnabled;
+        CListUser* m_pListUser;
+        int m_lDisableResources;
+        int m_AnimIdCount;
+        ZEventBase* m_pOnlyEventUpdate;
 
         /// VFTABLE
         virtual void Release(); //#0
@@ -178,4 +260,5 @@ namespace Glacier
         // Static methods
         static CCom* GetGlobalCom();
     };
+    RE_VERIFY_SIZE(ZEngineDataBase, 0x52D4);
 }

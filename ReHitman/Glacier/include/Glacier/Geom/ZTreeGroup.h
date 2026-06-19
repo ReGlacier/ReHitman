@@ -3,6 +3,7 @@
 #include <Glacier/ReGlacier.h>
 #include <Glacier/Geom/ZGROUP.h>
 #include <Glacier/ZSTL/REFTAB.h>
+#include <Glacier/ZSTL/CMemPool.h>
 #include <Glacier/Geom/ZEntityLocator.h>
 
 namespace Glacier
@@ -36,18 +37,6 @@ namespace Glacier
         float m_fScale;
     };
     RE_VERIFY_SIZE(ZOctree, 0x14);
-
-    struct CMemPool
-    {
-        void* m_pxPool;
-        uint16_t* m_pAllocTable;
-        int m_iEntries;
-        int m_iBlockSize;
-        int m_iNumAlloc;
-        bool m_bOwnPool;
-        bool m_padding[3];
-    };
-    RE_VERIFY_SIZE(CMemPool, 0x18);
 
     struct CObjectInfo
     {
