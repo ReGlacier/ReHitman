@@ -2,12 +2,21 @@
 
 #include <Glacier/IK/ZIKLNKOBJ.h>
 #include <Glacier/ZAction.h>
+#include <Glacier/ReGlacier.h>
 
 namespace Glacier
 {
     class ZCTRLIKLNKOBJ : public ZIKLNKOBJ
     {
     public:
+        // types
+        enum CONTROLLER : int
+        {
+            CONTROLLER_HUMAN = 0x0,
+            CONTROLLER_COMPUTER = 0x1,
+            CONTROLLER_FORCE32 = 0x7FFFFFFF,
+        };
+
         //vftable
         virtual void SetController(int*);
         virtual int GetController();
@@ -25,9 +34,10 @@ namespace Glacier
         virtual void GetVisionPos(ZVector3* pos);
 
         //data (total size is 0x1A0, base size is 0x190)
-        int m_controller;
-        int m_contactGeom;
-        int m_fLightReceived;
-        int m_field19C;
+        CONTROLLER m_eController;
+        unsigned int m_rContactGeom;
+        float m_fLightReceived;
+        struct CExplodeMolotov* m_pMolotovFireController; // lmao, IOI
     };
+    RE_VERIFY_SIZE(ZCTRLIKLNKOBJ, 0x1A0);
 }

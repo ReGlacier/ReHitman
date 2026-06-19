@@ -8,6 +8,7 @@ namespace Glacier
     class ZItem;
     class ZItemTemplate;
     class ZIKLNKOBJ;
+    class ZLNKOBJ;
 
     struct ZTARGET
     {

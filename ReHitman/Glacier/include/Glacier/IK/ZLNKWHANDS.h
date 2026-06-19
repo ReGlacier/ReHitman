@@ -1,16 +1,33 @@
 #pragma once
 
 #include <Glacier/GlacierFWD.h>
+#include <Glacier/ReGlacier.h>
 #include <Glacier/ZCTRLIKLNKOBJ.h>
 #include <Glacier/IK/ZIKHAND.h>
+#include <Glacier/ZSDOwner.h>
+#include <Glacier/ZSTL/ZMath.h>
 
 namespace Glacier
 {
-    struct SIKBoneCollision;
+    namespace Animation
+    {
+        struct ZBlendBone
+        {
+            ZQuat m_Quat;
+            ZVector3 m_Pos;
 
-    enum EFootSide : int {
-        Type1 = 1
-    };
+            union {
+                float    m_Blend;  // +0x1C (32 бита, float)
+                int32_t  m_lBlend; // +0x1C (32 бита, int)
+            };
+
+            int32_t  m_MagicNr;   // +0x20 (32 бита)
+            uint32_t m_Align[3];  // +0x24 (96 бит, выравнивание/паддинг)
+        };
+        RE_VERIFY_SIZE(ZBlendBone, 48);
+    }
+
+    struct SIKBoneCollision;
 
     enum EWHandsActionType : int {
         ZActionPickupItem_7 = 7,
@@ -29,9 +46,22 @@ namespace Glacier
         Unknown = 0xFF // default
     };
 
+    struct ZAnimVariationHandle
+    {
+        uint16_t iIndex;
+    };
+
     class ZLNKWHANDS : public ZCTRLIKLNKOBJ
     {
     public:
+        // types
+        enum EFootSide : int 
+        {
+            eRIGHT = 0,
+            LEFT = 1,
+            CENTER = 2
+        };
+
         //vftable
         virtual void AddNearItem(Glacier::ZREF);
         virtual void RemoveNearItem(Glacier::ZREF);
@@ -120,93 +150,56 @@ namespace Glacier
         virtual float GetCombatStrength();
 
         //data (total size is 0x3D0, base size is 0x1A0)
-        int m_field1A0;
-        bool m_bInMotion; //0x1A4
-        char field_1A5;
-        char field_1A6;
-        char field_1A7;
-        int field_1A8;
-        int field_1AC;
-        int field_1B0;
-        int field_1B4;
-        int field_1B8;
-        int field_1BC;
-        int field_1C0;
-        int field_1C4;
-        int field_1C8;
-        int field_1CC;
-        int field_1D0;
-        int field_1D4;
-        int field_1D8;
-        int field_1DC;
-        int field_1E0;
-        int field_1E4;
-        int field_1E8;
-        int field_1EC;
-        int field_1F0;
-        int field_1F4;
-        int field_1F8;
-        int field_1FC;
-        int field_200;
-        int field_204;
-        int m_rSpeechSound;
-        int field_20C;
-        int field_210;
-        int field_214;
-        int field_218;
-        int field_21C;
-        int field_220;
-        int field_224;
-        int field_228;
-        int field_22C;
-        int field_230;
+        float m_fLastUpdatedPosition;
+        bool m_bInMotion;
+        bool m_pad1E5[3];
+        Animation::ZBlendBone m_AttachBones[2]; // I'm not sure, but looks right
+        unsigned int m_rSpeechSound;
+        ZSDOwner m_SoundDef;
+        ZSDOwner m_MaterialDef;
+        float m_fActorPitch;
+        bool m_bFootStepSoundsEnabled;
+        bool m_bFootStepEventsEnabled;
+        bool m_padding[2];
         int m_lFootStepEvent;
-        int m_ContactMaterialDescID;
+        int m_ContactMaterialDescID; //  ZTypedef<int,enum EHardTypedef_TMaterialDescID>
         int m_rMaterial;
-        int field_240;
+        int m_rCutSequence;
         float m_fRecoil;
-        int m_hitAnimationName;
-        uint16_t m_animPullGun_Right;
-        uint16_t field_24E;
-        uint16_t m_animPickPut;
-        uint16_t field_252;
-        uint16_t m_animReloadMagnum;
-        uint16_t field_256;
-        uint16_t m_animReloadHardballer;
-        uint16_t field_25A;
-        uint16_t m_animReloadMP5;
-        uint16_t field_25E;
-        uint16_t m_animReloadRuger;
-        uint16_t field_262;
-        uint16_t m_animReloadGun_OneHand;
-        uint16_t field_266;
-        int m_pTarget;
-        int field_26C;
-        int field_270;
-        int field_274;
-        int field_278;
-        int field_27C;
-        int field_280;
-        int field_284;
-        int field_288;
-        int field_28C;
-        int field_290;
-        int field_294;
-        int field_298;
-        int field_29C;
-        int field_2A0;
-        int field_2A4;
-        int field_2A8;
-        int field_2AC;
-        int field_2B0;
-        int field_2B4;
-        int field_2B8;
-        int field_2BC;
-        int field_2C0;
-        int field_2C4;
-        ZIKHAND m_leftHand;
-        ZIKHAND m_rightHand;
-        REFTAB *p_nearItems;
-        int m_Mask1;
+        const char* m_pszHitAnim;
+        ZAnimVariationHandle m_HitAnimHandle;
+        ZAnimVariationHandle m_pPullItemRight;
+        ZAnimVariationHandle m_pPickupItemLeft;
+        ZAnimVariationHandle m_pPickupItemRight;
+        ZAnimVariationHandle m_pSwapItems;
+        ZAnimVariationHandle m_pReloadRevolverLeft;
+        ZAnimVariationHandle m_pReloadRevolverRight;
+        ZAnimVariationHandle m_pReloadPistolRight;
+        ZAnimVariationHandle m_pReloadRifle;
+        ZAnimVariationHandle m_pReloadSubMachineGunRight;
+        ZAnimVariationHandle m_pReloadShotgun;
+        ZAnimVariationHandle m_pReloadPumpgun;
+        ZAnimVariationHandle m_pReloadRPG;
+        ZAnimVariationHandle m_pReloadGunOneHand;
+        ZTARGET m_AimTarget;
+        ZIKHAND m_LHand;
+        ZIKHAND m_RHand;
+        REFTAB* m_pNearItems;
+        union {
+            uint8_t m_Mask1;
+            struct 
+            {
+                bool m_bDialog : 1;
+                bool m_bAimDisabled : 1;
+                bool m_bAimInPosition : 1;
+            };
+        };
+        uint8_t m_pad[3];
     };
+    RE_VERIFY_SIZE(ZLNKWHANDS, 0x3D0);
+    RE_VERIFY_OFFSET(ZLNKWHANDS, m_SoundDef, 0x20C);
+    RE_VERIFY_OFFSET(ZLNKWHANDS, m_MaterialDef, 0x21C);
+    RE_VERIFY_OFFSET(ZLNKWHANDS, m_AimTarget, 0x268);
+    RE_VERIFY_OFFSET(ZLNKWHANDS, m_LHand, 0x2C8);
+    RE_VERIFY_OFFSET(ZLNKWHANDS, m_RHand, 0x348);
 }

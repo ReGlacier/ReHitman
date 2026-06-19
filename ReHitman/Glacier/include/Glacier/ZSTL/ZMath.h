@@ -78,4 +78,9 @@ namespace Glacier
         ZMat3x3 transform;
         ZVector3 position;
     }; //size is 0x34
+
+    struct ZQuat
+    {
+        float i, j, k, w;
+    };
 }
