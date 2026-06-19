@@ -7,6 +7,7 @@
 #include <Glacier/ZLinkedListHeader.hpp>
 #include <Glacier/ZListNodeBase.h>
 #include <Glacier/ZScheduledUpdate.h>
+#include <Glacier/AnimationManager.h>
 
 #include <Glacier/PF4/Fwd.h>
 

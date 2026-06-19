@@ -17,12 +17,12 @@ namespace Glacier
             ZVector3 m_Pos;
 
             union {
-                float    m_Blend;  // +0x1C (32 бита, float)
-                int32_t  m_lBlend; // +0x1C (32 бита, int)
+                float    m_Blend;
+                int32_t  m_lBlend;
             };
 
-            int32_t  m_MagicNr;   // +0x20 (32 бита)
-            uint32_t m_Align[3];  // +0x24 (96 бит, выравнивание/паддинг)
+            int32_t  m_MagicNr;
+            uint32_t m_Align[3];
         };
         RE_VERIFY_SIZE(ZBlendBone, 48);
     }
