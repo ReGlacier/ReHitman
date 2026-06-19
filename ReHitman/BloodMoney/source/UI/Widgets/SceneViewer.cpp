@@ -33,7 +33,7 @@ namespace Hitman::BloodMoney
     {
         if (!currentGroup) return;
 
-        Glacier::ZEntityLocator* currentEntity = currentGroup->m_pEntity0;
+        Glacier::ZEntityLocator* currentEntity = currentGroup->m_pGroupFirst;
 
         while (currentEntity) {
             auto assignedTo = reinterpret_cast<Glacier::ZGEOM*>(currentEntity->m_pExtraGeom);

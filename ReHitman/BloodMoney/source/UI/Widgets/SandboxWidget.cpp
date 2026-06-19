@@ -379,48 +379,6 @@ namespace Hitman::BloodMoney
             }
         }
 
-		if (gameData->m_Hitman3 && ImGui::Begin("Camera offset & focus demo"))
-		{
-			auto pCamera = reinterpret_cast<Hitman::BloodMoney::ZHM3Camera*>(*reinterpret_cast<uint8_t**>(reinterpret_cast<uint8_t*>(gameData->m_Hitman3) + 0xB50));
-			if (pCamera) {
-				ImGui::Text("Common");
-
-				if (pCamera->m_pBaseGeom) {
-					if (ImGui::Button("Set")) {
-						reinterpret_cast<Glacier::ZCAMERA *>(pCamera->m_pBaseGeom)->m_field1C |= 0x1000000u;
-					}
-					ImGui::SameLine(0.f, 5.f);
-					if (ImGui::Button("UnSet")) {
-						reinterpret_cast<Glacier::ZCAMERA *>(pCamera->m_pBaseGeom)->m_field1C &= ~0x1000000u;
-					}
-				}
-
-				ImGui::Checkbox("IsFreeCam", &pCamera->m_bIsFreeCam);
-				ImGui::Checkbox("IsActive", &pCamera->m_bIsActive);
-				ImGui::Checkbox("IsEnabled", &pCamera->m_bEnabled);
-
-				ImGui::InputFloat3("m_vPos", &pCamera->m_vPos.x);
-				ImGui::InputFloat3("m_vPoseOffset", &pCamera->m_vPoseOffset.x);
-				ImGui::InputFloat3("m_vCurrentLookAtPoint", &pCamera->m_vCurrentLookAtPoint.x);
-
-				ImGui::DragFloat("m_fAngleYaw", &pCamera->m_fAngleYaw, 0.5f, 0.f, 360.f);
-				ImGui::DragFloat("m_fAnglePitch", &pCamera->m_fAnglePitch, 0.5f, 0.f, 360.f);
-				ImGui::DragFloat("m_fAngleRoll", &pCamera->m_fAngleRoll, 0.5f, 0.f, 360.f);
-
-				if (pCamera->m_pCameraConsole)
-				{
-					ImGui::Separator();
-
-					ImGui::InputFloat3("m_pCameraConsole->m_vFocalPoint", &pCamera->m_pCameraConsole->m_vFocalPoint.x);
-					ImGui::InputFloat3("m_pCameraConsole->m_vField17C", &pCamera->m_pCameraConsole->m_vField17C.x);
-				}
-			} else {
-				ImGui::TextColored(ImVec4 { 1.f, 1.f, 0.f, 1.f }, "No camera instance!");
-			}
-
-			ImGui::End();
-		}
-
 		if (gameData->m_OSD && gameData->m_OSD->m_pCheatsMenu && ImGui::Begin("Cheat Menu Editor Demo")) {
 			if (ImGui::Button("Add menu entry")) {
 				Glacier::REFTAB* pEntries = &gameData->m_OSD->m_pCheatsMenu->m_options;

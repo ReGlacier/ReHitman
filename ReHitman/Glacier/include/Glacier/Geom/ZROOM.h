@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Glacier/ReGlacier.h>
 #include <Glacier/GlacierFWD.h>
 #include <Glacier/ZSTL/ZMath.h>
 #include <Glacier/ZSTL/REFTAB.h>
@@ -7,62 +8,116 @@
 
 namespace Glacier
 {
+    struct ZRawData
+    {
+        void* m_Data;
+        uint32_t m_Size;
+    };
+    RE_VERIFY_SIZE(ZRawData, 0x8);
+
     class ZROOM : public ZTreeGroup
     {
     public:
+        // types
+        struct ZExit
+        {
+            ZVector3 p1;
+            ZVector3 p2;
+            ZVector3 p3;
+            ZVector3 p4;
+            ZROOM* m_pNeighbor;
+            uint16_t m_lNeighborExitIndex;
+            uint8_t m_lControl;
+            uint8_t m_lType;
+        };
+        RE_VERIFY_SIZE(ZExit, 0x38);
+
+        struct ZNeighborRoom
+        {
+            ZROOM* m_pNeighbor;
+            uint32_t m_lNrGeomsInExit;
+            uint32_t* m_pGeomsInExit;
+        };
+        RE_VERIFY_SIZE(ZNeighborRoom, 0xC);
+
+        enum ENoiseLevel : uint32_t 
+        {
+            eSuperQuiet = 0,
+            eQuiet = 1,
+            eNormal = 2,
+            eNoisy = 3,
+            eVeryNoisy = 4,
+            eNoEvents = 5
+        };
+
+        enum ELocation : uint32_t 
+        {
+            eUNDEFINED = 0,
+            eOUTSIDE = 1,
+            eINSIDE = 2,
+            eBOTH = 3
+        };
+
+#if 0   
+        // This definition was taken from PS2 build, in Mini Ninjas & K&L it's only fwd declared
+        // I'm not sure about this decl because ZGeom is not a type. It's fwd decl too (and it's not ZGEOM*)
+        struct ZTempRoom {
+            ZRoomViewEntry* m_pRoomViewEntry; // +0x00
+            ZExit* m_pFirstExit;             // +0x04
+            ZGeom* m_pFirstGeom;             // +0x08
+            int m_lNrExits;                  // +0x0C
+            bool m_bIsInside;                // +0x10
+        };
+#endif
+
         //vftable
-        virtual void CalcBestRoom(unsigned int, float const*, float const*, float const*); //DANGEROUS METHOD
-        virtual void AddDynamicGeomToRoom(ZEntityLocator*);
-        virtual void RemoveDynamicGeomFromRoom(ZEntityLocator*);
+        virtual ZROOM* CalcBestRoom(unsigned int, float const*, float const*, float const*);
+        virtual bool AddDynamicGeomToRoom(ZBaseGeom*);
+        virtual void RemoveDynamicGeomFromRoom(ZBaseGeom*);
         virtual void SetRoomControl(unsigned int, unsigned int);
         virtual unsigned int RoomControl();
-        virtual void GetDynamicLightsInRoom(ZEntityLocator**, ZEntityLocator**);
-        virtual void GetStaticPrimDrawGeomsListsRecur(ZEntityLocator**, ZEntityLocator**);
-        virtual void GetStaticCustomDrawGeomsListsRecur(ZEntityLocator**, ZEntityLocator**);
-        virtual void GetStaticLightsRecur(ZEntityLocator**, ZEntityLocator**);
+        virtual ZBaseGeom** GetDynamicLightsInRoom(ZBaseGeom**, ZBaseGeom**);
+        virtual ZBaseGeom** GetStaticPrimDrawGeomsListsRecur(ZBaseGeom**, ZBaseGeom**);
+        virtual ZBaseGeom** GetStaticCustomDrawGeomsListsRecur(ZBaseGeom**, ZBaseGeom**);
+        virtual ZBaseGeom** GetStaticLightsRecur(ZBaseGeom**, ZBaseGeom**);
         virtual bool NotInRoomTree();
 
         //data (total size is 0x144, base size is 0x70)
-        int m_field70;
-        int m_field74;
-        int m_field78;
-        int m_field7C;
-        int m_field80;
-        int m_field84;
-        int m_field88;
-        int m_field8C;
-        int m_field90;
-        int m_field94;
-        int m_field98;
-        int m_field9C;
-        int m_fieldA0;
-        int m_fieldA4;
-        int m_fieldA8;
-        int m_fieldAC;
-        int m_fieldB0;
-        int m_fieldB4;
-        REFTAB m_reftabB8;
-        REFTAB m_reftabD4;
-        int m_fieldF0;
-        int m_fieldF4;
-        int m_fieldF8;
-        int m_fieldFC;
-        int m_field100;
-        int m_field104;
-        int m_field108;
-        int m_field10C;
-        int m_field110;
-        int m_field114;
-        int m_field118;
-        int m_field11C;
-        int m_field120;
-        int m_field124;
-        int m_field128;
-        int m_field12C;
-        int m_field130;
-        int m_field134;
-        int m_field138;
-        int m_field13C;
-        int m_field140;
+        uint32_t m_lNrExits;
+        ZExit* m_pExits;
+        uint32_t m_rAttachedDrawBaseGeoms[2];
+        uint32_t m_rTriangleList;
+        ZNeighborRoom* m_pNeighborRooms;
+        uint8_t m_lNrNeighborRooms;
+        uint8_t m_padA1[3];
+        uint32_t m_lRoomOccl;
+        uint32_t m_lFogColor;
+        bool m_bIsOnDrawStack;
+        bool m_padAD[3];
+        void* m_pRoomCache; // Need to check this!
+        struct ZTempRoom* m_pTempRoom; // Only fwd decl
+        int m_lCacheIndex;
+        int m_lSoundGraphId;
+        uint32_t m_dwRoomRef;
+        int m_lAudioFilter;
+        int m_iLastVisibleFrameCount;
+        int m_iLightState;
+        REFTAB m_LightSwitches;
+        REFTAB m_FurnitureList;
+        REFTAB* m_pActorsAwareOfBrokenLight;
+        struct ZPoolAllocRefTab* m_pDynamicGeoms;
+        uint32_t m_lRoomControl;
+        ZBaseGeom* m_pEnvironment;
+        uint32_t m_lStaticGeomsCustomDrawList;
+        uint32_t m_lStaticGeomsPrimDrawList;
+        uint32_t m_lDynamicGeomsDrawList;
+        uint32_t m_lMusicId;
+        ZVector3 m_vGeometryCen;
+        ZVector3 m_vGeometrySize;
+        ENoiseLevel m_eNoiseLevel;
+        ELocation m_eLocationState;
+        ZRawData m_StaticShadowSampleData;
+        ZVector3 m_vWind;
     };
+    RE_VERIFY_SIZE(ZROOM, 0x144);
 }

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Glacier/ReGlacier.h>
+#include <Glacier/Geom/ZEntityLocator.h> // ZBaseGeom
 #include <Glacier/GlacierFWD.h>
 #include <Glacier/ZSTL/ZMath.h>
 #include <Glacier/Geom/ZGEOM.h>
@@ -41,24 +43,21 @@ namespace Glacier
         virtual ZGEOM* FindMaskGeom(char const*, int);
 
         //data (total size is 0x4F)
-        float m_field10; //0x0010
-        float m_field14; //0x0014
-        float m_field18; //0x0018
-        float m_field1C; //0x001C
-        float m_field20; //0x0020
-        float m_field24; //0x0024
-        int32_t m_control; //0x0028
-        int32_t m_field2C; //0x002C
-        int32_t m_field30; //0x0030
-        int32_t m_field34; //0x0034
-        int32_t m_field38; //0x0038
-        ZEntityLocator* m_pEntity0; //0x003C
-        ZEntityLocator* m_pEntity1; //0x0040
-        int32_t m_field44; //0x0044
-        int32_t m_field48; //0x0048
+        float m_vSizeInsideCheck[3];
+        float m_vCenInsideCheck[3];
+        unsigned int m_lGroupCon;
+        float m_OverRideNearFar[2];
+        REFTAB* m_pZBounds;
+        unsigned int m_LightList;
+        ZBaseGeom* m_pGroupFirst;
+        ZBaseGeom* m_pGroupLast;
+        float m_fPFResMultiplier;
+        uint16_t m_NrAttachGeom;
+        uint16_t m_pad3A;
 
         //API
         ZGEOM* CreateGeom(const char* name, int typeId, bool unk3);
         bool IsRoot();
     };
+    RE_VERIFY_SIZE(ZGROUP, 0x4C);
 }
