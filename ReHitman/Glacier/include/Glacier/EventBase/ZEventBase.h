@@ -69,8 +69,10 @@ namespace Glacier
         virtual void PreLoad(ISerializerStream*);
         virtual bool PostLoad(ISerializerStream*);
         virtual bool PostProcess(const unsigned int, const unsigned int);
+        virtual void LoadSave(Glacier::ZPackedInput*, bool);
         virtual void LoadObject(IOutputSerializerStream*);
-        virtual void ExchangeObject(ISerializerStream*);
+        virtual void SaveObject(int&);
+        virtual void ExchangeObject(Glacier::ZPackedInput*);
         virtual void SetToDefault();
         virtual unsigned int GetTypeID();
         virtual RTP::ZPropertyInfo* GetProperties();

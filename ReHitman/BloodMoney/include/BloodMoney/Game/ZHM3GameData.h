@@ -8,6 +8,7 @@
 #include <Glacier/ZGameData.h>
 #include <Glacier/ZSTL/ZArray.h>
 #include <Glacier/ZSTL/REFTAB.h>
+#include <Glacier/ReGlacier.h>
 #include <Glacier/ZBaseConRout.h>
 
 #define DECLARE_UNKNOWN_TYPE_PTR(name) using name = std::uintptr_t;
@@ -402,6 +403,7 @@ namespace Hitman::BloodMoney
     }; // Total size is 0x6A88 (27272)
 
     RE_VERIFY_SIZE(ZHM3GameData, 0x6A88);
+    RE_VERIFY_OFFSET(ZHM3GameData, m_apPlayers, 0x0A20);
     RE_VERIFY_OFFSET(ZHM3GameData, m_ParticleTemplatesList, 0x0A18);
     RE_VERIFY_OFFSET(ZHM3GameData, m_Hitman3, 0x0A40);
     RE_VERIFY_OFFSET(ZHM3GameData, m_Gui, 0x0A50);
