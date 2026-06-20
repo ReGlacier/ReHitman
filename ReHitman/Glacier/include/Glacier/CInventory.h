@@ -31,11 +31,13 @@ namespace Glacier
         void RemoveItem(Glacier::ZREF itemREF);
 
         // data
-        int field_30;
-        REFTAB m_reftab;
-        REFTAB32 m_inventoryList;
-        REFTAB32 m_reftab32_2;
+        uint32_t m_rCUI;
+        REFTAB   m_StartInventory;
+        REFTAB32 m_Inventory;
+        REFTAB32 m_TakeActions;
     };
 
-    static_assert(offsetof(CInventory, field_30) == 0x30, "CInventory| Bad offset of field_30");
+    RE_VERIFY_SIZE(CInventory, 0x1A8);
+    RE_VERIFY_OFFSET(CInventory, m_rCUI, 0x30);
+    RE_VERIFY_OFFSET(CInventory, m_StartInventory, 0x34);
 }

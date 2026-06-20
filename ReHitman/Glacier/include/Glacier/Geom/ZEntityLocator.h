@@ -1,8 +1,9 @@
 #pragma once
 
-#include <G1ConfigurationService.h>
+#include <Glacier/ReGlacier.h>
 #include <Glacier/Glacier.h>
 #include <Glacier/ZSTL/ZMath.h>
+#include <Glacier/ZSTL/CQuadtree.h>
 
 namespace Glacier
 {
@@ -17,14 +18,28 @@ namespace Glacier
         ZVector3 m_vSize;
         float m_fRadius;
         ZEntityLocator * m_pParent;
-        uint32_t m_uListID : 24;
-        uint32_t m_lPotentialLightListChange : 7;
-        uint32_t m_bFreezeLightList : 1;
-        uint16_t m_lDrawId;
-        uint16_t m_lDrawEntryId;
-        int m_iEntryIndex;
+
+        struct {
+            uint32_t m_uListID : 24;
+            uint32_t m_lPotentialLightListChange : 7;
+            uint32_t m_bFreezeLightList : 1;
+        };
+
+        union {
+            uint16_t m_lDrawId;
+            uint16_t m_lDrawEntryId;
+        };
+
+        union {
+            uint16_t m_iRoomListNr;
+            uint16_t m_iDynamicParentNr;
+        };
+
+        uint16_t m_iPrev;
+        uint16_t m_iNext;
+
         class ZGEOM* m_pExtraGeom;
-        int m_pDynId;
+        CQuadtreeObj* m_pDynId;
         int m_lPrim;
         const char* m_Name;
 
@@ -39,9 +54,8 @@ namespace Glacier
         ZEntityLocator* GetPrev();
         void SetPrev(ZEntityLocator* prev);
     }; //Size: 0x0070
-
-    static_assert(sizeof(ZEntityLocator) == 0x70, "Bad size of ZEntityLocator (ZBaseGeom)");
-
+    RE_VERIFY_SIZE(ZEntityLocator, 0x70);
+    
     // Need to refactor whole codebase and use ZBaseGeom instead of ZEntityLocator
     // That name is incorrect
     using ZBaseGeom = ZEntityLocator;

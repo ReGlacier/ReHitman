@@ -42,7 +42,7 @@ namespace Hitman::BloodMoney
                 continue;
             }
 
-            ImGui::PushID(currentEntity->m_iEntryIndex);
+            ImGui::PushID(reinterpret_cast<int>(currentEntity->m_pDynId));
 
             auto classInfo = assignedTo->GetOldClassInfo();
             std::string_view type = "N/A";
@@ -109,7 +109,7 @@ namespace Hitman::BloodMoney
         ImGui::Text("Scene Inspector");
         ImGui::Separator();
 
-        PrepareGroup(engineDb->m_root);
+        PrepareGroup(engineDb->m_pRoot);
 
         ImGui::End();
     }

@@ -194,10 +194,10 @@ namespace Hitman::BloodMoney
         static int selectedWeaponIdx = -1;
         static bool selectedUpgrades[UT_NumUpgradeTypes] = { false };
 
-        if (ImGui::Begin("Upgrade editor", &g_bShowInventoryMods))
-        {
-            auto* reftab = inventory->GetInventoryList();
+        auto* reftab = inventory->GetInventoryList();
 
+        if (reftab && ImGui::Begin("Upgrade editor", &g_bShowInventoryMods))
+        {
             ImGui::Columns(2, "WeaponEditorColumns", true);
 
             // Left side

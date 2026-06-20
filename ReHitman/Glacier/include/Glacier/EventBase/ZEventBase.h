@@ -62,19 +62,8 @@ namespace Glacier
         };
 
     public:
-        uint32_t m_Ref;
-        float m_TimerInterval;
-        TIMETYPE m_fTimePassed;
-        uint32_t m_lRoutCases;
-        uint32_t m_lEventLists;
-        uint8_t m_ClassCall;
-        EStatus m_Status;
-        unsigned __int16 m_lEventAllocSize;
-        ZGEOM * m_pBaseGeom;
-        ZScheduledEvent* m_pScheduleEvent;
-
         /// === vftable ===
-        virtual ~ZEventBase();
+        virtual void Release(bool);
         virtual void PreSave(ISerializerStream*);
         virtual void PostSave(ISerializerStream*);
         virtual void PreLoad(ISerializerStream*);
@@ -116,9 +105,22 @@ namespace Glacier
         // static helpers
         static int* GetDefaultStatus();
 
-    }; //Size: 0x0030
+        // members
+        uint32_t m_Ref;
+        float m_TimerInterval;
+        TIMETYPE m_fTimePassed;
+        uint32_t m_lRoutCases;
+        uint32_t m_lEventLists;
+        uint8_t m_ClassCall;
+        EStatus m_Status;
+        unsigned __int16 m_lEventAllocSize;
+        ZGEOM* m_pBaseGeom;
+        ZScheduledEvent* m_pScheduleEvent;
+    }; //Size: 0x002С
     RE_VERIFY_SIZE(ZEventBase, 0x2C);
     RE_VERIFY_OFFSET(ZEventBase, m_Ref, 0xC);
+    RE_VERIFY_OFFSET(ZEventBase, m_pBaseGeom, 0x24);
+    RE_VERIFY_OFFSET(ZEventBase, m_pScheduleEvent, 0x28);
 
     /// <summary>
     /// Dummy class to check that offset is OK, do not use in your code!

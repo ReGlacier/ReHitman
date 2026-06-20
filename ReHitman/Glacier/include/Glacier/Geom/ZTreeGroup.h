@@ -5,84 +5,16 @@
 #include <Glacier/ZSTL/REFTAB.h>
 #include <Glacier/ZSTL/CMemPool.h>
 #include <Glacier/Geom/ZEntityLocator.h>
+#include <Glacier/ZSTL/CQuadtree.h>
+#include <Glacier/ZSTL/ZOctree.h>
 
 namespace Glacier
 {
     enum eGlobalTreeType {}; ///TODO: Recognize all values
     struct SExtendedImpactInfo;
-    class COctreeObj;
     class ZGEOMCLASSINFO;
     class COLI;
     class CHUNK;
-    struct SRecurseInfoCompiled;
-
-    struct ZOctree
-    {
-        using RemapObjectIdFn = unsigned int(*)(unsigned int);
-
-        // Vtbl
-        virtual ~ZOctree();
-        virtual void lort();
-        virtual COctreeObj* AddMinMax(float*, float*, unsigned int, COctreeObj*);
-        virtual void Delete(COctreeObj*, bool);
-        virtual void* Compile(int*); // Not implemented in release hbm
-        virtual void RemapObjects(RemapObjectIdFn);
-        virtual bool CheckLinesegment(SRecurseInfoCompiled*, float*, float*);
-        virtual void CheckCube(SRecurseInfoCompiled*, float*, float*);
-        virtual void GetEverything(SRecurseInfoCompiled*);
-        virtual void CheckPoint(SRecurseInfoCompiled*, const float*);
-
-        // Data
-        ZVector3 m_vOrigin;
-        float m_fScale;
-    };
-    RE_VERIFY_SIZE(ZOctree, 0x14);
-
-    struct CObjectInfo
-    {
-        uint32_t iID;
-        uint16_t iMinX;
-        uint16_t iMinY;
-        uint16_t iMinZ;
-        uint16_t iMaxX;
-        uint16_t iMaxY;
-        uint16_t iMaxZ;
-    };
-    RE_VERIFY_SIZE(CObjectInfo, 0x10);
-
-    struct CTreeObject
-    {
-        struct CTreeObject* m_pNext;
-        struct CTreeObject* m_pPrev;
-        CObjectInfo m_tInfo;
-    };
-    RE_VERIFY_SIZE(CTreeObject, 0x18);
-
-    struct CTreeObjectList
-    {
-        CTreeObject* m_pHead;
-    };
-    RE_VERIFY_SIZE(CTreeObjectList, 0x4);
-
-    struct CNodeQuad
-    {
-        uint16_t m_aiChildren[4];
-        uint16_t m_iParent;
-        uint16_t m_iDepth;
-        CTreeObjectList m_tObjectList;
-    };
-    RE_VERIFY_SIZE(CNodeQuad, 0x10);
-
-    struct CQuadtree
-    {
-        CNodeQuad* m_pRoot;
-        CMemPool m_tPool;
-        int m_iObjects;
-        float m_fScale;
-        ZVector3 m_vOrigin;
-    };
-
-    RE_VERIFY_SIZE(CQuadtree, 0x30);
 
     struct SChildTreeGroups
     {
@@ -140,7 +72,7 @@ namespace Glacier
         bool m_bStaticContainer;
         bool m_bDynamicContainer;
         bool m_pad6A[2];
-        struct SChildTreeGroups* m_pChildTreeGroupsLists;
+        SChildTreeGroups* m_pChildTreeGroupsLists;
     };
     RE_VERIFY_SIZE(ZTreeGroup, 0x70);
 }

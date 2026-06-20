@@ -78,9 +78,6 @@ namespace Glacier
 	class ZBaseConRout : public ZEventBase
 	{
 	public:
-		// Members
-		ZROUTCLASSINFO* m_pRoutClassInfo;
-
 		// Virtual methods
 		virtual int InitBaseConRout(Glacier::ZROUTCLASSINFO*);
 		virtual void UnknownCommand(Glacier::ZMSGID command, Glacier::ZDATA data);
@@ -88,6 +85,10 @@ namespace Glacier
 		// Internal API
 		// Static
 		static ZBaseConRoutTypeInfo** GetFactory();
+
+		// Members
+		ZROUTCLASSINFO* m_pRoutClassInfo;
 	};
 	RE_VERIFY_SIZE(ZBaseConRout, 0x30);
+	RE_VERIFY_OFFSET(ZBaseConRout, m_pRoutClassInfo, 0x2C);
 }

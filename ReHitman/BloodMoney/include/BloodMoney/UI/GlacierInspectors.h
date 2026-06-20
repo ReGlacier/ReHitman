@@ -147,7 +147,6 @@ namespace ImGui
                 return;
             }
 
-            ImGui::Text("ID: %X", entity->m_iEntryIndex);
             ImGui::Text("Name: "); ImGui::SameLine(0.f, 0.4f); ImGui::TextColored(ImVec4 { 0.f, 1.f, 0.f, 1.f }, "%s", entity->m_Name);
             ImGui::Inspector<Glacier::ZMat3x3>::Draw("Transform", &entity->m_mMat);
             ImGui::Inspector<Glacier::ZVector3>::Draw("Position", &entity->m_vPos);
