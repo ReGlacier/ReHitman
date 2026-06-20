@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Glacier/GlacierFWD.h>
-#include <Glacier/ZBaseConRout.h>
+#include <Glacier/CBaseEvent.h>
 
 namespace Glacier
 {
@@ -28,7 +28,7 @@ namespace Glacier
         STEAL_TAPE = 0x29
     };
 
-    class ZAction : public ZBaseConRout
+    class ZAction : public CBaseEvent<ZGEOM>
     {
     public:
         /// vftable

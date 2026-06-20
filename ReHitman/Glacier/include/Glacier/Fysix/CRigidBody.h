@@ -1,6 +1,7 @@
 #pragma once
 
-#include <Glacier/EventBase/ZEventBase.h>
+#include <Glacier/CBaseEvent.h>
+#include <Glacier/Geom/ZGEOM.h>
 
 #include <Glacier/Fysix/SRigidBodyVelocity.h>
 #include <Glacier/Fysix/SExplosionInfo.h>
@@ -10,7 +11,7 @@ namespace Glacier
 {
     class ZCollisionBox;
 
-    class CRigidBody : public ZEventBase
+    class CRigidBody : public CBaseEvent<ZGEOM>
     {
     public:
         //data

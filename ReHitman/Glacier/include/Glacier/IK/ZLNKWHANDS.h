@@ -6,6 +6,7 @@
 #include <Glacier/IK/ZIKHAND.h>
 #include <Glacier/ZSDOwner.h>
 #include <Glacier/ZSTL/ZMath.h>
+#include <Glacier/Items/ITEMSTATE.h>
 
 namespace Glacier
 {

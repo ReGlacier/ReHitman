@@ -1,9 +1,11 @@
 #pragma once
 
 #include <Glacier/GlacierFWD.h>
+#include <Glacier/ReGlacier.h>
 #include <Glacier/ZSTL/ZRTTI.h>
 #include <Glacier/ZSTL/ZMath.h>
 #include <Glacier/Geom/ZGROUP.h>
+#include <Glacier/Items/ITEMSTATE.h>
 
 namespace Glacier
 {
@@ -39,24 +41,25 @@ namespace Glacier
         virtual void UpdateDeactivate();
 
         // data (total size is 0x84, ZGROUP size is 0x4C)
-        int m_lState;
-        int m_field50;
-        bool m_isVisibleForNPCs;
-        bool m_field55;
-        bool m_field56;
-        bool m_field57;
-        int m_field58;
-        int m_field5C;
-        int m_field60;
-        int m_field64;
-        int m_field68;
-        int m_field6C;
-        ZMSGID m_MSG_ITEMSETSTATE;
-        ZMSGID m_MSG_GETAVAILABLEITEMSTATES;
-        ZMSGID m_MSG_SetItem;
-        ZMSGID field_76; // no message here, just for alignment
-        int m_field78;
-        int m_field7C;
-        int m_field80;
+        ITEMSTATE m_lCurrentState;
+        uint32_t m_rItemTemplate;
+        bool m_bVisibleToNPCs;
+        RE_ADD_PADDING(3);
+        uint32_t m_rItemOwner;
+        uint32_t m_rMain;
+        ZPoolAllocRefTab* m_pStateRemove;
+        ZPoolAllocRefTab* m_pStateReuse;
+        ZPoolAllocLinkSortRefTab* m_pDeactivateStates;
+        ZPoolAllocLinkSortRefTab* m_pActivateStates;
+        uint16_t m_msgSetItemState;
+        uint16_t m_msgGetAvailableStates;
+        uint16_t m_msgSetItem;
+        RE_ADD_PADDING(2);
+        uint32_t m_iVisionID;
+        float m_fLastUpdatedPosition;
+        bool m_bInMotion;
+        bool m_NewItem;
+        RE_ADD_PADDING(2);
     };
+    RE_VERIFY_SIZE(ZItem, 0x84); // Verified
 }

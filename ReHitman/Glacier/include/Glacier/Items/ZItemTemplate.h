@@ -1,10 +1,24 @@
 #pragma once
 
 #include <Glacier/GlacierFWD.h>
+#include <Glacier/ReGlacier.h>
 #include <Glacier/Geom/ZGROUP.h>
 
 namespace Glacier
 {
+    enum ITEMHANDS : uint32_t {
+        eIH_NONE = 0, 
+        IH_ONEHANDED = 1,
+        IH_TWOHANDED = 2, 
+        IH_FORCE32 = 2147483647u
+    };
+
+    enum ITEMSIZE : uint32_t {
+        eITEMSIZE_SMALL = 0,
+        ITEMSIZE_LARGE  = 1,
+        ITEMSIZE_FORCE32 = 2147483647u
+    };
+
     class ZItemTemplate : public ZGROUP
     {
     public:
@@ -33,17 +47,19 @@ namespace Glacier
         virtual void* GetMaterial();
 
         // data (total size is 0x74, ZGROUP size is 0x4C)
-        int m_itemInHands;
-        int m_itemSize;
-        int m_field54;
-        int m_field58;
-        int m_field5C;
-        int m_field60;
-        REFTAB* m_states;
-        Glacier::ZMSGID m_MSG_ITEMSETSTATE;
-        Glacier::ZMSGID m_MSG_ITEMGETANIMNAME;
-        int m_material;
-        int m_field70;
+        ITEMHANDS m_eItemHands;
+        ITEMSIZE m_eItemSize;
+        bool m_bIsVisibleToNPCs;
+        RE_ADD_PADDING(3);
+        uint32_t m_rInventoryPicture;
+        uint32_t m_rPointerPicture;
+        uint32_t m_rPointerContextPicture;
+        REFTAB* m_pStates;
+        uint16_t m_msgSetItemState;
+        uint16_t m_msgGetItemSettings;
+        uint32_t m_rMaterial;
+        bool m_bSendImpactEvent;
+        RE_ADD_PADDING(3);
     };
-
+    RE_VERIFY_SIZE(ZItemTemplate, 0x74);
 }

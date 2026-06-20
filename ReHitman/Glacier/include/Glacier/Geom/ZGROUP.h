@@ -59,5 +59,5 @@ namespace Glacier
         ZGEOM* CreateGeom(const char* name, int typeId, bool unk3);
         bool IsRoot();
     };
-    RE_VERIFY_SIZE(ZGROUP, 0x4C);
+    RE_VERIFY_SIZE(ZGROUP, 0x4C); // Verified
 }

@@ -1,12 +1,13 @@
 #pragma once
 
 #include <Glacier/ZSTL/ZMath.h>
-#include <Glacier/EventBase/ZEventBase.h>
+#include <Glacier/CBaseEvent.h>
+#include <Glacier/ZCAMERA.h>
 
 
 namespace Glacier
 {
-	class ZBaseCamera : public ZEventBase
+	class ZBaseCamera : public CBaseEvent<ZCAMERA>
 	{
 	public:
 		//vftable

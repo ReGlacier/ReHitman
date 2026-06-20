@@ -76,18 +76,12 @@ namespace Glacier
     struct SInputActionDefinition;
     struct SExtendedImpactInfo;
     struct SRigidBodyVelocity;
+    struct ZPoolAllocRefTab;
+    struct ZPoolAllocLinkSortRefTab;
 
     enum ALLOCSEQUENCESTATUS {};
     struct LocomotionInfo;
 
-    enum class ITEMHANDS : uint32_t  {
-	    IH_FORCE32 = 0x7FFFFFFFu,
-	    IH_TWOHANDED = 2u,
-	    IH_ONEHANDED = 1u,
-	    IH_NONE = 0u
-    };
-
-    using ITEMSTATE = int;
     struct WEAPONOPERATION {};
     enum EFootSide;
 

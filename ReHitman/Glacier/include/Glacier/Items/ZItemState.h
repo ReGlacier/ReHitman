@@ -1,11 +1,12 @@
 #pragma once
 
 #include <Glacier/GlacierFWD.h>
-#include <Glacier/EventBase/ZEventBase.h>
+#include <Glacier/CBaseEvent.h>
+#include <Glacier/Geom/ZGEOM.h>
 
 namespace Glacier
 {
-    class ZItemState : public ZEventBase
+    class ZItemState : public CBaseEvent<ZGEOM>
     {
     public:
         // vftable

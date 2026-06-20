@@ -1,11 +1,12 @@
 #pragma once
 
-#include <Glacier/EventBase/ZEventBase.h>
+#include <Glacier/CBaseEvent.h>
+#include <Glacier/Geom/ZBoxPrimitive.h>
 
 namespace Glacier {
     class ZLIST;
 
-    class ZActorCommunication : public ZEventBase {
+    class ZActorCommunication : public CBaseEvent<ZBoxPrimitive> {
     public:
         //structures
         struct RADIOUSER {

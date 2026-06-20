@@ -1,37 +1,34 @@
 #pragma once
 
 #include <Glacier/ZSTL/ZMath.h>
+#include <Glacier/ReGlacier.h>
 
 namespace Glacier
 {
+    struct STempStripsUniqueId
+    {
+        uint32_t id1;
+        uint32_t id2;
+    };
+    RE_VERIFY_SIZE(STempStripsUniqueId, 0x8);
+
     struct COLI
     {
-        Glacier::Vector3 m_rootPoint;
-        int m_fieldC;
-        int m_field10;
-        int m_field14;
-        int m_field18;
-        int m_field1C;
-        int m_field20;
-        int m_field24;
-        int m_field28;
-        int m_field2C;
-        int m_field30;
-        Glacier::ZREF m_unknownREF3C;
-        int m_field38;
-        int m_field3C;
-        int m_field40;
-        int m_field44;
-        int m_field48;
-        int m_field4C;
-        int m_field50;
-        int m_field54;
-        int m_field58;
-        int m_field5C;
-        int m_field60;
-        char m_field64;
-        char m_field65;
-        char m_field66;
-        char m_field67;
+        ZVector3 lp;
+        ZVector3 ln;
+        ZVector3 cp;
+        float t;
+        uint32_t m_BoneId;
+        uint32_t m_Unknown2C; // Really idk, this is padding in PS2
+        STempStripsUniqueId m_HitCache;
+        uint32_t m_iColiMaterialDescId;
+        uint32_t ColiRef;
+        ZVector3 vP1;
+        ZVector3 vP2;
+        ZVector3 vP3;
+        bool m_bBothSides;
+        RE_ADD_PADDING(3);
     };
+    RE_VERIFY_SIZE(COLI, 0x68);
+    RE_VERIFY_OFFSET(COLI, m_Unknown2C, 0x2C);
 }
