@@ -197,7 +197,7 @@ namespace Glacier
         };
         uint8_t m_pad[3];
     };
-    RE_VERIFY_SIZE(ZLNKWHANDS, 0x3D0);
+    RE_VERIFY_SIZE(ZLNKWHANDS, 0x3D0); // Verified
     RE_VERIFY_OFFSET(ZLNKWHANDS, m_SoundDef, 0x20C);
     RE_VERIFY_OFFSET(ZLNKWHANDS, m_MaterialDef, 0x21C);
     RE_VERIFY_OFFSET(ZLNKWHANDS, m_AimTarget, 0x268);
