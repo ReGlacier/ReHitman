@@ -33,7 +33,8 @@ namespace Glacier
         const char* m_Name;
 
         // API
-        void DoInit();
+        const char* Name();
+        bool DoInit();
         ZGROUP* ParentGroup();
         void SetName(const char* name);
         bool SetPrim(int primId);

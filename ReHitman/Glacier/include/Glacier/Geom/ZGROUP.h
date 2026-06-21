@@ -12,6 +12,7 @@ namespace Glacier
     {
     public:
         //vftable
+#if 0
         virtual bool IsRecursiveActivateAllowed();
         virtual void DynamicGroupOnScreen();
         virtual void CheckBoxInside_ZGROUP(const float*, const float*,const float*);
@@ -41,6 +42,37 @@ namespace Glacier
         virtual void CalcCenSizeRecur();
         virtual void GetCenSizeRecur(float*, float*, bool);
         virtual ZGEOM* FindMaskGeom(char const*, int);
+#endif
+
+        virtual bool IsRecursiveActivateAllowed();
+        virtual void DynamicGroupOnScreen();
+        virtual void CheckBoxInside(const float*, const float*, const float*) const;
+        virtual ZGEOM* FindLoadWorldGeom(char const*) const;
+        virtual ZGEOM* FindMasterGeom(char const*) const;
+        virtual ZGEOM* FindGeom(const char*, ZBaseGeom*);
+        virtual int GroupDepth();
+        virtual float GetPFResMultiplier() const;
+        virtual void LinkBound(unsigned int);
+        virtual void RemoveBound(unsigned int);
+        virtual void GetAmbientSettings(const float*, float*, float*, float*) const;
+        virtual void CreateParentsRecur(ZGROUP*, ZGROUP**, bool);
+        virtual void SetOverRideNearFar(float*);
+        virtual void CorrectCenSizeRecur();
+        virtual void CorrectCenSize();
+        virtual void InvalidateBounds();
+        virtual void AttachGeom(ZBaseGeom*, bool);
+        virtual void AttachGeom(ZGEOM*, bool);
+        virtual void DetachGeom(ZBaseGeom*, bool);
+        virtual void RecurGetNextGroup(const ZBaseGeom**) const;
+        virtual void RecurGetNextExclRoom(const ZBaseGeom**) const;
+        virtual void SetGroupControl(unsigned int, unsigned int);
+        virtual unsigned int GroupControl() const;
+        virtual void ResetGroupPosition(bool);
+        virtual void MakeActiveRecursive();
+        virtual void GetStaticLights(ZBaseGeom**, ZBaseGeom**);
+        virtual void CalcCenSizeRecur();
+        virtual void GetCenSizeRecur(float*, float*, bool);
+        virtual ZGEOM* FindMaskGeom(char const*, int) const;
 
         //data (total size is 0x4F)
         float m_vSizeInsideCheck[3];

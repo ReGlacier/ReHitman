@@ -64,7 +64,7 @@ namespace Hitman::BloodMoney
 
     class ZHM3DialogControl;
     class ZHM3MenuElements;
-    class ZHM3Hitman3;
+    class ZHitman3;
     class ZGui;
     class CIngameMap;
     class ZHM3WeaponUpgradeControl;
@@ -339,7 +339,7 @@ namespace Hitman::BloodMoney
         bool m_bPad[3];
 
         // >>>>>>>>>>> ZHM3GameData <<<<<<<<<<<
-        ZHM3Hitman3* m_Hitman3; //0x0A40
+        ZHitman3* m_Hitman3; //0x0A40
         Glacier::ZREF m_rPlayer; //0x0A44
         ZHM3LevelControl* m_LevelControl; //0x0A48
         ZOSD* m_OSD; //0x0A4C

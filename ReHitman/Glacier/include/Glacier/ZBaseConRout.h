@@ -4,10 +4,13 @@
 #include <Glacier/EventBase/ZEventBase.h>
 #include <Glacier/ZSTL/ZOldTypeInfo.h>
 #include <Glacier/ReGlacier.h>
+#include <Glacier/Runtime/ZNonResourceClassInfo.h>
+#include <Glacier/Runtime/ZROUTCLASSINFO.h>
 
 
 namespace Glacier
 {
+	// LEGACY! TO REMOVE!
 	struct ZBaseConRoutTypeInfo
 	{
 		char *m_psName; //0x0000
@@ -31,49 +34,6 @@ namespace Glacier
 		uint32_t m_unk48; //0x0048
 		uint32_t m_unk4C; //0x004C
 	}; //Size: 0x0050
-
-	struct ZCLASSINFO
-	{
-		const char* m_szClassInfoName;
-		int m_iClassInfoType;
-		int m_lSceneInstanceCount;
-		struct ZCLASSINFO * Parent;
-		struct ZCLASSINFO * Prev;
-		struct ZCLASSINFO * Next;
-	};
-	RE_VERIFY_SIZE(ZCLASSINFO, 0x18);
-
-	struct ZNonResourceClassInfo : public ZCLASSINFO
-	{
-		uint32_t m_lSize;
-		bool m_bResourceLinked;
-		RE_ADD_PADDING(3);
-	};
-	RE_VERIFY_SIZE(ZNonResourceClassInfo, 0x20);
-
-	struct ZGEOMCLASINFO : public ZNonResourceClassInfo
-	{
-		void(* m_pSetTypeIDAndMask)(unsigned int, unsigned int);
-		unsigned int m_lType;
-		unsigned int m_lGeomCases;
-		const char* m_szParentClass;
-		unsigned int* m_pClassId;
-		unsigned int* m_pMaskId;
-		unsigned __int16 m_iClassInfoNr;
-		RE_ADD_PADDING(2);
-	};
-	RE_VERIFY_SIZE(ZGEOMCLASINFO, 0x3C);
-
-	class ZROUTCLASSINFO : public ZNonResourceClassInfo
-	{
-		const char* m_szRoutName;
-		const char* m_szGeomName;
-		int m_lPrio;
-		unsigned int m_lRoutCases;
-		uint16_t m_iClassInfoNr;
-		RE_ADD_PADDING(2);
-	};
-	RE_VERIFY_SIZE(ZROUTCLASSINFO, 0x34);
 
 	class ZBaseConRout : public ZEventBase
 	{

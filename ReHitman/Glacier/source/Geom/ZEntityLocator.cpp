@@ -1,10 +1,17 @@
 #include <Glacier/Geom/ZEntityLocator.h>
+#include <Glacier/Geom/ZGEOM.h>
 #include <G1ConfigurationService.h>
 
 namespace Glacier
 {
-    void ZEntityLocator::DoInit() {
-        ((void*(__thiscall*)(ZEntityLocator*))(G1ConfigurationService::G1API_FunctionAddress_ZBaseGeom_DoInit))(this);
+    const char* ZEntityLocator::Name() 
+    {
+        return m_Name ? m_Name : "<NONAME>";
+    }
+
+    bool ZEntityLocator::DoInit() 
+    {
+        return !m_pExtraGeom || m_pExtraGeom->DoInit();
     }
 
     ZGROUP* ZEntityLocator::ParentGroup() {

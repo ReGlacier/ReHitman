@@ -1,29 +1,29 @@
 #pragma once
 
+#include <Glacier/ReGlacier.h>
 #include <Glacier/GlacierFWD.h>
 #include <Glacier/ZSTL/ZMath.h>
 
 namespace Hitman::BloodMoney
 {
+    class ZHM3LevelControlM13;
+
     class ZPodiumController
     {
     public:
-        char field_0;
-        char field_1;
-        char field_2;
-        char field_3;
-        char m_field4;
-        char field_5;
-        char field_6;
-        char field_7;
+        Glacier::ZGEOM* m_pPodium;
+        ZHM3LevelControlM13* m_pLevelControl;
         bool m_bMoving;
         bool m_bHitmanOnTable;
-        bool m_fieldA;
-        bool m_fieldB;
-        int m_fMoveEndTime;
-        char field_10;
-        __declspec(align(4)) bool m_bTrapDoorClosed;
-        Glacier::Vector3 m_vCameraTargetPos;
-        Glacier::Vector3 m_vCameraFocusPos;
+        RE_ADD_PADDING(2);
+        float m_fMoveEndTime;
+        Glacier::ZGROUP* m_pTrapDoor;
+        bool m_bTrapDoorClosed;
+        RE_ADD_PADDING(3);
+        Glacier::ZVector3 m_vCameraTargetPos;
+        Glacier::ZVector3 m_vCameraFocusPos;
     };
+    RE_VERIFY_SIZE(ZPodiumController, 0x30);
+    RE_VERIFY_OFFSET(ZPodiumController, m_vCameraTargetPos, 0x18);
+    RE_VERIFY_OFFSET(ZPodiumController, m_vCameraFocusPos, 0x24);
 }

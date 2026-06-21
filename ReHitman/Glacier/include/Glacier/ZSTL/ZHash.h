@@ -40,4 +40,7 @@ namespace Glacier
         virtual void IntValue(const char* const*, unsigned int*, unsigned int*);
         virtual bool Equals(const char* const*, const char* const*);
     };
+
+    using ZIntHash = ZHash<int, unsigned int>;
+    RE_VERIFY_SIZE(ZIntHash, 0x20);
 }

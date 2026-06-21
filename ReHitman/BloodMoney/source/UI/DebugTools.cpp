@@ -3,12 +3,15 @@
 #include <BloodMoney/Game/ZHM3GameData.h>
 #include <BloodMoney/Game/CIngameMap.h>
 #include <BloodMoney/Game/Items/ZHM3ItemTemplate.h>
+#include <BloodMoney/Game/ZPodiumController.h>
+#include <BloodMoney/Game/LevelControls/ZHM3LevelControlM13.h>
 
 #include <Glacier/ResourceCollection.h>
 #include <Glacier/ZEngineDataBase.h>
 #include <Glacier/ZSysInterfaceWintel.h>
 #include <Glacier/ZActionManager.h>
 #include <Glacier/CInventory.h>
+#include <Glacier/ZPlayer.h>
 
 #include <Glacier/Geom/ZGEOM.h>
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Glacier/ReGlacier.h>
+#include <Glacier/STempStripsUniqueId.h>
 #include <Glacier/Geom/ZEntityLocator.h> // ZBaseGeom
 #include <Glacier/ZSTL/ZMath.h>
 #include <Glacier/IK/ZLNKWHANDS.h>
@@ -10,17 +11,6 @@
 
 namespace Glacier
 {
-    union STempStripsUniqueId
-    {
-        struct
-        {
-            uint32_t lIdLo;
-            uint32_t lIdHi;
-        };
-        uint64_t lId;
-    };
-    RE_VERIFY_SIZE(STempStripsUniqueId, 0x8);
-
     struct ZActiveImpactPrim
     {
         uint32_t m_lType;

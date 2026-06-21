@@ -22,6 +22,7 @@
 #include <Glacier/Geom/ZTreeGroup.h>
 #include <Glacier/Geom/ZSNDOBJ.h>
 #include <Glacier/ZTypeTraits.h>
+#include <Glacier/Runtime/ZGEOMCLASSINFO.h>
 
 #include <BloodMoney/Game/ZHM3Actor.h>
 
@@ -44,11 +45,11 @@ namespace Hitman::BloodMoney
 
             ImGui::PushID(reinterpret_cast<int>(currentEntity->m_pDynId));
 
-            auto classInfo = assignedTo->GetOldClassInfo();
+            Glacier::ZGEOMCLASSINFO* classInfo = assignedTo->GetOldClassInfo();
             std::string_view type = "N/A";
             std::string_view parent = "N/A";
 
-            if (classInfo) { type = classInfo->ComplexTypeName; }
+            if (classInfo) { type = classInfo->m_szClassInfoName; }
 
             if (Glacier::ZCast<Glacier::ZGROUP>::IsBasedOn(assignedTo)) {
                 auto childGroup = reinterpret_cast<Glacier::ZGROUP*>(assignedTo);

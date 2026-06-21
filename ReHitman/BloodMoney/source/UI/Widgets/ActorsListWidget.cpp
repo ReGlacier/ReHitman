@@ -208,33 +208,48 @@ namespace ImGui
                 Glacier::ZMat3x3 ownerMat;
                 Glacier::ZVector3 ownerPos;
 
+                spdlog::info("<< GetMatPos");
                 actorOwnerGroup->GetMatPos(&ownerMat, &ownerPos);
+                spdlog::info("<< DuplicateInit");
                 auto duplicateGroup = actorOwnerGroup->DuplicateInit(
                         actorRootGroup,
                         &ownerMat,
                         &ownerPos,
                         fmt::format("Actor!CloneOf!{}", reinterpret_cast<Glacier::ZGEOM*>(actorOwnerGroup)->m_baseGeom->m_Name).c_str(),
                         true);
-                auto clonedActor = reinterpret_cast<Hitman::BloodMoney::ZHM3Actor*>(reinterpret_cast<Glacier::ZGROUP*>(duplicateGroup)->FindGeom("Ground", nullptr));
 
+                spdlog::info("<< FindGeom(Ground)");
+                auto clonedActor = reinterpret_cast<Hitman::BloodMoney::ZHM3Actor*>(reinterpret_cast<Glacier::ZGROUP*>(duplicateGroup)->FindGeom("Ground", nullptr));
+                
+                spdlog::info("ClonedActor: {:08X}", reinterpret_cast<std::intptr_t>(clonedActor));
+                spdlog::info("<< InitMapIcon");
                 clonedActor->m_mapIconType = Hitman::BloodMoney::EActorMapRole::VIP;
                 using ZHM3Actor_InitMapIconFn = void(__thiscall*)(Hitman::BloodMoney::ZHM3Actor*, bool);
                 auto ZHM3Actor_InitMapIcon = (ZHM3Actor_InitMapIconFn)0x00637460;
 
                 ZHM3Actor_InitMapIcon(clonedActor, true);
 
+                spdlog::info("<< CopyPoseFrom");
                 reinterpret_cast<Glacier::ZLNKOBJ*>(clonedActor)->CopyPoseFrom(reinterpret_cast<Glacier::ZLNKOBJ*>(actor));
 
                 // Add actor to tracking list
+                spdlog::info("<< pTrackLinkObjects->AddGeom");
                 auto pTrackLinkObjects = *(Glacier::ZLIST**)0x00972DA8;
                 pTrackLinkObjects->AddGeom(reinterpret_cast<Glacier::ZGEOM*>(clonedActor));
 
+                spdlog::info("<< EnableIK");
                 reinterpret_cast<Glacier::ZIKLNKOBJ*>(clonedActor)->EnableIK();
+
+                spdlog::info("<< EnableControls");
                 reinterpret_cast<Glacier::ZIKLNKOBJ*>(clonedActor)->EnableControls();
 
                 // Actorcommunication__Registerradiouser
-                ((void(__cdecl*)(Glacier::ZREF, bool))0x006AA2B0)(reinterpret_cast<Glacier::ZGEOM*>(clonedActor)->GetRef(), true);
+                spdlog::info("<< Will ask for ref");
+                auto ref = reinterpret_cast<Glacier::ZGEOM*>(clonedActor)->GetRef();
+                spdlog::info("<< Actorcommunication__Registerradiouser (ref {})", ref);
+                ((void(__cdecl*)(Glacier::ZREF, int))0x006AA2B0)(reinterpret_cast<Glacier::ZGEOM*>(clonedActor)->GetRef(), 0);
 
+                spdlog::info("<< SetActorState");
                 clonedActor->SetActorState(Hitman::BloodMoney::ZActor::ACTORSTATE::ACTORSTATE_SLEEPING);
 
                 // ----------- PRETTY PRINT SOME INFOS -------------

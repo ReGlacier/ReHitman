@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Glacier/ZREF.h>
 #include <string>
 
 namespace Glacier
@@ -9,7 +10,6 @@ namespace Glacier
     using uint = unsigned int;
     using ZMSGID = unsigned short;
     using ZDATA = void*;
-    using ZREF = unsigned int;
     using SREF = unsigned int;
     using ZWM_MESSAGE = signed int; //Less that 0x1000!
 

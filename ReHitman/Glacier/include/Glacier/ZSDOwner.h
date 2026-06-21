@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Glacier/ReGlacier.h>
+
 namespace Glacier
 {
     struct ZSDOwner
@@ -10,6 +12,5 @@ namespace Glacier
         float m_Time_AllowedToPlay;
         unsigned int m_rLastPlayed;
     };
-
-    static_assert(sizeof(ZSDOwner) == 16, "Bad size of ZSDOwner");
+    RE_VERIFY_SIZE(ZSDOwner, 0x10);
 }

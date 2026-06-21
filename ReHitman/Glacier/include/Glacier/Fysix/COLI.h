@@ -1,17 +1,11 @@
 #pragma once
 
+#include <Glacier/STempStripsUniqueId.h>
 #include <Glacier/ZSTL/ZMath.h>
 #include <Glacier/ReGlacier.h>
 
 namespace Glacier
 {
-    struct STempStripsUniqueId
-    {
-        uint32_t id1;
-        uint32_t id2;
-    };
-    RE_VERIFY_SIZE(STempStripsUniqueId, 0x8);
-
     struct COLI
     {
         ZVector3 lp;

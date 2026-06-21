@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Glacier/ReGlacier.h>
 #include <BloodMoney/Game/ZCloth.h>
 
 namespace Hitman::BloodMoney
@@ -11,7 +12,11 @@ namespace Hitman::BloodMoney
         // api
         void HideTie(bool);
         void HideTieInMirror(bool);
+
         // Data (total size is 0xB4, ZCloth size is 0xB0)
-        int field_B0;
+        bool m_bHidden;
+        bool m_bHiddenInMirror;
+        RE_ADD_PADDING(2);
     };
+    RE_VERIFY_SIZE(ZTie, 0xB4); // Verified
 }
