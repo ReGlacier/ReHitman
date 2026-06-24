@@ -83,4 +83,10 @@ namespace Glacier
     {
         float i, j, k, w;
     };
+
+    struct ZMatrix
+    {
+        ZMat3x3 m0;
+        ZVector3 p0;
+    };
 }

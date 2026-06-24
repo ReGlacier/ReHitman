@@ -2,6 +2,8 @@
 
 #include <Glacier/CBaseEvent.h>
 #include <Glacier/Geom/ZGEOM.h>
+#include <Glacier/ZSTL/REFTAB.h>
+#include <Glacier/ReGlacier.h>
 
 #include <Glacier/Fysix/SRigidBodyVelocity.h>
 #include <Glacier/Fysix/SExplosionInfo.h>
@@ -9,7 +11,78 @@
 
 namespace Glacier
 {
-    class ZCollisionBox;
+    struct ZCollisionBox;
+
+    struct ParticleSystem
+    {
+        virtual ~ParticleSystem();
+        virtual void Init();
+    };
+    RE_VERIFY_SIZE(ParticleSystem, 0x4);
+
+    struct ZFastBoxColi
+    {
+        REFTAB* m_pFaceList;
+        bool m_bBoxSet;
+        ZVector3 m_vCen;
+        ZMat3x3 m_m;
+        ZVector3 m_vSize;
+        float m_fExtraSpace;
+        int32_t m_lGeomConMask;
+        bool m_bExtendedMode;
+        bool m_bIgnoreMovingObjects;
+        uint32_t m_lNrTrisInAll;
+    };
+    RE_VERIFY_SIZE(ZFastBoxColi, 0x54);
+
+    struct Particle
+    {
+        ZVector3 ok_x;
+        ZVector3 x;
+        ZVector3 oldx;
+        ZVector3 v;
+        float mass;
+    };
+    RE_VERIFY_SIZE(Particle, 0x34);
+
+    struct ParticleConstraint
+    {
+        struct Particle* m_pPar1;
+        struct Particle* m_pPar2;
+        float m_fDist;
+    };
+    RE_VERIFY_SIZE(ParticleConstraint, 0xC);
+
+    // TODO: Move to separated file
+    struct ConstrainedParticleSystem : public ParticleSystem
+    {
+        virtual void Init() override;
+        virtual ~ConstrainedParticleSystem() override;
+        virtual void InitOkX();
+
+        struct Particle* m_pParticles;                          // +0x04
+        struct ParticleConstraint* m_pConstraints;              // +0x08
+        struct ParticleConstraint* m_pSpecialConstraints;       // +0x0c
+        int m_iNumParticles;                             // +0x10
+        int m_iNumConstraints;                           // +0x14
+        int m_iNumSpecialConstraints;                    // +0x18
+        bool m_bFollow;                                  // +0x1c
+        float m_fPrevTimeStep;                           // +0x20
+        float m_fDamping;                                // +0x24
+        struct ZFastBoxColi* m_pFastBox;
+        bool m_bInWater;
+        bool m_bReallyInWater;
+        bool m_bReallyInWaterOld;
+        const ZLNKOBJ* m_pLnkObj;
+    };
+    RE_VERIFY_SIZE(ConstrainedParticleSystem, 0x34);
+
+    struct SVertexRep
+    {
+        float c[4];
+        float fQuadSum;
+    };
+    RE_VERIFY_SIZE(SVertexRep, 0x14);
 
     class CRigidBody : public CBaseEvent<ZGEOM>
     {
@@ -35,54 +108,30 @@ namespace Glacier
         void CheckCollision4b(ZCollisionBox* collisionBox);
 
         //data (total size is 0xF4, ZEventBase size is 0x30)
-        uint16_t m_bodyId;
-        uint16_t field_32;
-        int m_pConstrainedParticleSystem;
-        int m_field38;
-        int m_field3C;
-        int m_field40;
-        int m_field44;
-        int m_field48;
-        int m_field4C;
-        int m_field50;
-        int m_field54;
-        int m_field58;
-        int m_field5C;
-        int m_field60;
-        int m_field64;
-        ZVector3 m_position;
-        int m_field74;
-        int m_field78;
-        int m_field7C;
-        int m_field80;
-        int m_field84;
-        int m_field88;
-        int m_field8C;
-        int m_field90;
-        int m_field94;
-        int m_field98;
-        int m_field9C;
-        int m_fieldA0;
-        int m_fieldA4;
-        int m_fieldA8;
-        int m_fieldAC;
-        int m_fieldB0;
-        int m_fieldB4;
-        int m_fieldB8;
-        int m_fieldBC;
-        int m_fieldC0;
-        int m_fieldC4;
-        int m_fieldC8;
-        int m_fieldCC;
-        int m_fieldD0;
-        int m_fieldD4;
-        int m_fieldD8;
-        int m_fieldDC;
-        int m_fieldE0;
-        int m_material;
-        int m_fieldE8;
-        int m_fieldEC;
-        int m_fieldF0;
+        uint16_t m_id;
+        RE_ADD_PADDING(2);
+        ConstrainedParticleSystem m_Particles;
+        ZVector3 m_Centroid;
+        ZVector3 m_LocalCentroid;
+        ZMat3x3 m_QMat;
+        ZVector3 m_QPos;
+        SVertexRep* m_pVertexReps;
+        uint32_t m_nNumVertices;
+        ZBaseGeom* m_pHitAnything;
+        uint32_t m_iColiMaterialDescId;
+        ZVector3 m_OldPos;
+        uint16_t m_nTimeOut;
+        uint16_t m_iStopCount;
+        float m_fWeightedSpeed;
+        float m_fThreshold;
+        float m_fLastNrg;
+        TIMETYPE m_fLastHitTime;
+        uint16_t m_iImpactNum;
+        uint32_t m_rMaterial;
+        uint8_t m_Status;
+        uint32_t m_rContainingElevator;
+        bool m_bDoNotAddSoundEvent;
+        RE_ADD_PADDING(3);
     };
-
+    RE_VERIFY_SIZE(CRigidBody, 0xF4); // Verified
 }

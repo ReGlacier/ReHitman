@@ -1,4 +1,5 @@
 #include <Glacier/Fysix/CRigidBody.h>
+#include <Glacier/Fysix/ZCollisionBox.h>
 #include <G1ConfigurationService.h>
 #include <cassert>
 

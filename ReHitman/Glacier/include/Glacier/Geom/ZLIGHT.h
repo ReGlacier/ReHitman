@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Glacier/Geom/ZGEOM.h>
+#include <Glacier/ReGlacier.h>
 
 namespace Glacier {
     class ZLIGHT : public ZGEOM {
@@ -13,9 +14,10 @@ namespace Glacier {
         virtual void MakeLightUnique();
 
         //data (total size is 0x20, base size is 0x10)
-        int m_flags;
-        int m_field14;
-        int m_field18;
-        int m_field1C;
+        unsigned int m_lLightCon;
+        unsigned int* m_pExcludeList;
+        unsigned int m_rMasterLight;
+        unsigned int* m_pStaticShadowList;
     };
+    RE_VERIFY_SIZE(ZLIGHT, 0x20); // Verified
 }

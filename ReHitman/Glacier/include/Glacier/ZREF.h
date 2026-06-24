@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Glacier/ReGlacier.h>
+#include <cstdint>
 
 
 namespace Glacier
@@ -20,5 +21,6 @@ namespace Glacier
 	// RE_VERIFY_SIZE(ZREF, 0x4);
 
 	// We will return back that strucutre, but now it breaks everything
-	using ZREF = unsigned int;
+	using ZREF = uint32_t;
+	using ZAUDIOREF = uint32_t;
 }

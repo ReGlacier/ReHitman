@@ -41,6 +41,21 @@ namespace Glacier
 	};
 	RE_VERIFY_SIZE(ZSphereImpact, 0x158);
 
+    struct ZMoveNotify
+    {
+        bool m_bDeny;
+        RE_ADD_PADDING(3);
+        ZBaseGeom* m_pBaseGeom;
+        float m_fWeight;
+        ZVector3 m_vSize;
+        ZMat3x3 m_m0;
+        ZVector3 m_p0;
+        ZMat3x3 m_m1;
+        ZVector3 m_p1;
+        float m_t;
+    };
+    RE_VERIFY_SIZE(ZMoveNotify, 0x7C);
+
     struct ZMovementBase;
 
 	struct ZPlayer : public ZLNKWHANDS
@@ -114,6 +129,67 @@ namespace Glacier
         int32_t m_iDisplayParentBox;
         bool m_bControlGotDisabled;
         RE_ADD_PADDING(3);
+
+        // vtbl
+        virtual void DisplayCollisionsBounds(bool);
+        virtual void DisableCollision();
+        virtual void EnableCollision();
+        virtual void DisableT1();
+        virtual void EnableT1();
+        virtual void DragBody(ZGEOM*);
+        virtual void GetCenterMatPos(float*, float*);
+        virtual void GetCenterSphere(float*, float*, float*);
+        virtual bool GetGroundContact(void);
+        virtual void SetGroundContact(bool);
+        virtual ZGEOM* GetSuit();
+        virtual void MoveCenterToMatPos(float const*, float const*);
+        virtual float GetCenterHeight();
+        virtual float* CenterSpeed(); // float[3] in ret
+        virtual bool GodMode();
+        virtual void SetGodMode(bool);
+        virtual void Die(const ZVector3&, const ZVector3&, float);
+        virtual void SetMoveSpeeds(const float*);
+        virtual void GetMoveSpeeds(float*);
+        virtual float GetActualSpeed();
+        virtual bool ControlsEnabled();
+        virtual int GetStatus();
+        virtual bool IsWalking();
+        virtual int GetActiveMovementType();
+        virtual ZMovementBase* GetActiveMovement();
+        virtual void SetMovementStatePointer(ZMovementBase**);
+        virtual void SetActiveMovement(uint32_t);
+        virtual const char* GetAnimNameFromCollision(ZIKLNKOBJ::SIKBoneCollision*, bool, int);
+        virtual void ReloadRHandItem(ZItem*);
+        virtual void ReloadLHandItem(ZItem*);
+        virtual float GetLastAnimPrc();
+        virtual bool GetActiveAnimMovement(float*, float*);
+        virtual void SetLastAnimPrc(float);
+        virtual void CallBackAimInPosition();
+        virtual void HumanShieldLockSpineToHero();
+        virtual void UpdateBreathing();
+        virtual void SetGroupPos(const float*, const float*);
+        virtual void UpdateAllDisplay();
+        virtual void SetActiveUpperBody(float);
+        virtual void GetCurrentUBAnim(Animation::Header**, uint32_t*, float*);
+        virtual Animation::Header* GetCurrentUBAnim(uint32_t*);
+        virtual void CalcBonesFromMotion(float const*, float const*, float const*, float const*);
+        virtual void ControlBody(); /// <<< PURE VIRTUAL
+        virtual void GetSpeedModifier(float*);
+        virtual void OnCollision(const float*, const float*, ZMoveNotify*);
+        virtual bool IsCollisionEnabled();
+        virtual void OnMoveNotifyLargeObj(ZMoveNotify*);
+        virtual void MovementControl(float*, float*, float*, float*);
+        virtual uint32_t GetNearestEnemy(float const*, float const*);
+        virtual bool IsValidEnemy(ZGEOM*);
+        virtual void RegisterMovement(ZMovementBase*);
+        virtual void CreateMovements();
+        virtual ZMovementBase* CreateMovementBaseMove();
+        virtual ZMovementBase* CreateMovementStand();
+        virtual ZMovementBase* CreateMovementGuide();
+        virtual ZMovementBase* CreateMovementAnimation();
+        virtual ZMovementBase* GetMovement(uint32_t);
+        virtual void GetCameraOrientation(float*, float*);
+        virtual ZCAMERA* GetCamera();
 	};
-	RE_VERIFY_SIZE(ZPlayer, 0x768);
+	RE_VERIFY_SIZE(ZPlayer, 0x768); // Approved by Glacier RTTI on PC
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Glacier/Geom/ZLIGHT.h>
+#include <Glacier/ReGlacier.h>
 
 namespace Glacier {
     class ZOMNILIGHT : public ZLIGHT {

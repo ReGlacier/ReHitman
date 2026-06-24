@@ -10,8 +10,11 @@
 #include <Glacier/ZEngineDataBase.h>
 #include <Glacier/ZSysInterfaceWintel.h>
 #include <Glacier/ZActionManager.h>
+#include <Glacier/GUI/ZWINGROUP.h>
+#include <Glacier/GUI/ZCONTROL.h>
 #include <Glacier/CInventory.h>
 #include <Glacier/ZPlayer.h>
+#include <Glacier/Geom/ZEditorGroup.h>
 
 #include <Glacier/Geom/ZGEOM.h>
 
