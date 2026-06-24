@@ -1,9 +1,15 @@
 #pragma once
 
+#include <Glacier/ReGlacier.h>
+#include <Glacier/ZAnimVariationHandle.h>
+#include <Glacier/ZSTL/ZRTStringObject.h>
 #include <Glacier/Items/ZItemTemplateWeapon.h>
+
+#include <BloodMoney/Game/ZHM3ClipParticleControl.h>
 #include <BloodMoney/Game/Items/EHM3ItemType.h>
 #include <BloodMoney/Game/Items/EHM3WeaponScope.h>
 #include <BloodMoney/Game/Items/ESilencerType.h>
+#include <BloodMoney/Game/Items/EHM3RecoilRandom.h>
 
 namespace Hitman::BloodMoney
 {
@@ -28,22 +34,24 @@ namespace Hitman::BloodMoney
         virtual void* GetClipParticleControl(bool);
 
         //data (total size is 0x1A0, ZItemTemplateWeapon size is 0x15C)
-        int m_field15C;
-        EHM3ItemType m_eWeaponType;
-        int m_field164;
-        int m_field168;
-        int m_field16C;
+        Glacier::ZAnimVariationHandle m_1stPersonAimId;
+        Glacier::ZAnimVariationHandle m_1stPersonRecoilId;
+        EHM3ItemType m_eHM3ItemType;
+        ZHM3ClipParticleControl* m_pClipParticleControl;
+        ZHM3ClipParticleControl* m_pFireShellParticleControl;
+        EHM3RecoilRandom m_eHM3RecoilRandom;
         float m_fRecoilStrengthX;
         float m_fRecoilStrengthY;
-        EHM3WeaponScope m_eScopeType;
-        int m_field17C;
-        int m_field180;
-        int m_field184;
-        int m_field188;
-        int m_field18C;
-        int m_field190;
-        int m_field194;
-        int m_field198;
+        EHM3WeaponScope m_eScope;
+        Glacier::ZRTString m_pAnimNameActorReload;
+        Glacier::ZRTString m_pAnimNameActorChamber;
+        Glacier::ZRTString m_pAnimName1stPersonAim;
+        Glacier::ZRTString m_pAnimName1stPersonRecoil;
+        float RecognitionDistance;
+        float m_PelvisUpDown;
+        float m_PelvisFrontBack;
+        float m_PelvisLeftRight;
         ESilencerType m_eSilencerType;
     };
+    RE_VERIFY_SIZE(ZHM3ItemTemplateWeapon, 0x1A0); // Verified
 }

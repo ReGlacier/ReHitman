@@ -11,7 +11,7 @@ namespace Glacier
         int16_t m_iNumFree;
         int16_t m_iFreeIndex;
         bool m_bNeedClean;
-        RE_ADD_PADDING(2);
+        RE_ADD_PADDING(1);
         struct ZAllocMany *m_pOriginal;
         uint16_t m_msgActivate;
         bool m_bClone;

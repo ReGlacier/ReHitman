@@ -13,6 +13,8 @@ namespace Glacier
 	template <typename T>
 	struct ZBitfield : ZBitfieldBase
 	{
+        using Value_t = typename T;
+
 		static_assert(std::is_enum_v<T>, "Allowed to make bitfield only from enum types");
 		static_assert(sizeof(T) == sizeof(uint32_t), "Not allowed to make bitfield from non u32 type");
 
@@ -52,4 +54,7 @@ namespace Glacier
             this->m_Bitfield = 0u;
         }
 	};
+
+    enum class UNUSED_DUMMY_ENUM : uint32_t { V2 = 2, V4 = 4 };
+    RE_VERIFY_SIZE(ZBitfield<UNUSED_DUMMY_ENUM>, sizeof(uint32_t));
 }

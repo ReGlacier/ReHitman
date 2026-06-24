@@ -7,6 +7,7 @@
 #include <Glacier/ZSDOwner.h>
 #include <Glacier/ZSTL/ZMath.h>
 #include <Glacier/Items/ITEMSTATE.h>
+#include <Glacier/ZAnimVariationHandle.h>
 
 namespace Glacier
 {
@@ -45,11 +46,6 @@ namespace Glacier
         Type14 = 14,
         Type15 = 15,
         Unknown = 0xFF // default
-    };
-
-    struct ZAnimVariationHandle
-    {
-        uint16_t iIndex;
     };
 
     class ZLNKWHANDS : public ZCTRLIKLNKOBJ

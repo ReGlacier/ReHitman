@@ -6,14 +6,10 @@
 #include <Glacier/ZListNodeBase.h>
 #include <Glacier/ZScheduledScript.h>
 #include <Glacier/RTP/Base.h>
+#include <Glacier/ZSTL/TIMETYPE.h>
 
 namespace Glacier
 {
-    struct TIMETYPE
-    {
-        int secs;
-    };
-
     class ZEventBase : public ZListNode<ZEventBase, 0>
     {
     public: // Types

@@ -3,6 +3,15 @@
 #include <BloodMoney/Game/ZHM3GameData.h>
 #include <BloodMoney/Game/CIngameMap.h>
 #include <BloodMoney/Game/Items/ZHM3ItemTemplate.h>
+#include <BloodMoney/Game/Items/ZHM3ItemAmmo.h>
+#include <BloodMoney/Game/Items/ZHM3ItemBomb.h>
+#include <BloodMoney/Game/Items/ZHM3ItemContainer.h>
+#include <BloodMoney/Game/Items/ZHM3ItemTemplate.h>
+#include <BloodMoney/Game/Items/ZHM3ItemTemplateBomb.h>
+#include <BloodMoney/Game/Items/ZHM3ItemTemplateAmmoCustom.h>
+#include <BloodMoney/Game/Items/ZHM3ItemTemplateContainer.h>
+#include <BloodMoney/Game/Items/ZHM3ItemTemplateWeapon.h>
+#include <BloodMoney/Game/Items/ZHM3ItemWeaponCustomTemplate.h>
 #include <BloodMoney/Game/ZPodiumController.h>
 #include <BloodMoney/Game/LevelControls/ZHM3LevelControlM13.h>
 

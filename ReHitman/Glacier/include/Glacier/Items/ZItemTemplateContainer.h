@@ -1,3 +1,5 @@
+#pragma once
+
 #include <Glacier/Items/ZItemTemplate.h>
 #include <Glacier/ZSTL/REFTAB.h>
 

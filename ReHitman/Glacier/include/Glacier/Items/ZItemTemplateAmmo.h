@@ -40,4 +40,5 @@ namespace Glacier
         uint32_t m_lProjectileCurrent;
     };
     RE_VERIFY_SIZE(ZItemTemplateAmmo, 0xA4); // Verified
+    RE_VERIFY_OFFSET(ZItemTemplateAmmo, m_lProjectilesPerMagazine, 0x74);
 }

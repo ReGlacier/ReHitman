@@ -62,4 +62,5 @@ namespace Glacier
         RE_ADD_PADDING(3);
     };
     RE_VERIFY_SIZE(ZItemTemplate, 0x74); // Verified
+    RE_VERIFY_OFFSET(ZItemTemplate, m_eItemHands, 0x4C);
 }
