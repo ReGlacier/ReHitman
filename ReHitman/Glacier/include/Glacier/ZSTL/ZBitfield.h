@@ -26,6 +26,12 @@ namespace Glacier
             this->m_Bitfield = iInitialValue;
         }
 
+        ZBitfield& operator=(T value)
+        {
+            m_Bitfield = static_cast<uint32_t>(value);
+            return *this;
+        }
+
         bool IsSet(T value) const
         {
             return (this->m_Bitfield & static_cast<uint32_t>(value)) != 0u;

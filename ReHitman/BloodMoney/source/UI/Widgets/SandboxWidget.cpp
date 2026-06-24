@@ -223,13 +223,11 @@ namespace Hitman::BloodMoney
 
                     auto pGun = reinterpret_cast<Glacier::ZItemWeapon*>(pGunItem);
 
-                    spdlog::info("PWPNO: {:08X}", reinterpret_cast<Glacier::ZItemTemplateWeapon*>(pGun->GetItemTemplate())->m_pWeaponOperations);
-
-                    reinterpret_cast<Glacier::ZItemTemplateWeapon*>(pGun->GetItemTemplate())->m_pWeaponOperations = Glacier::EWeaponOperation::WO_FULLAUTO;
+                    reinterpret_cast<Glacier::ZItemTemplateWeapon*>(pGun->GetItemTemplate())->m_WeaponOperations = Glacier::EWeaponOperation::WO_FULLAUTO;
                     //spdlog::info("GT: {:08X}", reinterpret_cast<Glacier::ZItemTemplateWeapon*>(pGun->GetItemTemplate())->m_weaponType);
-                    reinterpret_cast<Glacier::ZItemTemplateWeapon*>(pGun->GetItemTemplate())->m_weaponType = 0;
+                    reinterpret_cast<Glacier::ZItemTemplateWeapon*>(pGun->GetItemTemplate())->m_eWeaponType = Glacier::WEAPONTYPE::WT_PISTOL;
 
-                    pGun->m_nextOperation = Glacier::EWeaponOperation::WO_FULLAUTO;
+                    pGun->m_eWeaponOperation = Glacier::EWeaponOperation::WO_FULLAUTO;
 
                     pGun->SetProjectilesInMagazine(999);
                 }

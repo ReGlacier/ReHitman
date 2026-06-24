@@ -45,29 +45,32 @@ namespace Glacier
         virtual void CopyGeom(ZGEOM* from, ZGEOM* unused, ZGROUP* inGroup, bool makeActive);
 
         //data (total size is 0xDC, ZItem size is 0x84)
-        Glacier::ZVector3 m_targetPosition;
-        Glacier::ZREF m_ammoTemplateREF;
-        int m_projectilesPerMagazine;
-        bool m_isBulletInChamber;
-        char m_field99;
-        char m_field9A;
-        char m_field9B;
-        int m_field9C;
-        int m_fieldA0;
-        int m_fieldA4;
-        EWeaponOperation m_nextOperation;
-        int m_fieldAC;
-        int m_fieldB0;
-        int m_fieldB4;
-        int m_fieldB8;
-        int m_fieldBC;
-        int m_fieldC0;
-        int m_fieldC4;
-        int m_fieldC8;
-        int m_fieldCC;
-        Glacier::ZREF m_fieldD0;
-        int m_fieldD4;
+        Glacier::ZVector3 m_vTarget;
+        Glacier::ZREF m_rAmmoTemplate;
+        int m_lProjectilesInMagazine;
+        bool m_bBulletInChamber;
+        RE_ADD_PADDING(3);
+        bool m_lBurstCount;
+        bool m_bRequestFireRelease;
+        bool m_bReloading;
+        bool m_bChambering;
+        bool m_bTriggerHeld;
+        RE_ADD_PADDING(3);
+        int m_fTimeLastShot;
+        EWeaponOperation m_eWeaponOperation;
+        REFTAB* m_prtWeaponParts;
+        int m_rParticleController;
+        int m_lMuzzleFireIndex;
+        int m_lMuzzleSmokeIndex;
+        int m_lCartridgeIndex;
+        Glacier::ZREF m_rMuzzleLight;
+        Glacier::ZVector3 m_vMuzzleLightAlign;
+        Glacier::ZREF m_rSlide;
+        Glacier::ZREF m_rClip;
         bool m_useBulletsFromMagazine;
+        bool m_bWantSoundEvent;
+        RE_ADD_PADDING(2);
     };
+    RE_VERIFY_SIZE(ZItemWeapon, 0xDC); // Verified
 
 }

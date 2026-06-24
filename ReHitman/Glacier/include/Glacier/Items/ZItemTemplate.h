@@ -61,5 +61,5 @@ namespace Glacier
         bool m_bSendImpactEvent;
         RE_ADD_PADDING(3);
     };
-    RE_VERIFY_SIZE(ZItemTemplate, 0x74);
+    RE_VERIFY_SIZE(ZItemTemplate, 0x74); // Verified
 }

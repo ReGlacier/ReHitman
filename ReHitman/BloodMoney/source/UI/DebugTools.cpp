@@ -14,6 +14,9 @@
 #include <Glacier/GUI/ZCONTROL.h>
 #include <Glacier/CInventory.h>
 #include <Glacier/ZPlayer.h>
+#include <Glacier/Items/ZItemState.h>
+#include <Glacier/Items/ZItemTemplateContainer.h>
+#include <Glacier/Items/ZItemTemplateWeapon.h>
 #include <Glacier/Geom/ZEditorGroup.h>
 
 #include <Glacier/Geom/ZGEOM.h>

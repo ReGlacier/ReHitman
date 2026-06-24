@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Glacier/ReGlacier.h>
 #include <Glacier/GlacierFWD.h>
 #include <Glacier/Items/ZItemTemplate.h>
 #include <Glacier/Items/EDamageType.h>
@@ -23,20 +24,20 @@ namespace Glacier
         virtual EDamageType GetDamageType();
 
         // data (total size is 0xA4, ZItemTemplate size is 0x74)
-        int m_defaultProjectilesPerMagazine;
-        int m_projectilesPerShot;
-        float m_nearDamage;
-        int m_field80;
+        int m_lProjectilesPerMagazine;
+        int m_lProjectilesPerShot;
+        float m_fNearDamage;
+        float m_fFarDamage;
         bool m_bCanSplashDamage;
-        char m_field_85;
-        char m_field_86;
-        char m_field_87;
-        int m_materialEnumID;
-        Glacier::ZREF m_projectileRef;
-        Glacier::ZREF m_cartridgeRef;
-        EDamageType m_damageType;
-        int m_field98;
-        int m_field9C;
-        int m_fieldA0;
+        bool m_bUseImpactSound;
+        RE_ADD_PADDING(2);
+        int m_MaterialEnumId; // typedef ZTypedef<int,EHardTypedef_TEnumID> TEnumID;
+        ZREF m_rProjectile;
+        ZREF m_rCartridge;
+        EDamageType m_eDamageType;
+        ZREF* m_pProjectileList;
+        uint32_t m_lProjectileListSize;
+        uint32_t m_lProjectileCurrent;
     };
+    RE_VERIFY_SIZE(ZItemTemplateAmmo, 0xA4); // Verified
 }

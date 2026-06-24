@@ -1,11 +1,23 @@
 #pragma once
 
+#include <Glacier/ReGlacier.h>
 #include <Glacier/GlacierFWD.h>
 #include <Glacier/CBaseEvent.h>
 #include <Glacier/Geom/ZGEOM.h>
+#include <Glacier/ZSTL/ZRTStringObject.h>
+#include <Glacier/ZSTL/ZBitfield.h>
+#include <Glacier/Items/ITEMSTATE.h>
 
 namespace Glacier
 {
+    enum ITEMDEST {
+        ID_ITEM = 0,
+        ID_PARENT = 1,
+        ID_OWNER = 2,
+        ID_ROOT = 3,
+        ID_FORCE32 = 2147483647,
+    };
+
     class ZItemState : public CBaseEvent<ZGEOM>
     {
     public:
@@ -17,18 +29,22 @@ namespace Glacier
         virtual void EnableCamera(ZCAMERA*);
 
         // data (total size is 0x5C, ZEventBase size is 0x30)
-        Glacier::ZMSGID m_MSG_ITEM_STATE_CREATE;
-        Glacier::ZMSGID m_MSG_ITEM_SET_STATE;
-        Glacier::ZMSGID m_MSG_ITEM_GET_ANIM_NAME;
-        Glacier::ZMSGID m_field36;
-        int m_field38;
-        int m_isMain;
-        int m_field40;
-        int m_field44;
-        int m_field48;
-        int m_field4C;
-        Glacier::ZREF m_useGeomREF;
-        int m_field54;
-        int m_field58;
+        Glacier::ZMSGID m_msgItemStateCreate;
+        Glacier::ZMSGID m_msgSetItemState;
+        Glacier::ZMSGID m_msgGetItemSettings;
+        ZBitfield<ITEMSTATE> m_lStateBits;
+        bool m_bIsMain;
+        RE_ADD_PADDING(3);
+        ITEMDEST m_lDestination;
+        float m_fActivateDelay;
+        float m_fDeactivateTime;
+        bool m_bReuseStateGeom;
+        bool m_bAutoRemove;
+        RE_ADD_PADDING(2);
+        ZRTString m_sAnimName;
+        ZREF m_rUseGeom;
+        bool m_bOnlyVisible;
+        RE_ADD_PADDING(3);
     };
+    RE_VERIFY_SIZE(ZItemState, 0x5C); // Verified
 }
