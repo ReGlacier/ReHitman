@@ -2,6 +2,7 @@
 
 #include <Glacier/GlacierFWD.h>
 #include <Glacier/Geom/ZGEOM.h>
+#include <Glacier/ZSTL/REFTAB.h>
 
 namespace Glacier
 {

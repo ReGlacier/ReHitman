@@ -1,52 +1,98 @@
 #pragma once
 
 #include <Glacier/Glacier.h>
+#include <Glacier/ReGlacier.h>
 #include <Glacier/ZHandle.h>
 #include <Glacier/ZSTL/ZRTTI.h>
 #include <Glacier/ZSTL/ZMath.h>
 #include <Glacier/ZSTL/REFTAB.h>
 #include <Glacier/ZSTL/REFTAB32.h>
+#include <Glacier/ZSTL/ZStackArray.h>
 #include <Glacier/ZWinEvents.h>
+#include <Glacier/SpriteDraw.h>
 
 #include <BloodMoney/Game/SMapGroup.h>
 #include <BloodMoney/Game/SIconBase.h>
 #include <BloodMoney/Game/UI/ZWINDOW.h>
 #include <BloodMoney/Game/UI/CWinEvent.h>
 
+#ifdef small // thx msvc
+#   undef small
+#endif
+
 namespace Hitman::BloodMoney
 {
-    struct SMapText
+    enum EAnimMode
     {
-        int id; //0x0000
-        bool field_04;   //0x0004
-        bool field_05;   //0x0005
-        bool field_06;   //0x0006
-        bool field_07;   //0x0007
-        char str[0x5C];  //0x0008
-        int  field_64;   //0x0064
-        int  field_68;
-        int  field_6C;
-        int  field_70;
-        int  field_74;
-        int  field_78;
-        int  field_7C;
-        int  field_80;
-        int  field_84;
-        int  field_88;
-        int  field_8C;
-        int  field_90;
-        int  field_94;
-    }; //Size: 0x0098 (see CIngameMap::AddText at 00663E20 for details)
-
-    struct SIconInstance
-    {
-        int32_t ref;         // SRef id (object id)
-        bool field_04;       // must be true if you want to replace icon
-        char field_5;        // ?
-        char field_6;        // ?
-        char field_7;        // ?
-        int32_t eIconType;   // icon type (enum)
+        none = 0,
+        scale = 1,
+        jump = 2,
+        alpha = 4,
+        saturation = 8,
+        big = 16,
+        small = 32
     };
+
+    struct SIconDef
+    {
+        uint16_t  u;
+        uint16_t  v;
+        uint16_t  w;
+        uint16_t  h;
+        uint32_t  iColor;
+        EAnimMode eAnimMode;
+        bool      bRotate;
+        int8_t    iMaxDifficulty;
+        RE_ADD_PADDING(2);
+    };
+    RE_VERIFY_SIZE(SIconDef, 0x14);
+
+    struct SMapText : public SIconBase
+    {
+        char szText[128];
+        uint32_t   iColor;
+        EAnimMode eAnimMode;
+        float     fSize;
+        int8_t    iAlignment;
+        bool      bRotate;
+        RE_ADD_PADDING(2);
+    }; //Size: 0x0098 (see CIngameMap::AddText at 00663E20 for details)
+    RE_VERIFY_SIZE(SMapText, 0x98); // Verified
+
+    struct SIconInstance : public SIconBase 
+    {
+        uint32_t iIconIndex;
+    };
+    RE_VERIFY_SIZE(SIconInstance, 0xC);
+
+    struct CMapIconDraw : public Glacier::ZSTDOBJ 
+    {
+        struct SMatPos
+        {
+            Glacier::ZVector3 vPos;
+            Glacier::ZMat3x3 mPos;
+        };
+        RE_VERIFY_SIZE(SMatPos, 0x30);
+
+        struct SIconInfo 
+        {
+            uint32_t m_iIcon;
+            Glacier::ZREF m_rBaseGeom;
+            SMatPos m_sLastPos;
+        };
+        RE_VERIFY_SIZE(SIconInfo, 0x38);
+
+        // Size: 0x4bac (19372) bytes
+        Glacier::ZStackArray<256, CMapIconDraw::SIconInfo> m_Icons;
+        Glacier::ZStackArray<32, SMapText> m_Texts;
+        Glacier::ZStackArray<32, ZCHAROBJ*> m_TextObjects;
+        uint32_t* m_pPrims;
+        Glacier::SSpriteArray* m_pSpriteArrays;
+        Glacier::SSpriteArrayElementRaw* m_pSprites;
+        float m_fScale;
+    };
+    RE_VERIFY_SIZE(CMapIconDraw, 0x4BAC);
+
 
     class CIngameMap : public CWinEvent<ZWINDOW>
     {
@@ -63,95 +109,75 @@ namespace Hitman::BloodMoney
         virtual void NotifyUpdate(uint16_t);
 
         //data (total size is 0x2C4, CWinEvent<ZWINDOW> : ZEventBase size is 0x30)
-        Glacier::ZHandle m_mapLegendAction;
-        Glacier::ZHandle m_mapSelectAction;
-        Glacier::ZHandle m_mapCameraLeftAction;
-        Glacier::ZHandle m_mapCameraRightAction;
-        Glacier::ZHandle m_mapCameraUpAction;
-        Glacier::ZHandle m_mapCameraDownAction;
-        Glacier::ZHandle m_mapMoveUpAction;
-        Glacier::ZHandle m_mapMoveDownAction;
-        Glacier::ZHandle m_mapPrevAction;
-        Glacier::ZHandle m_mapNextAction;
-        Glacier::ZHandle m_mapMenuAction;
-        Glacier::ZHandle m_mapAction;
-        int field_00C0;
-        int field_00C4;
-        int field_00C8;
-        int field_00CC;
-        int field_00D0;
-        int field_00D4;
-        int field_00D8;
-        int field_00DC;
-        int field_00E0;
-        int field_00E4;
-        int field_00E8;
-        int field_00EC;
-        int field_00F0;
-        int field_00F4;
-        Glacier::REFTAB32 m_reftab32_00F8;
-        int field_01A4;
-        SMapGroup* m_legendMapGroup;
-        int field_01AC;
-        Glacier::REFTAB m_mapGroups; //REFTAB of SMapGroup
-        int field_01CC;
-        int field_01D0;
-        Glacier::REFTAB m_iconsRefTab;
-        Glacier::REFTAB m_textsRefTab;
-        int field_020C;
-        int field_0210;
-        int field_0214;
-        int field_0218;
-        int field_021C;
-        int field_0220;
-        int field_0224;
-        int field_0228;
-        int field_022C;
-        int field_0230;
-        int field_0234;
-        int field_0238;
-        int field_023C;
-        int field_0240;
-        int field_0244;
-        int field_0248;
-        int field_024C;
-        int field_0250;
-        int field_0254;
-        int field_0258;
-        int field_025C;
-        int field_0260;
-        int field_0264;
-        int field_0268;
-        int field_026C;
-        int field_0270;
-        int field_0274;
-        int field_0278;
-        int field_027C;
-        int field_0280;
-        int field_0284;
-        int field_0288;
-        int field_028C;
-        int field_0290;
-        int field_0294;
-        char m_isMapListOpened;
-        char field_299;
-        char field_29A;
-        char field_29B;
-        char field_029C;
-        char field_29D;
-        char m_mapsComboShowing;
-        char field_29F;
-        char field_02A0;
-        char field_2A1;
-        char field_2A2;
-        char field_2A3;
-        int field_02A4;
-        int field_02A8;
-        SMapGroup* m_currentMapGroup;
-        int field_02B0;
-        int field_02B4;
-        int field_02B8;
-        int field_02BC;
-        int field_02C0;
+        Glacier::ZHandle m_ahLegend;
+        Glacier::ZHandle m_ahSelect;
+        Glacier::ZHandle m_ahCamLeft;
+        Glacier::ZHandle m_ahCamRight;
+        Glacier::ZHandle m_ahCamUp;
+        Glacier::ZHandle m_ahCamDown;
+        Glacier::ZHandle m_ahMoveUp;
+        Glacier::ZHandle m_ahMoveDown;
+        Glacier::ZHandle m_ahPrev;
+        Glacier::ZHandle m_ahNext;
+        Glacier::ZHandle m_ahMenu;
+        Glacier::ZHandle m_ahMap;
+        Glacier::ZREF m_rBackgroundCamera;
+        Glacier::ZREF m_rMapCamera;
+        Glacier::ZREF m_rOverlayCamera;
+        Glacier::ZREF m_rIconCamera;
+        Glacier::ZREF m_rIconGroup;
+        Glacier::ZREF m_rReferenceCamera;
+        Glacier::ZREF m_rZoomCursor;
+        Glacier::ZREF m_rPanCursor;
+        Glacier::ZREF m_rBackgroundGroup;
+        Glacier::ZREF m_rOverlayGroup;
+        Glacier::ZREF m_rZoomBox;
+        Glacier::ZREF m_rSelectionList;
+        Glacier::ZREF m_rCurrentMapTitle;
+        Glacier::ZREF m_rLegendButton;
+        Glacier::REFTAB32 m_rtButtons;
+        Glacier::ZREF m_rCompass;
+        SMapGroup* m_pLegendGroup;
+        Glacier::ZREF m_rReferenceMap;
+        Glacier::REFTAB m_rtGroups;
+        int32_t m_iCurrentMapIndexOffset;
+        CMapIconDraw* m_pDraw;
+        Glacier::REFTAB m_rtIcons;
+        Glacier::REFTAB m_rtTexts;
+        Glacier::ZVector2 m_v2MapPosition;
+        Glacier::ZVector2 m_v2MousePosition;
+        Glacier::ZVector3 m_vOldCamPos;
+        Glacier::ZVector3 m_vOldZoomBoxPos;
+        Glacier::ZVector3 m_vZoomPanMin;
+        Glacier::ZVector3 m_vZoomPanMax;
+        Glacier::ZMat3x3 m_mBoxMat;
+        float m_fZoomBoxStartScale;
+        float m_fZoomBoxEndScale;
+        float m_fCurrentScale;
+        float m_fScalePul;
+        Glacier::ZVector2 m_v2SubScale;
+        Glacier::ZVector2 m_v2MouseStartPosition;
+        float m_fMouseDownTime;
+        Glacier::ZGROUP* m_pCurSniperOverlay;
+        bool m_bMapListOpen;
+        bool m_bShowingLegend;
+        bool m_bScopecameraDeactivatedOnWindowOpen;
+        bool m_bMouseInside;
+        bool m_bMouseMoving;
+        bool m_bLMouseDown;
+        bool m_bCrossHack;
+        bool m_bWasEnable4_3CutOff;
+        bool m_bZoom_Pressed;
+        bool m_bPan_Pressed;
+        RE_ADD_PADDING(2);
+        Glacier::ZREF m_sound_Moving;
+        uint32_t m_lRemMaxFrameInterval;
+        SMapGroup* m_pCurrentMap;
+        SMapGroup* m_pLastMap;
+        Glacier::ZREF m_rTmpMapGroup;
+        Glacier::ZREF m_rTmpWorldGroup;
+        Glacier::ZREF m_rHintObject;
+        Glacier::TIMETYPE m_fHintTimeout;
     };
+    RE_VERIFY_SIZE(CIngameMap, 0x2C4); // Verified
 }

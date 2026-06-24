@@ -13,6 +13,7 @@
 #include <BloodMoney/Game/Items/ZHM3ItemTemplateWeapon.h>
 #include <BloodMoney/Game/Items/ZHM3ItemWeaponCustomTemplate.h>
 #include <BloodMoney/Game/ZPodiumController.h>
+#include <BloodMoney/Game/ZHitman3.h>
 #include <BloodMoney/Game/LevelControls/ZHM3LevelControlM13.h>
 
 #include <Glacier/ResourceCollection.h>

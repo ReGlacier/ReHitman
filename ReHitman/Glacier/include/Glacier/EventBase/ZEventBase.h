@@ -95,7 +95,7 @@ namespace Glacier
         uint32_t m_lEventLists;
         uint8_t m_ClassCall;
         EStatus m_Status;
-        unsigned __int16 m_lEventAllocSize;
+        uint16_t m_lEventAllocSize;
         ZGEOM* m_pBaseGeom;
         ZScheduledEvent* m_pScheduleEvent;
     }; //Size: 0x002С

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Glacier/ZSTL/zstring.h>
 #include <Glacier/ZREF.h>
 #include <string>
 
@@ -11,7 +12,7 @@ namespace Glacier
     using ZMSGID = unsigned short;
     using ZDATA = void*;
     using SREF = unsigned int;
-    using ZWM_MESSAGE = signed int; //Less that 0x1000!
+    enum ZWM_MESSAGE;
 
     struct RefRun;
     using TabBlk = void*;
@@ -69,6 +70,7 @@ namespace Glacier
     class ZGeomBufferPoolEntity;
     class ZQElemsBuffer;
     class ZBaseGeomLists;
+    class CInventory;
 
     struct SGeomTypeCount;
     struct SCompiledGeom;
@@ -86,8 +88,6 @@ namespace Glacier
     enum EFootSide;
 
     class ZCheckPointBuffer; // NOT AVAILABLE FOR PC ?
-
-    using zstring = std::string; /// I GUESS, CAUSE INSIDE ZSTRING USED STD::BASIC_STRING<CHAR, ...>
 
     class ZEntityLocator;
     class FsZip_t;

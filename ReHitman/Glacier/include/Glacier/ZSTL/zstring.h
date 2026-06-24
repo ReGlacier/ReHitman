@@ -1,12 +1,14 @@
 #pragma once
 
+#include <cstdint>
+
 namespace Glacier
 {
     class zstring
     {
     public:
-        char*   str;
-        int     length;
-        int     m_field8; //?
+        char* m_pData;
+        uint32_t m_iLength;
+        uint32_t m_iCapacity;
     };
 }
