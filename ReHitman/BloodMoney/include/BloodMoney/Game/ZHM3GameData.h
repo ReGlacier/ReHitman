@@ -359,7 +359,7 @@ namespace Hitman::BloodMoney
         uint32_t m_rActorCommunication;
         uint32_t m_rFightController;
         uint32_t m_rCoverList;
-        ZClothTracker* m_pClothTracker; //0x699C [always nullptr, lmao]
+        ZClothTracker* m_pClothTracker; //0x699C Created on demand by ZHitman3::OnActorBlowingHitmansCover
         uint32_t m_rActorFriskingHM;
         EFriskOp m_eFriskOperation; //0x69A0
         ZHM3DialogControl* m_DialogControl; //0x69A8

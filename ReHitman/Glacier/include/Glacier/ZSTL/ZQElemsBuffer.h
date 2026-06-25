@@ -1,19 +1,11 @@
 #pragma once
 
+#include <Glacier/ZSTL/ZQStaticMemBlock.h>
+
 namespace Glacier
 {
 
-    class ZQElemsBuffer
+    class ZQElemsBuffer : public ZQStaticMemBlock
     {
-    public:
-        // data
-        int m_field4;
-        int m_field8;
-        int m_fieldC;
-        int m_field10;
-        int m_field14;
-
-        // vftable
-        virtual void Release();
     };
 }

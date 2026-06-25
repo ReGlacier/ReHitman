@@ -6,41 +6,13 @@
 #include <Glacier/ZSTL/ZMath.h>
 #include <Glacier/IK/ZLNKWHANDS.h>
 #include <Glacier/Glacier.h>
+#include <Glacier/ZSphereImpact.h>
+#include <Glacier/ZMovementBase.h>
 #include <Glacier/PF4/ZMetaNode.h>
 
 
 namespace Glacier
 {
-    struct ZActiveImpactPrim
-    {
-        uint32_t m_lType;
-        uint32_t m_lImpactTriangleNr;
-        ZVector3 m_vCorner1;
-        ZVector3 m_vCorner2;
-        ZVector3 m_vCorner3;
-        ZVector3 m_vNormal;
-        ZBaseGeom* m_pBaseGeom;
-        RE_ADD_PADDING(4);
-        STempStripsUniqueId m_StripId;
-        bool m_bInvalid;
-        bool m_bNoEnter;
-        RE_ADD_PADDING(6);
-    };
-    RE_VERIFY_SIZE(ZActiveImpactPrim, 0x50);
-
-	struct ZSphereImpact
-	{
-		unsigned int m_lNrActiveImpacts;
-		unsigned int m_lNrFramesOffGround;
-		STempStripsUniqueId m_StripId;
-		ZActiveImpactPrim m_ActiveImpacts[4];
-		int m_iGroundMaterial;
-		bool m_bLocal;
-		bool m_bGroundContact;
-		RE_ADD_PADDING(2);
-	};
-	RE_VERIFY_SIZE(ZSphereImpact, 0x158);
-
     struct ZMoveNotify
     {
         bool m_bDeny;
@@ -56,7 +28,27 @@ namespace Glacier
     };
     RE_VERIFY_SIZE(ZMoveNotify, 0x7C);
 
-    struct ZMovementBase;
+    enum ZHM3MOVEMENTS {
+        HM3MC_PREV = 6,
+        HM3MC_FALL = 7,
+        HM3MC_GUIDEMATPOS = 8,
+        HM3MC_HUMANSHIELD = 9,
+        HM3MC_CLIMBWALL = 10,
+        HM3MC_WALLHUG = 11,
+        HM3MC_CLIMBONTO = 12,
+        HM3MC_PASSOBSTACLE = 13,
+        HM3MC_CLIMBWINDOW = 14,
+        HM3MC_PULLUPONTOWALL = 15,
+        HM3MC_CARRYBODY = 16,
+        HM3MC_CLIMBLADDER = 17,
+        HM3MC_CLIMBDRAINPIPE = 18,
+        HM3MC_DEAD = 19,
+        HM3MC_KILLTARGETLINEUP = 20,
+        HM3MC_CUTSEQUENCE = 21,
+        HM3MC_DIALOG = 22,
+        HM3MC_JUMPBALCONY = 23,
+        HM3MC_M13TABLE = 24,
+    };
 
 	struct ZPlayer : public ZLNKWHANDS
 	{
@@ -64,6 +56,10 @@ namespace Glacier
         bool m_bReady;
         RE_ADD_PADDING(3);
         uint32_t m_rDragTarget;
+
+        // Bit # 1 - is walking
+        // Bit #3 - meaning smth, used in ZPlayer::SetActiveUpperBody
+        // Bit #18 - is dead
         uint32_t m_CurrentStatus;
         PF4::ZMetaNode m_Entity;
         void* m_pkBoid; // wtf?
@@ -187,7 +183,7 @@ namespace Glacier
         virtual ZMovementBase* CreateMovementStand();
         virtual ZMovementBase* CreateMovementGuide();
         virtual ZMovementBase* CreateMovementAnimation();
-        virtual ZMovementBase* GetMovement(uint32_t);
+        virtual ZMovementBase* GetMovement(ZHM3MOVEMENTS);
         virtual void GetCameraOrientation(float*, float*);
         virtual ZCAMERA* GetCamera();
 	};

@@ -1,8 +1,10 @@
 #pragma once
 
+#include <Glacier/ReGlacier.h>
 #include <Glacier/ZListNodeBase.h>
 #include <Glacier/GlacierFWD.h>
 #include <Glacier/EventBase/ZEventBase.h>
+#include <Glacier/ZSTL/ZFixedSizeMemoryManager.h>
 
 namespace Glacier
 {
@@ -10,12 +12,12 @@ namespace Glacier
     {
     public:
         // members
-		void* m_EventRefs;
-		void* m_pEventRam;
-		int m_lEventRamSize;
+        ZFixedSizeMemoryManager<ZEventBase*>* m_EventRefs;
+        char* m_pEventRam;
+		uint32_t m_lEventRamSize;
 		ZOffsetAlloc* m_pEventAlloc;
-		int m_lAllocatedEventsRam;
-		int m_lNrAllocatedEvents;
+        uint32_t m_lAllocatedEventsRam;
+        uint32_t m_lNrAllocatedEvents;
 
         /// === vftable ===
         virtual void Release(bool);
@@ -40,5 +42,5 @@ namespace Glacier
 		    return reinterpret_cast<TEntity*>(ZEventBuffer::GetGQC(ref));
 	    }
     };
-
+    RE_VERIFY_SIZE(ZEventBuffer, 0x1C); // verified
 }
