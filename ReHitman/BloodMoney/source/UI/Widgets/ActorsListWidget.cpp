@@ -36,7 +36,7 @@ namespace ImGui
         ImGui::Inspector<Glacier::ZEntityLocator>::Draw("actor.entity", actor->m_baseGeom);
         ImGui::Separator();
         ImGui::Inspector<Glacier::ZEntityLocator>::Draw("actor.group", actor->m_baseGeom->ParentGroup()->m_baseGeom);
-        ImGui::Inspector<Glacier::ZHumanBoid>::Draw("Actor boid", actor->m_boid);
+        ImGui::Inspector<Glacier::ZHumanBoid>::Draw("Actor boid", actor->m_pkBoid);
         ImGui::Text("Group Info: ");
         ImGui::Inspector<Glacier::ZGROUP>::Draw("ActorGroup", actor->m_baseGeom->ParentGroup());
         ImGui::Inspector<Hitman::BloodMoney::ZPathFollower>::Draw("Actor.PathFollower", reinterpret_cast<Hitman::BloodMoney::ZPathFollower*>(actor->FindEvent(Hitman::BloodMoney::ZPathFollower::Name)));
@@ -85,13 +85,13 @@ namespace ImGui
                 using PF4_Path_Clear_t = void(__thiscall*)(std::intptr_t*);
                 auto PF4_Path_Clear = (PF4_Path_Clear_t)0x004D8D00;
 
-                PF4_Path_Clear(&actor->m_field534);
+                PF4_Path_Clear(reinterpret_cast<std::intptr_t*>(&actor->m_Path));
 
                 actor->PreparePath();
             }
         }
 
-        if (auto path = reinterpret_cast<Hitman::BloodMoney::PF4RunTime::ZPath*>(&actor->m_field534); path && path->m_Size > 1)
+        if (auto path = reinterpret_cast<Hitman::BloodMoney::PF4RunTime::ZPath*>(reinterpret_cast<std::intptr_t*>(&actor->m_Path)); path && path->m_Size > 1)
         {
             using ZPlayer_GetCamera_t = Glacier::ZCAMERA* (__thiscall*)(int*);
             using GetLocalPoint_t = void(__thiscall*)(Glacier::ZCAMERA* pCamera, Glacier::ZVector3* pInOutPoint);
