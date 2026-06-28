@@ -56,7 +56,14 @@ namespace ReHitman
 
     int Core::EntryPoint(const void*)
     {
+#       ifndef NDEBUG
+        // TODO: This section is restricted to DEBUG builds only. 
+        // Allocating a console window here introduces severe stutters/deadlocks, 
+        // completely breaking the gameplay experience and ruining the "FixFuckedLoaderScreens" patch.
+        // This will be refactored and redesigned in the future.
         ReHitman::DebugConsole::Create("ReHitman | Developer Console");
+#       endif
+
         ReHitman::Logger::Setup();
 
         CrashHandlerReporter crashHandlerReporter;
