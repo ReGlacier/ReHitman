@@ -6,6 +6,6 @@ namespace Glacier
 {
     struct ZAnimVariationHandle
     {
-        uint16_t iIndex;
+        int16_t iIndex;
     };
 }

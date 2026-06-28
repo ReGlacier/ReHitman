@@ -71,6 +71,7 @@ namespace Glacier
     class ZQElemsBuffer;
     class ZBaseGeomLists;
     class CInventory;
+    class ZParticleEmitter;
 
     struct SGeomTypeCount;
     struct SCompiledGeom;

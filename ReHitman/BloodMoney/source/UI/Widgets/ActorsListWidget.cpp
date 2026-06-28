@@ -223,9 +223,9 @@ namespace ImGui
                 
                 spdlog::info("ClonedActor: {:08X}", reinterpret_cast<std::intptr_t>(clonedActor));
                 spdlog::info("<< InitMapIcon");
-                clonedActor->m_mapIconType = Hitman::BloodMoney::EActorMapRole::VIP;
+                clonedActor->m_eCharacterType = Hitman::BloodMoney::eCharacterType::eCharacterType_VIP;
                 using ZHM3Actor_InitMapIconFn = void(__thiscall*)(Hitman::BloodMoney::ZHM3Actor*, bool);
-                auto ZHM3Actor_InitMapIcon = (ZHM3Actor_InitMapIconFn)0x00637460;
+                auto ZHM3Actor_InitMapIcon = (ZHM3Actor_InitMapIconFn)0x00637460; // TODO: Use vtbl?
 
                 ZHM3Actor_InitMapIcon(clonedActor, true);
 
