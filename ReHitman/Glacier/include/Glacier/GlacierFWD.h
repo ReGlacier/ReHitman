@@ -18,9 +18,9 @@ namespace Glacier
     using TabBlk = void*;
 
     /// FWD
-    class ISerializerStream {};
-    class IInputSerializerStream {};
-    class IOutputSerializerStream {};
+    class ISerializerStream;
+    class IInputSerializerStream;
+    class IOutputSerializerStream;
 
     class ZPackedInput;
     class ZScene;

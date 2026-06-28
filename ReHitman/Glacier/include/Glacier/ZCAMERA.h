@@ -89,8 +89,8 @@ namespace Glacier
         float m_fOldLightMultiplier;
         ZROOM* m_pCurrentRoomHint;
         bool m_bWideScreen;
-        bool m_pad175[3];
+        RE_ADD_PADDING(3);
         struct ZRender* m_SubWindow;
     };
-    RE_VERIFY_SIZE(ZCAMERA, 0x18C);
+    RE_VERIFY_SIZE(ZCAMERA, 0x18C); // Verified
 }

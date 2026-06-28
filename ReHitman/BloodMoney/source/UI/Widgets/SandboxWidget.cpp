@@ -33,7 +33,7 @@
 #include <Glacier/ZTypeTraits.h>
 #include <Glacier/ZRenderWintelD3D.h>
 #include <Glacier/ZPrimControlWintel.h>
-#include <Glacier/ZSTL/ZLIST.h>
+#include <Glacier/Geom/ZLIST.h>
 #include <Glacier/Items/ZItemTemplateAmmo.h>
 #include <Glacier/Items/ZItemTemplateWeapon.h>
 #include <Glacier/Items/ZItemWeapon.h>

@@ -15,6 +15,8 @@
 #include <BloodMoney/Game/ZPodiumController.h>
 #include <BloodMoney/Game/ZHitman3.h>
 #include <BloodMoney/Game/LevelControls/ZHM3LevelControlM13.h>
+#include <BloodMoney/Game/LoaderSequence/ZLoader_Sequence_Info.h>
+#include <BloodMoney/Game/LoaderSequence/ZLoader_Sequence_Setup.h>
 
 #include <Glacier/ResourceCollection.h>
 #include <Glacier/ZEngineDataBase.h>

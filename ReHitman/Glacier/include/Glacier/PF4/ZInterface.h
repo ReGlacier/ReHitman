@@ -3,6 +3,8 @@
 #include <Glacier/GlacierFWD.h>
 #include <Glacier/ReGlacier.h>
 #include <Glacier/PF4/PF4.h>
+#include <Glacier/PF4/Fwd.h>
+#include <Glacier/PF4/EPathWayActions.h>
 #include <Glacier/PF4/ZLocation.h>
 #include <Glacier/PF4/ZMetaNode.h>
 
@@ -18,20 +20,6 @@ namespace Glacier::PF4
         ZVector2 m_Pos;
     };
     RE_VERIFY_SIZE(ZDataRef, 0xC);
-
-    enum EPathWayActions : int {
-        ePWA_INVALID = -1,
-        PWA_DEFAULT = 0,
-        PWA_CLIMB = 1,
-        PWA_FALL = 2,
-        PWA_JUMP = 3,
-        PWA_WALK = 4,
-        PWA_STOP = 5,
-        PWA_RAPEL = 6,
-        PWA_DOOR = 7,
-        PWA_ENTERELEVATOR = 8,
-        PWA_EXITELEVATOR = 9
-    };
 
     struct ZPath 
     {

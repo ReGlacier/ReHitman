@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Glacier/Fysix/ZCollisionBase.h>
+
 namespace Glacier
 {
     class ZCollisionWintel

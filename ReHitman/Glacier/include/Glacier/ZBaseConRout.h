@@ -49,6 +49,6 @@ namespace Glacier
 		// Members
 		ZROUTCLASSINFO* m_pRoutClassInfo;
 	};
-	RE_VERIFY_SIZE(ZBaseConRout, 0x30);
+	RE_VERIFY_SIZE(ZBaseConRout, 0x30); // Verified
 	RE_VERIFY_OFFSET(ZBaseConRout, m_pRoutClassInfo, 0x2C);
 }

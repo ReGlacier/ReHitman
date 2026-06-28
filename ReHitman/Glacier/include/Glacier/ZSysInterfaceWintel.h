@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Glacier/ReGlacier.h>
 #include <Glacier/Glacier.h>
 
 namespace Glacier
@@ -7,6 +8,11 @@ namespace Glacier
     class ZEngineDataBase;
     class ZRenderWintelD3D;
     class CConfiguration;
+
+    class ZSysInterface
+    {
+
+    };
 
     class ZSysInterfaceWintel
     {
@@ -143,5 +149,5 @@ namespace Glacier
         virtual void Function_0074(); //#74 +128 .rdata:0075fed4
         virtual void Function_0075(); //#75 +12c .rdata:0075fed8
         virtual void Function_0076(); //#76 +130 .rdata:0075fedc
-    };
+    }; // Total size is 0x1700
 }

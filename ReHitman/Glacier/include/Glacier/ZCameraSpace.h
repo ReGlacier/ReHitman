@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Glacier/ReGlacier.h>
 #include <Glacier/ZSTL/ZMath.h>
 #include <Glacier/ZCAMERA.h>
 
@@ -23,4 +24,5 @@ namespace Glacier {
         void TransformInversMatPos(Matrix3x3* mat, Vector3* pos);
         void GetViewport(Vector4* pViewport);
     };
+    RE_VERIFY_SIZE(ZCameraSpace, 0x230);
 }

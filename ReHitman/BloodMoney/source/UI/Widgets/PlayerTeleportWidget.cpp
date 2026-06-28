@@ -9,7 +9,7 @@
 #include <Glacier/ZCTRLIKLNKOBJ.h>
 #include <Glacier/EventBase/ZEventBuffer.h>
 
-#include <Glacier/ZSTL/ZLIST.h>
+#include <Glacier/Geom/ZLIST.h>
 #include <Glacier/ZSTL/ZMath.h>
 #include <Glacier/IK/ZLNKWHANDS.h>
 

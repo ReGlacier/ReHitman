@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Glacier/Glacier.h>
-#include <Glacier/ZSTL/ZLIST.h>
+#include <Glacier/Geom/ZLIST.h>
 #include <Glacier/CBaseEvent.h>
 
 namespace Hitman::BloodMoney 

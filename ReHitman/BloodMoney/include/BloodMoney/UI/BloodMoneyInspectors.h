@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Glacier/Geom/ZGEOM.h>
-#include <Glacier/ZSTL/ZLIST.h>
+#include <Glacier/Geom/ZLIST.h>
 
 #include <BloodMoney/UI/ImGuiInspector.h>
 #include <BloodMoney/Game/PF/ZPathFollower.h>

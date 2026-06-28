@@ -24,6 +24,5 @@ namespace Glacier
 		ZLnkAction* m_pCurrentAction;
 		ZIKLNKOBJ* m_pActor;
 	};
-
-	RE_VERIFY_SIZE(ZActionDispatcher, 0xC);
+	RE_VERIFY_SIZE(ZActionDispatcher, 0xC); // Verified
 }

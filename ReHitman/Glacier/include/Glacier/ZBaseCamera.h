@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Glacier/ReGlacier.h>
+#include <Glacier/GlacierFWD.h>
 #include <Glacier/ZSTL/ZMath.h>
 #include <Glacier/CBaseEvent.h>
 #include <Glacier/ZCAMERA.h>
@@ -27,11 +29,11 @@ namespace Glacier
 		//data (base size is 0x30, current size is 0x40)
 		bool m_bIsActive;
 		bool m_bEnabled;
-		bool m_field32;
-		bool m_bIsFreeCam;
-		float m_fFreeCamMouseSensitivity;
-		float m_field38;
-		uint16_t m_rFollowedGeom;
-		uint16_t m_unk3E;
+		bool m_bAlignment;
+		bool m_KeyConOn;
+		float m_fCameraRotSpeed;
+		float m_fCameraMoveSpeed;
+		ZREF m_rFollowGeom;
 	};
+	RE_VERIFY_SIZE(ZBaseCamera, 0x40); // Verified
 }

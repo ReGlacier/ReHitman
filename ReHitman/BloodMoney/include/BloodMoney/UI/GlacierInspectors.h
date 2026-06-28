@@ -150,6 +150,13 @@ namespace ImGui
             ImGui::Text("Name: "); ImGui::SameLine(0.f, 0.4f); ImGui::TextColored(ImVec4 { 0.f, 1.f, 0.f, 1.f }, "%s", entity->m_Name);
             ImGui::Inspector<Glacier::ZMat3x3>::Draw("Transform", &entity->m_mMat);
             ImGui::Inspector<Glacier::ZVector3>::Draw("Position", &entity->m_vPos);
+            ImGui::Inspector<Glacier::ZVector3>::Draw("Center", &entity->m_vCen);
+            ImGui::DragFloat("Radius", &entity->m_fRadius);
+            ImGui::Text("ListID: %d", entity->m_uListID); ImGui::SameLine();
+            ImGui::Text("PLLC: %d", entity->m_lPotentialLightListChange); ImGui::SameLine();
+            ImGui::Text("Freeze: %d", entity->m_bFreezeLightList);
+            ImGui::Text("Draw id: %d", entity->m_lDrawId); ImGui::SameLine();
+            ImGui::Text("Draw entry id: %d", entity->m_lDrawId);
             ImGui::Text("Primitive ID: %d", entity->m_lPrim);
         }
     };
