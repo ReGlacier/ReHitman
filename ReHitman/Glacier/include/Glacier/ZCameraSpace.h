@@ -5,12 +5,34 @@
 #include <Glacier/ZCAMERA.h>
 
 namespace Glacier {
-    class ZCameraSpace {
+    class ZCameraSpace 
+    {
     public:
         // data
-        Matrix3x3 matrix {};
-        Vector3 position {};
-        char sub[512] { 0 };  /// That's should be enough, I guess
+        ZMatrix m_CameraToRoot;
+        float m_ClipPlanes[48];
+        float m_fFogNear;
+        float m_fFogFar;
+        float m_fFogMin;
+        float m_fFogMax;
+        unsigned int m_lFogColor;
+        float m_fNear;
+        float m_fFar;
+        float m_fFieldOfView;
+        float m_fFieldOfViewFirstPerson;
+        float m_fPers;
+        float m_fScaleX;
+        float m_fScaleY;
+        float m_fViewport[4];
+        float m_fViewAspect;
+        float m_vCameraStartPoint[3];
+        unsigned int m_lNrClipPlanes;
+        unsigned int m_rTopNode;
+        bool m_bIsOrthogonal;
+        bool m_bIsMain;
+        bool m_bGatesEnabled;
+        bool m_bGeomBoundsEnabled;
+        const ZCAMERA *m_pZCamera;
 
         // operators
         ZCameraSpace& operator=(ZCAMERA* pCamera);
@@ -24,5 +46,5 @@ namespace Glacier {
         void TransformInversMatPos(Matrix3x3* mat, Vector3* pos);
         void GetViewport(Vector4* pViewport);
     };
-    RE_VERIFY_SIZE(ZCameraSpace, 0x230);
+    RE_VERIFY_SIZE(ZCameraSpace, 0x150);
 }

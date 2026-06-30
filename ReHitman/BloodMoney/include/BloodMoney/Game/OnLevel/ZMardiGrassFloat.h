@@ -14,7 +14,7 @@ namespace Hitman::BloodMoney
         float m_fWidth;
         float m_fLength;
         uint32_t m_lNumCorners;
-        Glacier::ZMatrix[9] m_MovementCorners;
+        Glacier::ZMatrix m_MovementCorners[9];
         Glacier::ZStackArray<16, ZGEOM*> m_Corners;
         Glacier::ZREF m_rObstacleBase;
         ZMardiGrassFloat* m_pFloatGroup;

@@ -97,23 +97,26 @@ namespace ImGui
             auto st = (Glacier::EBoidState)*state;
             switch (st)
             {
-                case Glacier::EBoidState::Moving:
-                    ImGui::Text("EBoidState::Moving");
+                case Glacier::EBoidState::eFollowPath:
+                    ImGui::Text("EBoidState::eFollowPath");
                     break;
-                case Glacier::EBoidState::Staying:
-                    ImGui::Text("EBoidState::Staying");
+                case Glacier::EBoidState::eControlled:
+                    ImGui::Text("EBoidState::eControlled");
                     break;
-                case Glacier::EBoidState::ParentActorDestroyed:
-                    ImGui::Text("EBoidState::ParentActorDestroyed (Dead)");
+                case Glacier::EBoidState::eSoftObstacle:
+                    ImGui::Text("EBoidState::eSoftObstacle");
                     break;
-                case Glacier::EBoidState::Sitting:
-                    ImGui::Text("EBoidState::Sitting");
+                case Glacier::EBoidState::eHardObstacle:
+                    ImGui::Text("EBoidState::eHardObstacle");
                     break;
-                case Glacier::EBoidState::Unk6:
-                    ImGui::Text("EBoidState::Unk6");
+                case Glacier::EBoidState::ePassivePushable:
+                    ImGui::Text("EBoidState::ePassivePushable");
                     break;
-                default:
-                    ImGui::Text("Unknown EBoidState (%.8X)", st);
+                case Glacier::EBoidState::eInActive:
+                    ImGui::Text("EBoidState::eInActive");
+                    break;
+                case Glacier::EBoidState::eHero:
+                    ImGui::Text("EBoidState::eHero");
                     break;
             }
         }
@@ -130,9 +133,9 @@ namespace ImGui
                     return;
                 }
 
-                ImGui::Inspector<Glacier::EBoidState>::Draw("Boid state", &boid->m_boidState);
-                ImGui::Inspector<Glacier::ZVector3>::Draw("Boid Position", &boid->m_Position);
-                ImGui::Text("Actual speed: %f / Speed: %f / Speed2: %f", boid->m_ActualSpeed, boid->m_speed, boid->m_speed2);
+                ImGui::Inspector<Glacier::EBoidState>::Draw("Boid state", &boid->m_eState);
+                ImGui::Inspector<Glacier::ZVector3>::Draw("Boid Position", &boid->m_kPosition);
+                ImGui::Text("Actual speed: %f / Max speed: %f", boid->m_ActualSpeed, boid->m_fMaxSpeed);
             }
         }
     };

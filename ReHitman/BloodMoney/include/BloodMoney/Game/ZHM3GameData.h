@@ -3,11 +3,13 @@
 #include <BloodMoney/Game/ZHM3Actor.h>
 #include <BloodMoney/Game/LevelControls/ZHM3LevelControl.h>
 #include <BloodMoney/Game/ZHM3BriefingControl.h>
+#include <BloodMoney/Game/ZClothTracker.h>
 #include <BloodMoney/Game/UI/ZOSD.h>
 
 #include <Glacier/ZGameData.h>
 #include <Glacier/ZSTL/ZArray.h>
 #include <Glacier/ZSTL/REFTAB.h>
+#include <Glacier/ZSTL/ZStaticVector.h>
 #include <Glacier/ReGlacier.h>
 #include <Glacier/ZBaseConRout.h>
 
@@ -43,15 +45,6 @@ namespace Glacier
 
     VERIFY_FIELD_POS(ZGameStats, m_iStats_CurrentShotCount, 0x4);
     VERIFY_FIELD_POS(ZGameStats, m_iStats_LastShotTime, 0x8);
-
-    template <typename T, size_t N>
-    struct ZStaticVector
-    {
-        uint32_t m_iSize;
-        T m_Data[N];
-
-        T& operator[](size_t i) { return m_Data[i]; }
-    };
 }
 
 namespace Hitman::BloodMoney
@@ -276,48 +269,6 @@ namespace Hitman::BloodMoney
 
     static_assert(sizeof(ZWeaponUpgradeUtils) == 0x20, "Bad size of ZWeaponUpgradeUtils");
 
-    struct SClothInfo {
-        unsigned int rHitmanAs;
-        float fDisguiseQuality;
-        bool bDisguiseBlown;
-        bool m_bPad[3];
-    };
-
-    struct SInspector {
-        unsigned int rSeerActor;
-        float fQuality;
-        struct ZHM3ActorProperties* rt_pActorProperty;
-        unsigned char iClothIdx;
-
-        union {
-            unsigned char mask;
-            struct {
-                unsigned char bInvestigating : 1;
-                unsigned char bKnownCloth : 1;
-                unsigned char bNotorietyBlowCover : 1;
-            };
-        };
-        bool m_bPad[2];
-    };
-
-    struct ZClothTracker : public Glacier::ZBaseConRout
-    {
-        Glacier::ZArray<SClothInfo> m_Clothes;
-        Glacier::ZArray<SInspector> m_Inspectors;
-
-        float m_fInspectTime;
-        float m_fDiffSpeedMult;
-        float m_fDiffForgetMult;
-        float m_fDiffSeeThroughDisguiseDistance;
-
-        int m_iNotoriety;
-        float m_fNotorietySpeedMult;
-        float m_fNotorietyDistMult;
-        int m_iCurrInspectCloth;
-    };
-
-    static_assert(sizeof(ZClothTracker) == 0x88, "Bad size of ZClothTracker");
-
     class ZHM3GameData final : public Glacier::ZGameData
     {
     public:
@@ -336,7 +287,7 @@ namespace Hitman::BloodMoney
         int m_pSoundDef_OSD; //0x0A34 ZSDOwner* m_pSOund
         int m_pSoundDef_Effects; //0x0A38
         bool m_bGameJustLoaded;
-        bool m_bPad[3];
+        RE_ADD_PADDING(3);
 
         // >>>>>>>>>>> ZHM3GameData <<<<<<<<<<<
         ZHitman3* m_Hitman3; //0x0A40

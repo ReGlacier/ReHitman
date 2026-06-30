@@ -1,7 +1,51 @@
 #pragma once
 
+#include <Glacier/ReGlacier.h>
+#include <Glacier/ZSTL/STRREFTAB.h>
+#include <cstdint>
+
 namespace Glacier
 {
+    struct _FILETIME
+    {
+        unsigned int dwHighDateTime;
+        unsigned int dwLowDateTime;
+    };
+
+    struct IBuffer
+    {
+        virtual ~IBuffer();
+        virtual const void* GetData(uint32_t);
+        virtual uint32_t GetBufferSize();
+        virtual void GetBufferData(void (__cdecl *)(const char *, unsigned int, void *), void *); // Not sure about this functor type
+    };
+
+    class FsZip_t;
+
+    struct IOLegacyFilesystem_t
+    {
+        // vtbl
+        virtual void PrintStatus();
+        virtual void Add(_FILETIME*, IBuffer*);
+        virtual void Add(_FILETIME*, void*, uint32_t);
+        virtual void Add(const char*, char*);
+        virtual void Save(const char*);
+        virtual int GetSize(const char*);
+        virtual bool Exists(const char*);
+        virtual bool GetFileTime(const char*, _FILETIME*);
+        virtual int Load(const char*, void*, int, int);
+        virtual void GetDirectory(STRREFTAB*);
+        virtual void SyncClose();
+        virtual void SyncOpen();
+        virtual void invalidateRedundantFiles(FsZip_t*);
+        virtual ~IOLegacyFilesystem_t();
+
+        // data
+        int errorStatus;
+        bool statusOK;
+        RE_ADD_PADDING(3);
+    };
+
     class FsZip_t
     {
     public:

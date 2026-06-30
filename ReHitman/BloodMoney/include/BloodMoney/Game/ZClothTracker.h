@@ -1,36 +1,52 @@
 #pragma once
 
-#include <Glacier/EventBase/ZEventBase.h>
+#include <Glacier/ReGlacier.h>
+#include <Glacier/ZSTL/ZArray.h>
+#include <Glacier/CBaseEvent.h>
+#include <Glacier/Geom/ZGEOM.h>
 
-namespace Hitman::BloodMoney {
-    class ZClothTracker : public Glacier::ZEventBase
+namespace Hitman::BloodMoney 
+{
+    struct SClothInfo 
     {
-    public:
-        //vftable (no changes)
-        //api
-        //static api
-        //data (total size is 0x88, base size is 0x30)
-        int m_field30;
-        int m_field34;
-        int m_field38;
-        int m_field3C;
-        int m_field40;
-        int m_field44;
-        int m_field48;
-        int m_field4C;
-        int m_field50;
-        int m_field54;
-        int m_field58;
-        int m_field5C;
-        int m_field60;
-        int m_field64;
-        float m_field68;
-        float m_field6C;
-        int m_field70;
-        int m_field74;
-        int m_field78;
-        int m_field7C;
-        int m_field80;
-        int m_field84;
+        Glacier::ZREF rHitmanAs;
+        float fDisguiseQuality;
+        bool bDisguiseBlown;
+        bool m_bPad[3];
     };
+
+    struct SInspector 
+    {
+        Glacier::ZREF rSeerActor;
+        float fQuality;
+        struct ZHM3ActorProperties* rt_pActorProperty;
+        unsigned char iClothIdx;
+
+        union {
+            unsigned char mask;
+            struct {
+                unsigned char bInvestigating : 1;
+                unsigned char bKnownCloth : 1;
+                unsigned char bNotorietyBlowCover : 1;
+            };
+        };
+        RE_ADD_PADDING(2);
+    };
+
+    struct ZClothTracker : public Glacier::CBaseEvent<Glacier::ZGEOM>
+    {
+        Glacier::ZArray<SClothInfo> m_Clothes;
+        Glacier::ZArray<SInspector> m_Inspectors;
+
+        float m_fInspectTime;
+        float m_fDiffSpeedMult;
+        float m_fDiffForgetMult;
+        float m_fDiffSeeThroughDisguiseDistance;
+
+        int m_iNotoriety;
+        float m_fNotorietySpeedMult;
+        float m_fNotorietyDistMult;
+        int m_iCurrInspectCloth;
+    };
+    RE_VERIFY_SIZE(ZClothTracker, 0x88);
 }

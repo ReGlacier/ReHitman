@@ -13,6 +13,7 @@ namespace Hitman::BloodMoney
 {
     // fwds
     class ZHM3Actor;
+    class ZHM3ItemContainer;
     class ZHM3ItemTemplateWeapon;
     class ZHM3ItemWeapon;
     class ZHM3ItemBomb;

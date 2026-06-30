@@ -172,6 +172,7 @@ namespace Hitman::BloodMoney
         // api
         void PreparePath();
         void ActivateBloodSpurt(const Glacier::Vector3* pInvDir, const Glacier::Vector3* pCollisionPos, EBloodSpurtType type);
+        void InitMapIcon(bool);
 
         // types
         struct UseDoorInfo
@@ -400,7 +401,7 @@ namespace Hitman::BloodMoney
         RE_ADD_PADDING(3);
         float m_fLastClothActionStatusChange; //+0xB54
         float m_fLastDragActionStatusChange; //+0xB58
-        int m_fieldB58; //+0xB5C
+        int m_fieldB5C; //+0xB5C
     };
     RE_VERIFY_SIZE(ZHM3Actor, 0xB60);  // Verified
     RE_VERIFY_OFFSET(ZHM3Actor, m_rHitmanAs, 0x904); // Approved by ZHM3Actor__getAvailableSuitObjectID

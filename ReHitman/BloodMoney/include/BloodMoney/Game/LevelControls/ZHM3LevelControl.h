@@ -166,7 +166,7 @@ namespace Hitman::BloodMoney
         Glacier::ZREF m_rBreathEmitter;
         Glacier::ZREF m_rWaterSplashParticleSystem;
     };
-    RE_VERIFY_SIZE(ZHM3LevelControl, 0x5D8);
+    RE_VERIFY_SIZE(ZHM3LevelControl, 0x5D8); // Verified
     RE_VERIFY_OFFSET(ZHM3LevelControl, m_fHitmanDiedAt, 0x30);
     RE_VERIFY_OFFSET(ZHM3LevelControl, m_pMusicController, 0x34);
 }

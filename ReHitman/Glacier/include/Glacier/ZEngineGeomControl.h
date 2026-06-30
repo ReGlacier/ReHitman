@@ -24,8 +24,10 @@ namespace Glacier
         static ZEngineGeomControl* GetInstance();
 
         // data
-        ZEntityLocator* m_pool[128];
-        int field_204;
-        int field_208; // enable custom light sources? (for weapon in inventory preview)
+        ZBaseGeom* m_MovedGeoms[128];
+        int m_lNrMovedGeoms;
+        bool m_bChangeDetection;
+        RE_ADD_PADDING(3);
     };
+    RE_VERIFY_SIZE(ZEngineGeomControl, 0x20C);
 }

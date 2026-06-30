@@ -1,7 +1,13 @@
 #include <BloodMoney/UI/DebugTools.h>
 #include <BloodMoney/Game/Globals.h>
+
 #include <BloodMoney/Game/ZHM3GameData.h>
 #include <BloodMoney/Game/CIngameMap.h>
+#include <BloodMoney/Game/ZHM3ActorProperties.h>
+#include <BloodMoney/Game/ZPodiumController.h>
+#include <BloodMoney/Game/ZClothTracker.h>
+#include <BloodMoney/Game/ZHitman3.h>
+// Items (HM3, not gamebase)
 #include <BloodMoney/Game/Items/ZHM3ItemTemplate.h>
 #include <BloodMoney/Game/Items/ZHM3ItemAmmo.h>
 #include <BloodMoney/Game/Items/ZHM3ItemBomb.h>
@@ -12,26 +18,74 @@
 #include <BloodMoney/Game/Items/ZHM3ItemTemplateContainer.h>
 #include <BloodMoney/Game/Items/ZHM3ItemTemplateWeapon.h>
 #include <BloodMoney/Game/Items/ZHM3ItemWeaponCustomTemplate.h>
-#include <BloodMoney/Game/ZPodiumController.h>
-#include <BloodMoney/Game/ZHitman3.h>
+// On level stuff
+#include <BloodMoney/Game/OnLevel/CMetalDetector.h>
+#include <BloodMoney/Game/OnLevel/CKeycardReader.h>
+#include <BloodMoney/Game/OnLevel/ZZoneControl.h>
+#include <BloodMoney/Game/OnLevel/ZFireAlarm.h>
+#include <BloodMoney/Game/OnLevel/ZVCR.h>
+// Level controls
+#include <BloodMoney/Game/LevelControls/ZHM3LevelControlHideout.h>
+#include <BloodMoney/Game/LevelControls/ZHM3LevelControlM00.h>
+#include <BloodMoney/Game/LevelControls/ZHM3LevelControlM01.h>
+#include <BloodMoney/Game/LevelControls/ZHM3LevelControlM02.h>
+#include <BloodMoney/Game/LevelControls/ZHM3LevelControlM03.h>
+#include <BloodMoney/Game/LevelControls/ZHM3LevelControlM04.h>
+#include <BloodMoney/Game/LevelControls/ZHM3LevelControlM05.h>
+#include <BloodMoney/Game/LevelControls/ZHM3LevelControlM06.h>
+#include <BloodMoney/Game/LevelControls/ZHM3LevelControlM07.h>
+#include <BloodMoney/Game/LevelControls/ZHM3LevelControlM08.h>
+#include <BloodMoney/Game/LevelControls/ZHM3LevelControlM09.h>
+#include <BloodMoney/Game/LevelControls/ZHM3LevelControlM10.h>
+#include <BloodMoney/Game/LevelControls/ZHM3LevelControlM11.h>
+#include <BloodMoney/Game/LevelControls/ZHM3LevelControlM12.h>
 #include <BloodMoney/Game/LevelControls/ZHM3LevelControlM13.h>
+// Loader sequence
 #include <BloodMoney/Game/LoaderSequence/ZLoader_Sequence_Info.h>
 #include <BloodMoney/Game/LoaderSequence/ZLoader_Sequence_Setup.h>
-
+// Etc
 #include <Glacier/ResourceCollection.h>
 #include <Glacier/ZEngineDataBase.h>
 #include <Glacier/ZSysInterfaceWintel.h>
 #include <Glacier/ZActionManager.h>
+#include <Glacier/ZRunMatPosAnim.h>
+#include <Glacier/SSplineMover.h>
 #include <Glacier/GUI/ZWINGROUP.h>
 #include <Glacier/GUI/ZCONTROL.h>
 #include <Glacier/CInventory.h>
 #include <Glacier/ZPlayer.h>
+#include <Glacier/ZEngineGeomControl.h>
+#include <Glacier/ZLnkActionQueue.h>
+#include <Glacier/ZLnkAction.h>
+// Items (gamebase)
 #include <Glacier/Items/ZItemState.h>
 #include <Glacier/Items/ZItemTemplateContainer.h>
 #include <Glacier/Items/ZItemTemplateWeapon.h>
 #include <Glacier/Geom/ZEditorGroup.h>
-
 #include <Glacier/Geom/ZGEOM.h>
+// ZSTL
+#include <Glacier/ZSTL/REFTAB.h>
+#include <Glacier/ZSTL/STRREFTAB.h>
+#include <Glacier/ZSTL/LINKREFTAB.h>
+#include <Glacier/ZSTL/LINKSORTREFTAB.h>
+#include <Glacier/ZSTL/ZPoolAllocRefTab.h>
+#include <Glacier/ZSTL/ALLOCREF.h>
+#include <Glacier/ZSTL/ZBlockAlloc.h>
+#include <Glacier/ZSTL/ZRefAlloc.h>
+#include <Glacier/Geom/ZSHAPE.h>
+// Vehicles
+#include <Glacier/Vehicle/PPart.h>
+#include <Glacier/Vehicle/ZLinkBase.h>
+#include <Glacier/Vehicle/ZVehicle.h>
+#include <Glacier/Vehicle/ZSailing.h>
+#include <Glacier/Vehicle/ZDriving.h>
+#include <Glacier/Vehicle/ZCar.h>
+#include <Glacier/Vehicle/ZBoat.h>
+#include <Glacier/Vehicle/BaseMover.h>
+#include <Glacier/Vehicle/PathMover.h>
+#include <Glacier/Vehicle/BaseMoveModel.h>
+#include <Glacier/Vehicle/ZCarMoveModelIF.h>
+#include <Glacier/Vehicle/OrgCarMoveModel.h>
 
 #include <spdlog/spdlog.h>
 #include <imgui.h>

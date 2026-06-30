@@ -1,8 +1,7 @@
 #pragma once
 
+#include <Glacier/ReGlacier.h>
 #include <Glacier/Glacier.h>
-#include <Glacier/ReGlaceir.h>
-
 
 namespace Glacier
 {

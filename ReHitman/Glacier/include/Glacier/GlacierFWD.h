@@ -15,8 +15,7 @@ namespace Glacier
     enum ZWM_MESSAGE;
 
     struct RefRun;
-    using TabBlk = void*;
-
+    
     /// FWD
     class ISerializerStream;
     class IInputSerializerStream;

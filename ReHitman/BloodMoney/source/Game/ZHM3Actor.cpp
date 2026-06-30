@@ -24,4 +24,12 @@ namespace Hitman::BloodMoney
             (BMConfigurationService::BMAPI_FunctionAddress_ZHM3Actor_ActivateBloodSpurt))(this, pInvDir, pCollisionPos, type);
         }
     }
+
+    void ZHM3Actor::InitMapIcon(bool a1)
+    {
+        assert(BMConfigurationService::BMAPI_FunctionAddress_ZHM3Actor_InitMapIcon != BMConfigurationService::kNotConfiguredOption);
+        if (BMConfigurationService::BMAPI_FunctionAddress_ZHM3Actor_InitMapIcon != BMConfigurationService::kNotConfiguredOption) {
+            ((void(__thiscall*)(Hitman::BloodMoney::ZHM3Actor*, bool))(BMConfigurationService::BMAPI_FunctionAddress_ZHM3Actor_InitMapIcon))(this, a1);
+        }
+    }
 }

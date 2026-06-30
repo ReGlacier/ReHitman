@@ -23,7 +23,7 @@ namespace Hitman::BloodMoney
         Glacier::ZVector3 m_vCameraTargetPos;
         Glacier::ZVector3 m_vCameraFocusPos;
     };
-    RE_VERIFY_SIZE(ZPodiumController, 0x30);
+    RE_VERIFY_SIZE(ZPodiumController, 0x30); // Verified
     RE_VERIFY_OFFSET(ZPodiumController, m_vCameraTargetPos, 0x18);
     RE_VERIFY_OFFSET(ZPodiumController, m_vCameraFocusPos, 0x24);
 }

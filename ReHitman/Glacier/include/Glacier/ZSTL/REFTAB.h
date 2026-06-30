@@ -7,10 +7,19 @@
 
 namespace Glacier
 {
-    struct RefRun {
-        int m_field0;
-        int m_field4;
-        int m_field8;
+    struct TabBlk
+    {
+        TabBlk *_Prev;
+        TabBlk *_Next;
+        int _Cou;
+        int _Pad;
+    };
+
+    struct RefRun
+    {
+        TabBlk *_RunPtr;
+        int _RunCou;
+        int _RunDir;
     };
 
     class REFTAB
@@ -38,7 +47,7 @@ namespace Glacier
         virtual bool Exists(uint*);                //#11 +2c .rdata:00756a18
         virtual void* Find(uint);                  //#12 +30 .rdata:00756a1c
         virtual uint GetRefNr(int);                //#13 +34 .rdata:00756a20
-        virtual uint GetRefPtrNr(int);             //#14 +38 .rdata:00756a24
+        virtual uint* GetRefPtrNr(int);             //#14 +38 .rdata:00756a24
         virtual uint GetIndex(uint);               //#15 +3c .rdata:00756a28
         virtual void Remove(uint);                 //#16 +40 .rdata:00756a2c
         virtual void RemoveIfExists(uint);         //#17 +44 .rdata:00756a30
@@ -58,7 +67,7 @@ namespace Glacier
         virtual void* operator[](int);             //#31 +7c .rdata:00756a68
         virtual void RunToRefPtr(RefRun *);        //#32 +80 .rdata:00756a6c
         virtual void DeleteBlock(TabBlk *);        //#33 +84 .rdata:00756a70
-        virtual void* NewBlock(void);              //#34 +88 .rdata:00756a74
+        virtual TabBlk* NewBlock(void);              //#34 +88 .rdata:00756a74
     };
     RE_VERIFY_SIZE(REFTAB, 0x1C);
 }

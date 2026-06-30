@@ -1,12 +1,13 @@
 #pragma once
 
-#include <Glacier/EventBase/ZEventBase.h>
+#include <Glacier/ReGlacier.h>
+#include <Glacier/ZBaseConRout.h>
 #include <Glacier/ZSTL/REFTAB.h>
 #include <Glacier/GlacierFWD.h>
 
 namespace Hitman::BloodMoney
 {
-	class ZCheatMenu : public Glacier::ZEventBase
+	class ZCheatMenu : public Glacier::ZBaseConRout
 	{
 	public:
 		//custom entries
@@ -21,6 +22,35 @@ namespace Hitman::BloodMoney
 			MENU_ENGINE_DATABASE_FLOAT_B28 = 0x8, // Always ptr to ZEngineDatabase::m_fTimeMultiplier value!
 			MENU_TOGGLE_BOOL = 0x7, // Bool value
 		};
+
+		enum ECheatType {
+			ct_btoggle = 0,
+			ct_ftoggle = 1,
+			ct_fvalue = 2,
+			ct_fivalue = 3,
+			ct_oneshot = 4,
+			ct_console = 5,
+			ct_ivalue = 6,
+			ct_uvartoggle = 7,
+			ct_timemult = 8,
+		};
+
+		struct SCheat
+		{
+			ECheatType eCheatType;
+			const char* szDisplayName;
+			union 
+			{
+				const char* szCommand;
+				float* pFloat;
+				bool* pBool;
+				int32_t* pInt;
+				void* pUvarInt;
+				void        (__cdecl* pFn)(); 
+				uint32_t    _Dummy;
+			};
+		};
+		RE_VERIFY_SIZE(SCheat, 0xC);
 
 		union UEntryOption {
 			void(__cdecl *pFunction)(void);
