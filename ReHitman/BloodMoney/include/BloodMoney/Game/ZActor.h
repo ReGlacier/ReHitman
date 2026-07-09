@@ -123,7 +123,8 @@ namespace Hitman::BloodMoney
     {
     public:
         // pub
-        enum ACTORSTATE : int8_t {
+        enum ACTORSTATE : int8_t 
+        {
             ACTORSTATE_DEAD = 0,
             ACTORSTATE_AWAKE = 1,
             ACTORSTATE_UNCONSCIOUS = 2,

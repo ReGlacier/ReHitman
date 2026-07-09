@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Glacier/ReGlacier.h>
 #include <Glacier/ZSTL/ZMath.h>
 #include <Glacier/GlacierFWD.h>
 #include <Glacier/Geom/ZSTDOBJ.h>
@@ -652,6 +653,5 @@ namespace Hitman::BloodMoney
         char field_8FA;
         char field_8FB;
     };
-
-    static_assert(sizeof(ZOSD) == 0x8FC, "Bad size of ZOSD (PC alloc is 0x8FC)");
+    RE_VERIFY_SIZE(ZOSD, 0x8FC); // Verified
 }

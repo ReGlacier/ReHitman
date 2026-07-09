@@ -306,26 +306,26 @@ namespace Hitman::BloodMoney
 //            ((void(__thiscall*)(Hitman::BloodMoney::ZHM3LevelControl*))0x006BF540)(gameData->m_LevelControl);
 //        }
 
-		if (gameData->m_OSD && gameData->m_OSD->m_pCheatsMenu && ImGui::Begin("Cheat Menu Editor Demo")) {
-			if (ImGui::Button("Add menu entry")) {
-				Glacier::REFTAB* pEntries = &gameData->m_OSD->m_pCheatsMenu->m_options;
+		// if (gameData->m_OSD && gameData->m_OSD->m_pCheatsMenu && ImGui::Begin("Cheat Menu Editor Demo")) {
+		// 	if (ImGui::Button("Add menu entry")) {
+		// 		Glacier::REFTAB* pEntries = &gameData->m_OSD->m_pCheatsMenu->m_rtCommands;
 
-				auto onZombieModActivation = []() {
-					auto gameData = Glacier::getInterface<Hitman::BloodMoney::ZHM3GameData>(Globals::kGameDataAddr);
-					if (gameData && gameData->m_LevelControl)
-					{
-						gameData->m_LevelControl->Command(0x952, nullptr);
-					}
-				};
+		// 		auto onZombieModActivation = []() {
+		// 			auto gameData = Glacier::getInterface<Hitman::BloodMoney::ZHM3GameData>(Globals::kGameDataAddr);
+		// 			if (gameData && gameData->m_LevelControl)
+		// 			{
+		// 				gameData->m_LevelControl->Command(0x952, nullptr);
+		// 			}
+		// 		};
 
-				auto ent = reinterpret_cast<ZCheatMenu::SEntry*>(pEntries->Add(0));
-				ent->pName = "Run Zombie Mode";
-				ent->eType = ZCheatMenu::ECheatMenuEntryType::MENU_TOGGLE_CALLABLE_OPTION;
-				ent->uOption.pFunction = onZombieModActivation;
-			}
+		// 		auto ent = reinterpret_cast<ZCheatMenu::SEntry*>(pEntries->Add(0));
+		// 		ent->pName = "Run Zombie Mode";
+		// 		ent->eType = ZCheatMenu::ECheatMenuEntryType::MENU_TOGGLE_CALLABLE_OPTION;
+		// 		ent->uOption.pFunction = onZombieModActivation;
+		// 	}
 
-			ImGui::End();
-		}
+		// 	ImGui::End();
+		// }
 
         ImGui::End();
     }

@@ -53,6 +53,9 @@ namespace Hitman::BloodMoney
                 spdlog::info("CCheat::GiveSome patch applied");
             }
 
+            // Enable first-person movement in M13 lol
+            process->writeMemory(0x006C9DE4, { 0xC6, 0x82, 0x4D, 0x10, 0x00, 0x00, 0x01 });
+
             return BasicPatch::Apply(modules);
         }
 

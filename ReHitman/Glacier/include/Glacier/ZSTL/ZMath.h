@@ -5,16 +5,24 @@
 
 namespace Glacier
 {
-    struct Vector2 : public UseManagedAllocator
+    struct Vector2
     {
         float x = 0.f, y = 0.f;
 
         bool operator==(const Vector2& with) const {
             return x == with.x && y == with.y;
         }
+
+        Vector2& operator=(const Vector2& v)
+        {
+            x = v.x;
+            y = v.y;
+
+            return *this;
+        }
     };
 
-    struct Vector3 : public UseManagedAllocator
+    struct Vector3
     {
         float x = 0.f, y = 0.f, z = 0.f;
 
@@ -24,9 +32,18 @@ namespace Glacier
         bool operator==(const Vector3& with) const {
             return x == with.x && y == with.y && z == with.z;
         }
+
+        Vector3& operator=(const Vector3& v)
+        {
+            x = v.x;
+            y = v.y;
+            z = v.z;
+
+            return *this;
+        }
     };
 
-    struct Vector4 : public UseManagedAllocator
+    struct Vector4
     {
         float x = 0.f, y = 0.f, z = 0.f, w = 0.f;
 
@@ -36,9 +53,19 @@ namespace Glacier
         bool operator==(const Vector4& with) const {
             return x == with.x && y == with.y && z == with.z && w == with.w;
         }
+
+        Vector4& operator=(const Vector4& v)
+        {
+            x = v.x;
+            y = v.y;
+            z = v.z;
+            w = v.w;
+
+            return *this;
+        }
     };
 
-    struct Matrix3x3 : public UseManagedAllocator
+    struct Matrix3x3
     {
         float data[9];
 
@@ -57,7 +84,7 @@ namespace Glacier
         }
     };
 
-    struct Matrix4x4 : public UseManagedAllocator
+    struct Matrix4x4
     {
         float data[16];
 

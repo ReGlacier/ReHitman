@@ -4,9 +4,48 @@
 #include <Glacier/Glacier.h>
 #include <Glacier/ZSTL/ZMath.h>
 #include <Glacier/ZSTL/CQuadtree.h>
+#include <cstdint>
+
 
 namespace Glacier
 {
+    struct SGeomEvent_Direct_Id
+    {
+        uint8_t m_iDirect_Value[3];
+    };
+
+    struct ZGeomEventListBuffers
+    {
+        struct SGeomEventListBufferEntity_Id
+        {
+            uint8_t m_iBuffer_Id;
+            uint8_t m_iEntity_Id;
+        };
+    };
+
+    struct ZGeomEventList
+    {
+        uint8_t m_bListEntityOffset_Or_DirectOffset;
+        union 
+        {
+            ZGeomEventListBuffers::SGeomEventListBufferEntity_Id m_Control_Routine_List_Entity_Id;
+            SGeomEvent_Direct_Id m_iControl_Routine_Direct_Id;
+        };
+    };
+    RE_VERIFY_SIZE(ZGeomEventList, 0x4);
+
+    struct ExGeomData
+    {
+        // Known bits
+        // 1 - want camera msg | ZBaseGeom::WantCameraMsg
+        // 2 - is moving
+        int16_t _lControl;
+        ZGeomEventList _Events;
+        RE_ADD_PADDING(2);
+        CHUNKFILE* _ExtraInitData;
+    };
+    RE_VERIFY_SIZE(ExGeomData, 0xC);
+
     class ZEntityLocator
     {
     public:

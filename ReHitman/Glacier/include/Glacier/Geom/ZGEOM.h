@@ -40,8 +40,8 @@ namespace Glacier
         };
 
         // Data
-        ZEntityLocator* m_baseGeom; //+0x4
-        int pExData; //+0x8
+        ZBaseGeom* m_baseGeom; //+0x4
+        ExGeomData* m_pExData; //+0x8
         uint16_t m_lGeomControl; //+0xC
         EStatus m_eStatus; //+0xE
         uint8_t m_fieldE; //+0xF
@@ -185,7 +185,7 @@ namespace Glacier
     };
     RE_VERIFY_SIZE(ZGEOM, 0x10);
     RE_VERIFY_OFFSET(ZGEOM, m_baseGeom, 0x4);
-    RE_VERIFY_OFFSET(ZGEOM, pExData, 0x8);
+    RE_VERIFY_OFFSET(ZGEOM, m_pExData, 0x8);
     RE_VERIFY_OFFSET(ZGEOM, m_lGeomControl, 0xC);
     RE_VERIFY_OFFSET(ZGEOM, m_eStatus, 0xE);
     RE_VERIFY_OFFSET(ZGEOM, m_fieldE, 0xF);

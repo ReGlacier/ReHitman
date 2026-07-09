@@ -5,6 +5,7 @@
 #include <Glacier/ReGlacier.h>
 #include <Glacier/ZSTL/ZRTStringObject.h>
 #include <Glacier/ZSTL/ZMath.h>
+#include <Glacier/Animation/ZBone.h>
 
 namespace Glacier
 {
@@ -61,13 +62,6 @@ namespace Glacier
         };
     };
     RE_VERIFY_SIZE(ActBoneMotion2, 0x4);
-
-    struct ZBone
-    {
-        ZMat3x3 _Mat;
-        ZVector3 _Pos;
-    };
-    RE_VERIFY_SIZE(ZBone, 0x30);
 
     struct GameEntity
     {

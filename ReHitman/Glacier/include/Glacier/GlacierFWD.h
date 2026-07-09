@@ -3,6 +3,7 @@
 #include <Glacier/ZSTL/zstring.h>
 #include <Glacier/ZREF.h>
 #include <string>
+#include <cassert>
 
 namespace Glacier
 {
@@ -94,3 +95,5 @@ namespace Glacier
 
     using AnimCallback_t = bool(ZGEOM::*)(void*, float, float, unsigned int);
 }
+
+#define ZASSERT(cond) assert((cond));

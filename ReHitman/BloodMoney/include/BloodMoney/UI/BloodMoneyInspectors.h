@@ -31,7 +31,7 @@ namespace ImGui
 
             for (int waypointListIndex = 0; waypointListIndex < totalWaypointsListsCount; ++waypointListIndex)
             {
-                const int ZLISTEntityId = reinterpret_cast<int>(pathFollower->m_listsOfWaypoints[waypointListIndex]);
+                const auto ZLISTEntityId = pathFollower->m_listsOfWaypoints[waypointListIndex];
                 auto pointsList = reinterpret_cast<Glacier::ZLIST*>(Glacier::ZGEOM::RefToPtr(ZLISTEntityId));
 
                 if (!pointsList || !pointsList->m_entries)

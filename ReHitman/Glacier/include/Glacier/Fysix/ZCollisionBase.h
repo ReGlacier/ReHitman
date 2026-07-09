@@ -127,5 +127,5 @@ namespace Glacier
         ZCollisionPackBase* m_pCollisionPackBase;
         ZBaseGeom* m_GeomList[2048];
     };
-    
+    RE_VERIFY_SIZE(ZCollisionBase, 0x20B4);
 }

@@ -1,77 +1,63 @@
 #pragma once
 
+#include <Glacier/ZHandle.h>
+#include <BloodMoney/Game/UI/eZWUserEvents.h>
+
+
 namespace Hitman::BloodMoney
 {
     class ZWINDOWS;
 
-    namespace Action
+    struct SWinKey 
     {
-        struct ZHandle
-        {
-            const char *hotkey;
-            int m_field4;
-            int m_field8;
-        };
-    }
+        Glacier::ZHandle* pHandle;
+        uint32_t dwPrevState;
+    };
+    RE_VERIFY_SIZE(SWinKey, 0x8);
+
+    struct SAnalogKey {
+        // Size: 0x1c (28) bytes
+
+        Glacier::ZHandle* pHandle;
+        float fActivationTime;
+        float fRepeatTime;
+        eZWUserEvents eHighEvent;
+        eZWUserEvents eLowEvent;
+        bool bSentEventLastFrame;
+        eZWUserEvents eLastEvent;
+    };
+    // TODO: ^^^ Need verify size of this struct ^^^
 
     class ZWinInput
     {
     public:
-        ZWINDOWS* m_parent;
-        Action::ZHandle m_downAction;
-        Action::ZHandle m_upAction;
-        Action::ZHandle m_leftAction;
-        Action::ZHandle m_rightAction;
-        Action::ZHandle m_selectAction;
-        Action::ZHandle m_select2Action;
-        Action::ZHandle m_select3Action;
-        Action::ZHandle m_select4Action;
-        Action::ZHandle m_cancelAction;
-        Action::ZHandle m_misc1Action;
-        Action::ZHandle m_mouseButtonAction;
-        Action::ZHandle m_leftMouseButtonAction;
-        Action::ZHandle m_rightMouseButtonAction;
-        Action::ZHandle m_mouseWheelUpAction;
-        Action::ZHandle m_mouseWheelDownAction;
-        Action::ZHandle m_startAction;
-        Action::ZHandle m_z1Action;
-        Action::ZHandle m_r1Action;
-        int field_dc;
-        int field_e0;
-        int field_e4;
-        int field_e8;
-        int field_ec;
-        int field_f0;
-        int field_f4;
-        int field_f8;
-        int field_fc;
-        int field_100;
-        int field_104;
-        int field_108;
-        int field_10c;
-        int field_110;
-        int field_114;
-        int field_118;
-        int field_11c;
-        int field_120;
-        int field_124;
-        int field_128;
-        int field_12c;
-        int field_130;
-        int field_134;
-        int field_138;
-        int field_13c;
-        int field_140;
-        int field_144;
-        int field_148;
-        int field_14c;
-        int field_150;
-        int field_154;
-        int field_158;
-        int field_15c;
-        int field_160;
-        int field_164;
-        int field_168;
-        int field_16c;
+        // vtbl
+        // data
+        ZWINDOWS* m_pWindows;
+        Glacier::ZHandle m_Down;
+        Glacier::ZHandle m_Up;
+        Glacier::ZHandle m_Left;
+        Glacier::ZHandle m_Right;
+        Glacier::ZHandle m_Select;
+        Glacier::ZHandle m_Select2;
+        Glacier::ZHandle m_Select3;
+        Glacier::ZHandle m_Select4;
+        Glacier::ZHandle m_Cancel;
+        Glacier::ZHandle m_Misc1;
+        Glacier::ZHandle m_MButton;
+        Glacier::ZHandle m_LButton;
+        Glacier::ZHandle m_RButton;
+        Glacier::ZHandle m_MWheelUp;
+        Glacier::ZHandle m_MWheelDown;
+        Glacier::ZHandle m_Start;
+        Glacier::ZHandle m_L1;
+        Glacier::ZHandle m_R1;
+        SWinKey m_aKeys[18];
+        bool m_bKeyboardBinded;
+        bool m_bInputHandlerInstalled;
+        Glacier::ZHandle m_AnalogHorizontal;
+        Glacier::ZHandle m_AnalogVertical;
+        SAnalogKey m_aAnalogKeys[2];
     };
+    // TODO: ^^^ Need verify size and check code ^^^
 }

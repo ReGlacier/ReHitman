@@ -5,10 +5,11 @@
 namespace Hitman::BloodMoney {
     class ZColorSet : public ZGUIBase {
     public:
-        enum EColorIndex {
-            DisableColor,
-            FocusColor,
-            NormalColor
+        enum EColorIndex 
+        {
+            DisableColor = 0,
+            FocusColor = 1,
+            NormalColor = 2
         };
 
         //vftable (no changes)
@@ -16,9 +17,7 @@ namespace Hitman::BloodMoney {
         uint32_t GetColor(EColorIndex colorIndex);
 
         //data (total size is 0x58, base size is 0x4C)
-        int m_field4C;
-        uint32_t m_NormalColor;
-        uint32_t m_FocusColor;
-        uint32_t m_DisableColor;
+        uint32_t m_aiColors[3];
     };
+    RE_VERIFY_SIZE(ZColorSet, 0x58); // Verified
 }

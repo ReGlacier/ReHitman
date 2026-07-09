@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Glacier/EventBase/ZLnkAction.h>
+#include <Glacier/ZLnkAction.h>
 
 namespace Hitman::BloodMoney
 {

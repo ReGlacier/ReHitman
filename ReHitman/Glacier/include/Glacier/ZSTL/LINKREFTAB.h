@@ -24,7 +24,7 @@ namespace Glacier
         virtual unsigned int * GetPrevRefPtr(unsigned int *);
         virtual unsigned int * GetNextRefPtr(uint *);
         virtual unsigned int * GetRefPtrNr(int) override;
-        virtual unsigned int   GetRefNr(int) override;
+        virtual unsigned int   GetRefNr(int) const override;
 
         /// === members ===
         PrevNext *First;

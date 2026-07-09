@@ -32,51 +32,15 @@
 namespace ImGui
 {
     void Inspector<Hitman::BloodMoney::ZHM3Actor>::Draw(const char* id, Hitman::BloodMoney::ZHM3Actor* actor) {
-        //ImGui::Inspector<Glacier::ZEntityLocator>::Draw("actor.entity", actor->ActorInformation->location);
+        // Base actor info
         ImGui::Inspector<Glacier::ZEntityLocator>::Draw("actor.entity", actor->m_baseGeom);
         ImGui::Separator();
-        ImGui::Inspector<Glacier::ZEntityLocator>::Draw("actor.group", actor->m_baseGeom->ParentGroup()->m_baseGeom);
-        ImGui::Inspector<Glacier::ZHumanBoid>::Draw("Actor boid", actor->m_pkBoid);
-        ImGui::Text("Group Info: ");
-        ImGui::Inspector<Glacier::ZGROUP>::Draw("ActorGroup", actor->m_baseGeom->ParentGroup());
-        ImGui::Inspector<Hitman::BloodMoney::ZPathFollower>::Draw("Actor.PathFollower", reinterpret_cast<Hitman::BloodMoney::ZPathFollower*>(actor->FindEvent(Hitman::BloodMoney::ZPathFollower::Name)));
-        ImGui::Inspector<Glacier::CInventory>::Draw("Actor.Inventory", reinterpret_cast<Glacier::CInventory*>(actor->FindEvent(Glacier::CInventory::Name)));
 
-		// ColiBits
-		{
-			static bool g_ColiBits[8] { false, false, false, false, false, false, false, false };
-			bool bBitsChanged = false;
+        // Another info
+        ImGui::Text("m_fHitpoints: %f", actor->m_fHitpoints);
+        ImGui::Text("m_fTension: %f", actor->m_fTension);
 
-			// Show current bits
-			*reinterpret_cast<uint8_t*>(&g_ColiBits[0]) = static_cast<uint8_t>(actor->m_baseGeom->m_lControl & 0xFFu);
-
-			ImGui::Text("ColiBits: ");
-			bBitsChanged = ImGui::Checkbox("BIT_0", &g_ColiBits[0]) || bBitsChanged;
-			bBitsChanged = ImGui::Checkbox("BIT_1", &g_ColiBits[1]) || bBitsChanged;
-			bBitsChanged = ImGui::Checkbox("BIT_2", &g_ColiBits[2]) || bBitsChanged;
-			bBitsChanged = ImGui::Checkbox("BIT_3", &g_ColiBits[3]) || bBitsChanged;
-			bBitsChanged = ImGui::Checkbox("BIT_4", &g_ColiBits[4]) || bBitsChanged;
-			bBitsChanged = ImGui::Checkbox("BIT_5", &g_ColiBits[5]) || bBitsChanged;
-			bBitsChanged = ImGui::Checkbox("BIT_6", &g_ColiBits[6]) || bBitsChanged;
-			bBitsChanged = ImGui::Checkbox("BIT_7", &g_ColiBits[7]) || bBitsChanged;
-
-			if (bBitsChanged)
-			{
-				uint8_t coliBitsNew = 0u;
-#define SETBIT(where, idx, v) do { if (v) { where |= (1 << idx); } else { where &= ~(1 << idx); }  } while (0);
-				SETBIT(coliBitsNew, 0, g_ColiBits[0]);
-				SETBIT(coliBitsNew, 1, g_ColiBits[1]);
-				SETBIT(coliBitsNew, 2, g_ColiBits[2]);
-				SETBIT(coliBitsNew, 3, g_ColiBits[3]);
-				SETBIT(coliBitsNew, 4, g_ColiBits[4]);
-				SETBIT(coliBitsNew, 5, g_ColiBits[5]);
-				SETBIT(coliBitsNew, 6, g_ColiBits[6]);
-				SETBIT(coliBitsNew, 7, g_ColiBits[7]);
-#undef SETBIT
-
-				actor->m_baseGeom->m_lControl = (actor->m_baseGeom->m_lControl & 0x00FFFFFFu) | (static_cast<uint32_t>(coliBitsNew) << 24);
-			}
-		}
+        // Components
 
         // ==================
         {

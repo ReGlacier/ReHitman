@@ -9,8 +9,8 @@
 
 namespace Hitman::BloodMoney
 {
-	struct ZMardiGrassFloat : public Glacier::ZGROUP
-	{
+    struct ZMardiGrassFloat : public Glacier::ZGROUP
+    {
         float m_fWidth;
         float m_fLength;
         uint32_t m_lNumCorners;
@@ -26,6 +26,6 @@ namespace Hitman::BloodMoney
         Glacier::ZMatrix m_PrevPosition;
         Glacier::ZGEOM* m_pCenterGeom;
         Glacier::PF4::ZDynamicObstacle* m_pObstacle;
-	};
-	RE_VERIFY_SIZE(ZMardiGrassFloat, 0x2F0); // Not finished yet
+    };
+    RE_VERIFY_SIZE(ZMardiGrassFloat, 0x2F0); // Not finished yet
 }

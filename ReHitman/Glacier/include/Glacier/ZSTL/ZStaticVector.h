@@ -10,6 +10,7 @@ namespace Glacier
         uint32_t m_iSize;
         T m_Data[N];
 
+        uint32_t size() const { return m_iSize; }
         T& operator[](size_t i) { return m_Data[i]; }
         [[nodiscard]] bool IsEmpty() const { return m_iSize == 0u; }
     };

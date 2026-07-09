@@ -1,14 +1,25 @@
 #pragma once
 
+#include <Glacier/ReGlacier.h>
 #include <Glacier/Geom/ZSTDOBJ.h>
 #include <Glacier/ZDrawBuffer.h>
 #include <Glacier/ZCameraSpace.h>
+#include <Glacier/SpriteDraw.h>
 
 namespace Hitman::BloodMoney
 {
-    using SPRITETYPE = int;
+    enum SPRITETYPE : int
+    {
+        SPRITETYPE_ARRAY = 0x1,
+        SPRITETYPE_ARRAY_BOX = 0x3,
+        SPRITETYPE_ARRAY_BOX_SCALE = 0x4,
+        SPRITETYPE_ARRAY_UV = 0x5,
+        SPRITETYPE_ARRAY_RAW = 0x6,
+        SPRITETYPE_ARRAY_PARTICLE = 0x7,
+    };
 
-    class ZWINOBJ : public Glacier::ZSTDOBJ {
+    class ZWINOBJ : public Glacier::ZSTDOBJ 
+    {
     public:
         // vftable
         virtual void CreateSpriteArray(uint32_t, uint32_t, SPRITETYPE);
@@ -21,16 +32,6 @@ namespace Hitman::BloodMoney
         virtual void RemoveGeometry();
         virtual void LoadSaveGeometry(Glacier::ZPackedInput*, bool);
         virtual void SetDrawMode(uint32_t, int);
-        /**
-         * a2 table:
-         * 1 -> 0x16C012;
-         * 2 -> fault
-         * 3: -> 0x16C011;
-         * 4 -> fault
-         * 5 -> 0x16C210
-         * 6 -> 0x16C211
-         * other -> 0x16C010
-         */
         virtual int32_t CalcDrawMode(int a2, int a3);
         virtual void SetDrawing();
         virtual void SetColor(uint32_t, bool);
@@ -49,35 +50,27 @@ namespace Hitman::BloodMoney
         int GetTexture(unsigned int iTextureType);
 
         // data (total size is 0x88, base size is 0x10)
-        int m_field10; //+0x10
-        int m_field14; //+0x14
-        int m_field18; //+0x18
-        int m_field1C; //+0x1C
-        int m_field20; //+0x20
-        int m_field24; //+0x24
-        int m_field28; //+0x28
-        int m_field2C; //+0x2C
-        int m_field30; //+0x30
-        int m_field34; //+0x34
-        int m_field38; //+0x38
-        int m_field3C; //+0x3C
-        int m_field40; //+0x40
-        int m_field44; //+0x44
-        int m_field48; //+0x48
-        int m_field4C; //+0x4C
-        int m_field50; //+0x50
-        int m_field54; //+0x54
-        int m_field58; //+0x58
-        int m_field5C; //+0x5C
-        int m_field60; //+0x60
-        int m_field64; //+0x64
-        int m_field68; //+0x68
-        int m_field6C; //+0x6C
-        int m_field70; //+0x70
-        int m_field74; //+0x74
-        int m_field78; //+0x78
-        int m_field7C; //+0x7C
-        int m_field80; //+0x80
-        int m_field84; //+0x84
-    };
+        unsigned int m_dwFaceColor;
+        unsigned int m_dwDrawMode;
+        Glacier::ZVector2 m_v2Scale;
+        Glacier::SSpriteArrayElementUV *m_pSprites;
+        uint16_t m_iNumSprites;
+        uint16_t m_iNumSpriteArrays;
+        unsigned int *m_pPrims;
+        Glacier::SSpriteArray *m_pSpriteArrays;
+        Glacier::ZVector2 m_vAlignmentOffset;
+        Glacier::ZVector3 m_vLastCamPos;
+        Glacier::ZMat3x3 m_mCache;
+        Glacier::ZVector3 m_vCache;
+        Glacier::ZVector3 m_vCacheScale;
+        uint8_t m_dwAlignment;
+        uint8_t m_dwType;
+        uint8_t m_dwAmount;
+        uint8_t m_iPriority;
+        bool m_bModified;
+        bool m_bStaticSprites;
+        bool m_bAnimateAlpha;
+        bool m_bScalePS2_512_448;
+    }; // Size is 0x88 (verified)
+    RE_VERIFY_SIZE(ZWINOBJ, 0x88);
 }

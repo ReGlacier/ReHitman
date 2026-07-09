@@ -1,12 +1,17 @@
 #include <BloodMoney/UI/DebugTools.h>
 #include <BloodMoney/Game/Globals.h>
 
-#include <BloodMoney/Game/ZHM3GameData.h>
-#include <BloodMoney/Game/CIngameMap.h>
+#include <BloodMoney/Game/CExplosionController.h>
 #include <BloodMoney/Game/ZHM3ActorProperties.h>
 #include <BloodMoney/Game/ZPodiumController.h>
 #include <BloodMoney/Game/ZClothTracker.h>
+#include <BloodMoney/Game/ZHM3GameData.h>
+#include <BloodMoney/Game/ZHM3HitEvent.h>
+#include <BloodMoney/Game/CIngameMap.h>
+#include <BloodMoney/Game/ZPlaceBomb.h>
+#include <BloodMoney/Game/ZHM3Damage.h>
 #include <BloodMoney/Game/ZHitman3.h>
+
 // Items (HM3, not gamebase)
 #include <BloodMoney/Game/Items/ZHM3ItemTemplate.h>
 #include <BloodMoney/Game/Items/ZHM3ItemAmmo.h>
@@ -19,10 +24,14 @@
 #include <BloodMoney/Game/Items/ZHM3ItemTemplateWeapon.h>
 #include <BloodMoney/Game/Items/ZHM3ItemWeaponCustomTemplate.h>
 // On level stuff
+#include <BloodMoney/Game/OnLevel/ZM13PosController.h>
 #include <BloodMoney/Game/OnLevel/CMetalDetector.h>
+#include <BloodMoney/Game/OnLevel/CBodyContainer.h>
 #include <BloodMoney/Game/OnLevel/CKeycardReader.h>
 #include <BloodMoney/Game/OnLevel/ZZoneControl.h>
 #include <BloodMoney/Game/OnLevel/ZFireAlarm.h>
+#include <BloodMoney/Game/OnLevel/ZFurniture.h>
+#include <BloodMoney/Game/OnLevel/ZUsePoint.h>
 #include <BloodMoney/Game/OnLevel/ZVCR.h>
 // Level controls
 #include <BloodMoney/Game/LevelControls/ZHM3LevelControlHideout.h>
@@ -43,6 +52,31 @@
 // Loader sequence
 #include <BloodMoney/Game/LoaderSequence/ZLoader_Sequence_Info.h>
 #include <BloodMoney/Game/LoaderSequence/ZLoader_Sequence_Setup.h>
+// UI
+#include <BloodMoney/Game/UI/IWindowInterface.h>
+#include <BloodMoney/Game/UI/ZStandardWindow.h>
+#include <BloodMoney/Game/UI/IGUIElement.h>
+#include <BloodMoney/Game/UI/ZXMLGUISystem.h>
+#include <BloodMoney/Game/UI/CMainMenu.h>
+#include <BloodMoney/Game/UI/ZOSD.h>
+// Need move to Glacier
+#include <BloodMoney/Game/UI/ZCUSTOMFRAME.h>
+#include <BloodMoney/Game/UI/ZKerningFont.h>
+#include <BloodMoney/Game/UI/ZSIMPLEHTML.h>
+#include <BloodMoney/Game/UI/ZExtCharObj.h>
+#include <BloodMoney/Game/UI/ZCHAROBJ.h>
+#include <BloodMoney/Game/UI/ZLINEOBJ.h>
+#include <BloodMoney/Game/ZCheatMenu.h> // TODO: Move to UI!
+#include <BloodMoney/Game/UI/ZWINOBJ.h>
+#include <BloodMoney/Game/UI/ZWINPIC.h>
+#include <BloodMoney/Game/UI/ZTTFONT.h>
+#include <BloodMoney/Game/UI/ZFRAME.h>
+#include <BloodMoney/Game/UI/ZFONT.h>
+// Anim
+#include <Glacier/Animation/ActiveAnimation.h>
+#include <Glacier/Animation/Manager.h>
+#include <Glacier/Animation/Header.h>
+#include <Glacier/Animation/Model.h>
 // Etc
 #include <Glacier/ResourceCollection.h>
 #include <Glacier/ZEngineDataBase.h>
@@ -57,12 +91,23 @@
 #include <Glacier/ZEngineGeomControl.h>
 #include <Glacier/ZLnkActionQueue.h>
 #include <Glacier/ZLnkAction.h>
+#include <Glacier/Component/ZComponentBase.h>
+#include <Glacier/ZSysMem.h>
+// Materials
+#include <Glacier/Materials/BS_Runtime.h>
 // Items (gamebase)
 #include <Glacier/Items/ZItemState.h>
 #include <Glacier/Items/ZItemTemplateContainer.h>
 #include <Glacier/Items/ZItemTemplateWeapon.h>
 #include <Glacier/Geom/ZEditorGroup.h>
+#include <Glacier/Geom/ZGeomBuffer.h>
 #include <Glacier/Geom/ZGEOM.h>
+#include <Glacier/Geom/ZSNDOBJ.h>
+#include <Glacier/Geom/Z2DOBJ.h>
+#include <Glacier/Geom/ZPICOBJ.h>
+#include <Glacier/Geom/ZLIGHT.h>
+#include <Glacier/Geom/ZSHADOWMESHOBJ.h>
+#include <Glacier/Geom/ZSTDOBJPRIO.h>
 // ZSTL
 #include <Glacier/ZSTL/REFTAB.h>
 #include <Glacier/ZSTL/STRREFTAB.h>
@@ -73,6 +118,9 @@
 #include <Glacier/ZSTL/ZBlockAlloc.h>
 #include <Glacier/ZSTL/ZRefAlloc.h>
 #include <Glacier/Geom/ZSHAPE.h>
+#include <Glacier/Runtime/ZFactory.h>
+#include <Glacier/Fysix/ZCollisionBase.h>
+#include <Glacier/Fysix/ZCollisionWintel.h>
 // Vehicles
 #include <Glacier/Vehicle/PPart.h>
 #include <Glacier/Vehicle/ZLinkBase.h>

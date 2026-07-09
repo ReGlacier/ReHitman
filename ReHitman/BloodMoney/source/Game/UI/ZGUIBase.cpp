@@ -12,4 +12,9 @@ namespace Hitman::BloodMoney {
             ((void(__thiscall*)(ZGUIBase*,ZWINGROUP*,Glacier::Vector2*))BMConfigurationService::BMAPI_FunctionAddress_ZGUIBase_GetSize)(this, pGroup, pSize);
         }
     }
+
+    void ZGUIBase::GetPos(Glacier::Vector2* pPos)
+    {
+        *pPos = m_v2Pos;
+    }
 }

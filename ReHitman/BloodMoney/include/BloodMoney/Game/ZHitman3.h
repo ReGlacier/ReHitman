@@ -12,6 +12,7 @@
 namespace Hitman::BloodMoney
 {
     // fwds
+    class ZHitman3;
     class ZHM3Actor;
     class ZHM3ItemContainer;
     class ZHM3ItemTemplateWeapon;
@@ -70,7 +71,6 @@ namespace Hitman::BloodMoney
         Glacier::ZVector3 vColiPt;
     };
     RE_VERIFY_SIZE(SRailInfo, 0x34);
-
 
     // aliases
     using ZStackArrayLocalizedActionNames = Glacier::ZStackArray<61, Glacier::zstring>;
@@ -205,6 +205,9 @@ namespace Hitman::BloodMoney
         virtual void LoadObject(Glacier::IInputSerializerStream& stream);
         virtual void SaveObject(Glacier::IOutputSerializerStream& stream);
 
+        // methods
+        ZHitman3* Hitman() { return m_pHitman; }
+
         // types
         struct FireFlags {
             uint16_t m_bFireWeapon : 1;
@@ -238,7 +241,7 @@ namespace Hitman::BloodMoney
         };
 
         // members
-        class ZHitman3* m_pHitman;
+        ZHitman3* m_pHitman;
         Glacier::TIMETYPE m_ttLastAttackTime;
         Glacier::ZMSGID m_msgGetInventoryListPtr;
         FireFlags m_Flags;
@@ -263,7 +266,7 @@ namespace Hitman::BloodMoney
         virtual void SaveObject(Glacier::IOutputSerializerStream& stream);
 
         // members
-        class ZHitman3* m_pHitman;
+        ZHitman3* m_pHitman;
         Glacier::ZREF m_rHitman;
         EHM3Action m_eCurrentAction;
         Glacier::ZGEOM* m_pCurrentActionObject;

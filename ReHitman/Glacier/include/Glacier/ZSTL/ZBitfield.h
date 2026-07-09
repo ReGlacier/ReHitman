@@ -8,6 +8,9 @@ namespace Glacier
 	struct ZBitfieldBase
 	{
 		uint32_t m_Bitfield{ 0u };
+
+        uint32_t GetBitfield() const { return m_Bitfield; }
+        void SetBitfield(uint32_t value) { m_Bitfield = value; }
 	};
 
 	template <typename T>

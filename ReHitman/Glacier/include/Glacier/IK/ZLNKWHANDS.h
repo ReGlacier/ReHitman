@@ -7,28 +7,11 @@
 #include <Glacier/ZSDOwner.h>
 #include <Glacier/ZSTL/ZMath.h>
 #include <Glacier/Items/ITEMSTATE.h>
+#include <Glacier/Animation/ZBlendBone.h>
 #include <Glacier/ZAnimVariationHandle.h>
 
 namespace Glacier
 {
-    namespace Animation
-    {
-        struct ZBlendBone
-        {
-            ZQuat m_Quat;
-            ZVector3 m_Pos;
-
-            union {
-                float    m_Blend;
-                int32_t  m_lBlend;
-            };
-
-            int32_t  m_MagicNr;
-            uint32_t m_Align[3];
-        };
-        RE_VERIFY_SIZE(ZBlendBone, 48);
-    }
-
     struct SIKBoneCollision;
 
     enum EWHandsActionType : int {

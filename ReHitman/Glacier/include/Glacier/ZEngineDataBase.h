@@ -7,7 +7,7 @@
 #include <Glacier/ZLinkedListHeader.hpp>
 #include <Glacier/ZListNodeBase.h>
 #include <Glacier/ZScheduledUpdate.h>
-#include <Glacier/AnimationManager.h>
+#include <Glacier/Animation/Manager.h>
 
 #include <Glacier/PF4/Fwd.h>
 
@@ -261,5 +261,5 @@ namespace Glacier
         // Static methods
         static CCom* GetGlobalCom();
     };
-    RE_VERIFY_SIZE(ZEngineDataBase, 0x52D4);
+    RE_VERIFY_SIZE(ZEngineDataBase, 0x52D4); // verified
 }
