@@ -1,22 +1,6 @@
 #include <Glacier/ZSTL/REFTAB32.h>
-
-#if defined(REHITMAN_STANDALONE) || defined(REHITMAN_TESTS) // Only for separated testing without game instance
-#   define USE_STL_ALLOCATOR
-#else
-#   include <Glacier/ZSysMem.h>
-#   define USE_GLACIER_ALLOCATOR
-#endif
-
-// Override for testing env
-#ifdef REHITMAN_TESTS
-#   include <stdexcept>
-#   include <string>
-#   undef ZASSERT
-#   define ZASSERT(expr) \
-        if (!(expr)) { \
-            throw std::runtime_error("ZASSERT failed: " #expr " at " + std::to_string(__LINE__)); \
-        }
-#endif
+#include <Glacier/ZUniMemory.h>
+#include <Glacier/ZUniAssert.h>
 
 
 namespace Glacier
@@ -57,12 +41,7 @@ namespace Glacier
             return;
         }
 
-#       ifdef USE_STL_ALLOCATOR
-        std::free((void*)pBlk);
-#       else
-        // В оригинале используется оператор delete для блоков
-        ZSysMem::m_pInstance->Delete((void*)pBlk);
-#       endif
+        ZUniMemory::Free((void*)pBlk);
     }
 
     TabBlk* REFTAB32::NewBlock(void)
@@ -73,13 +52,7 @@ namespace Glacier
         }
 
         const size_t iRequiredSize = sizeof(TabBlk) + (BlkSize * sizeof(uint32_t));
-        TabBlk* pResult = nullptr;
-
-#       ifdef USE_STL_ALLOCATOR
-        pResult = reinterpret_cast<TabBlk*>(std::malloc(iRequiredSize));
-#       else
-        pResult = reinterpret_cast<TabBlk*>(ZSysMem::m_pInstance->New(EAllocType::DEFAULT_MEM, iRequiredSize));
-#       endif
+        TabBlk* pResult = (TabBlk*)ZUniMemory::Allocate(iRequiredSize);
         if (pResult)
         {
             // From Glacier code

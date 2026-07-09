@@ -43,7 +43,7 @@ namespace Glacier
         virtual uint32_t* GetRefPtrNr_LOST(int) { return nullptr; }
 
         // data
-        REFTAB* m_pFreeStack;
+        REFTAB* m_pFreeStack{nullptr};
     };
     RE_VERIFY_SIZE(STATICREFTAB, 0x20); // Verified
 }

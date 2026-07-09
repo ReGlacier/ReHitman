@@ -42,7 +42,8 @@ namespace Glacier
         char* m_gameName; //0x083C
         char pad_0840[252]; //0x0840
         int32_t m_heroControlMode; //0x093C
-        char pad_0940[20]; //0x0940
+        char pad_0940[19]; //0x0940
+        bool m_bRefsLocked; // 0x0953
         bool m_disableLight; //0x0954
         bool m_field0955;
         bool m_field0956;
@@ -150,4 +151,6 @@ namespace Glacier
         virtual void Function_0075(); //#75 +12c .rdata:0075fed8
         virtual void Function_0076(); //#76 +130 .rdata:0075fedc
     }; // Total size is 0x1700
+
+    RE_VERIFY_OFFSET(ZSysInterfaceWintel, m_bRefsLocked, 0x953); // Verified by ALLOCREF::FreeRef
 }

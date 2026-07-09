@@ -1,36 +1,13 @@
 #include <Glacier/ZSTL/REFTAB.h>
-
-#if defined(REHITMAN_STANDALONE) || defined(REHITMAN_TESTS) // Only for separated testing without game instance
-#   define USE_STL_ALLOCATOR
-#else
-#   include <Glacier/ZSysMem.h>
-#   define USE_GLACIER_ALLOCATOR
-#endif
-
-// Override for testing env
-#ifdef REHITMAN_TESTS
-#   include <stdexcept>
-#   include <string>
-#   undef ZASSERT
-#   define ZASSERT(expr) \
-        if (!(expr)) { \
-            throw std::runtime_error("ZASSERT failed: " #expr " at " + std::to_string(__LINE__)); \
-        }
-#endif
+#include <Glacier/ZUniMemory.h>
+#include <Glacier/ZUniAssert.h>
 
 
 namespace Glacier
 {
     REFTAB* REFTAB::MakeReftab(int pPoolSize, int pUserData)
     {
-        void* pRawMem = nullptr;
-
-#       ifdef USE_STL_ALLOCATOR
-        pRawMem = std::malloc(sizeof(REFTAB));
-#       else
-        pRawMem = ZSysMem::m_pInstance->New(EAllocType::DEFAULT_MEM, sizeof(REFTAB));
-#       endif
-
+        void* pRawMem = ZUniMemory::Allocate(sizeof(REFTAB));
         if (!pRawMem)
             return nullptr;
         
@@ -43,12 +20,7 @@ namespace Glacier
             return;
 
         pRefTab->~REFTAB();
-
-#       ifdef USE_STL_ALLOCATOR
-        std::free(pRefTab);
-#       else
-        ZSysMem::m_pInstance->Delete(pRefTab);
-#       endif
+        ZUniMemory::Free(pRefTab);
     }
 
     REFTAB::REFTAB(int pPoolSize, int pUserData)
@@ -555,22 +527,12 @@ namespace Glacier
     void REFTAB::DeleteBlock(TabBlk* pBlk)
     {
         ZASSERT(pBlk != nullptr);
-        
-#       ifdef USE_STL_ALLOCATOR
-        std::free((void*)pBlk);
-#       else
-        ZSysMem::m_pInstance->Delete((void*)pBlk);
-#       endif
+        ZUniMemory::Free((void*)pBlk);
     }
 
     TabBlk* REFTAB::NewBlock(void)
     {
         const size_t iTotalSize = (4 * BlkSize) + sizeof(TabBlk);
-
-#       ifdef USE_STL_ALLOCATOR
-        return reinterpret_cast<TabBlk*>(std::malloc(iTotalSize));
-#       else
-        return reinterpret_cast<TabBlk*>(ZSysMem::m_pInstance->New(EAllocType::DEFAULT_MEM, iTotalSize));
-#       endif
+        return (TabBlk*)ZUniMemory::Allocate(iTotalSize);
     }
 }

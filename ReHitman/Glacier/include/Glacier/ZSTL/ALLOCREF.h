@@ -8,11 +8,14 @@ namespace Glacier
     class ALLOCREF
     {
     public:
+        // methods
+        ALLOCREF(uint32_t lRefShift, uint32_t lNrActiveRefs);
+        
         // vtbl
-        virtual void Release(bool);
+        virtual ~ALLOCREF();
         virtual Glacier::ZREF NewRef();
-        virtual int GetActiveRefs(REFTAB* out);
-        virtual int GetNrActiveRefs();
+        virtual uint32_t GetActiveRefs(REFTAB* out);
+        virtual uint32_t GetNrActiveRefs();
         virtual bool FreeRef(Glacier::ZREF ref);
         virtual bool CheckRefActive(Glacier::ZREF ref);
         virtual void PrintRef(Glacier::ZREF ref); // Do nothing :(
