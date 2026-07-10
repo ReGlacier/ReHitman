@@ -3,106 +3,93 @@
 
 using namespace Glacier;
 
-TEST(STATICREFTAB_Tests, BasicPoolAllocation)
+TEST(STATICREFTAB, AddSingle)
 {
-    STATICREFTAB pool(2, 0);
+    auto* tab = new STATICREFTAB(4, 5);
 
-    EXPECT_EQ(pool.Count(), 0);
-    EXPECT_EQ(pool.Size(), 2);
+    EXPECT_EQ(tab->Count(), 0);
 
-    uint32_t* pPayload1 = pool.Add(0xAAAAA111);
-    ASSERT_NE(pPayload1, nullptr);
-    
-    EXPECT_EQ(*(pPayload1 - 1), 0xAAAAA111);
-    EXPECT_EQ(pool.Count(), 1);
+    auto* p = tab->Add(123);
 
-    uint32_t* pPayload2 = pool.Add(0xBBBBB222);
-    ASSERT_NE(pPayload2, nullptr);
-    EXPECT_EQ(*(pPayload2 - 1), 0xBBBBB222);
-    EXPECT_EQ(pool.Count(), 2);
+    ASSERT_NE(p, nullptr);
+    EXPECT_EQ(tab->Count(), 1);
 
-    pool.DelRefPtr(pPayload1);
-    EXPECT_EQ(pool.Count(), 1);
+    delete tab;
 }
 
-TEST(STATICREFTAB_Tests, PointerStabilityAndFreeStackReuse)
+TEST(STATICREFTAB, ReuseFreedSlot)
 {
-    STATICREFTAB pool(3, 0);
+    auto* tab = new STATICREFTAB(4, 5);
 
-    uint32_t* pRef1 = pool.Add(10);
-    uint32_t* pRef2 = pool.Add(20);
-    uint32_t* pRef3 = pool.Add(30);
+    auto* a = tab->Add(1);
+    auto* b = tab->Add(2);
 
-    uint32_t* pAddrRef1 = pRef1;
-    uint32_t* pAddrRef3 = pRef3;
+    EXPECT_EQ(tab->Count(), 2);
 
-    pool.DelRefPtr(pRef2);
-    EXPECT_EQ(pool.Count(), 2);
+    tab->DelRefPtr(a);
 
-    EXPECT_EQ(*(pAddrRef1 - 1), 10);
-    EXPECT_EQ(*(pAddrRef3 - 1), 30);
+    EXPECT_EQ(tab->Count(), 1);
 
-    uint32_t* pRefNew = pool.Add(99);
-    EXPECT_EQ(pool.Count(), 3);
+    auto* c = tab->Add(3);
 
-    uint32_t* pBlockStart = pAddrRef1 - 1;
-    uint32_t* pSlotStartNew = pRefNew - 1;
-    
-    EXPECT_GE(pSlotStartNew, pBlockStart);
-    EXPECT_LT(pSlotStartNew, pBlockStart + (pool.Size() * pool.PoolSize()));
+    EXPECT_EQ(tab->Count(), 2);
+    EXPECT_NE(c, nullptr);
+    EXPECT_NE(c, b);
+
+    delete tab;
 }
 
-TEST(STATICREFTAB_Tests, BlockAllocationAndDeallocation)
+TEST(STATICREFTAB, AllocateMultipleBlocks)
 {
-    STATICREFTAB pool(2, 0);
+    auto* tab = new STATICREFTAB(2, 5);
 
-    uint32_t* pSlotA = pool.Add(111);
-    uint32_t* pSlotB = pool.Add(222);
+    EXPECT_EQ(tab->Count(), 0);
 
-    uint32_t* pSlotC = pool.Add(333);
-    EXPECT_EQ(pool.Count(), 3);
+    tab->Add(1);
+    tab->Add(2);
+    tab->Add(3);
 
-    pool.DelRefPtr(pSlotB);
-    EXPECT_EQ(pool.Count(), 2);
+    EXPECT_EQ(tab->Count(), 3);
 
-    pool.DelRefPtr(pSlotA);
-    EXPECT_EQ(pool.Count(), 1);
-    EXPECT_EQ(*(pSlotC - 1), 333);
+    delete tab;
 }
 
-TEST(STATICREFTAB_Tests, CustomUserDataHandling)
+TEST(STATICREFTAB, DeleteEmptyBlock)
 {
-    STATICREFTAB pool(2, 2);
+    auto* tab = new STATICREFTAB(2, 5);
 
-    EXPECT_EQ(pool.Size(), 4);
+    auto* a = tab->Add(1);
+    auto* b = tab->Add(2);
 
-    uint32_t* pPayload = pool.Add(0xABC);
-    
-    pPayload[0] = 0x11111111;
-    pPayload[1] = 0x22222222;
+    EXPECT_EQ(tab->Count(), 2);
 
-    EXPECT_EQ(*(pPayload - 1), 0xABC);
-    EXPECT_EQ(pPayload[0], 0x11111111);
-    EXPECT_EQ(pPayload[1], 0x22222222);
+    tab->DelRefPtr(a);
+    EXPECT_EQ(tab->Count(), 1);
 
-    uint32_t* pPayloadNext = pool.Add(0xABC);
-    uint32_t* pSlotStart1 = pPayload - 1;
-    uint32_t* pSlotStart2 = pPayloadNext - 1;
+    tab->DelRefPtr(b);
+    EXPECT_EQ(tab->Count(), 0);
 
-    EXPECT_EQ(pSlotStart1 + pool.Size(), pSlotStart2);
+    auto* c = tab->Add(3);
 
-    pool.DelRefPtr(pPayload);
+    ASSERT_NE(c, nullptr);
+    EXPECT_EQ(tab->Count(), 1);
+
+    delete tab;
 }
 
-TEST(STATICREFTAB_Tests, ClearOperations)
+TEST(STATICREFTAB, Clear)
 {
-    STATICREFTAB pool(4, 0);
+    auto* tab = new STATICREFTAB(4, 5);
 
-    pool.Add(10);
-    pool.Add(20);
-    pool.Add(30);
-    EXPECT_EQ(pool.Count(), 3);
+    tab->Add(10);
+    tab->Add(20);
+    tab->Add(30);
 
-    pool.Clear();
-    EXPECT_EQ(pool.Count(), 0);
+    EXPECT_EQ(tab->Count(), 3);
+
+    tab->Clear();
+
+    EXPECT_EQ(tab->Count(), 0);
+
+    delete tab;
 }

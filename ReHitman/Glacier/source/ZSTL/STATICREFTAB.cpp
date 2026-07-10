@@ -31,15 +31,15 @@ namespace Glacier
 
     uint32_t* STATICREFTAB::Add(uint32_t rRef)
     {
-        this->EleCount++;
+        EleCount++;
 
         if (m_pFreeStack->Count() == 0)
         {
-            TabBlk* pNewBlk = this->NewBlock();
+            TabBlk* pNewBlk = NewBlock();
             ZASSERT(pNewBlk != nullptr);
 
             pNewBlk->_Prev = nullptr;
-            pNewBlk->_Next = this->TabFirstPtr;
+            pNewBlk->_Next = TabFirstPtr;
             pNewBlk->_Cou = 0;
 
             if (TabFirstPtr)
@@ -49,7 +49,7 @@ namespace Glacier
 
             TabFirstPtr = pNewBlk;
 
-            int refsInBlock = this->m_lRefsPrBlk & 0x7FFFFFFF;
+            int refsInBlock = m_lRefsPrBlk & 0x7FFFFFFF;
             
             uint32_t* pSlotIterator = reinterpret_cast<uint32_t*>(pNewBlk + 1);
             for (int i = 0; i < refsInBlock; ++i)
@@ -71,7 +71,7 @@ namespace Glacier
             m_pFreeStack->RunInitNxtRef(&it);
 
             uint32_t rawAddr = m_pFreeStack->RunNxtRef(&it);
-            
+
             if (rawAddr != 0)
             {
                 pTargetSlot = reinterpret_cast<uint32_t*>(rawAddr);                
@@ -105,7 +105,7 @@ namespace Glacier
             m_pFreeStack = nullptr;
         }
 
-        TabBlk* pCurrentBlk = this->TabFirstPtr;
+        TabBlk* pCurrentBlk = TabFirstPtr;
         while (pCurrentBlk)
         {
             TabBlk* pToKill = pCurrentBlk;
@@ -148,29 +148,24 @@ namespace Glacier
 
             if (m_pFreeStack)
             {
-                // 1. Создаем временный стек такого же размера для фильтрации
-                REFTAB* pTmpStack = REFTAB::MakeReftab(this->m_lRefsPrBlk & 0x7FFFFFFF, 0);
+                REFTAB* pTmpStack = REFTAB::MakeReftab(m_lRefsPrBlk & 0x7FFFFFFF, 0);
                 
                 RefRun it;
                 m_pFreeStack->RunInitNxtRef(&it);
                 
-                // 2. Первый проход: собираем во временный стек только живые слоты
                 while (uint32_t* pFreeSlotValueRef = m_pFreeStack->RunNxtRefPtr(&it))
                 {
                     uint32_t* pCheckedSlot = reinterpret_cast<uint32_t*>(*pFreeSlotValueRef);                    
                     TabBlk* pCheckedParent = *reinterpret_cast<TabBlk**>(&pCheckedSlot[this->EleSize - 1]);
                     
-                    // Если слот принадлежит ЖИВОМУ блоку (не pParentBlk), сохраняем его
                     if (pCheckedParent != pParentBlk)
                     {
                         pTmpStack->Add(reinterpret_cast<uint32_t>(pCheckedSlot));
                     }
                 }
                 
-                // 3. Полностью зачищаем оригинальный свободный стек
                 m_pFreeStack->Clear();
                 
-                // 4. Второй проход: возвращаем отфильтрованные живые слоты обратно в m_pFreeStack
                 if (pTmpStack->Count() > 0)
                 {
                     RefRun tmpIt;
@@ -182,7 +177,6 @@ namespace Glacier
                     }
                 }
                 
-                // 5. Уничтожаем временный стек
                 REFTAB::DeleteReftab(pTmpStack);
             }
 

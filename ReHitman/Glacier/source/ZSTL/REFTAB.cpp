@@ -324,11 +324,11 @@ namespace Glacier
 
             if (pLastElementData == pTargetDeleteData)
             {
-                memset(pLastElementData, 0x55, EleSize);
+                memset(pLastElementData, 0x55, EleSize * sizeof(uint32_t));
             }
             else
             {
-                memcpy(pTargetDeleteData, pLastElementData, EleSize);
+                memcpy(pTargetDeleteData, pLastElementData, EleSize * sizeof(uint32_t));
             }
         }
 
