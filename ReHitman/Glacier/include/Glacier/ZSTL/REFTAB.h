@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <type_traits>
 #include <Glacier/Glacier.h>
 #include <Glacier/GlacierFWD.h>
 #include <Glacier/ReGlacier.h>
@@ -116,6 +117,7 @@ namespace Glacier
         virtual TabBlk* NewBlock(void);
 
         // STL Iterators
+        template <typename T = uint32_t>
         class Iterator 
         {
         private:
@@ -130,10 +132,10 @@ namespace Glacier
 
         public:
             using iterator_category = std::forward_iterator_tag;
-            using value_type        = uint32_t;
+            using value_type        = T;
             using difference_type   = std::ptrdiff_t;
-            using pointer           = uint32_t*;
-            using reference         = uint32_t&;
+            using pointer           = T*;
+            using reference         = const T&;
 
             Iterator(REFTAB* container, bool isEnd) : m_pContainer(container) 
             {
@@ -151,8 +153,29 @@ namespace Glacier
                 }
             }
 
-            reference operator*() const { return *m_pCurrentPtr; }
-            pointer operator->() const { return m_pCurrentPtr; }
+            value_type operator*() const 
+            { 
+                if constexpr (std::is_pointer_v<value_type>)
+                {
+                    return reinterpret_cast<value_type>(*m_pCurrentPtr); 
+                }
+                else
+                {
+                    return static_cast<value_type>(*m_pCurrentPtr);
+                }
+            }
+
+            value_type operator->() const 
+            { 
+                if constexpr (std::is_pointer_v<value_type>)
+                {
+                    return reinterpret_cast<value_type>(*m_pCurrentPtr); 
+                }
+                else
+                {
+                    return static_cast<value_type>(*m_pCurrentPtr);
+                }
+            }
 
             Iterator& operator++() 
             {
@@ -180,9 +203,9 @@ namespace Glacier
                 return !(*this == other);
             }
         };
-
-        Iterator begin() { return Iterator(this, false); }
-        Iterator end()   { return Iterator(this, true); }
+        
+        Iterator<uint32_t> begin() { return Iterator<uint32_t>(this, false); }
+        Iterator<uint32_t> end()   { return Iterator<uint32_t>(this, true); }
     };
     RE_VERIFY_SIZE(REFTAB, 0x1C);
 }
