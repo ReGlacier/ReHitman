@@ -109,6 +109,7 @@ namespace
         if (!m_lActRefNr)
             return 0;
 
+        // TODO: Need replace this code to actual glacier... idk
         std::vector<uint8_t> freeSlotsMap(m_lActRefNr, 0);
 
         if (m_pRefStack)

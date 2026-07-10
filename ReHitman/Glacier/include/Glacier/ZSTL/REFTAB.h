@@ -206,6 +206,9 @@ namespace Glacier
         
         Iterator<uint32_t> begin() { return Iterator<uint32_t>(this, false); }
         Iterator<uint32_t> end()   { return Iterator<uint32_t>(this, true); }
+
+    protected:
+        void MakeDirty();
     };
     RE_VERIFY_SIZE(REFTAB, 0x1C);
 }

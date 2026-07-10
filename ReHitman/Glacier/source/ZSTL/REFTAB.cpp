@@ -377,7 +377,7 @@ namespace Glacier
         pRefRun->_RunDir = 1;
         pRefRun->_RunPtr = TabFirstPtr;
 
-        m_lRefsPrBlk &= ~0x80000000;
+        MakeDirty();
     }
 
     void REFTAB::RunInitPrevRef(RefRun* pRefRun) const
@@ -397,7 +397,7 @@ namespace Glacier
         pRefRun->_RunPtr = TabBlockPtr;
         pRefRun->_RunCou = TabBlockPtr ? TabBlockPtr->_Cou : 0;
 
-        m_lRefsPrBlk &= ~0x80000000;
+        MakeDirty();
     }
 
     uint32_t REFTAB::RunNxtRef(RefRun* pRefRun) const
@@ -534,5 +534,10 @@ namespace Glacier
     {
         const size_t iTotalSize = (4 * BlkSize) + sizeof(TabBlk);
         return (TabBlk*)ZUniMemory::Allocate(iTotalSize);
+    }
+
+    void REFTAB::MakeDirty()
+    {
+        m_lRefsPrBlk &= ~0x80000000;
     }
 }

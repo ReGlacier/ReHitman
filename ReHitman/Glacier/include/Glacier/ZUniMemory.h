@@ -35,3 +35,15 @@ struct ZUniMemory
         Free(ptr);
     }
 };
+
+#ifdef REHITMAN_TESTS
+#   define STATIC_CLASS_VAR(cls, type, name) static type name;
+#   define STATIC_CLASS_VAR_ARRAY(cls, type, name, size) static type name[size];
+#   define STATIC_CLASS_VAR_IMPL(cls, type, name, addr, default_value) type cls::name = default_value;
+#   define STATIC_CLASS_VAR_ARRAY_IMPL(cls, type, name, size, addr) type cls::name[size] = {};
+#else
+#   define STATIC_CLASS_VAR(cls, type, name) static type& name;
+#   define STATIC_CLASS_VAR_ARRAY(cls, type, name, size) static type (&name)[size];
+#   define STATIC_CLASS_VAR_IMPL(cls, type, name, addr, default_value) type& cls::name = *reinterpret_cast<type*>(addr);
+#   define STATIC_CLASS_VAR_ARRAY_IMPL(cls, type, name, size, addr) type (&cls::name)[size] = *reinterpret_cast<type(*)[size]>(addr);
+#endif
