@@ -27,6 +27,7 @@ namespace Glacier
         float x = 0.f, y = 0.f, z = 0.f;
 
         Vector3() = default;
+        Vector3(float scalar) : x(scalar), y(scalar), z(scalar) {}
         Vector3(float _x, float _y, float _z) : x(_x), y(_y), z(_z) {}
 
         bool operator==(const Vector3& with) const {

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Glacier/ReGlacier.h>
+
 
 namespace Glacier
 {
@@ -22,8 +24,15 @@ namespace Glacier
         };
 
         // vtbl
-        virtual void startElement(const char *, const char **);
-        virtual void endElement(const char *);
+        virtual void startElement(const char* name, const char** attrs);
+        virtual void endElement(const char* name);
+
+        // methods
+        SimpleXML();
+
+        int XML_Parse(char* buffer, int length, int isFinal);
+        const char* GetAttr(const char** attrs, const char* name);
+        int getElement();
 
         // data
         char* m_pStart;
@@ -33,5 +42,9 @@ namespace Glacier
         char* m_pTag;
         int m_nAttributes;
         char* m_Attributes[NATTRIBUTES];
+
+    private: // private stuff
+        int printError(const char* psErrorMessage);
     };
+    RE_VERIFY_SIZE(SimpleXML, 0x1AC);
 }

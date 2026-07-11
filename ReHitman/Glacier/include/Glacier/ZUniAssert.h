@@ -1,5 +1,9 @@
 #pragma once
 
+#ifndef ZASSERT
+#include <Glacier/GlacierFWD.h>
+#endif
+
 // INCLUDE ONLY IN CPP AND ONLY AFTER ALL HEADERS!!!
 #ifdef REHITMAN_TESTS
 #   include <stdexcept>
