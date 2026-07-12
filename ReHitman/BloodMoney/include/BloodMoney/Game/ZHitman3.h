@@ -4,7 +4,7 @@
 #include <Glacier/ZPlayer.h>
 #include <Glacier/Glacier.h>
 #include <Glacier/ZSTL/zstring.h>
-#include <Glacier/ZSTL/ZBlockArrayBase.h>
+#include <Glacier/ZSTL/ZArray.h>
 
 #include <BloodMoney/Game/LevelControls/ESecurityZone.h>
 #include <BloodMoney/Game/Actions/EHM3Action.h>
@@ -604,7 +604,7 @@ namespace Hitman::BloodMoney
         Glacier::Animation::Header* m_pHoldMobile;
         Glacier::Animation::Header* m_pHoldBinoculars;
         Glacier::Animation::Header* m_pHoldSausage;
-        Glacier::ZBlockArrayBase m_UBAnimArray;
+        Glacier::ZArray<Glacier::Animation::Header*> m_UBAnimArray;
         struct ZFootPrints* m_pFootPrints;
         struct ZBloodTrails* m_pBloodTrails;
         Glacier::ZMSGID m_msgProjectileHit;

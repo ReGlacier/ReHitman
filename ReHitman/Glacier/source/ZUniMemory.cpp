@@ -35,6 +35,9 @@ void* ZUniMemory::Allocate(int bytes, Glacier::EAllocType eAllocType)
 
 void ZUniMemory::Free(void* ptr)
 {
+    if (ptr == nullptr) 
+        return;
+
 #   ifdef USE_STL_ALLOCATOR
     std::free(ptr);
 #   else
