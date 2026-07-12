@@ -28,6 +28,7 @@ namespace Glacier
 
         Vector3() = default;
         Vector3(float scalar) : x(scalar), y(scalar), z(scalar) {}
+        Vector3(const float* pvPos) : x(pvPos[0]), y(pvPos[1]), z(pvPos[2]) {}
         Vector3(float _x, float _y, float _z) : x(_x), y(_y), z(_z) {}
 
         bool operator==(const Vector3& with) const {
@@ -40,6 +41,39 @@ namespace Glacier
             y = v.y;
             z = v.z;
 
+            return *this;
+        }
+
+        Vector3 operator-(const Vector3& other) const
+        {
+            return {
+                x - other.x,
+                y - other.y,
+                z - other.z
+            };
+        }
+
+        Vector3& operator*(float fScalar)
+        {
+            x *= fScalar;
+            y *= fScalar;
+            z *= fScalar;
+            return *this;
+        }
+
+        Vector3& operator/(float fScalar)
+        {
+            x /= fScalar;
+            y /= fScalar;
+            z /= fScalar;
+            return *this;
+        }
+
+        Vector3& operator+(float fScalar)
+        {
+            x += fScalar;
+            y += fScalar;
+            z += fScalar;
             return *this;
         }
     };
