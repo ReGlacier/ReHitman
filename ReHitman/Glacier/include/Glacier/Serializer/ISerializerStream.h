@@ -17,6 +17,8 @@ namespace Glacier
 	{
 		struct IREFConverter
 		{
+			IREFConverter() = default;
+			
 			virtual ZREF GetRef();
 			virtual void SetRef(ZREF ref);
 		};

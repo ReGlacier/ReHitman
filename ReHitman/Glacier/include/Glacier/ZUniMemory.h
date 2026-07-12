@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Glacier/ZSTL/EAllocType.h>
 #include <utility>
 
 
@@ -12,6 +13,7 @@
 struct ZUniMemory
 {
     static void* Allocate(int bytes);
+    static void* Allocate(int bytes, Glacier::EAllocType eAllocType);
     static void Free(void* ptr);
 
     template <typename T, typename... TArgs>

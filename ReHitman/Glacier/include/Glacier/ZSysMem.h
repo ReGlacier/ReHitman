@@ -2,23 +2,12 @@
 
 #include <cstdint>
 #include <Glacier/ReGlacier.h>
+#include <Glacier/ZSTL/EAllocType.h>
 #include <Glacier/Component/ZComponentSingleton.h>
 
 
 namespace Glacier
 {
-    enum EAllocType : int
-    {
-        RENDERCPU_MEM = 0x0,
-        RENDERPRIMACCESS_MEM = 0x1,
-        DEFAULT_MEM = 0x2,
-        SLOW_MEM = 0x3,
-        FAST_MEM = 0x4,
-        STATIC_MEM = 0x5,
-        END_OF_ALLOCATOR_TYPES = 0x6,
-        // There are no 'physics' mem on PC
-    };
-
     struct ZAllocatorBase;
 
     struct ZSysmemDebugHandler : ZGlobalComponentBase

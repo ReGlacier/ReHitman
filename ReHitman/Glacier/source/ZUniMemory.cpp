@@ -12,11 +12,16 @@
 
 void* ZUniMemory::Allocate(int bytes)
 {
+    return Allocate(bytes, Glacier::EAllocType::DEFAULT_MEM);
+}
+
+void* ZUniMemory::Allocate(int bytes, Glacier::EAllocType eAllocType)
+{
     void* ptr = nullptr;
 #   ifdef USE_STL_ALLOCATOR
     ptr = std::malloc(bytes);
 #   else
-    ptr = Glacier::ZSysMem::m_pInstance->New(Glacier::EAllocType::DEFAULT_MEM, bytes);
+    ptr = Glacier::ZSysMem::m_pInstance->New(eAllocType, bytes);
 #   endif
 
     // idk, maybe not need to use this? Idk)

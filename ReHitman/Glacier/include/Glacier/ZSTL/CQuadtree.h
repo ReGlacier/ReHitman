@@ -147,6 +147,5 @@ namespace Glacier
 		float m_fScale;
 		ZVector3 m_vOrigin;
 	};
-
 	RE_VERIFY_SIZE(CQuadtree, 0x30);
 }
