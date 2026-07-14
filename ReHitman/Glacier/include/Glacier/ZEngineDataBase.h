@@ -5,7 +5,7 @@
 #include <Glacier/ReGlacier.h>
 #include <Glacier/Geom/ZEntityLocator.h> // ZBaseGeom
 #include <Glacier/ZLinkedListHeader.hpp>
-#include <Glacier/ZListNodeBase.h>
+#include <Glacier/ZSTL/ZList.h>
 #include <Glacier/ZScheduledUpdate.h>
 #include <Glacier/Animation/Manager.h>
 
@@ -151,7 +151,7 @@ namespace Glacier
         int m_lLockMinMax;
         MYSTR m_FileName;
         ZRTString m_ZMsgStrings[1024];
-        ZPStrHash* m_pZMessageHash;
+        ZPStrHash<unsigned int>* m_pZMessageHash;
         uint32_t m_iNumRegisteredMessages;
         uint8_t* m_pStaticBuffer;
         int m_lStaticBufferLength;

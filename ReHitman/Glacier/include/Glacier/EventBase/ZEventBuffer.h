@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Glacier/ReGlacier.h>
-#include <Glacier/ZListNodeBase.h>
+#include <Glacier/ZSTL/ZList.h>
 #include <Glacier/GlacierFWD.h>
 #include <Glacier/EventBase/ZEventBase.h>
 #include <Glacier/ZSTL/ZFixedSizeMemoryManager.h>

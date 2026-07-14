@@ -85,9 +85,6 @@ namespace Glacier
     enum ALLOCSEQUENCESTATUS {};
     struct LocomotionInfo;
 
-    struct WEAPONOPERATION {};
-    enum EFootSide;
-
     class ZCheckPointBuffer; // NOT AVAILABLE FOR PC ?
 
     class ZEntityLocator;

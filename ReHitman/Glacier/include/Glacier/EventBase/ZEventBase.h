@@ -3,7 +3,7 @@
 #include <Glacier/ReGlacier.h>
 #include <Glacier/ZSTL/ZRTTI.h>
 #include <Glacier/GlacierFWD.h>
-#include <Glacier/ZListNodeBase.h>
+#include <Glacier/ZSTL/ZList.h>
 #include <Glacier/ZScheduledScript.h>
 #include <Glacier/RTP/Base.h>
 #include <Glacier/ZSTL/TIMETYPE.h>
