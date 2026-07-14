@@ -43,7 +43,7 @@ namespace Hitman::BloodMoney
     public:
         // vtbl (no changes)
         // data
-        Glacier::ZPStrHash m_TutorialsHintsShown;
+        Glacier::ZPStrHash<int> m_TutorialsHintsShown;
         bool m_bSwingKingDead;
         bool m_bScoopDead;
         RE_ADD_PADDING(2);

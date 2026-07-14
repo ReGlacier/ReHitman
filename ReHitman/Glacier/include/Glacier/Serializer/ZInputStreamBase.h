@@ -29,6 +29,21 @@ namespace Glacier
             return value;
         }
 
+        template <typename T>
+        T GetAndChangeEndiannessIfRequired()
+        {
+            T value {};
+            if (m_ChangeEndianness)
+            {
+                ReadChangeEndianness((char*)&value, sizeof(T), 3u);
+            }
+            else
+            {
+                ReadRaw((char*)&value, sizeof(T));
+            }
+            return value;
+        }
+
         void SetBigEndian(bool bigEndian);
 
         // members

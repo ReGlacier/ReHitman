@@ -44,6 +44,9 @@ namespace Glacier
         void CheckSignature();
         ZSuccess CheckTag(ZPackedStream::ETag eTag);
         ZSuccess CheckName(ZToken token);
+        void VisitStringTable(ISerializerVisitor* visitor, const ZToken& token);
+        void VisitStringTableBitfield(ISerializerVisitor* visitor, const ZToken& token);
+        void VisitBitfield(ISerializerVisitor* visitor, const ZToken& token);
 
         // members
         ZInputStreamBase* m_Input;

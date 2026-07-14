@@ -17,8 +17,7 @@ namespace Glacier
      */
     struct ISerializerVisitor
     {
-        /** @brief Visits an inline unsigned integer token payload. */
-        virtual void Data(const ZToken token, const unsigned int) {}
+        virtual void Data(const ZToken token, const char*) {}
         /** @brief Visits a double value. */
         virtual void Data(const ZToken token, double*) {}
         /** @brief Visits a float value. */
@@ -37,10 +36,9 @@ namespace Glacier
         virtual void Data(const ZToken token, uint8_t*) {}
         /** @brief Visits a boolean value. */
         virtual void Data(const ZToken token, bool*) {};
-        /** @brief Visits a string value. */
-        virtual void Data(const ZToken token, const char*) {};
+        virtual void Data(const ZToken token, void*, const uint32_t) {};
         /** @brief Visits a bitfield described by up to 32 string labels. */
-        virtual void Bitfield(const ZToken token, const char *(*)[32]) {} // WTF???
+        virtual void Bitfield(const ZToken token, const char *(*)[32]) {}
         /** @brief Visits a serialized object/reference id. */
         virtual void Reference(const ZToken token, uint32_t) {}
         /** @brief Visits a container with an element count. */
@@ -48,11 +46,11 @@ namespace Glacier
         /** @brief Called when an object begins. */
         virtual void BeginObject(const ZToken token) {}
         /** @brief Called when an object ends. */
-        virtual void EndObject(const ZToken token) {}
+        virtual void EndObject() {}
         /** @brief Called when an array begins. */
-        virtual void BeginArray(const ZToken token, const uint32_t) {}
+        virtual void BeginArray(const ZToken token, const uint32_t capacity) {}
         /** @brief Called when an array ends. */
-        virtual void EndArray(const ZToken token) {}
+        virtual void EndArray() {}
         /** @brief Called when a stream skip marker is encountered. */
         virtual void Skip() {}
         /** @brief Called at the end of the stream walk. */
@@ -75,7 +73,7 @@ namespace Glacier
     struct ZSerializerVisitor_Skip : public ISerializerVisitor
     {
         // vtbl
-        void Data(const ZToken token, const unsigned int) override;
+        void Data(const ZToken token, const char*) override;
         void Data(const ZToken token, double*) override;
         void Data(const ZToken token, float*) override;
         void Data(const ZToken token, int32_t*) override;
@@ -85,12 +83,12 @@ namespace Glacier
         void Data(const ZToken token, int8_t*) override;
         void Data(const ZToken token, uint8_t*) override;
         void Data(const ZToken token, bool*)  override;
-        void Data(const ZToken token, const char*)  override;
+        void Data(const ZToken token, void*, const uint32_t)  override;
         void Bitfield(const ZToken token, const char *(*)[32]) override;
         void Reference(const ZToken token, uint32_t) override;
         void Container(const ZToken token, const uint32_t) override;
         void BeginObject(const ZToken token) override;
-        void EndObject(const ZToken token) override;
+        void EndObject() override;
         void End() override;
 
         // methods
@@ -130,7 +128,7 @@ namespace Glacier
     {
         // vtbl
         void Skip() override;
-        void EndObject(const ZToken token) override;
+        void EndObject() override;
 
         // methods
         /** @brief Creates a visitor that skips from the current object to the next mark. */

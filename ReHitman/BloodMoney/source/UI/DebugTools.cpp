@@ -79,6 +79,7 @@
 #include <Glacier/Animation/Model.h>
 // Etc
 #include <Glacier/ResourceCollection.h>
+#include <Glacier/Serializer/ISerializerStream.h>
 #include <Glacier/ZEngineDataBase.h>
 #include <Glacier/ZSysInterfaceWintel.h>
 #include <Glacier/ZActionManager.h>

@@ -16,7 +16,7 @@ namespace Glacier
     {
     }
 
-    void ZSerializerVisitor_Skip::Data(const ZToken, const unsigned int)
+    void ZSerializerVisitor_Skip::Data(const ZToken, const char*)
     {
         AssertInsideSkippedObject(m_Depth);
     }
@@ -66,7 +66,7 @@ namespace Glacier
         AssertInsideSkippedObject(m_Depth);
     }
 
-    void ZSerializerVisitor_Skip::Data(const ZToken, const char*)
+    void ZSerializerVisitor_Skip::Data(const ZToken, void*, const uint32_t)
     {
         AssertInsideSkippedObject(m_Depth);
     }
@@ -91,7 +91,7 @@ namespace Glacier
         ++m_Depth;
     }
 
-    void ZSerializerVisitor_Skip::EndObject(const ZToken)
+    void ZSerializerVisitor_Skip::EndObject()
     {
         --m_Depth;
     }
@@ -111,9 +111,9 @@ namespace Glacier
         m_SkipFound = true;
     }
 
-    void ZSerializerVisitor_SkipToNextMark::EndObject(const ZToken token)
+    void ZSerializerVisitor_SkipToNextMark::EndObject()
     {
-        ZSerializerVisitor_Skip::EndObject(token);
+        ZSerializerVisitor_Skip::EndObject();
         ZASSERT(m_Depth != 0);
     }
 

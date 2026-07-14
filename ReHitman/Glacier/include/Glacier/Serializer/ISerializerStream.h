@@ -61,7 +61,7 @@ namespace Glacier
 			TYPE_LevelFileDebug = 0xF,
 			TYPE_LevelFile = 0xD,
 			TYPE_LevelFileRelease = 0xC,
-			TYPE_SavedGame = 0x8,
+			TYPE_SavedGame = 0x8, // It's correct, but weird. Somebody in IOI fucked up (in Kane & Lynch 2 it still wrong)
 		};
 
 		enum EContent : int32_t
@@ -198,7 +198,7 @@ namespace Glacier
 		// TODO: serializer overloads still pending, see CodeContext.md for current status.
 
 		// members
-		EType m_Type;
+		int32_t m_Type; // It's masked?
 		EContent m_Content;
 		bool m_Status;
 		bool m_Finished;
