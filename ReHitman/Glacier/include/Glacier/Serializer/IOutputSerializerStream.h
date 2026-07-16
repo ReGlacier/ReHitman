@@ -38,20 +38,20 @@ namespace Glacier
         template <typename T>
         void Save(ZToken token, const T& value)
         {
-            ISerializerStream::Exchage(token, value);
+            ISerializerStream::Exchange(token, value);
         }
 
         template <typename T>
         void Save(const char* psToken, const T& value)
         {
             ZToken token = GetToken(psToken);
-            ISerializerStream::Exchage(token, value);
+            ISerializerStream::Exchange(token, value);
         }
 
         template <typename T, size_t N>
         void Save(ZToken token, const float arr[N])
         {
-            ISerializerStream::ExchangeArray<T>(token, &arr[0], N);
+            ISerializerStream::ExchangeArray(token, arr, static_cast<uint32_t>(N));
         }
         
         // NOTE: Need support template spec of T[N] | float[3] as example
