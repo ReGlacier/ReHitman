@@ -18,9 +18,9 @@ namespace Glacier
     struct RefRun;
     
     /// FWD
-    class ISerializerStream;
-    class IInputSerializerStream;
-    class IOutputSerializerStream;
+    struct ISerializerStream;
+    struct IInputSerializerStream;
+    struct IOutputSerializerStream;
 
     class ZPackedInput;
     class ZScene;

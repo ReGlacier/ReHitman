@@ -1,5 +1,8 @@
+#include <Glacier/ZUniMemory.h>
 #include <Glacier/Serializer/ZDictionary_Serializerlib.h>
+#include <Glacier/Serializer/ZTokenTable_Serializerlib.h>
 #include <Glacier/Serializer/ZOutputStreamBase.h>
+#include <Glacier/Serializer/ZInputStreamBase.h>
 #include <Glacier/Serializer/ZPackedDictionary.h>
 #include <Glacier/Serializer/ZFastDictionary.h>
 #include <Glacier/Serializer/ZDictionary.h>
@@ -18,24 +21,19 @@ namespace Glacier
             return static_cast<uint8_t>(*pWord++) & 0x7F;
         }
 
-        uint32_t CountPackedNodeBytes(const ZFastDictionary::cNode& node, bool includeTerminators, uint32_t depth)
+        uint32_t CountNodeWordBytes(const ZFastDictionary::cNode& node, bool includeTerminators, uint32_t depth)
         {
             uint32_t result = 0;
-            bool hasWrittenWord = node.m_Token != ZToken::Void;
 
-            if (hasWrittenWord && includeTerminators)
-                ++result;
+            if (node.m_Token != ZToken::Void)
+                result = includeTerminators ? depth + 1 : depth;
 
             for (auto* pChild : node.m_Children)
             {
                 if (!pChild)
                     continue;
 
-                if (hasWrittenWord)
-                    result += depth;
-
-                result += 1 + CountPackedNodeBytes(*pChild, includeTerminators, depth + 1);
-                hasWrittenWord = true;
+                result += CountNodeWordBytes(*pChild, includeTerminators, depth + 1);
             }
 
             return result;
@@ -58,7 +56,7 @@ namespace Glacier
     {
     }
 
-    ZToken* ZDictionary::GetToken(ZToken* result, const char* word)
+    ZToken ZDictionary::GetToken(const char* word)
     {
         const char* pWord = word ? word : "";
         uint32_t low = 0;
@@ -71,8 +69,7 @@ namespace Glacier
 
             if (entry.m_String == pWord)
             {
-                *result = entry.m_Token;
-                return result;
+                return entry.m_Token;
             }
 
             if (entry.m_String < pWord)
@@ -91,29 +88,47 @@ namespace Glacier
 
         m_TokenTable[low].m_String = pWord;
         m_TokenTable[low].m_Token = ZToken(static_cast<int32_t>(stringIndex));
-        *result = ZToken(static_cast<int32_t>(stringIndex));
-        return result;
+        return ZToken(static_cast<int32_t>(stringIndex));
     }
 
     ZDictionary_Serializerlib::~ZDictionary_Serializerlib() = default;
 
     ZDictionary_Serializerlib::ZDictionary_Serializerlib() = default;
 
-    void ZDictionary_Serializerlib::SaveAsTokenTable(ZOutputStreamBase* pStream)
+    void ZDictionary_Serializerlib::SaveAsTokenTable(ZOutputStreamBase& pStream)
     {
         ZTokenTable_Serializerlib tokenTable(*this);
         tokenTable.Save(pStream);
     }
 
-    void ZDictionary_Serializerlib::SaveAsPackedDictionary(ZOutputStreamBase* pStream)
+    void ZDictionary_Serializerlib::SaveAsPackedDictionary(ZOutputStreamBase& pStream)
     {
         ZPackedDictionary_Serializerlib packedDictionary(*this);
         packedDictionary.Save(pStream);
     }
 
+    ZFastDictionary::cNode::cNode()
+    {
+        std::memset(&m_Children[0], 0x0, sizeof(m_Children));
+        m_Token = ZToken::Void;
+    }
+
+    ZFastDictionary::cNode::~cNode()
+    {
+        for (auto*& pChild : m_Children)
+        {
+            if (!pChild)
+                continue;
+
+            pChild->~cNode();
+            ZUniMemory::Free(pChild);
+            pChild = nullptr;
+        }
+    }
+
     uint32_t ZFastDictionary::cNode::CountWordsLength(bool includeTerminators) const
     {
-        return CountPackedNodeBytes(*this, includeTerminators, 0);
+        return CountNodeWordBytes(*this, includeTerminators, 0);
     }
 
     ZToken ZFastDictionary::cNode::GetLargestToken(ZToken largest) const
@@ -137,7 +152,7 @@ namespace Glacier
             *pWrite++ = '\0';
         }
 
-        for (uint32_t i = 0; i < 128; ++i)
+        for (uint32_t i = 0; i < NUM_CHILD_NODES; ++i)
         {
             auto* pChild = m_Children[i];
             if (!pChild)
@@ -158,6 +173,63 @@ namespace Glacier
         return pWrite;
     }
 
+    int ZFastDictionary::cNode::Pack(ZPackedDictionary& dict, int& count)
+    {
+        int childIndex = count;
+
+        for (int i = 0; i < NUM_CHILD_NODES; ++i)
+        {
+            if (m_Children[i])
+                ++count;
+        }
+
+        for (int j = 0; j < NUM_CHILD_NODES; ++j)
+        {
+            if (m_Children[j])
+            {
+                dict.m_Letters[childIndex] = static_cast<char>(j);
+                dict.m_From[childIndex] = count;
+                dict.m_To[childIndex] = m_Children[j]->Pack(dict, count);
+                dict.m_Tokens[childIndex] = m_Children[j]->m_Token;
+                ++childIndex;
+            }
+        }
+
+        return childIndex;
+    }
+
+    uint32_t ZFastDictionary::cNode::CountNodes() const
+    {
+        uint32_t iCount { 1 };
+        
+        for (const auto& pNode : m_Children)
+        {
+            if (pNode)
+            {
+                iCount += pNode->CountNodes();
+            }
+        }
+
+        return iCount;
+    }
+
+    ZFastDictionary::~ZFastDictionary() = default;
+
+    ZToken ZFastDictionary::GetToken(const char* word)
+    {
+        auto* pNode = FindOrAdd(word);
+        if (pNode->m_Token == ZToken::Void)
+        {
+            pNode->m_Token = ++m_NextToken;
+        }
+
+        return ZToken { pNode->m_Token };
+    }
+
+    ZFastDictionary::ZFastDictionary()
+    {
+    }
+
     uint32_t ZFastDictionary::CountWordsLength(bool includeTerminators) const
     {
         return m_Root.CountWordsLength(includeTerminators);
@@ -172,8 +244,56 @@ namespace Glacier
     {
         m_Root.Unpack(pWords, pWords, 0, pToken2Name);
     }
+    
+    ZFastDictionary::cNode* ZFastDictionary::FindOrAdd(const char* pToken)
+    {
+        if (!pToken)
+        {
+            return &m_Root;
+        }
 
-    ZPackedDictionary::~ZPackedDictionary() = default;
+        cNode* pNode = &m_Root;
+        const char* pWord = pToken;
+        int32_t index = 0;
+
+        for (;;)
+        {
+            if (*pWord == '\0')
+                return pNode;
+
+            index = static_cast<uint8_t>(*pWord++) & 0x7F;
+
+            if (!pNode->m_Children[index])
+                break;
+
+            pNode = pNode->m_Children[index];
+        }
+
+        while (true)
+        {
+            auto* pNewNode = ZUniMemory::New<cNode>();
+
+            pNode->m_Children[index] = pNewNode;
+            pNode = pNewNode;
+
+            if (*pWord == '\0')
+                break;
+
+            index = static_cast<uint8_t>(*pWord++) & 0x7F;
+        }
+
+        return pNode;
+    }
+
+    uint32_t ZFastDictionary::CountNodes() const
+    {
+        return m_Root.CountNodes();
+    }
+
+    ZPackedDictionary::~ZPackedDictionary()
+    {
+        Cleanup();
+    }
 
     ZPackedDictionary::ZPackedDictionary()
         : m_Size(0)
@@ -184,34 +304,188 @@ namespace Glacier
     {
     }
 
+    void ZPackedDictionary::Setup()
+    {
+        m_Letters = static_cast<char*>(ZUniMemory::Allocate(m_Size));
+        m_From = static_cast<uint32_t*>(ZUniMemory::Allocate(m_Size * sizeof(uint32_t)));
+        m_To = static_cast<uint32_t*>(ZUniMemory::Allocate(m_Size * sizeof(uint32_t)));
+        m_Tokens = static_cast<ZToken*>(ZUniMemory::Allocate(m_Size * sizeof(ZToken)));
+
+        for (uint32_t i = 0; i < m_Size; ++i)
+            new (&m_Tokens[i]) ZToken();
+    }
+
+    void ZPackedDictionary::Cleanup()
+    {
+        ZUniMemory::Free(m_Letters);
+        ZUniMemory::Free(m_From);
+        ZUniMemory::Free(m_To);
+        ZUniMemory::Free(m_Tokens);
+        m_Letters = nullptr;
+        m_From = nullptr;
+        m_To = nullptr;
+        m_Tokens = nullptr;
+    }
+
+    uint32_t ZPackedDictionary::CalculatePackedSize(const TDynamicArray<ZDictionary::ZTokenizedString>& tokenTable,
+                                                     int low, int high, int depth)
+    {
+        uint32_t nodeCount = 0;
+        int current = low;
+
+        while (current < high)
+        {
+            int groupStart = current;
+            char c = static_cast<const char*>(tokenTable[current].m_String)[depth];
+            ++current;
+
+            while (current < high)
+            {
+                if (static_cast<const char*>(tokenTable[current].m_String)[depth] != c)
+                    break;
+                ++current;
+            }
+
+            ++nodeCount;
+
+            const char* firstStr = static_cast<const char*>(tokenTable[groupStart].m_String);
+            if (!firstStr[depth + 1] && ++groupStart == current)
+                continue;
+
+            nodeCount += CalculatePackedSize(tokenTable, groupStart, current, depth + 1);
+        }
+
+        return nodeCount;
+    }
+
+    uint32_t ZPackedDictionary::PackRecursive(const TDynamicArray<ZDictionary::ZTokenizedString>& tokenTable,
+                                               int& count, int low, int high, int depth)
+    {
+        int savedCount = count;
+        int current = low;
+
+        while (current < high)
+        {
+            int groupStart = current;
+            char c = static_cast<const char*>(tokenTable[current].m_String)[depth];
+            ++current;
+
+            while (current < high)
+            {
+                if (static_cast<const char*>(tokenTable[current].m_String)[depth] != c)
+                    break;
+                ++current;
+            }
+
+            const char* firstStr = static_cast<const char*>(tokenTable[groupStart].m_String);
+            if (firstStr[depth + 1])
+            {
+                m_Tokens[count] = ZToken::Unknown;
+            }
+            else
+            {
+                m_Tokens[count] = tokenTable[groupStart].m_Token;
+                ++groupStart;
+            }
+
+            m_From[count] = static_cast<uint32_t>(groupStart);
+            m_To[count] = static_cast<uint32_t>(current);
+            m_Letters[count] = c;
+            ++count;
+        }
+
+        const int levelEnd = count;
+
+        for (int i = savedCount; i < levelEnd; ++i)
+        {
+            uint32_t pageStart = m_From[i];
+            uint32_t pageEnd = m_To[i];
+
+            if (pageStart < pageEnd)
+            {
+                m_From[i] = static_cast<uint32_t>(count);
+                m_To[i] = PackRecursive(tokenTable, count,
+                                        static_cast<int>(pageStart),
+                                        static_cast<int>(pageEnd),
+                                        depth + 1);
+            }
+        }
+
+        return static_cast<uint32_t>(levelEnd);
+    }
+
+    ZPackedDictionary::ZPackedDictionary(ZDictionary& sDict)
+    {
+        int tokenCount = static_cast<int>(sDict.m_TokenTable.GetSize());
+        m_Size = CalculatePackedSize(sDict.m_TokenTable, 0, tokenCount, 0) + 1;
+        Setup();
+
+        int count = 1;
+        m_From[0] = 1;
+        m_To[0] = PackRecursive(sDict.m_TokenTable, count, 0, tokenCount, 0);
+        m_Tokens[0] = ZToken::Unknown;
+    }
+
+    ZPackedDictionary::ZPackedDictionary(ZFastDictionary& sDict)
+    {
+        m_Size = sDict.CountNodes();
+        Setup();
+
+        int count = 1;
+        m_From[0] = 1;
+        m_To[0] = static_cast<uint32_t>(sDict.m_Root.Pack(*this, count));
+        m_Tokens[0] = sDict.m_Root.m_Token;
+    }
+
     ZPackedDictionary_Serializerlib::~ZPackedDictionary_Serializerlib() = default;
 
     ZPackedDictionary_Serializerlib::ZPackedDictionary_Serializerlib() = default;
 
-    ZPackedDictionary_Serializerlib::ZPackedDictionary_Serializerlib(ZDictionary&)
-        : ZPackedDictionary()
+    ZPackedDictionary_Serializerlib::ZPackedDictionary_Serializerlib(ZDictionary& sDict)
+        : ZPackedDictionary(sDict)
     {
     }
 
-    void ZPackedDictionary_Serializerlib::Save(ZOutputStreamBase* pStream)
+    ZPackedDictionary_Serializerlib::ZPackedDictionary_Serializerlib(ZFastDictionary& sDict)
+        : ZPackedDictionary(sDict)
     {
-        pStream->Write(m_Size);
-
-        if (!m_Size)
-            return;
-
-        pStream->Write(m_Letters, m_Size);
-        pStream->WriteRaw(reinterpret_cast<char*>(m_From), sizeof(uint32_t) * m_Size);
-        pStream->WriteRaw(reinterpret_cast<char*>(m_To), sizeof(uint32_t) * m_Size);
-        pStream->WriteRaw(reinterpret_cast<char*>(m_Tokens), sizeof(ZToken) * m_Size);
     }
 
-    ZToken* ZPackedDictionary::GetToken(ZToken* result, const char* word)
+    void ZPackedDictionary_Serializerlib::Save(ZOutputStreamBase& pStream)
+    {
+        pStream.WriteWithEndianness<uint32_t>(m_Size);
+        pStream.Write(m_Letters, m_Size);
+        pStream.WriteWithEndianness(m_From, m_Size);
+        pStream.WriteWithEndianness(m_To, m_Size);
+
+        for (int i = 0; i < m_Size; ++i)
+        {
+            pStream.WriteWithEndianness(static_cast<uint32_t>(m_Tokens[i]));
+        }
+    }
+
+    void ZPackedDictionary_Serializerlib::Load(ZInputStreamBase& stream)
+    {
+        Cleanup();
+
+        m_Size = stream.GetAndChangeEndiannessIfRequired<uint32_t>();
+        Setup();
+
+        stream.Read(m_Letters, m_Size);
+        stream.GetAndChangeEndiannessIfRequired(m_From, m_Size);
+        stream.GetAndChangeEndiannessIfRequired(m_To, m_Size);
+
+        for (int i = 0; i < m_Size; ++i)
+        {
+            m_Tokens[i] = ZToken(stream.GetAndChangeEndiannessIfRequired<uint32_t>());
+        }
+    }
+
+    ZToken ZPackedDictionary::GetToken(const char* word)
     {
         if (!m_Size)
         {
-            *result = ZToken::Void;
-            return result;
+            return ZToken::Void;
         }
 
         uint32_t node = 0;
@@ -221,8 +495,7 @@ namespace Glacier
         {
             if (!*pRead)
             {
-                *result = m_Tokens[node];
-                return result;
+                return m_Tokens[node];
             }
 
             const int32_t index = GetPackedDictionaryIndex(pRead);
@@ -249,8 +522,7 @@ namespace Glacier
 
             if (from >= to)
             {
-                *result = ZToken::Unknown;
-                return result;
+                return ZToken::Unknown;
             }
         }
     }

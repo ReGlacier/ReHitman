@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Glacier/ReGlacier.h>
 #include <Glacier/Serializer/IOutputStream.h>
 #include <Glacier/Serializer/ZOutputStreamBase.h>
 
@@ -42,4 +43,5 @@ namespace Glacier
         /** Local write buffer used for small writes. */
         uint8_t m_Buffer[MAX_BUFFER_SIZE]{'\0'};
     };
+    RE_VERIFY_SIZE(ZOutputStream, 0x1010); // Verified in PC
 }

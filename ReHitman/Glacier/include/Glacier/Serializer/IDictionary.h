@@ -9,6 +9,6 @@ namespace Glacier
     {
         // vtbl
         virtual ~IDictionary();
-        virtual ZToken* GetToken(ZToken* result, const char* word) = 0;
+        virtual ZToken GetToken(const char* word) = 0;
     };
 }

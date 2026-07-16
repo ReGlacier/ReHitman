@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Glacier/ReGlacier.h>
+#include <Glacier/Serializer/ZTokenTable_Serializerlib.h>
 #include <Glacier/Serializer/ISerializerStream.h>
 #include <Glacier/Serializer/ZInputStreamBase.h>
 #include <Glacier/Serializer/ZPackedDictionary.h>
@@ -18,7 +19,7 @@ namespace Glacier
         bool Visit(ISerializerVisitor* pVisitor) override;
         void ExchangeContainer(const ZToken token, unsigned int* count) override;
         void ExchangeRaw(const ZToken token, void* data, const unsigned int size) override;
-        ZToken* GetToken(ZToken* result, const char* word) override;
+        ZToken GetToken(const char* word) override;
         void BeginArray(const ZToken token, const unsigned int count) override;
         void EndArray() override;
         void ExchangeHeader(const ZToken token, const EPropertyType propertyType) override;

@@ -50,7 +50,7 @@ namespace Glacier
         };
 
         static bool IsNamed(ETag eTag);
-        static uint32_t GetNamedHeaderTag(ISerializerStream::EPropertyType ePropType);
+        static ETag GetNamedHeaderTag(ISerializerStream::EPropertyType ePropType);
         static const char* GetName(ETag eTag);
         static ETag GetHeaderTag(ISerializerStream::EPropertyType ePropType);
         static ETag GetFooterTag(ISerializerStream::EPropertyType ePropType);

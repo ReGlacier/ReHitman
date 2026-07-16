@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <cstring>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -55,15 +56,30 @@ namespace
         bytes.insert(bytes.end(), raw, raw + sizeof(T));
     }
 
-    void AppendHeader(std::vector<char>& bytes, ISerializerStream::EType type = ISerializerStream::TYPE_Tags)
+    void AppendHeader(std::vector<char>& bytes,
+                      ISerializerStream::EType type = ISerializerStream::TYPE_Tags,
+                      ISerializerStream::EContent content = ISerializerStream::CONTENT_SimpleRepack,
+                      bool bigEndian = false,
+                      uint32_t objectCount = 0u)
     {
         static constexpr char kSignature[] = "IOPacked v0.1";
         bytes.insert(bytes.end(), std::begin(kSignature), std::end(kSignature));
 
-        Append<uint8_t>(bytes, 0u);
-        Append<uint32_t>(bytes, static_cast<uint32_t>(type));
-        Append<uint32_t>(bytes, static_cast<uint32_t>(ISerializerStream::CONTENT_SimpleRepack));
-        Append<uint32_t>(bytes, 0u);
+        Append<uint8_t>(bytes, bigEndian ? 1u : 0u);
+
+        uint32_t rawType = static_cast<uint32_t>(type);
+        uint32_t rawContent = static_cast<uint32_t>(content);
+        uint32_t rawObjectCount = objectCount;
+        if (bigEndian)
+        {
+            rawType = _byteswap_ulong(rawType);
+            rawContent = _byteswap_ulong(rawContent);
+            rawObjectCount = _byteswap_ulong(rawObjectCount);
+        }
+
+        Append<uint32_t>(bytes, rawType);
+        Append<uint32_t>(bytes, rawContent);
+        Append<uint32_t>(bytes, rawObjectCount);
     }
 
     struct RecordingVisitor final : public ISerializerVisitor
@@ -151,13 +167,67 @@ TEST(ZPackedInput, InitializesFromPackedHeader)
     input.End();
 }
 
+TEST(ZPackedInput, InitializesFromBigEndianPackedHeader)
+{
+    std::vector<char> bytes;
+    AppendHeader(bytes, ISerializerStream::TYPE_DataOnly, ISerializerStream::CONTENT_SavedGame, true, 3u);
+
+    MemoryPackedInputStream stream(std::move(bytes));
+    ZPackedInput input(&stream);
+    const uint32_t processTableSize = input.m_ProcessTable.GetSize();
+    input.End();
+
+    EXPECT_EQ(input.m_Type, ISerializerStream::TYPE_DataOnly);
+    EXPECT_EQ(input.m_Content, ISerializerStream::CONTENT_SavedGame);
+    EXPECT_TRUE(input.m_BigEndian);
+    EXPECT_TRUE(stream.m_ChangeEndianness);
+    EXPECT_EQ(processTableSize, 3u);
+}
+
+TEST(ZPackedInput, RejectsCorruptPackedHeaderSignature)
+{
+    std::vector<char> bytes;
+    AppendHeader(bytes);
+    bytes[2] = 'X';
+
+    MemoryPackedInputStream stream(std::move(bytes));
+
+    EXPECT_THROW(ZPackedInput input(&stream), std::runtime_error);
+}
+
+TEST(ZPackedInput, HeaderAcceptsEverySerializerTypeFlagCombination)
+{
+    constexpr uint32_t kKnownTypeBits = ISerializerStream::TYPE_Tags |
+                                        ISerializerStream::TYPE_Dictionary |
+                                        ISerializerStream::TYPE_StringEnums |
+                                        ISerializerStream::TYPE_StringTable;
+
+    for (uint32_t type = 0; type <= kKnownTypeBits; ++type)
+    {
+        if ((type & (ISerializerStream::TYPE_Dictionary | ISerializerStream::TYPE_StringTable)) != 0)
+            continue;
+
+        std::vector<char> bytes;
+        AppendHeader(bytes, static_cast<ISerializerStream::EType>(type));
+
+        MemoryPackedInputStream stream(std::move(bytes));
+        ZPackedInput input(&stream);
+
+        EXPECT_EQ(static_cast<uint32_t>(input.m_Type), type);
+        EXPECT_EQ(input.CheckType(ISerializerStream::TYPE_Tags), (type & ISerializerStream::TYPE_Tags) != 0);
+        EXPECT_EQ(input.CheckType(ISerializerStream::TYPE_StringEnums), (type & ISerializerStream::TYPE_StringEnums) != 0);
+
+        input.End();
+    }
+}
+
 TEST(ZPackedInput, ReadsPayloadFromSeparateDataStreamWhenProvided)
 {
     std::vector<char> headerBytes;
     AppendHeader(headerBytes);
 
     std::vector<char> dataBytes;
-    Append<uint32_t>(dataBytes, static_cast<uint32_t>(ZPackedStream::TAG_Int32));
+    Append<uint8_t>(dataBytes, static_cast<uint8_t>(ZPackedStream::TAG_Int32));
     Append<int32_t>(dataBytes, 314159);
 
     MemoryPackedInputStream headerStream(std::move(headerBytes));
@@ -180,7 +250,7 @@ TEST(ZPackedInput, ExchangeContainerReadsStoredCount)
 {
     std::vector<char> bytes;
     AppendHeader(bytes);
-    Append<uint32_t>(bytes, static_cast<uint32_t>(ZPackedStream::TAG_Container));
+    Append<uint8_t>(bytes, static_cast<uint8_t>(ZPackedStream::TAG_Container));
     Append<uint32_t>(bytes, 12u);
 
     MemoryPackedInputStream stream(std::move(bytes));
@@ -198,7 +268,7 @@ TEST(ZPackedInput, ExchangeReadsPrimitiveBehindTag)
 {
     std::vector<char> bytes;
     AppendHeader(bytes);
-    Append<uint32_t>(bytes, static_cast<uint32_t>(ZPackedStream::TAG_Int32));
+    Append<uint8_t>(bytes, static_cast<uint8_t>(ZPackedStream::TAG_Int32));
     Append<int32_t>(bytes, -123456);
 
     MemoryPackedInputStream stream(std::move(bytes));
@@ -265,7 +335,7 @@ TEST(ZPackedInput, ExchangeRawReadsStoredSizeAndPayload)
 {
     std::vector<char> bytes;
     AppendHeader(bytes);
-    Append<uint32_t>(bytes, static_cast<uint32_t>(ZPackedStream::TAG_RawData));
+    Append<uint8_t>(bytes, static_cast<uint8_t>(ZPackedStream::TAG_RawData));
     Append<uint32_t>(bytes, 4u);
     bytes.insert(bytes.end(), { 'd', 'a', 't', 'a' });
 
@@ -284,13 +354,13 @@ TEST(ZPackedInput, ExchangeArrayReadsArrayTagsAndValues)
 {
     std::vector<char> bytes;
     AppendHeader(bytes);
-    Append<uint32_t>(bytes, static_cast<uint32_t>(ZPackedStream::TAG_Array));
+    Append<uint8_t>(bytes, static_cast<uint8_t>(ZPackedStream::TAG_Array));
     Append<uint32_t>(bytes, 2u);
-    Append<uint32_t>(bytes, static_cast<uint32_t>(ZPackedStream::TAG_Int32));
+    Append<uint8_t>(bytes, static_cast<uint8_t>(ZPackedStream::TAG_Int32));
     Append<uint32_t>(bytes, 10u);
-    Append<uint32_t>(bytes, static_cast<uint32_t>(ZPackedStream::TAG_Int32));
+    Append<uint8_t>(bytes, static_cast<uint8_t>(ZPackedStream::TAG_Int32));
     Append<uint32_t>(bytes, 20u);
-    Append<uint32_t>(bytes, static_cast<uint32_t>(ZPackedStream::TAG_EndArray));
+    Append<uint8_t>(bytes, static_cast<uint8_t>(ZPackedStream::TAG_EndArray));
 
     MemoryPackedInputStream stream(std::move(bytes));
     ZPackedInput input(&stream);

@@ -1,7 +1,10 @@
 #include <Glacier/ZSTL/ZRefAlloc.h>
+#include <Glacier/Serializer/IOutputSerializerStream.h>
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <stdexcept>
+#include <vector>
 
 using namespace Glacier;
 
@@ -9,6 +12,82 @@ namespace
 {
     static_assert(sizeof(SRefLink) == 0x8);
     static_assert(sizeof(ZRefAlloc) == 0x4648);
+
+    struct MockWriter final : public IOutputSerializerStream
+    {
+        std::vector<uint32_t>& m_Buffer;
+
+        explicit MockWriter(std::vector<uint32_t>& buffer) : m_Buffer(buffer) {}
+
+        bool IsSaving() const override { return true; }
+        void Skip() override {}
+        void ExchangeContainer(const ZToken, unsigned int*) override {}
+        void ExchangeRaw(const ZToken, void*, const unsigned int) override {}
+        void ExchangeREF(const ZToken, IREFConverter*) override {}
+        void ExchangeReftab(const ZToken, REFTAB*) override {}
+        ZToken GetToken(const char*) override { return ZToken::Void; }
+        void BeginArray(const ZToken, const unsigned int) override {}
+        void EndArray() override {}
+        void ExchangeHeader(const ZToken, const EPropertyType) override {}
+        void ExchangeFooter(const EPropertyType) override {}
+        void ExchangeData(ZSerializable*) override {}
+        void ExchangeData(ZBitfieldBase*, const ZEnumInfo*) override {}
+        void ExchangeData(void*, const ZEnumInfo*) override {}
+        void ExchangeData(zstring&) override {}
+        void ExchangeData(const char*&) override {}
+        void ExchangeData(double&) override {}
+        void ExchangeData(float&) override {}
+        void ExchangeData(uint8_t&) override {}
+        void ExchangeData(int8_t&) override {}
+        void ExchangeData(uint16_t&) override {}
+        void ExchangeData(int16_t&) override {}
+        void ExchangeData(uint32_t& data) override { m_Buffer.push_back(data); }
+        void ExchangeData(int32_t& data) override { m_Buffer.push_back(static_cast<uint32_t>(data)); }
+        void ExchangeData(bool&) override {}
+    };
+
+    struct MockReader final : public IInputSerializerStream
+    {
+        const std::vector<uint32_t>& m_Buffer;
+        size_t m_Offset = 0;
+
+        explicit MockReader(const std::vector<uint32_t>& buffer) : m_Buffer(buffer) {}
+
+        bool IsSaving() const override { return false; }
+        bool Visit(ISerializerVisitor*) override { return true; }
+        void Skip() override {}
+        void ExchangeContainer(const ZToken, unsigned int*) override {}
+        void ExchangeRaw(const ZToken, void*, const unsigned int) override {}
+        void ExchangeREF(const ZToken, IREFConverter*) override {}
+        void ExchangeReftab(const ZToken, REFTAB*) override {}
+        ZToken GetToken(const char*) override { return ZToken::Void; }
+        void BeginArray(const ZToken, const unsigned int) override {}
+        void EndArray() override {}
+        void ExchangeHeader(const ZToken, const EPropertyType) override {}
+        void ExchangeFooter(const EPropertyType) override {}
+        void ExchangeData(ZSerializable*) override {}
+        void ExchangeData(ZBitfieldBase*, const ZEnumInfo*) override {}
+        void ExchangeData(void*, const ZEnumInfo*) override {}
+        void ExchangeData(zstring&) override {}
+        void ExchangeData(const char*&) override {}
+        void ExchangeData(double&) override {}
+        void ExchangeData(float&) override {}
+        void ExchangeData(uint8_t&) override {}
+        void ExchangeData(int8_t&) override {}
+        void ExchangeData(uint16_t&) override {}
+        void ExchangeData(int16_t&) override {}
+        void ExchangeData(uint32_t& data) override
+        {
+            ASSERT_LT(m_Offset, m_Buffer.size());
+            data = m_Buffer[m_Offset++];
+        }
+        void ExchangeData(int32_t& data) override
+        {
+            ASSERT_LT(m_Offset, m_Buffer.size());
+            data = static_cast<int32_t>(m_Buffer[m_Offset++]);
+        }
+        void ExchangeData(bool&) override {}
+    };
 }
 
 TEST(ZRefAlloc, ConstructorInitializesFreeList)
@@ -129,10 +208,60 @@ TEST(ZRefAlloc, GetLinkReturnsNullForSentinels)
     EXPECT_EQ(alloc.GetLink(ZRefAlloc::REFCHAIN_END), nullptr);
 }
 
-TEST(ZRefAlloc, SerializerMethodsAreNotReversedYet)
+TEST(ZRefAlloc, SaveAndLoadRefChainRoundtrip)
 {
-    ZRefAlloc alloc;
+    ZRefAlloc alloc1;
+    uint32_t chain = alloc1.AddToChain(0, 100);
+    chain = alloc1.AddToChain(chain, 200);
+    chain = alloc1.AddToChain(chain, 300);
+    ASSERT_EQ(alloc1.GetChainLength(chain), 3u);
 
-    EXPECT_THROW(alloc.SaveRefChain(nullptr, 0), std::runtime_error);
-    EXPECT_THROW(alloc.LoadRefChain(nullptr), std::runtime_error);
+    std::vector<uint32_t> buffer;
+    MockWriter writer(buffer);
+    alloc1.SaveRefChain(&writer, chain);
+    writer.End();
+
+    ASSERT_EQ(buffer.size(), 4u);
+    EXPECT_EQ(buffer[0], 3u);
+    EXPECT_EQ(buffer[1], 100u);
+    EXPECT_EQ(buffer[2], 300u);
+    EXPECT_EQ(buffer[3], 200u);
+
+    MockReader reader(buffer);
+    ZRefAlloc alloc2;
+    uint32_t loadedChain = alloc2.LoadRefChain(&reader);
+    reader.End();
+
+    ASSERT_EQ(alloc2.GetChainLength(loadedChain), 3u);
+
+    std::vector<uint32_t> refs1, refs2;
+    for (auto* p = alloc1.GetLink(chain); p; p = alloc1.GetLink(p->m_lNext))
+        refs1.push_back(p->m_rRef);
+    for (auto* p = alloc2.GetLink(loadedChain); p; p = alloc2.GetLink(p->m_lNext))
+        refs2.push_back(p->m_rRef);
+
+    std::sort(refs1.begin(), refs1.end());
+    std::sort(refs2.begin(), refs2.end());
+
+    EXPECT_EQ(refs1, refs2);
+}
+
+TEST(ZRefAlloc, SaveAndLoadEmptyChain)
+{
+    ZRefAlloc alloc1;
+    ASSERT_EQ(alloc1.GetChainLength(0), 0u);
+
+    std::vector<uint32_t> buffer;
+    MockWriter writer(buffer);
+    alloc1.SaveRefChain(&writer, 0);
+    writer.End();
+
+    MockReader reader(buffer);
+    ZRefAlloc alloc2;
+    uint32_t loadedChain = alloc2.LoadRefChain(&reader);
+    reader.End();
+
+    EXPECT_EQ(loadedChain, 0u);
+    EXPECT_EQ(alloc2.GetChainLength(loadedChain), 0u);
+    EXPECT_TRUE(alloc2.IsEmpty());
 }

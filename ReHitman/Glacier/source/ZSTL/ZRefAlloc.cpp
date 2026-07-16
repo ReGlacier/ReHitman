@@ -1,5 +1,7 @@
 #include <Glacier/ZSTL/ZRefAlloc.h>
 #include <Glacier/ZUniAssert.h>
+#include <Glacier/Serializer/ISerializerStream.h>
+#include <Glacier/Serializer/IOutputSerializerStream.h>
 
 
 namespace Glacier
@@ -105,16 +107,36 @@ namespace Glacier
         return lLength;
     }
 
-    void ZRefAlloc::SaveRefChain(IOutputSerializerStream*, uint32_t)
+    void ZRefAlloc::SaveRefChain(IOutputSerializerStream* pStream, uint32_t lChainIdx)
     {
-        // Not reversed yet: depends on serializer token/exchange helpers that are not implemented.
-        ZASSERT(false);
+        int32_t iChainLength = static_cast<int32_t>(GetChainLength(lChainIdx));
+        ZToken token { ZToken::Void };
+        pStream->Exchange(token, iChainLength);
+
+        for (auto* pLink = GetLink(lChainIdx); pLink; pLink = GetLink(pLink->m_lNext))
+        {
+            ZToken innerToken { ZToken::Void };
+            pStream->Exchange(innerToken, pLink->m_rRef);
+        }
     }
 
-    uint32_t ZRefAlloc::LoadRefChain(IInputSerializerStream*)
+    uint32_t ZRefAlloc::LoadRefChain(IInputSerializerStream* pStream)
     {
-        // Not reversed yet: depends on serializer token/exchange helpers that are not implemented.
-        ZASSERT(false);
-        return 0;
+        ZToken token { ZToken::Void };
+
+        int32_t iCount = 0;
+        uint32_t iChainIndex = 0;
+        pStream->Exchange(token, iCount);
+
+        while (iCount)
+        {
+            ZToken innerToken { ZToken::Void };
+            uint32_t iRef {};
+            pStream->Exchange(innerToken, iRef);
+            iChainIndex = AddToChain(iChainIndex, iRef);
+            --iCount;
+        }
+
+        return iChainIndex;
     }
 }

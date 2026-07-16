@@ -89,4 +89,5 @@ namespace Glacier
         /** Write offset inside m_Last. */
         uint32_t m_Index;
     };
+    RE_VERIFY_SIZE(ZMemoryOutputStream, 0x18); // Verified in PC
 }

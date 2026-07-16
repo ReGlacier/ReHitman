@@ -102,7 +102,7 @@ namespace Glacier
 		virtual void ExchangeRaw(const ZToken, void*, const unsigned int) = 0;
 		virtual void ExchangeREF(const ZToken, IREFConverter *) = 0;
 		virtual void ExchangeReftab(const ZToken, REFTAB*) = 0;
-		virtual ZToken* GetToken(ZToken* result, const char*) = 0;
+		virtual ZToken GetToken(const char* psToken) = 0;
 		virtual void BeginArray(const ZToken, const unsigned int) = 0;
 		virtual void EndArray() = 0;
 		virtual void ExchangeHeader(const ZToken, const EPropertyType) = 0;
@@ -166,11 +166,11 @@ namespace Glacier
 		template <size_t N>
 		void Exchange(const ZToken token, int16_t (&data)[N]) { ExchangeArray(token, data, static_cast<uint32_t>(N)); }
 		template <size_t N>
-		void Exchange(const char* psName, int16_t (&data)[N]) { ZToken token; GetToken(&token, psName); Exchange(token, data); }
+		void Exchange(const char* psName, int16_t (&data)[N]) { Exchange(GetToken(psName), data); }
 		template <size_t N>
 		void Exchange(const ZToken token, float (&data)[N]) { ExchangeArray(token, data, static_cast<uint32_t>(N)); }
 		template <size_t N>
-		void Exchange(const char* psName, float (&data)[N]) { ZToken token; GetToken(&token, psName); Exchange(token, data); }
+		void Exchange(const char* psName, float (&data)[N]) { Exchange(GetToken(psName), data); }
 
 		void ExchangeArray(const char* psName, uint32_t* data, uint32_t count);
 		void ExchangeArray(const ZToken token, uint32_t* data, uint32_t count);

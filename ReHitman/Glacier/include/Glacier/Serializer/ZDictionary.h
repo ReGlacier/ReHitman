@@ -27,7 +27,7 @@ namespace Glacier
         
         // vtbl
         ~ZDictionary() override;
-        ZToken* GetToken(ZToken* result, const char* word) override;
+        ZToken GetToken(const char* word) override;
 
         // methods
         ZDictionary();

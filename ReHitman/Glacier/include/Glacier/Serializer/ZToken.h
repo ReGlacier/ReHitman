@@ -49,6 +49,13 @@ namespace Glacier
             return *this;
         }
 
+        ZToken operator++(int) 
+        {
+            ZToken temp = *this;
+            ++(*this);
+            return temp;
+        }
+
         constexpr operator int32_t() const { return m_Token; }
     };
     inline constexpr ZToken ZToken::Void{ -1 };

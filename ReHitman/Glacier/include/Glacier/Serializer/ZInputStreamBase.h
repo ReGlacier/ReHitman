@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Glacier/Serializer/MaskUtils.h>
 #include <cstdint>
 
 
@@ -35,13 +36,26 @@ namespace Glacier
             T value {};
             if (m_ChangeEndianness)
             {
-                ReadChangeEndianness((char*)&value, sizeof(T), 3u);
+                ReadChangeEndianness((char*)&value, sizeof(T), GetEndiannessMask<T>());
             }
             else
             {
                 ReadRaw((char*)&value, sizeof(T));
             }
             return value;
+        }
+
+        template <typename T>
+        void GetAndChangeEndiannessIfRequired(T* pArray, uint32_t count)
+        {
+            if (m_ChangeEndianness)
+            {
+                ReadChangeEndianness((char*)pArray, sizeof(T) * count, GetEndiannessMask<T>());
+            }
+            else
+            {
+                ReadRaw((char*)pArray, sizeof(T) * count);
+            }
         }
 
         void SetBigEndian(bool bigEndian);

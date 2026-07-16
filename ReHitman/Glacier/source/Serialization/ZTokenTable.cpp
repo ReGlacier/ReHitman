@@ -15,6 +15,11 @@ namespace Glacier
 
     ZOutputStreamBase::~ZOutputStreamBase() = default;
 
+    void ZOutputStreamBase::SetBigEndian(bool bigEndian)
+    {
+        m_ChangeEndianness = bigEndian;
+    }
+
     ZTokenTable::~ZTokenTable()
     {
         if (m_Words)
@@ -88,41 +93,5 @@ namespace Glacier
         // common/basic/dictionary.h
         ZASSERT(IsValidToken(token));
         return m_Token2Name[token];
-    }
-
-    ZTokenTable_Serializerlib::~ZTokenTable_Serializerlib() = default;
-
-    ZTokenTable_Serializerlib::ZTokenTable_Serializerlib() = default;
-
-    ZTokenTable_Serializerlib::ZTokenTable_Serializerlib(ZDictionary& dict)
-        : ZTokenTable(dict)
-    {
-    }
-
-    ZTokenTable_Serializerlib::ZTokenTable_Serializerlib(ZFastDictionary& dict)
-        : ZTokenTable(dict)
-    {
-    }
-
-    void ZTokenTable_Serializerlib::Save(ZOutputStreamBase* pStream)
-    {
-        const uint32_t largestToken = static_cast<uint32_t>(static_cast<int32_t>(m_LargestToken));
-        pStream->Write(largestToken);
-
-        uint32_t wordsSize = 0;
-        for (ZToken token(0); token <= m_LargestToken; ++token)
-        {
-            const char* pWord = m_Token2Name[static_cast<int32_t>(token)];
-            wordsSize += static_cast<uint32_t>(std::strlen(pWord)) + 1;
-        }
-
-        pStream->Write(wordsSize);
-
-        for (ZToken token(0); token <= m_LargestToken; ++token)
-        {
-            const char* pWord = m_Token2Name[static_cast<int32_t>(token)];
-            const uint32_t length = static_cast<uint32_t>(std::strlen(pWord)) + 1;
-            pStream->Write(pWord, length);
-        }
     }
 }

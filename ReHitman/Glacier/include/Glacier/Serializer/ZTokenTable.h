@@ -26,18 +26,4 @@ namespace Glacier
         char* m_Words;
         const char** m_Token2Name;
     };
-
-    struct ZTokenTable_Serializerlib : public ZTokenTable
-    {
-        // vtbl
-        // methods
-        ~ZTokenTable_Serializerlib();
-        ZTokenTable_Serializerlib();
-        ZTokenTable_Serializerlib(ZDictionary&);
-        ZTokenTable_Serializerlib(ZFastDictionary&);
-
-        void Load(ZInputStreamBase*);
-        void Save(ZOutputStreamBase*);
-        // members
-    };
 }

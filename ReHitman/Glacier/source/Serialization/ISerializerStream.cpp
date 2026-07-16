@@ -5,6 +5,8 @@
 #include <Glacier/ZSTL/REFTAB.h>
 #include <Glacier/ZUniAssert.h>
 
+#include <exception>
+
 
 namespace Glacier
 {
@@ -12,9 +14,7 @@ namespace Glacier
     {
         ZToken TokenFromName(ISerializerStream* pStream, const char* psName)
         {
-            ZToken token;
-            pStream->GetToken(&token, psName);
-            return token;
+            return pStream->GetToken(psName);
         }
 
         template <typename T>
@@ -56,7 +56,7 @@ namespace Glacier
 
     ISerializerStream::~ISerializerStream()
     {
-        ZASSERT(m_Finished);
+        assert(m_Finished || std::uncaught_exceptions() != 0); // Not ZASSERT because sometimes it may throw exception
 
         while (auto* pNode = m_Cache.GetFirst())
         {
@@ -77,9 +77,7 @@ namespace Glacier
             if (pTokenCache->m_Stream)
                 pTokenCache->Unlink();
 
-            ZToken token;
-            GetToken(&token, pTokenCache->m_Name);
-            pTokenCache->m_Token = token;
+            pTokenCache->m_Token = GetToken(pTokenCache->m_Name);
             m_Cache.m_Head.AddPrev(pTokenCache);
             pTokenCache->m_Stream = this;
         }

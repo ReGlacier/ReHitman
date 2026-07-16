@@ -7,10 +7,14 @@ namespace Glacier
 {
 	struct ZBitfieldBase
 	{
+        static constexpr uint32_t MAX_BITS_NR = 0x20;
+
 		uint32_t m_Bitfield{ 0u };
 
         uint32_t GetBitfield() const { return m_Bitfield; }
         void SetBitfield(uint32_t value) { m_Bitfield = value; }
+
+        bool TestBit(uint32_t bitNr) const { return (m_Bitfield & (1 << bitNr)) != 0u; }
 	};
 
 	template <typename T>

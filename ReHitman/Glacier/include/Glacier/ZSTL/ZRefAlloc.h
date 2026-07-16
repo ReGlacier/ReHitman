@@ -101,16 +101,10 @@ namespace Glacier
         uint32_t GetChainLength(uint32_t lChainIdx) const;
         /**
          * @brief Serializes a reference chain.
-         *
-         * @warning Not implemented yet. The required serializer token/exchange helpers
-         * have not been fully reversed.
          */
         void SaveRefChain(IOutputSerializerStream* pStream, uint32_t lChainIdx);
         /**
          * @brief Deserializes a reference chain.
-         *
-         * @warning Not implemented yet. The required serializer token/exchange helpers
-         * have not been fully reversed.
          */
         uint32_t LoadRefChain(IInputSerializerStream* pStream);
     };

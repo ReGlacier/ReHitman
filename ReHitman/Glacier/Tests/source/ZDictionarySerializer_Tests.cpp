@@ -1,5 +1,6 @@
 #include <Glacier/Serializer/ZOutputStreamBase.h>
 #include <Glacier/Serializer/ZDictionary_Serializerlib.h>
+#include <Glacier/Serializer/ZTokenTable_Serializerlib.h>
 #include <Glacier/Serializer/ZTokenTable.h>
 #include <Glacier/Serializer/ZDictionary.h>
 
@@ -47,8 +48,8 @@ TEST(ZDictionarySerializerlib, SaveAsTokenTableWritesLargestTokenSizeAndWords)
     ZDictionary_Serializerlib dictionary;
     ZToken token;
 
-    dictionary.GetToken(&token, "beta");
-    dictionary.GetToken(&token, "alpha");
+    token = dictionary.GetToken("beta");
+    token = dictionary.GetToken("alpha");
 
     ASSERT_EQ(dictionary.m_StringTable.GetSize(), 2u);
     ASSERT_STREQ(dictionary.m_StringTable[0].c_str(), "beta");
@@ -56,7 +57,7 @@ TEST(ZDictionarySerializerlib, SaveAsTokenTableWritesLargestTokenSizeAndWords)
 
     MemoryOutputStream stream;
     ZTokenTable_Serializerlib tokenTable(dictionary);
-    tokenTable.Save(&stream);
+    tokenTable.Save(stream);
 
     ASSERT_GE(stream.Bytes.size(), sizeof(uint32_t) * 2);
     EXPECT_EQ(stream.ReadAt<uint32_t>(0), 1u);

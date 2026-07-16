@@ -11,7 +11,7 @@ namespace Glacier
         return (static_cast<int32_t>(eTag) & TAG_FLAG_Named) != 0;
     }
 
-    uint32_t ZPackedStream::GetNamedHeaderTag(ISerializerStream::EPropertyType ePropType)
+    ZPackedStream::ETag ZPackedStream::GetNamedHeaderTag(ISerializerStream::EPropertyType ePropType)
     {
         switch (ePropType)
         {

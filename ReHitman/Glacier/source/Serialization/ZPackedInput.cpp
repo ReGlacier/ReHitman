@@ -1,5 +1,6 @@
 #include <Glacier/Serializer/ZPackedInput.h>
 #include <Glacier/Serializer/ZSerializable.h>
+#include <Glacier/Serializer/ZPackedDictionary.h>
 #include <Glacier/Serializer/ZSerializerVisitor.h>
 #include <Glacier/ZSTL/zstring.h>
 #include <Glacier/ZUniAssert.h>
@@ -13,9 +14,6 @@ namespace Glacier
 
     uint32_t ZInputStreamBase::Read(char* address, uint32_t count)
     {
-        if (m_ChangeEndianness)
-            return ReadChangeEndianness(address, count, 0xFFFFFFFFu);
-
         return ReadRaw(address, count);
     }
 
@@ -46,14 +44,20 @@ namespace Glacier
         m_Input->SetBigEndian(m_BigEndian);
         m_DataStream->SetBigEndian(m_BigEndian);
 
-        m_Type = static_cast<EType>(m_Input->Get<uint32_t>());
-        m_Content = static_cast<EContent>(m_Input->Get<uint32_t>());
+        m_Type = static_cast<EType>(m_Input->GetAndChangeEndiannessIfRequired<uint32_t>());
+        m_Content = static_cast<EContent>(m_Input->GetAndChangeEndiannessIfRequired<uint32_t>());
 
-        // Dictionary and token-table loading need their PS2 Load methods reversed.
-        ZASSERT(!CheckType(TYPE_Dictionary));
-        ZASSERT(!CheckType(TYPE_StringTable));
+        if (CheckType(TYPE_Dictionary))
+        {
+            m_Dictionary.Load(*m_Input);
+        }
 
-        SetNumberOfObjects(m_Input->Get<uint32_t>());
+        if (CheckType(TYPE_StringTable))
+        {
+            m_StringTable.Load(*m_Input);
+        }
+
+        SetNumberOfObjects(m_Input->GetAndChangeEndiannessIfRequired<uint32_t>());
         m_Finishing = false;
     }
 
@@ -73,7 +77,7 @@ namespace Glacier
         if (!CheckType(TYPE_Tags))
             return ZSuccess(true);
 
-        const auto foundTag = static_cast<ZPackedStream::ETag>(m_DataStream->Get<uint32_t>());
+        const auto foundTag = static_cast<ZPackedStream::ETag>(m_DataStream->Get<uint8_t>());
         return ZSuccess(foundTag == eTag);
     }
 
@@ -159,13 +163,14 @@ namespace Glacier
         visitor->Bitfield(token, &paStrings);
     }
 
-    ZToken* ZPackedInput::GetToken(ZToken* result, const char* word)
+    ZToken ZPackedInput::GetToken(const char* word)
     {
         if (word)
-            return m_Dictionary.GetToken(result, word);
+        {
+            return m_Dictionary.GetToken(word);
+        }
 
-        *result = ZToken::Joker;
-        return result;
+        return ZToken::Joker;
     }
 
     void ZPackedInput::ExchangeRaw(const ZToken token, void* data, const unsigned int size)
@@ -174,7 +179,7 @@ namespace Glacier
 
         if (CheckType(TYPE_Tags))
         {
-            const uint32_t storedSize = m_DataStream->Get<uint32_t>();
+            const uint32_t storedSize = m_DataStream->GetAndChangeEndiannessIfRequired<uint32_t>();
             ZASSERT(storedSize == size);
         }
 
@@ -184,7 +189,7 @@ namespace Glacier
     void ZPackedInput::ExchangeContainer(const ZToken token, unsigned int* count)
     {
         ExchangeHeader(token, PT_Container);
-        m_DataStream->Read(count, 1);
+        *count = m_DataStream->GetAndChangeEndiannessIfRequired<uint32_t>();
     }
 
     void ZPackedInput::ExchangeData(ZSerializable* serializable)
@@ -196,48 +201,48 @@ namespace Glacier
     {
         ZASSERT(CheckType(TYPE_StringTable));
 
-        const ZToken token(m_DataStream->Get<uint32_t>());
+        const ZToken token(m_DataStream->GetAndChangeEndiannessIfRequired<uint32_t>());
         data = m_StringTable.GetWord(token);
     }
 
     void ZPackedInput::ExchangeData(double& data)
     {
-        m_DataStream->Read(&data, 1);
+        data = m_DataStream->GetAndChangeEndiannessIfRequired<double>();
     }
 
     void ZPackedInput::ExchangeData(float& data)
     {
-        m_DataStream->Read(&data, 1);
+        data = m_DataStream->GetAndChangeEndiannessIfRequired<float>();
     }
 
     void ZPackedInput::ExchangeData(uint8_t& data)
     {
-        m_DataStream->Read(&data, 1);
+        data = m_DataStream->Get<uint8_t>();
     }
 
     void ZPackedInput::ExchangeData(int8_t& data)
     {
-        m_DataStream->Read(&data, 1);
+        data = m_DataStream->Get<int8_t>();
     }
 
     void ZPackedInput::ExchangeData(uint16_t& data)
     {
-        m_DataStream->Read(&data, 1);
+        data = m_DataStream->GetAndChangeEndiannessIfRequired<uint16_t>();
     }
 
     void ZPackedInput::ExchangeData(int16_t& data)
     {
-        m_DataStream->Read(&data, 1);
+        data = m_DataStream->GetAndChangeEndiannessIfRequired<int16_t>();
     }
 
     void ZPackedInput::ExchangeData(uint32_t& data)
     {
-        m_DataStream->Read(&data, 1);
+        data = m_DataStream->GetAndChangeEndiannessIfRequired<uint32_t>();
     }
 
     void ZPackedInput::ExchangeData(int32_t& data)
     {
-        m_DataStream->Read(&data, 1);
+        data = m_DataStream->GetAndChangeEndiannessIfRequired<int32_t>();
     }
 
     void ZPackedInput::ExchangeData(bool& data)
