@@ -3,7 +3,7 @@
 #include <Glacier/CCom.h>
 #include <Glacier/Glacier.h>
 #include <Glacier/ReGlacier.h>
-#include <Glacier/Geom/ZEntityLocator.h> // ZBaseGeom
+#include <Glacier/Geom/ZBaseGeom.h> // ZBaseGeom
 #include <Glacier/ZLinkedListHeader.hpp>
 #include <Glacier/ZSTL/ZList.h>
 #include <Glacier/ZScheduledUpdate.h>

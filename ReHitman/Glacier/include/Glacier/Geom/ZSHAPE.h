@@ -23,6 +23,9 @@ namespace Glacier
     class ZSHAPE : public ZGEOM
     {
     public:
+        STATIC_CLASS_VAR(ZSHAPE, uint32_t, m_Id);
+        STATIC_CLASS_VAR(ZSHAPE, uint32_t, m_Mask);
+
         // types
         struct SShapeParametricCurve 
         {

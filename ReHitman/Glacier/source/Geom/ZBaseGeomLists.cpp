@@ -1,5 +1,5 @@
 #include <Glacier/Geom/ZBaseGeomLists.h>
-#include <Glacier/Geom/ZEntityLocator.h> // ZBaseGeom
+#include <Glacier/Geom/ZBaseGeom.h> // ZBaseGeom
 #include <Glacier/ZSTL/ZOffsetAlloc.h>
 #include <Glacier/ZSTL/REFTAB.h>
 #include <Glacier/ZUniAssert.h>
@@ -35,12 +35,12 @@ namespace Glacier
             return reinterpret_cast<ZBaseGeom*>(lGeomID & ~QLISTGEOMTYPE);
         }
 
-        ZEntityLocator* Parent(ZBaseGeom* pGeom)
+        ZBaseGeom* Parent(ZBaseGeom* pGeom)
         {
             return pGeom ? pGeom->m_pParent : nullptr;
         }
 
-        ZEntityLocator* ParentFromID(uintptr_t lGeomID)
+        ZBaseGeom* ParentFromID(uintptr_t lGeomID)
         {
             return Parent(UnpackGeom(lGeomID));
         }
@@ -168,7 +168,7 @@ namespace Glacier
 
         uintptr_t lFirstGeom = PackGeom(pFirstGeom, lType);
         uintptr_t lLastGeom = PackGeom(pLastGeom, lType);
-        ZEntityLocator* pParent = ParentFromID(lFirstGeom);
+        ZBaseGeom* pParent = ParentFromID(lFirstGeom);
         uintptr_t pRootList = pList;
         SBaseGeomListHeader* pInsertList = ListFromRef(pList);
 

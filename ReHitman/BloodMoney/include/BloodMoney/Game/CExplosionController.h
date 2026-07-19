@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Glacier/ReGlacier.h>
-#include <Glacier/Geom/ZEntityLocator.h> // ZBaseGeom
+#include <Glacier/Geom/ZBaseGeom.h> // ZBaseGeom
 #include <Glacier/ZSTL/REFTAB.h>
 #include <Glacier/GlacierFWD.h>
 #include <Glacier/Geom/ZGEOM.h>

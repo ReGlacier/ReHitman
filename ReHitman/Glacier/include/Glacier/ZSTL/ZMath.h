@@ -2,6 +2,9 @@
 
 #include <Glacier/ZSTL/ZMemory.h>
 #include <algorithm>
+#include <cmath>
+#include <cmath>
+
 
 namespace Glacier
 {
@@ -35,6 +38,14 @@ namespace Glacier
             return x == with.x && y == with.y && z == with.z;
         }
 
+        Vector3& operator=(const float* p)
+        {
+            x = p[0];
+            y = p[1];
+            z = p[2];
+            return *this;
+        }
+
         Vector3& operator=(const Vector3& v)
         {
             x = v.x;
@@ -51,6 +62,15 @@ namespace Glacier
                 y - other.y,
                 z - other.z
             };
+        }
+
+        Vector3& operator-=(const Vector3& other)
+        {
+            x -= other.x;
+            y -= other.y;
+            z -= other.z;
+
+            return *this;
         }
 
         Vector3& operator*(float fScalar)
@@ -75,6 +95,28 @@ namespace Glacier
             y += fScalar;
             z += fScalar;
             return *this;
+        }
+
+        Vector3& operator+=(const Vector3& v)
+        {
+            x += v.x;
+            y += v.y;
+            z += v.z;
+            return *this;
+        }
+
+        float* Get() { return &x; }
+        const float* Get() const { return &x; }
+
+        Vector3& Reset()
+        {
+            x = y = z = 0.f;
+            return *this;
+        }
+
+        inline float Length() const
+        {
+            return std::sqrtf((x * x)+ (y * y) + (z * z));
         }
     };
 
@@ -117,6 +159,88 @@ namespace Glacier
         bool operator==(const Matrix3x3& with) const {
             return std::equal(std::begin(data), std::end(data), std::begin(with.data), std::end(with.data));
         }
+
+        const float* Get() const { return &data[0]; }
+
+        Matrix3x3& operator=(const float* p)
+        {
+            std::memcpy(&data[0], p, sizeof(float) * 9);
+            return *this;
+        }
+
+        Matrix3x3& operator*=(const Matrix3x3& mat)
+        {
+            const float zX = data[0];
+            const float zY = data[1];
+            const float zZ = data[2];
+            const float yX = data[3];
+            const float yY = data[4];
+            const float yZ = data[5];
+            const float xX = data[6];
+            const float xY = data[7];
+            const float xZ = data[8];
+
+            data[6] = xX * mat.data[6] + xY * mat.data[7] + xZ * mat.data[8];
+            data[7] = xX * mat.data[3] + xY * mat.data[4] + xZ * mat.data[5];
+            data[8] = xX * mat.data[0] + xY * mat.data[1] + xZ * mat.data[2];
+
+            data[3] = yX * mat.data[6] + yY * mat.data[7] + yZ * mat.data[8];
+            data[4] = yX * mat.data[3] + yY * mat.data[4] + yZ * mat.data[5];
+            data[5] = yX * mat.data[0] + yY * mat.data[1] + yZ * mat.data[2];
+
+            data[0] = zX * mat.data[6] + zY * mat.data[7] + zZ * mat.data[8];
+            data[1] = zX * mat.data[3] + zY * mat.data[4] + zZ * mat.data[5];
+            data[2] = zX * mat.data[0] + zY * mat.data[1] + zZ * mat.data[2];
+
+            return *this;
+        }
+
+        Matrix3x3& Reset()
+        {
+            data[0] = 0.0f;
+            data[1] = 0.0f;
+            data[2] = 1.0f;
+
+            data[3] = 0.0f;
+            data[4] = 1.0f;
+            data[5] = 0.0f;
+
+            data[6] = 1.0f;
+            data[7] = 0.0f;
+            data[8] = 0.0f;
+
+            return *this;
+        }
+
+        Vector3& XAxis()
+        {
+            return *reinterpret_cast<Vector3*>(&data[6]);
+        }
+
+        Vector3& YAxis()
+        {
+            return *reinterpret_cast<Vector3*>(&data[3]);
+        }
+
+        Vector3& ZAxis()
+        {
+            return *reinterpret_cast<Vector3*>(&data[0]);
+        }
+
+        const Vector3& XAxis() const
+        {
+            return *reinterpret_cast<const Vector3*>(&data[6]);
+        }
+
+        const Vector3& YAxis() const
+        {
+            return *reinterpret_cast<const Vector3*>(&data[3]);
+        }
+
+        const Vector3& ZAxis() const
+        {
+            return *reinterpret_cast<const Vector3*>(&data[0]);
+        }
     };
 
     struct Matrix4x4
@@ -151,4 +275,136 @@ namespace Glacier
         ZMat3x3 m0;
         ZVector3 p0;
     };
+
+
+    inline void TransformRootVector(ZVector3& vec, const ZMat3x3& mat) // GetRootVec_Asm
+    {
+        const float x = vec.x;
+        const float y = vec.y;
+        const float z = vec.z;
+
+        vec.x = x * mat.data[6] + y * mat.data[3] + z * mat.data[0];
+        vec.y = x * mat.data[7] + y * mat.data[4] + z * mat.data[1];
+        vec.z = x * mat.data[8] + y * mat.data[5] + z * mat.data[2];
+    }
+
+    inline void TransformLocalVector(ZVector3& vec, const ZMat3x3& mat) // vmtmul
+    {
+        const float x = vec.x;
+        const float y = vec.y;
+        const float z = vec.z;
+
+        vec.x = x * mat.data[6] + y * mat.data[7] + z * mat.data[8];
+        vec.y = x * mat.data[3] + y * mat.data[4] + z * mat.data[5];
+        vec.z = x * mat.data[0] + y * mat.data[1] + z * mat.data[2];
+    }
+
+    inline void TransformLocalMatrix(ZMat3x3& mat, const ZMat3x3& rootMat)
+    {
+        TransformLocalVector(mat.XAxis(), rootMat);
+        TransformLocalVector(mat.YAxis(), rootMat);
+        TransformLocalVector(mat.ZAxis(), rootMat);
+    }
+
+#   pragma region " --- Glacier pure math --- " // NOTE: Need optimize all this stuff to AVX2 (?)
+    inline void vmmul(float* out, const float* in, const float* mat)
+    {
+        const float x = in[0];
+        const float y = in[1];
+        const float z = in[2];
+
+        out[0] = x * mat[6] + y * mat[3] + z * mat[0];
+        out[1] = x * mat[7] + y * mat[4] + z * mat[1];
+        out[2] = x * mat[8] + y * mat[5] + z * mat[2];
+    }
+
+    inline void vmmul(float* vec, const float* mat)
+    {
+        const float x = vec[0];
+        const float y = vec[1];
+        const float z = vec[2];
+
+        vec[0] = x * mat[6] + y * mat[3] + z * mat[0];
+        vec[1] = x * mat[7] + y * mat[4] + z * mat[1];
+        vec[2] = x * mat[8] + y * mat[5] + z * mat[2];
+    }
+
+    inline void vmtmul(float* out, const float* in, const float* mat)
+    {
+        const float x = in[0];
+        const float y = in[1];
+        const float z = in[2];
+
+        out[0] = x * mat[6] + y * mat[7] + z * mat[8];
+        out[1] = x * mat[3] + y * mat[4] + z * mat[5];
+        out[2] = x * mat[0] + y * mat[1] + z * mat[2];
+    }
+
+    inline void vmtmul(float* vec, const float* mat)
+    {
+        const float x = vec[0];
+        const float y = vec[1];
+        const float z = vec[2];
+
+        vec[0] = x * mat[6] + y * mat[7] + z * mat[8];
+        vec[1] = x * mat[3] + y * mat[4] + z * mat[5];
+        vec[2] = x * mat[0] + y * mat[1] + z * mat[2];
+    }
+
+    inline void TransformBox(const float* mat, float* size)
+    {
+        const float x = size[0];
+        const float y = size[1];
+        const float z = size[2];
+
+        size[0] = std::fabs(x * mat[6]) + std::fabs(y * mat[3]) + std::fabs(z * mat[0]);
+        size[1] = std::fabs(x * mat[7]) + std::fabs(y * mat[4]) + std::fabs(z * mat[1]);
+        size[2] = std::fabs(x * mat[8]) + std::fabs(y * mat[5]) + std::fabs(z * mat[2]);
+    }
+#   pragma endregion
 }
+
+/*
+DronCode: List of math methods to reverse (MiniNinjas)
+vscalar(float *,float)	.text	820EA3D8	00000028	00000000	00000001	R	.	.	.	.	.	.	T	.	.
+vscalar(float *,float const *,float)	.text	820EA3B0	00000028	00000000	00000001	R	.	.	.	.	.	.	T	.	.
+vrotz(float *,float const *,float)	.text	820EBA00	0000008C	00000080		R	.	.	.	.	.	.	T	.	.
+vroty(float *,float)	.text	820EB990	00000070	00000070		R	.	.	.	.	.	.	T	.	.
+vrot(float *,float const *,float const *)	.text	820EB888	00000108	00000090		R	.	.	.	.	.	.	T	.	.
+vrot(float *,float const *)	.text	820EB7C0	000000C8	00000080		R	.	.	.	.	.	.	T	.	.
+vreset(float * const)	.text	820DA1F8	00000018	00000000	00000001	R	.	.	.	.	.	.	T	.	.
+vrand(float *)	.text	820ED6E8	00000110	00000080		R	.	.	.	.	.	.	T	.	.
+vnorm2(float *)	.text	820EAE68	00000044	00000000	00000001	R	.	.	.	.	.	.	T	.	.
+vnorm(float *,float const *)	.text	820EADA8	00000070	00000000	00000001	R	.	.	.	.	.	.	T	.	.
+vnorm(float *)	.text	820EAD40	00000068	00000000	00000001	R	.	.	.	.	.	.	T	.	.
+vneg(float *,float const *)	.text	820EA428	00000028	00000000	00000001	R	.	.	.	.	.	.	T	.	.
+vneg(float *)	.text	820EA400	00000028	00000000	00000001	R	.	.	.	.	.	.	T	.	.
+vmul(float *,float const *,float const *)	.text	820EA640	00000034	00000000	00000001	R	.	.	.	.	.	.	T	.	.
+vmul(float *,float const *)	.text	820EA450	00000034	00000000	00000001	R	.	.	.	.	.	.	T	.	.
+vmtmul(float *,float const *,float const *)	.text	820EAAD0	00000064	00000000	00000001	R	.	.	.	.	.	.	T	.	.
+vmtmul(float *,float const *)	.text	820DA230	00000064	00000000	00000001	R	.	.	.	.	.	.	T	.	.
+vmmul(float *,float const *,float const *)	.text	820EAB38	00000064	00000000	00000001	R	.	.	.	.	.	.	T	.	.
+vmin(float *,float const *)	.text	820EA5B0	00000040	00000000	00000001	R	.	.	.	.	.	.	T	.	.
+vmax(float *,float const *)	.text	820EA570	00000040	00000000	00000001	R	.	.	.	.	.	.	T	.	.
+vlen2(float const *)	.text	820DA210	0000001C	00000000	00000001	R	.	.	.	.	.	.	T	.	.
+vfscanf	.text	8241D550	000001AC	000000A0		R	.	.	.	.	.	.	T	.	.
+vdist2d(float const *,float const *)	.text	820EAC90	00000028	00000000	00000001	R	.	.	.	.	.	.	T	.	.
+vdist2(float const *,float const *)	.text	820EACB8	00000034	00000000	00000001	R	.	.	.	.	.	.	T	.	.
+vdist(float const *,float const *)	.text	820EAC58	00000038	00000000	00000001	R	.	.	.	.	.	.	T	.	.
+vcross(float *,float const *,float const *)	.text	820EA4F8	00000058	00000000	00000001	R	.	.	.	.	.	.	T	.	.
+vcpy<float,float>(float *,float const *)	.text	820D96D8	0000001C	00000000	00000001	R	.	.	.	.	.	.	T	.	.
+vangularpul(float * const,float const * const,float const * const,float,float)	.text	820ED7F8	00000314	000000F0		R	.	.	.	.	.	.	T	.	.
+vangpul(float * const,float const * const,float const * const,float)	.text	820EB590	00000230	000000E0		R	.	.	.	.	.	.	T	.	.
+vangle(float const * const,float const * const)	.text	820EAC00	00000058	00000000	00000001	R	.	.	.	.	.	.	T	.	.
+vaddscalar(float *,float const *,float)	.text	820EA488	00000034	00000000	00000001	R	.	.	.	.	.	.	T	.	.
+vaddscalar(float *,float const *,float const *,float)	.text	820EA4C0	00000034	00000000	00000001	R	.	.	.	.	.	.	T	.	.
+vadd(float *,float const *)	.text	820D9668	00000034	00000000	00000001	R	.	.	.	.	.	.	T	.	.
+vabs(float *,float const *)	.text	820EAD18	00000028	00000000	00000001	R	.	.	.	.	.	.	T	.	.
+vabs(float *)	.text	820EACF0	00000028	00000000	00000001	R	.	.	.	.	.	.	T	.	.
+toupper	.text	8241DB40	00000018	00000000	00000001	R	.	.	.	.	.	.	T	.	.
+tolower	.text	8241ED38	00000018	00000000	00000001	R	.	.	.	.	.	.	T	.	.
+tmat(float *,float const *)	.text	820EA5F0	0000004C	00000000	00000001	R	.	.	.	.	.	.	T	.	.
+terminate(void)	.text	82426F58	00000058	00000060		.	.	.	.	.	.	.	T	.	.
+tanh	.text	8265AD20	00000100	00000070		R	.	.	.	.	.	.	T	.	.
+tan	.text	8241CB30	000000D4	00000010		R	.	.	.	.	.	.	T	.	.
+*/

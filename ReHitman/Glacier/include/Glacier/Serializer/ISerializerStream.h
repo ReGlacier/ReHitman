@@ -162,6 +162,7 @@ namespace Glacier
 		void Exchange(const ZToken token, const char*& data);
 		void Exchange(const char* psName, bool& data);
 		void Exchange(const ZToken token, bool& data);
+		void Exchange(const ZToken token, ZEventBase& data);
 
 		template <size_t N>
 		void Exchange(const ZToken token, int16_t (&data)[N]) { ExchangeArray(token, data, static_cast<uint32_t>(N)); }

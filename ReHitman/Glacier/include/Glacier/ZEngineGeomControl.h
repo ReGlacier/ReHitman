@@ -1,30 +1,33 @@
 #pragma once
 
-#include <Glacier/Geom/ZEntityLocator.h>
+#include <Glacier/ReGlacier.h>
+#include <Glacier/Geom/ZBaseGeom.h>
+#include <Glacier/ZUniMemory.h>
+
 
 namespace Glacier
 {
     class ZEngineGeomControl
     {
     public:
-        // vftable
-        virtual bool GeomMoved(ZEntityLocator* pEntity);
+        // constant
+        static constexpr uint32_t MAX_MOVED_GEOMS_NR = 128;
+
+        // vtbl
+        virtual bool GeomMoved(ZBaseGeom* pGeom);
         virtual void UpdateMovedGeoms();
         virtual void Clear();
         virtual void JonsLights(); // crash?
+        virtual void UpdateChangedLights(ZBaseGeom** pBaseGeomList, uint32_t lNrLights);
 
-        /**
-         * @brief Update lights for entities (must be derived from ZLIGHT)
-         * @param ppEntities pointer to array of pointers to entities
-         * @param iCount count of pointers in array
-         */
-        virtual void UpdateChangedLights(ZEntityLocator** ppEntities, uint32_t iCount);
+        // methods
+        static ZEngineGeomControl& GetInstance();
 
-        // public api
-        static ZEngineGeomControl* GetInstance();
+        ZEngineGeomControl();
+        bool GetChangeDetection() const;
 
         // data
-        ZBaseGeom* m_MovedGeoms[128];
+        ZREF m_MovedGeoms[MAX_MOVED_GEOMS_NR];
         int m_lNrMovedGeoms;
         bool m_bChangeDetection;
         RE_ADD_PADDING(3);

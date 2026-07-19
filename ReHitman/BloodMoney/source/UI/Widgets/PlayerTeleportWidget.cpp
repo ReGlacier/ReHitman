@@ -91,7 +91,7 @@ namespace Hitman::BloodMoney {
                     if (refObj) {
                         Glacier::ZMat3x3 transform;
                         Glacier::ZVector3 position;
-                        refObj->GetRootTM(&transform, &position);
+                        refObj->GetRootTM(transform, position);
 
                         ImGui::Text("#%d | (%.3f; %.3f; %.3f)", pointIndex + 1, position.x, position.y, position.z);
                         ImGui::SameLine(0.f, 4.f);

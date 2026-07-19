@@ -28,7 +28,7 @@ namespace Hitman::BloodMoney
         virtual void PostInit2();
         virtual void CopyData(Glacier::ZEventBase*);
         virtual int32_t EventName();
-        virtual void ExpandBounds(float*, float*, float*, Glacier::ZEntityLocator*);
+        virtual void ExpandBounds(float*, float*, float*, Glacier::ZBaseGeom*);
         virtual void PreSaveGame();
         virtual void RegisterInstance();
         virtual void CheckPointSave(int&); //ZCheckPointBuffer&
@@ -43,7 +43,7 @@ namespace Hitman::BloodMoney
         virtual void Remove();
         virtual void SchedUpdate();
         virtual void InitBaseConRout(Glacier::ZROUTCLASSINFO*);
-        virtual void UnknownCommand(Glacier::ZMSGID, void*);
+        virtual int32_t UnknownCommand(Glacier::ZMSGID, void*);
 
         // data
         int32_t field_4;

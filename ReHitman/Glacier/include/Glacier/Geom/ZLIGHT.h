@@ -6,6 +6,9 @@
 namespace Glacier {
     class ZLIGHT : public ZGEOM {
     public:
+        STATIC_CLASS_VAR(ZLIGHT, uint32_t, m_Id);
+        STATIC_CLASS_VAR(ZLIGHT, uint32_t, m_Mask);
+
         //vftable
         virtual void Enable();
         virtual void Disable();

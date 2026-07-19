@@ -4,7 +4,7 @@
 #include <Glacier/ZSysInterfaceWintel.h>
 #include <Glacier/Geom/ZGROUP.h>
 #include <Glacier/Geom/ZGEOM.h>
-#include <Glacier/Geom/ZEntityLocator.h>
+#include <Glacier/Geom/ZBaseGeom.h>
 #include <Glacier/ZRenderEntry.h>
 #include <Glacier/ZCAMERA.h>
 #include <spdlog/spdlog.h>
@@ -24,7 +24,7 @@ namespace Hitman::BloodMoney {
                 return;
             }
 
-            Glacier::ZEntityLocator* pEntityLocator = pRenderEntry->GetEntityLocator();
+            Glacier::ZBaseGeom* pEntityLocator = pRenderEntry->GetEntityLocator();
             if (!pEntityLocator) {
                 return;
             }

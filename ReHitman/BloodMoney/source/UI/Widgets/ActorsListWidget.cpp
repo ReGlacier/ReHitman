@@ -33,7 +33,7 @@ namespace ImGui
 {
     void Inspector<Hitman::BloodMoney::ZHM3Actor>::Draw(const char* id, Hitman::BloodMoney::ZHM3Actor* actor) {
         // Base actor info
-        ImGui::Inspector<Glacier::ZEntityLocator>::Draw("actor.entity", actor->m_baseGeom);
+        ImGui::Inspector<Glacier::ZBaseGeom>::Draw("actor.entity", actor->m_baseGeom);
         ImGui::Separator();
 
         // Another info
@@ -69,7 +69,7 @@ namespace ImGui
             auto cam = ZPlayer_GetCamera((int*)gameData->m_Hitman3);
             Glacier::ZMat3x3 camMat;
             Glacier::ZVector3 camPos;
-            cam->GetMatPos(&camMat, &camPos);
+            cam->GetMatPos(camMat, camPos);
 
             for (int i = 1; i < path->m_Size; ++i)
             {
@@ -173,7 +173,7 @@ namespace ImGui
                 Glacier::ZVector3 ownerPos;
 
                 spdlog::info("<< GetMatPos");
-                actorOwnerGroup->GetMatPos(&ownerMat, &ownerPos);
+                actorOwnerGroup->GetMatPos(ownerMat, ownerPos);
                 spdlog::info("<< DuplicateInit");
                 auto duplicateGroup = actorOwnerGroup->DuplicateInit(
                         actorRootGroup,
@@ -232,21 +232,19 @@ namespace ImGui
                 Glacier::CInventory* pClonedActorInventory = nullptr;
 
                 {
-                    int* pDefaultStatus = Glacier::ZEventBase::GetDefaultStatus();
-                    const int oldDefaultStatus = *pDefaultStatus;
+                    const auto eOldDefaultStatus = Glacier::ZEventBase::m_DefaultStatus;
+                    {
+                        Glacier::ZEventBase::m_DefaultStatus = Glacier::ZEventBase::EStatus::STATUS_Init;
 
-                    // Here we need to change default status to fix ZScriptC event creation
-                    *pDefaultStatus = 1;
+                        //TODO: Here we need to fix ZGEOM vftable. One method is lost between FindEvent and AddEvent
+                        pClonedActorInventory = HF::Hook::VFHook<Hitman::BloodMoney::ZHM3Actor>::invoke<Glacier::CInventory*, const char*>(clonedActor, 66, "ZGEOM_Inventory"); // Add inventory
+                        pClonedActorScript = HF::Hook::VFHook<Hitman::BloodMoney::ZHM3Actor>::invoke<Hitman::BloodMoney::ZScriptC*, const char*>(clonedActor, 66, "ZGEOM_ScriptC"); // AddEvent
 
-                    //TODO: Here we need to fix ZGEOM vftable. One method is lost between FindEvent and AddEvent
-                    pClonedActorInventory = HF::Hook::VFHook<Hitman::BloodMoney::ZHM3Actor>::invoke<Glacier::CInventory*, const char*>(clonedActor, 66, "ZGEOM_Inventory"); // Add inventory
-                    pClonedActorScript = HF::Hook::VFHook<Hitman::BloodMoney::ZHM3Actor>::invoke<Hitman::BloodMoney::ZScriptC*, const char*>(clonedActor, 66, "ZGEOM_ScriptC"); // AddEvent
-
-					// And PathFollower
-					HF::Hook::VFHook<Hitman::BloodMoney::ZHM3Actor>::invoke<Hitman::BloodMoney::ZScriptC*, const char*>(clonedActor, 66, "ZGEOM_PathFollower"); // AddEvent
-
+                        // And PathFollower
+                        HF::Hook::VFHook<Hitman::BloodMoney::ZHM3Actor>::invoke<Hitman::BloodMoney::ZScriptC*, const char*>(clonedActor, 66, "ZGEOM_PathFollower"); // AddEvent
+                    }
                     // And don't forget to restore it back to avoid other issues
-                    *pDefaultStatus = oldDefaultStatus;
+                    Glacier::ZEventBase::m_DefaultStatus = eOldDefaultStatus;
                 }
 
                 if (!pClonedActorScript) {

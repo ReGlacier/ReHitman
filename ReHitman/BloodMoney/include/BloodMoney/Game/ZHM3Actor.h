@@ -4,7 +4,7 @@
 #include <Glacier/GlacierFWD.h>
 #include <Glacier/ZSTL/REFTAB.h>
 #include <Glacier/ZSTL/ZMath.h>
-#include <Glacier/Geom/ZEntityLocator.h>
+#include <Glacier/Geom/ZBaseGeom.h>
 #include <Glacier/IK/ZIKHAND.h>
 #include <Glacier/ZHumanBoid.h>
 #include <Glacier/ZAnimVariationHandle.h>

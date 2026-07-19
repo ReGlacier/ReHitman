@@ -4,15 +4,15 @@
 #include <Glacier/Geom/ZGROUP.h>
 #include <Glacier/ZSTL/REFTAB.h>
 #include <Glacier/ZSTL/CMemPool.h>
-#include <Glacier/Geom/ZEntityLocator.h>
+#include <Glacier/Geom/ZBaseGeom.h>
 #include <Glacier/ZSTL/CQuadtree.h>
 #include <Glacier/ZSTL/ZOctree.h>
+#include <Glacier/Fysix/eGlobalTreeType.h>
 
 namespace Glacier
 {
-    enum eGlobalTreeType {}; ///TODO: Recognize all values
     struct SExtendedImpactInfo;
-    class ZGEOMCLASSINFO;
+    struct ZGEOMCLASSINFO;
     class COLI;
     class CHUNK;
 
@@ -39,28 +39,28 @@ namespace Glacier
         virtual void CheckDynamicLineColi(eGlobalTreeType,float *,float *,bool,int,int);
         virtual void CalcDynamicLineColiRecur(SExtendedImpactInfo *,eGlobalTreeType,float *,float *,bool,int,ZGEOMCLASSINFO *);
         virtual void CalcDynamicLineColi(SExtendedImpactInfo *,eGlobalTreeType,float *,float *,bool,int,ZGEOMCLASSINFO *);
-        virtual void AttachDynamicGeoms(ZEntityLocator *);
-        virtual void DetachDynamicGeoms(ZEntityLocator *);
-        virtual void AttachTreeGroupChilds(ZEntityLocator *);
-        virtual void DetachTreeGroupChilds(ZEntityLocator *);
+        virtual void AttachDynamicGeoms(ZBaseGeom *);
+        virtual void DetachDynamicGeoms(ZBaseGeom *);
+        virtual void AttachTreeGroupChilds(ZBaseGeom *);
+        virtual void DetachTreeGroupChilds(ZBaseGeom *);
         virtual void MakeStaticContainer(bool);
         virtual void MakeDynamicContainer(bool);
         virtual bool IsStaticContainer();
         virtual bool IsDynamicContainer();
         virtual bool IsPrivate();
-        virtual void* GetDynamicTreePtr();
-        virtual void AddDynamicGeom(ZEntityLocator *);
-        virtual void MoveDynamicGeom(ZEntityLocator *);
-        virtual bool RemoveDynamicGeom(ZEntityLocator *);
+        virtual CQuadtree* GetDynamicTreePtr();
+        virtual CQuadtreeObj* AddDynamicGeom(ZBaseGeom *);
+        virtual void MoveDynamicGeom(ZBaseGeom *);
+        virtual bool RemoveDynamicGeom(ZBaseGeom *);
         virtual void CreateDynamicTrees();
         virtual void SaveBoundTrees(CHUNK*, unsigned int);
         virtual void LoadBoundTrees(char* rmc);
         virtual void FreeGlobalBounds();
         virtual void FreeDynamicTrees();
-        virtual void RemoveGlobalBound(eGlobalTreeType,ZEntityLocator *,COctreeObj *);
-        virtual void MoveGlobalBound(eGlobalTreeType,ZEntityLocator *,COctreeObj *,float *,float *);
+        virtual void RemoveGlobalBound(eGlobalTreeType,ZBaseGeom *,COctreeObj *);
+        virtual void MoveGlobalBound(eGlobalTreeType,ZBaseGeom *,COctreeObj *,float *,float *);
         virtual void* GetGlobalTreePtr(eGlobalTreeType);
-        virtual void* GetStaticGeomsInBound(ZEntityLocator **a2, ZEntityLocator **a3, eGlobalTreeType treeType, Glacier::ZMat3x3* mat, Glacier::ZVector3* a6, Glacier::ZVector3* a7, int rmc, char a9);
+        virtual void* GetStaticGeomsInBound(ZBaseGeom **a2, ZBaseGeom **a3, eGlobalTreeType treeType, Glacier::ZMat3x3* mat, Glacier::ZVector3* a6, Glacier::ZVector3* a7, int rmc, char a9);
         virtual void SetDynamicContainer(bool const&);
         virtual void SetStaticContainer(bool const&);
 

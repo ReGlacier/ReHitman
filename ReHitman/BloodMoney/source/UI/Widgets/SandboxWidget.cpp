@@ -17,7 +17,7 @@
 
 #include <Glacier/ZSysInterfaceWintel.h>
 #include <Glacier/ZEngineDataBase.h>
-#include <Glacier/Geom/ZEntityLocator.h>
+#include <Glacier/Geom/ZBaseGeom.h>
 #include <Glacier/Geom/ZGeomBuffer.h>
 #include <Glacier/Glacier.h>
 #include <Glacier/Geom/ZGROUP.h>
@@ -183,7 +183,7 @@ namespace Hitman::BloodMoney
                     return;
                 }
 
-                Glacier::ZEntityLocator* pCurrentEnt = pGroup->m_baseGeom;
+                Glacier::ZBaseGeom* pCurrentEnt = pGroup->m_baseGeom;
                 Glacier::ZGEOM* pCurrentGeom = nullptr;
 
                 do {
@@ -266,7 +266,7 @@ namespace Hitman::BloodMoney
             Glacier::ZMat3x3 mat;
             Glacier::ZVector3 pos;
 
-            gameData->m_ActorsPool[0]->GetRootMatPos(&mat, &pos);
+            gameData->m_ActorsPool[0]->GetRootMatPos(mat, pos);
 
             spdlog::info("Actor #0: ");
             spdlog::info("Pos     : {};{};{}", pos.x, pos.y, pos.z);

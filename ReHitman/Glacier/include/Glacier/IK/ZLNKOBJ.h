@@ -131,12 +131,12 @@ namespace Glacier
         virtual void SetDefaultBones(ZBone const*,SBoneDefinition const*);
         virtual void GetAnimDeltaBones(Animation::Header *);
         virtual void GetBoneMatPos(Glacier::ZMat3x3*,Glacier::ZVector3*, unsigned int);
-        virtual void AttachBaseGeomToBone(ZEntityLocator const*,unsigned int,float const*,float const*);
-        virtual void DetachBaseGeomFromBone(ZEntityLocator const*,unsigned int);
-        virtual void GetAttachedBaseGeomBoneId(ZEntityLocator const*);
+        virtual void AttachBaseGeomToBone(ZBaseGeom const*,unsigned int,float const*,float const*);
+        virtual void DetachBaseGeomFromBone(ZBaseGeom const*,unsigned int);
+        virtual void GetAttachedBaseGeomBoneId(ZBaseGeom const*);
         virtual void GetGroundBoneAnimMatPos(ZMat3x3*, ZVector3*, Animation::Header *,float,bool);
         virtual void GetGroundBoneDeltaMatPos(ZMat3x3*, ZVector3*, Animation::Header *,float,float);
-        virtual void GetAttachedGeomMatPos(ZEntityLocator const*,float *,float *);
+        virtual void GetAttachedGeomMatPos(ZBaseGeom const*,float *,float *);
         virtual void DisplayBone(unsigned int,bool);
         virtual void GetFocusMatPos(float *,float *);
         virtual void DisplayAllBones(bool);

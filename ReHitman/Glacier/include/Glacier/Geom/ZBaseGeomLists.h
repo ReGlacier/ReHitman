@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Glacier/Geom/ZEntityLocator.h>
+#include <Glacier/Geom/ZBaseGeom.h>
 #include <Glacier/ZSTL/ZQStaticMemBlock.h>
 #include <Glacier/ReGlacier.h>
 #include <cstdint>

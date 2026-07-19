@@ -1,7 +1,9 @@
 #pragma once
 
 #include <Glacier/ReGlacier.h>
+#include <Glacier/ZUniAssert.h>
 #include <cstdint>
+
 
 namespace Glacier
 {

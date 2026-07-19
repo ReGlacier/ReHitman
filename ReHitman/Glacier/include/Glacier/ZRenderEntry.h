@@ -34,7 +34,7 @@ namespace Glacier
         virtual void Unknown7();                         //+0x1C
         virtual void Unknown8();                         //+0x20
         virtual bool Unknown9();                         //+0x24
-        virtual ZEntityLocator* GetEntityLocator();      //+0x28
+        virtual ZBaseGeom* GetEntityLocator();      //+0x28
         virtual ZREF GetFrameREF();                      //+0x2C
         virtual bool Unknown12();                        //+0x30
         virtual int Unknown13();                         //+0x34

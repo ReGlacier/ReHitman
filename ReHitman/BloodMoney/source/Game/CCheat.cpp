@@ -8,7 +8,7 @@
 #include <Glacier/ZEngineDataBase.h>
 #include <Glacier/EventBase/ZEventBase.h>
 #include <Glacier/CInventory.h>
-#include <Glacier/Geom/ZEntityLocator.h>
+#include <Glacier/Geom/ZBaseGeom.h>
 #include <Glacier/Geom/ZGROUP.h>
 #include <Glacier/Geom/ZGEOM.h>
 
@@ -68,7 +68,7 @@ namespace Hitman::BloodMoney {
     }
 
     void CCheat::GiveItem(Glacier::ZGROUP *pWeaponsGroup, std::string_view sItemName) {
-        Glacier::ZEntityLocator* pCurrentEnt = pWeaponsGroup->m_baseGeom;
+        Glacier::ZBaseGeom* pCurrentEnt = pWeaponsGroup->m_baseGeom;
         Glacier::ZGEOM* pCurrentGeom = nullptr;
 
         do {
@@ -128,7 +128,7 @@ namespace Hitman::BloodMoney {
             return;
         }
 
-        Glacier::ZEntityLocator* pCurrentEnt = pWeaponsGroup->m_baseGeom;
+        Glacier::ZBaseGeom* pCurrentEnt = pWeaponsGroup->m_baseGeom;
         Glacier::ZGEOM* pCurrentGeom = nullptr;
 
         do {

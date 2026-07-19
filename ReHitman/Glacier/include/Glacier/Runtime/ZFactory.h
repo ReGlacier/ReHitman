@@ -1,43 +1,181 @@
 #pragma once
 
+#include <Glacier/GlacierFWD.h>
 #include <Glacier/Runtime/ZGEOMCLASSINFO.h>
+#include <Glacier/Runtime/ZROUTCLASSINFO.h>
+#include <type_traits>
 #include <cstdint>
+#include <cstring>
 
 
 namespace Glacier
 {
     struct NotCopyable
     {
+        NotCopyable() = default;
         NotCopyable(const NotCopyable&) = delete;
         NotCopyable& operator=(const NotCopyable&) = delete;
     };
 
+    #define DECLARE_FACTORY(classInfo_t, typeId_t, creatorTrampoline_t) \
+        using ClassInfo_t = classInfo_t; \
+        using ProducerId_t = typeId_t; \
+        using CreatorTrampoline_t = creatorTrampoline_t;
+
     template <typename T>
     struct ZFactory : public NotCopyable
     {
-        struct ProducerData : public ZGEOMCLASSINFO
+        // constants
+        static constexpr uint32_t MAX_ENTRIES_IN_BUCKET = 16;
+
+        // type helpers
+        using ClassInfo = typename T::ClassInfo_t;
+        using ProducerId = typename T::ProducerId_t;
+        using CreatorTrampoline = typename T::CreatorTrampoline_t;
+
+        // types
+        struct ProducerData : public ClassInfo
         {
-            uint32_t m_ProducerId;
-            T*(__cdecl* m_pCreator)(ZGEOMCLASSINFO*);
+            // types
+            using CreatorFunction_t = T*(*)(const ClassInfo&);
+
+            // methods
+            ~ProducerData() = default;
+            ProducerData(ProducerId producerId, CreatorFunction_t pCreator, const ClassInfo& classInfo)
+                : ClassInfo(classInfo)
+                , m_pCreator(pCreator)
+                , m_ProducerId(producerId)
+            {}
+
+            // members
+            ProducerId m_ProducerId;
+            CreatorFunction_t m_pCreator;
             ProducerData* m_pNext;
         };
 
         struct Iterator
         {
+            // members
             ProducerData* m_p;
             uint32_t m_HashIndex;
             ZFactory<T>* m_Factory;
         };
 
-        ProducerData* m_DataMap[16];
+        // methods
+        ~ZFactory() = default;
+        ZFactory()
+            : m_DataMap{}
+        {
+        }
+
+        bool Add(ZFactory<T>::ProducerData* pData)
+        {
+            auto* pFound = Find(pData->m_ProducerId);
+            ZASSERT(pFound == nullptr);
+
+            if (pFound)
+            {
+                return false;
+            }
+
+            auto*& pHead = GetData(pData->m_ProducerId);
+            pData->m_pNext = pHead;
+            pHead = pData;
+
+            return true;
+        }
+
+        T* Create(ProducerId id)
+        {
+            auto* pProducer = Find(id);
+            if (pProducer)
+            {
+                return pProducer->m_pCreator(*pProducer);
+            }
+
+            return nullptr;
+        }
+        
+        ProducerData* Find(ProducerId id)
+        {
+            for (auto* pCurrent = GetData(id); pCurrent; pCurrent = pCurrent->m_pNext)
+            {
+                if (Equals(pCurrent->m_ProducerId, id))
+                {
+                    return pCurrent;
+                }
+            }
+
+            return nullptr;
+        }
+        
+        int32_t Hash(ProducerId id) const
+        {
+            if constexpr (std::is_same_v<ProducerId, uint32_t>)
+            {
+                return id;
+            }
+            else
+            {
+                int hash = 0;
+
+                while (*id)
+                {
+                    hash = 5 * hash + static_cast<char>(*id++);
+                }
+
+                return hash;
+            }
+        }
+
+        ZFactory<T>::ProducerData*& GetData(ProducerId id)
+        {
+            return m_DataMap[Hash(id) & (MAX_ENTRIES_IN_BUCKET - 1)];
+        }
+
+        bool Equals(ProducerId k1, ProducerId k2) const 
+        { 
+            if constexpr (std::is_same_v<ProducerId, uint32_t>)
+            {
+                return k1 == k2;
+            }
+            else
+            {
+               return std::strcmp(k1, k2) == 0;
+            }
+        }
+
+        // members
+        ProducerData* m_DataMap[MAX_ENTRIES_IN_BUCKET];
     };
 
-    // Same template instance to check final fit size
-    RE_VERIFY_SIZE(ZFactory<int>, 0x40);
+    //RE_VERIFY_SIZE(ZFactory<ZGEOM>, 0x40);
+    //RE_VERIFY_SIZE(ZFactory<ZBaseConRout>, 0x40);
 
-    template <typename T>
+    template <typename T, typename TProduced = T>
     struct ZFactoryProducer
     {
+        // type helpers
+        using ClassInfo = typename ZFactory<T>::ClassInfo;
+        using ProducerId = typename ZFactory<T>::ProducerId;
+        using CreatorTrampoline = typename ZFactory<T>::CreatorTrampoline;
+
+        // methods
+        static T* Create(const ClassInfo& classInfo)
+        {
+            static_assert(std::is_base_of_v<T, TProduced>, "TProduced must be derived from T");
+            return CreatorTrampoline::Create::template Do<TProduced>(classInfo);
+        }
+
+        ZFactoryProducer(ProducerId id, const ClassInfo& classInfo)
+            : m_Data(id, ZFactoryProducer<T, TProduced>::Create, classInfo)
+        {
+            T::GetFactory().Add(&m_Data);
+        }
+
+        ~ZFactoryProducer() = default;
+
+        // embers
         ZFactory<T>::ProducerData m_Data;
     };
 }

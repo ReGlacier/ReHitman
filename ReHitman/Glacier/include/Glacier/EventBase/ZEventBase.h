@@ -7,10 +7,15 @@
 #include <Glacier/ZScheduledScript.h>
 #include <Glacier/RTP/Base.h>
 #include <Glacier/ZSTL/TIMETYPE.h>
+#include <Glacier/Serializer/ZSerializable.h>
+#include <Glacier/Geom/ZBaseGeom.h> // ZBaseGeom
+#include <Glacier/ZUniMemory.h>
 
 namespace Glacier
 {
-    class ZEventBase : public ZListNode<ZEventBase, 0>
+    struct ZCheckPointBuffer;
+    
+    class ZEventBase : public RTP::cBase, public ZListNode<ZEventBase, 0>
     {
     public: // Types
         enum EEventPriority : uint32_t
@@ -42,20 +47,19 @@ namespace Glacier
         };
 
     public:
+        // static
+        STATIC_CLASS_VAR(ZEventBase, RTP::ZPropertyInfo, Info);
+        STATIC_CLASS_VAR(ZEventBase, uint32_t, m_DirectRef);
+        STATIC_CLASS_VAR(ZEventBase, bool, m_LockCreation);
+        STATIC_CLASS_VAR(ZEventBase, EStatus, m_DefaultStatus);
+        
         /// === vftable ===
-        virtual void Release(bool);
-        virtual void PreSave(ISerializerStream*);
-        virtual void PostSave(ISerializerStream*);
-        virtual void PreLoad(ISerializerStream*);
-        virtual bool PostLoad(ISerializerStream*);
-        virtual bool PostProcess(const unsigned int, const unsigned int);
-        virtual void LoadSave(Glacier::ZPackedInput*, bool);
-        virtual void LoadObject(IOutputSerializerStream*);
-        virtual void SaveObject(int&);
-        virtual void ExchangeObject(Glacier::ZPackedInput*);
-        virtual void SetToDefault();
-        virtual unsigned int GetTypeID();
-        virtual RTP::ZPropertyInfo* GetProperties();
+        virtual ~ZEventBase() override = default;
+        // -> ZSerializable
+        // [Nothing to override]
+        // -> RTP::cBase
+        const RTP::ZPropertyInfo& GetProperties() const override;
+        // -> ZEventBase
         virtual EEventPriority GetEventPriority();
         virtual void Init();
         virtual void Init2();
@@ -63,41 +67,61 @@ namespace Glacier
         virtual void PostInit2();
         virtual void CopyData(const ZEventBase*);
         virtual const char* EventName();
-        virtual void ExpandBounds(float*, float*, float*, Glacier::ZEntityLocator*);
+        virtual void ExpandBounds(ZMat3x3& mMat, ZVector3& vCen, ZVector3& vSize, ZBaseGeom* pBaseGeom);
         virtual void PreSaveGame();
         virtual void RegisterInstance();
-        virtual void CheckPointSave(int&);
-        virtual void CheckPointLoad(int&);
+        virtual void CheckPointSave(ZCheckPointBuffer&);
+        virtual void CheckPointLoad(ZCheckPointBuffer&);
         virtual void Reset();
         virtual void TimeUpdate();
         virtual void FrameUpdate();
         virtual int Command(Glacier::ZMSGID command, Glacier::ZDATA data);
-        virtual int DoEvent(int, int, void*);
+        virtual int DoEvent(int lType, uint16_t lParam, void* pData);
         virtual void End();
         virtual void EditorCommand(Glacier::ZMSGID command, Glacier::ZDATA data);
         virtual void Remove();
         virtual void SchedUpdate();
 
-        // api
-        void ActivateFrameUpdate(bool a1);
+        // custom operators
+        static void* operator new(std::size_t size);
+        static void operator delete(void* ptr) noexcept;
+
+        // static methods
+        static ZEventBase* RefToPtr(ZREF rRef);
+        static void SetPreferedStatus(EStatus eStatus);
+
+        // methods
+        ZEventBase();
+        void ActivateFrameUpdate(bool run_when_pause);
         void DeactivateFrameUpdate();
         void ChangeEventActivity();
-        void ActivateTimeUpdate(float);
-
-        // static helpers
-        static int* GetDefaultStatus();
+        void ActivateTimeUpdate(float time_interval);
+        void ChangeStatus(EStatus status, bool allowed_to_destroy);
+        void Delete();
+        void DetachFromGeom();
+        bool SkipSave() const;
+        bool IsAttached() const;
+        bool IsWorking() const;
+        bool IsPendingForRemoval() const;
+        uint32_t GetRef() const;
+        void DoInit();
+        void DeactivateTimeUpdate();
+        void DeactivateScheduleUpdate();
+        int32_t Call(uint32_t Case, void* Param1, uint16_t Param2);
+        void AttachToGeom(ZGEOM* pGeom);
+        void OnlyUpdateMe(bool bOnlyUpdateMe);
 
         // members
-        uint32_t m_Ref;
-        float m_TimerInterval;
-        TIMETYPE m_fTimePassed;
-        uint32_t m_lRoutCases;
-        uint32_t m_lEventLists;
-        uint8_t m_ClassCall;
-        EStatus m_Status;
-        uint16_t m_lEventAllocSize;
-        ZGEOM* m_pBaseGeom;
-        ZScheduledEvent* m_pScheduleEvent;
+        uint32_t m_Ref; // +0xC
+        float m_TimerInterval; // +0x10
+        TIMETYPE m_fTimePassed; // +0x14
+        uint32_t m_lRoutCases; // +0x18
+        uint32_t m_lEventLists; // +0x1C
+        uint8_t m_ClassCall; // +0x20
+        EStatus m_Status; // +0x24
+        uint16_t m_lEventAllocSize; // +0x28
+        ZGEOM* m_pBaseGeom; // +0x2C
+        ZScheduledEvent* m_pScheduleEvent; // +0x30
     }; //Size: 0x002С
     RE_VERIFY_SIZE(ZEventBase, 0x2C);
     RE_VERIFY_OFFSET(ZEventBase, m_Ref, 0xC);

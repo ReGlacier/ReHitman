@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Glacier/ZSTL/ZMath.h>
-#include <Glacier/Geom/ZEntityLocator.h>
+#include <Glacier/Geom/ZBaseGeom.h>
 
 namespace Glacier {
     class ZRenderEntryGeomD3D {
@@ -29,14 +29,14 @@ namespace Glacier {
         int m_field44; //0x0044
         Glacier::ZMat3x3 m_transform; //0x0048
         Glacier::ZVector3 m_position; //0x006C
-        Glacier::ZEntityLocator* m_pEntityLocator0; //0x0078
+        Glacier::ZBaseGeom* m_pEntityLocator0; //0x0078
         int m_field7C; //0x007C
         int m_field80; //0x0080
         int m_field84; //0x0084
         int m_field88; //0x0088
-        Glacier::ZEntityLocator* m_pEntityLocator; //0x008C
+        Glacier::ZBaseGeom* m_pEntityLocator; //0x008C
         int m_ref; //0x0090
         int m_field94; //0x0094
-        Glacier::ZEntityLocator* m_pPlayerEntity; //0x0098 (I'm not sure that this is player entity because sometimes this field is null)
+        Glacier::ZBaseGeom* m_pPlayerEntity; //0x0098 (I'm not sure that this is player entity because sometimes this field is null)
     };
 }

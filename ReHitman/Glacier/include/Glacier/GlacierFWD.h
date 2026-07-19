@@ -87,7 +87,7 @@ namespace Glacier
 
     class ZCheckPointBuffer; // NOT AVAILABLE FOR PC ?
 
-    class ZEntityLocator;
+    class ZBaseGeom;
     class FsZip_t;
 
     using AnimCallback_t = bool(ZGEOM::*)(void*, float, float, unsigned int);

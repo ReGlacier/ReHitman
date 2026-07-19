@@ -2,7 +2,8 @@
 
 #include <Glacier/Fysix/ZCollisionBox.h>
 #include <Glacier/Fysix/ZOctreeCompiled.h>
-#include <Glacier/Geom/ZEntityLocator.h>
+#include <Glacier/Fysix/eGlobalTreeType.h>
+#include <Glacier/Geom/ZBaseGeom.h>
 #include <Glacier/STempStripsUniqueId.h>
 #include <Glacier/GlacierFWD.h>
 
@@ -62,17 +63,6 @@ namespace Glacier
         float fDisableSpecularAtDist;
     };
     RE_VERIFY_SIZE(STempStrips, 0x70);
-
-    enum eGlobalTreeType : uint32_t
-    {
-        GT_None = 0xFFFFFFFF,
-        GT_StdObjs = 0x0,
-        GT_Lights = 0x1,
-        GT_Gates = 0x2,
-        GT_Groups = 0x3,
-        GT_TreeGroups = 0x4,
-        GT_SIZE = 0x5,
-    };
 
     class ZTreeGroup;
 

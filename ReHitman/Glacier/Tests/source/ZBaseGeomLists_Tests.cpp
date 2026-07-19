@@ -37,7 +37,7 @@ TEST(ZBaseGeomLists, AddBaseGeomsCreatesListNode)
 {
     ZBaseGeomLists lists(256, nullptr);
     alignas(8) ZBaseGeom geoms[2]{};
-    ZEntityLocator parent{};
+    ZBaseGeom parent{};
     geoms[0].m_pParent = &parent;
     geoms[1].m_pParent = &parent;
 
@@ -59,7 +59,7 @@ TEST(ZBaseGeomLists, AddBaseGeomsMergesAdjacentRangesWithSameParentAndType)
 {
     ZBaseGeomLists lists(256, nullptr);
     alignas(8) ZBaseGeom geoms[4]{};
-    ZEntityLocator parent{};
+    ZBaseGeom parent{};
     for (auto& geom : geoms)
         geom.m_pParent = &parent;
 
@@ -80,8 +80,8 @@ TEST(ZBaseGeomLists, AddBaseGeomsDoesNotMergeDifferentParents)
 {
     ZBaseGeomLists lists(256, nullptr);
     alignas(8) ZBaseGeom geoms[4]{};
-    ZEntityLocator firstParent{};
-    ZEntityLocator secondParent{};
+    ZBaseGeom firstParent{};
+    ZBaseGeom secondParent{};
     geoms[0].m_pParent = &firstParent;
     geoms[1].m_pParent = &firstParent;
     geoms[2].m_pParent = &secondParent;

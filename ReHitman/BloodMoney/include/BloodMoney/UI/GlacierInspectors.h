@@ -140,13 +140,13 @@ namespace ImGui
         }
     };
 
-    template <> struct Inspector<Glacier::ZEntityLocator>
+    template <> struct Inspector<Glacier::ZBaseGeom>
     {
-        static void Draw(const char*, Glacier::ZEntityLocator* entity)
+        static void Draw(const char*, Glacier::ZBaseGeom* entity)
         {
             if (!entity)
             {
-                ImGui::TextColored(ImVec4 { 1.f, 0.f, 0.f, 1.f }, "INVALID ZEntityLocator INSTANCE");
+                ImGui::TextColored(ImVec4 { 1.f, 0.f, 0.f, 1.f }, "INVALID ZBaseGeom INSTANCE");
                 return;
             }
 
@@ -235,8 +235,8 @@ namespace ImGui
             float aspect = camera->GetViewAspect();
             float fov = camera->GetFOV(), fovOld = camera->GetFOV();
 
-            camera->GetMatPos(&matrix, &position);
-            camera->GetMatPos(&matrixOld, &positionOld);
+            camera->GetMatPos(matrix, position);
+            camera->GetMatPos(matrixOld, positionOld);
 
             ImGui::Inspector<Glacier::ZMat3x3>::Draw("Transform", &matrix);
             ImGui::Inspector<Glacier::ZVector3>::Draw("Position", &position);
@@ -244,11 +244,11 @@ namespace ImGui
             ImGui::Inspector<float>::Draw("FOV", &fov);
 
             if (matrix != matrixOld) {
-                camera->SetMat(&matrix);
+                camera->SetMat(matrix);
             }
 
             if (position != positionOld) {
-                camera->SetPos(&position);
+                camera->SetPos(position);
             }
 
             if (fov != fovOld) {

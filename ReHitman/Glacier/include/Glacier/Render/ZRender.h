@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Glacier/Geom/ZEntityLocator.h> // ZBaseGeom
+#include <Glacier/Geom/ZBaseGeom.h> // ZBaseGeom
 #include <Glacier/Render/ZDrawSurface.h>
 
 namespace Glacier

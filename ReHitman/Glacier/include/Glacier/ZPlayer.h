@@ -2,7 +2,7 @@
 
 #include <Glacier/ReGlacier.h>
 #include <Glacier/STempStripsUniqueId.h>
-#include <Glacier/Geom/ZEntityLocator.h> // ZBaseGeom
+#include <Glacier/Geom/ZBaseGeom.h> // ZBaseGeom
 #include <Glacier/ZSTL/ZMath.h>
 #include <Glacier/IK/ZLNKWHANDS.h>
 #include <Glacier/Glacier.h>

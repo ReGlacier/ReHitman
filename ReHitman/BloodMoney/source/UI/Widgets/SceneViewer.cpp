@@ -11,7 +11,7 @@
 
 #include <Glacier/ZSysInterfaceWintel.h>
 #include <Glacier/ZEngineDataBase.h>
-#include <Glacier/Geom/ZEntityLocator.h>
+#include <Glacier/Geom/ZBaseGeom.h>
 #include <Glacier/Glacier.h>
 #include <Glacier/Geom/ZGROUP.h>
 #include <Glacier/Geom/ZGEOM.h>
@@ -34,7 +34,7 @@ namespace Hitman::BloodMoney
     {
         if (!currentGroup) return;
 
-        Glacier::ZEntityLocator* currentEntity = currentGroup->m_pGroupFirst;
+        Glacier::ZBaseGeom* currentEntity = currentGroup->m_pGroupFirst;
 
         while (currentEntity) {
             auto assignedTo = reinterpret_cast<Glacier::ZGEOM*>(currentEntity->m_pExtraGeom);
@@ -57,7 +57,7 @@ namespace Hitman::BloodMoney
                     ImGui::TextColored(ImVec4{1.f, 0.f, 0.f, 1.f}, "Bad group pointer!");
                 } else {
                     if (ImGui::TreeNode(fmt::format("Group \"{}\" (type: {} of {}, ID: {:08X})", currentEntity->m_Name, type, parent, assignedTo->GetRef()).c_str())) {
-                        ImGui::Inspector<Glacier::ZEntityLocator>::Draw("NONE", assignedTo->m_baseGeom);
+                        ImGui::Inspector<Glacier::ZBaseGeom>::Draw("NONE", assignedTo->m_baseGeom);
                         ImGui::Separator();
                         PrepareGroup(childGroup);
                         ImGui::TreePop();
@@ -84,7 +84,7 @@ namespace Hitman::BloodMoney
             }
             else {
                 if (ImGui::TreeNode(fmt::format("Entity \"{}\" (type: {} of {}, type ptr: {:08X}, ID: {:08X})", currentEntity->m_Name, type, parent, (int)classInfo, assignedTo->GetRef()).c_str())) {
-                    ImGui::Inspector<Glacier::ZEntityLocator>::Draw("NONE", currentEntity);
+                    ImGui::Inspector<Glacier::ZBaseGeom>::Draw("NONE", currentEntity);
                     ImGui::TreePop();
                 }
             }

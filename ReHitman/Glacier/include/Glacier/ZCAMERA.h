@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Glacier/ReGlacier.h>
-#include <Glacier/Geom/ZEntityLocator.h> //ZBaseGeom
+#include <Glacier/Geom/ZBaseGeom.h> //ZBaseGeom
 #include <Glacier/Geom/ZGEOM.h>
 #include <Glacier/ZSTL/ZMath.h>
 
@@ -9,7 +9,7 @@ namespace Glacier
 {
     class ZROOM;
     class ZRender;
-    class ZEntityLocator;
+    class ZBaseGeom;
     struct SScreenSelect;
 
     struct CCLIPPLANES
@@ -42,8 +42,8 @@ namespace Glacier
         virtual void ActivateCam();
         virtual void DeactivateCam();
         virtual bool IsActive();
-        virtual void AddAlwaysDrawGeom(const ZEntityLocator*);
-        virtual void RemoveAlwaysDrawGeom(const ZEntityLocator*);
+        virtual void AddAlwaysDrawGeom(const ZBaseGeom*);
+        virtual void RemoveAlwaysDrawGeom(const ZBaseGeom*);
         virtual void SetCamPrio(int); //nullstub
         virtual void SetCamTarget(Vector3*, float);
         virtual void SetCam6ClipPlanes(float,float,float,int,int,float);

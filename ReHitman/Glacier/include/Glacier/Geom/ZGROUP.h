@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Glacier/ReGlacier.h>
-#include <Glacier/Geom/ZEntityLocator.h> // ZBaseGeom
+#include <Glacier/Geom/ZBaseGeom.h> // ZBaseGeom
 #include <Glacier/GlacierFWD.h>
 #include <Glacier/ZSTL/ZMath.h>
 #include <Glacier/Geom/ZGEOM.h>
@@ -11,7 +11,10 @@ namespace Glacier
     class ZGROUP : public ZGEOM
     {
     public:
-        //vftable
+        STATIC_CLASS_VAR(ZGROUP, uint32_t, m_Id);
+        STATIC_CLASS_VAR(ZGROUP, uint32_t, m_Mask);
+
+        // vtbl
         virtual bool IsRecursiveActivateAllowed();
         virtual void DynamicGroupOnScreen();
         virtual void CheckBoxInside(const float*, const float*, const float*) const;
@@ -28,9 +31,9 @@ namespace Glacier
         virtual void CorrectCenSizeRecur();
         virtual void CorrectCenSize();
         virtual void InvalidateBounds();
-        virtual void AttachGeom(ZBaseGeom*, bool);
-        virtual void AttachGeom(ZGEOM*, bool);
-        virtual void DetachGeom(ZBaseGeom*, bool);
+        virtual void AttachGeom(ZBaseGeom* pBaseGeom, bool bCalcMinMax);
+        virtual void AttachGeom(ZGEOM* pGeom, bool bCalcMinMax);
+        virtual void DetachGeom(ZBaseGeom* pBaseGeom, bool bCalcMinMax);
         virtual void RecurGetNextGroup(const ZBaseGeom**) const;
         virtual void RecurGetNextExclRoom(const ZBaseGeom**) const;
         virtual void SetGroupControl(unsigned int, unsigned int);
@@ -42,7 +45,11 @@ namespace Glacier
         virtual void GetCenSizeRecur(float*, float*, bool);
         virtual ZGEOM* FindMaskGeom(char const*, int) const;
 
-        //data (total size is 0x4F)
+        // methods
+        ZGEOM* CreateResourceGeom(const char* pName, uint32_t iGeomResourceId, uint32_t lGeomClassType, bool bCalcMinMax);
+        
+
+        // members
         float m_vSizeInsideCheck[3];
         float m_vCenInsideCheck[3];
         unsigned int m_lGroupCon;
@@ -56,7 +63,7 @@ namespace Glacier
         RE_ADD_PADDING(2);
 
         //API
-        ZGEOM* CreateGeom(const char* name, int typeId, bool unk3);
+        ZGEOM* CreateGeom(const char* pName, uint32_t iGeomClassId, bool bCalcMinMax);
         bool IsRoot();
     };
     RE_VERIFY_SIZE(ZGROUP, 0x4C); // Verified

@@ -15,15 +15,15 @@ namespace Glacier
     struct ZSerializable : public ZSerializableBase
     {
         virtual ~ZSerializable() {}
-        virtual void PreSave(ISerializerStream&) {}
-        virtual void PostSave(ISerializerStream&) {}
-        virtual void PreLoad(ISerializerStream&) {}
-        virtual bool PostLoad(ISerializerStream&) { return true; }
-        virtual bool PostProcess(uint32_t, uint32_t) { return true; }
-        virtual void LoadSave(ISerializerStream&, bool) {} // Removed in MiniNinjas, but not in HBM lol
-        virtual void LoadObject(IInputSerializerStream &) {}
-        virtual void SaveObject(IOutputSerializerStream &) {}
-        virtual void ExchangeObject(ISerializerStream &) {}
+        virtual void PreSave(ISerializerStream& stream) {}
+        virtual void PostSave(ISerializerStream& stream) {}
+        virtual void PreLoad(ISerializerStream& stream) {}
+        virtual bool PostLoad(ISerializerStream& stream) { return true; }
+        virtual bool PostProcess(uint32_t filter, uint32_t pass) { return true; }
+        virtual void LoadSave(ISerializerStream& stream, bool bSaving) {} // Removed in MiniNinjas, but not in HBM lol
+        virtual void LoadObject(IInputSerializerStream& stream) {}
+        virtual void SaveObject(IOutputSerializerStream& stream) {}
+        virtual void ExchangeObject(ISerializerStream& stream) {}
         virtual void SetToDefault() {}
         virtual uint32_t GetTypeID() { return 0; }
     };

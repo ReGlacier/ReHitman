@@ -8,6 +8,9 @@ namespace Glacier
     class ZSNDOBJ : public ZSTDOBJ
     {
     public:
+        STATIC_CLASS_VAR(ZSNDOBJ, uint32_t, m_Id);
+        STATIC_CLASS_VAR(ZSNDOBJ, uint32_t, m_Mask);
+
         // vftable
         virtual void ModifyGeomCon(int, int);
 

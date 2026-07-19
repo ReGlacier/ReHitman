@@ -4,13 +4,35 @@
 #include <Glacier/ZSTL/ZList.h>
 #include <Glacier/GlacierFWD.h>
 #include <Glacier/EventBase/ZEventBase.h>
+#include <Glacier/Serializer/ZSerializable.h>
 #include <Glacier/ZSTL/ZFixedSizeMemoryManager.h>
+#include <Glacier/ZUniMemory.h>
 
 namespace Glacier
 {
-    class ZEventBuffer // total size is 0x1C
+    class ZEventBuffer : public ZSerializable // total size is 0x1C
     {
     public:
+        // static
+        STATIC_CLASS_VAR(ZEventBuffer, ZEventBuffer*, m_Instance);
+
+        // vtbl
+        ~ZEventBuffer() override;
+        void LoadObject(IInputSerializerStream &) override;
+        void SaveObject(IOutputSerializerStream &) override;
+
+        // methods
+        static ZEventBuffer& Instance();
+        ZEventBuffer(uint32_t iEventBufferSize);
+        void InitEventBuffer(uint32_t lEventRamSize);
+        void FreeEventBuffer();
+        ZEventBase* AllocEventRam(uint32_t lEventSize);
+        ZREF AllocRef(ZEventBase* pEvent);
+        int AllocRefDirect(ZEventBase* pEvent, ZREF ref);
+        ZEventBase* ConvEventRefToPtr(ZREF ref);
+        void FreeEventRam(ZEventBase* pEvent);
+        void FreeRef(ZREF ref);
+
         // members
         ZFixedSizeMemoryManager<ZEventBase*>* m_EventRefs;
         char* m_pEventRam;
@@ -18,20 +40,6 @@ namespace Glacier
 		ZOffsetAlloc* m_pEventAlloc;
         uint32_t m_lAllocatedEventsRam;
         uint32_t m_lNrAllocatedEvents;
-
-        /// === vftable ===
-        virtual void Release(bool);
-        virtual void PreSave(ISerializerStream&);
-        virtual void PostSave(ISerializerStream&);
-        virtual void PreLoad(ISerializerStream&);
-        virtual bool PostLoad(ISerializerStream&);
-        virtual bool PostProcess(unsigned int, unsigned int);
-        virtual void LoadSave(ISerializerStream&, bool);
-        virtual void LoadObject(IInputSerializerStream&);
-        virtual void SaveObject(IOutputSerializerStream&);
-        virtual void ExchangeObject(ISerializerStream&);
-        virtual void SetToDefault();
-        virtual unsigned int GetTypeID();
 
     public:
 	    // Custom API

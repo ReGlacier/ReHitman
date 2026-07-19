@@ -238,6 +238,11 @@ namespace Glacier
         {
             return m_lTotalSize < 0;
         }
+
+        uint32_t GetTotalSizeAligned() const
+        {
+            return m_lTotalSize & 0x3FFFFFFFu;
+        }
     };
     RE_VERIFY_SIZE(CHUNKFILE, 0x18);
 
