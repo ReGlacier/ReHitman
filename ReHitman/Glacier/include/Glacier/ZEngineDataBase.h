@@ -3,11 +3,14 @@
 #include <Glacier/CCom.h>
 #include <Glacier/Glacier.h>
 #include <Glacier/ReGlacier.h>
-#include <Glacier/Geom/ZBaseGeom.h> // ZBaseGeom
+#include <Glacier/Geom/ZBaseGeom.h>
 #include <Glacier/ZLinkedListHeader.hpp>
+#include <Glacier/ZEntityTracker.h>
+#include <Glacier/ZScene.h>
+#include <Glacier/ZSTL/CListUser.h>
 #include <Glacier/ZSTL/ZList.h>
-#include <Glacier/ZScheduledUpdate.h>
 #include <Glacier/Animation/Manager.h>
+#include <Glacier/EventBase/ZEventList.h>
 
 #include <Glacier/PF4/Fwd.h>
 
@@ -21,103 +24,134 @@
 
 namespace Glacier
 {
-    class ZIOInputStream;
+    // fwds
+    class STRREFTAB;
+    class ZGeomBuffer;
+    struct IInputStream;
     struct ZGEOMCLASSINFO;
+    class ZScheduledUpdate;
 
-    struct SDynBlock
+    struct SGeomTypeCount
     {
-        unsigned int* pNode1;
-        unsigned int* pNode2;
-        unsigned int* pNode3;
-        unsigned int* pNextBlock;
+        uint32_t m_lGeomType;
+        uint32_t m_lGeomCount;
+        uint32_t m_lNoNeedExtraGeom;
     };
-    RE_VERIFY_SIZE(SDynBlock, 0x10);
+    RE_VERIFY_SIZE(SGeomTypeCount, 0xC);
 
-    struct CListUser : CMemPool
-    {
-        // vtbl
-        virtual void AnalyzeCatch(unsigned int, void*);
-        virtual bool IsNodeInList(unsigned int, void*);
-        virtual unsigned int* UnfoldList(unsigned int*, unsigned int);
-        virtual unsigned int* GetCatchBuffer(unsigned int*);
-        virtual void DisconnectFromAllMembers(void*);
-        virtual void NotifyAllMembers(void*);
-        virtual bool DisconnectNodeFromNode(ZBaseGeom*, ZBaseGeom*);
-        virtual void ConvertOffsetsToRefs(const unsigned int*);
-        virtual unsigned int GetTotalBufferSize();
-        virtual unsigned int* GetFullBuffer();
-        virtual unsigned int AddRuntimeMember(void*);
-        virtual void RemoveRuntimeMember(void*);
-
-        // members
-        unsigned int m_uSizeOfStaticBuf;
-        unsigned int* m_pStaticBuf;
-        unsigned int m_uSizeOfDynamicBuf;
-        SDynBlock* m_pDynamicBuf;
-        unsigned int m_uSizeOfRuntimeBuf;
-        CMemPool* m_pGetDynEntryPool;
-        unsigned int m_uMaxLength;
-        unsigned int* m_pCollidedWith;
-        unsigned int* m_pInternalListUnfold;
-        unsigned int* m_pInternalOutBuf;
-    };
-    RE_VERIFY_SIZE(CListUser, 0x44);
-
-    struct ZEventList
-    {
-        unsigned int m_NumberOfEvents;
-        ZList<ZEventBase, 0, 0> m_EventLists[10];
-        ZListIterator<ZEventBase, 0> m_Iterator;
-        ZEventBase* m_pCurrentEvent;
-    };
-    RE_VERIFY_SIZE(ZEventList, 0x5C);
-
-    struct ZScene
-    {
-        bool m_Changing;
-        bool m_Loaded;
-        char m_SceneName[260];
-        LINKREFTAB* _pBigFiles;
-        ZROOM* _pRoot;
-        unsigned int _rEnvionmentRef;
-        REFTAB* _pDisplayRouts;
-        ZGEOMCLASSINFO* _pClassFirst;
-        ZGEOMCLASSINFO* _pClassLast;
-        CCom* _pSceneCom;
-        float _FrameTime;
-        float _PreFrameTime;
-        float _ActTime;
-        struct ZInputActions* _pInputActions;
-        struct MMCHK* _pAllGroupsMMChk;
-        uint8_t* _pStaticBuffer;
-        int _lStaticBufferLength;
-        CHUNKFILE* _pPackedAnims;
-        int _lPackedAnimsLength;
-        ZGeomBuffer* _pGeomBuffer;
-        int _lLockMinMax;
-        uint8_t* _pPackedTreeData;
-        ZEventList* _pFrameUpdateList;
-        uint8_t* m_WordTable;
-    };
-
-    struct ZEntityTracker
-    {
-        PF4::ZInterface* m_PathFinder;
-        int m_ActorTypeId;
-        int m_HeroTypeId;
-        int m_ReservedPointId;
-    };
-    RE_VERIFY_SIZE(ZEntityTracker, 0x10);
-
-    class ZEngineDataBase
+    class ZEngineDataBase : public ZSerializable
     {
     public:
-        /// === members ===
+        // types
+        // constants
+        // static
+        // vtable
+        ~ZEngineDataBase() override;
+        void PreLoad(ISerializerStream& stream) override;
+        void LoadSave(ISerializerStream& stream, bool bSaving) override;
+        void LoadObject(IInputSerializerStream& stream) override;
+        void SaveObject(IOutputSerializerStream& stream) override;
+        void ExchangeObject(ISerializerStream& stream) override;
+
+        // ZEngineDataBase :
+        virtual void InitAllocSequencePercent(ZSWScene* pSceneWrapper, bool bPacked);
+        virtual void EndAllocSequencePercent(ZSWScene* pSceneWrapper);
+        virtual float SetAllocSequencePercent(ALLOCSEQUENCESTATUS Status, char const* pText, float fPercent);
+        virtual void SoundUpdate();
+        virtual void MainLoop(bool bUpdateViews);
+        virtual const char* GetSceneName();
+        virtual ZROOM* AllocRootGroup();
+        virtual void AllocSequence(struct ZSWScene* __formal);
+        virtual bool ForceExtraGeom();
+        virtual void CountNrGeoms(uint32_t& lNrBaseGeoms, uint32_t& lExtraGeomsSize, SGeomTypeCount& pGeomTypeCount, uint32_t lNrGeomTypes);
+        virtual void DeleteAllGeoms();
+        virtual void LoadBoundTrees();
+        virtual void CreateBoundTrees();
+        virtual void CreateRoomTrees();
+        virtual void LoadRoomTrees();
+        virtual void CreateSoundGraph();
+        virtual void LoadSoundGraph();
+        virtual void RegisterZDefine(char const* pName, char*, int);
+        virtual ZMSGID RegisterZMsg(char const* pMsgName, uint32_t lForcedValue, const char* pFile, int Line);
+        virtual const char* GetZMsgName(ZMSGID GetZMsgName);
+        virtual void CreateObjectFactories();
+        virtual bool StartUp();
+        virtual void CloseDown();
+        virtual void AddDlc(const char* pDllName);
+        virtual void FreeDlcFiles();
+        virtual void GetDefaultDLCFiles(STRREFTAB* pDlcFiles);
+        virtual void ControlSceneChange();
+        virtual void UnloadScene();
+        virtual void LoadScene(char const* scene_name);
+        virtual void CheckAndMakeStaticContainer();
+        virtual void DoUnloadScene();
+        virtual void FreeSceneMemory();
+        virtual void PushValues(ZScene* pNewScene);
+        virtual void InstallTextureBuffer();
+        virtual uint32_t GetPrimsSize();
+        virtual void GetPrimsData(void* pData, uint32_t lSize);
+        virtual uint32_t GetGeomsSize();
+        virtual void GetGeomsData(void* pData, uint32_t lSize);
+        virtual IInputStream* CreatePropertyInputStream();
+        virtual void CleanupPropertyData();
+        virtual uint32_t GetStaticSize();
+        virtual void GetStaticData(void* pData, uint32_t lSize);
+        virtual uint32_t GetTextureSize();
+        virtual void GetTextureData(void* pData, uint32_t lSize);
+        virtual uint32_t GetMaterialsSize(void);
+        virtual void GetMaterialsData(void* pData, uint32_t lSize);
+        virtual uint32_t GetSoundDataSize();
+        virtual void GetSoundData(void* pData, uint32_t lSize);
+        virtual uint32_t GetWaveDataSize();
+        virtual void GetWaveData(void* pData, uint32_t lSize);
+        virtual uint32_t GetWaveHeaderDataSize();
+        virtual void GetWaveHeaderData(void* pData, uint32_t lSize);
+        virtual uint32_t GetAnimsSize();
+        virtual void GetAnimsData(void* pData, uint32_t lSize);
+        virtual uint32_t GetGeomFilesSize();
+        virtual void* GetGeomFilesData(void* pData, uint32_t lSize);
+        virtual uint32_t GetRoomColiTreeSize();
+        virtual void GetRoomColiTreeData(void* pData, uint32_t lSize);
+        virtual uint32_t GetRoomInsideTreeSize();
+        virtual void GetRoomInsideTreeData(void* pData, uint32_t lSize);
+        virtual uint32_t GetGlobalColiTreeSize();
+        virtual void GetGlobalColiTreeData(void* pData, uint32_t lSize);
+        virtual uint32_t GetGlobalStripColiTreeSize();
+        virtual void* GetGlobalStripColiTreeData(void* pData, uint32_t lSize);
+        virtual ZCAMERA* CreateDefaultCam(ZCAMERA* pCamera); 
+        virtual void CorrectEditorDestGroup(SCompiledGeom* pCompiledGeom, ZGROUP* pCurrentDestGroup);
+        virtual void PackHookMissingOnlyInitialize();
+        virtual void CreatePackedStaticGameLevelData();
+        virtual void LoadPackedStaticGameLevelData();
+
+        // methods
+        ZEngineDataBase(const char* pFileName);
+
+        // TODO: Make complete list of actual methods!!!
+        void NewEventClass(ZEventBase* pEvent);
+        ZScheduledUpdate* GetEventScheduler();
+        void SetOnlyEventUpdate(ZEventBase* pEvent);
+        ZEventBase* GetOnlyEventUpdate() const;
+        bool IsPaused() const;
+        bool CheckInPackBuffer(void* ptr) const;
+        ZEventBase* AllocGeomCallEvent(ZGEOM* pGeom);
+        bool ResourcesDisabled() const;
+        void EnableResources();
+        CListUser* GetListUser() const;
+        void DeleteCheck(void* ptr) const;
+        bool RunTime() const;
+        void UnlockMinMax();
+        void LockMinMax();
+        void UnlockScene();
+        ZREF GetREFByName(const char* pszName) const;
+        ZGEOM* GeomRefToPtr(ZREF rGeom) const;
+
+        // members
         bool m_SavingGame;
         bool m_LoadingGame;
         struct ILoadCallBack* m_pLoadCallBack;
         struct ZSaveClass* m_pSaveObject;
-        struct ZGeomBuffer* m_pGeomBuffer;
+        ZGeomBuffer* m_pGeomBuffer;
         PF4::ZInterface* m_pPathfinder4Data;
         Animation::Manager* m_AnimationManager;
         ZEntityTracker* m_pEntityTracker;
@@ -167,99 +201,17 @@ namespace Glacier
         int m_AnimIdCount;
         ZEventBase* m_pOnlyEventUpdate;
 
-        /// VFTABLE
-        virtual void Release(); //#0
-        virtual void PreSave(ISerializerStream &); //#2
-        virtual void PostSave(ISerializerStream &); //#3
-        virtual void PreLoad(ISerializerStream &); //#4
-        virtual void PostLoad(ISerializerStream &); //#5
-        virtual void PostProcess(uint,uint); //#6
-        virtual void LoadSave(ISerializerStream &,bool); //#7
-        virtual void LoadObject(IInputSerializerStream &); //#8
-        virtual void SaveObject(IOutputSerializerStream &); //#9
-        virtual void ExchangeObject(ISerializerStream &); //#10
-        virtual void SetToDefault(void); //#11
-        virtual void GetTypeID(void); //#12
-        virtual void InitAllocSequencePercent(ZSWScene *,bool); //#13
-        virtual void EndAllocSequencePercent(ZSWScene *); //#14
-        virtual void SetAllocSequencePercent(ALLOCSEQUENCESTATUS,char const*,float); //#15
-        virtual void SoundUpdate(void); //#16
-        virtual void MainLoop(bool); //#17
-        virtual const char* GetSceneName(void); //#18
-        virtual ZGROUP* AllocRootGroup(void); //#19
-        virtual void AllocSequence(ZSWScene *); //#20
-        virtual void ForceExtraGeom(void); //#21
-        virtual void CountNrGeoms(uint &,uint &,SGeomTypeCount *,uint); //#22
-        virtual void DeleteAllGeoms(void); //#23
-        virtual void LoadBoundTrees(void); //#24
-        virtual void CreateBoundTrees(void); //#25
-        virtual void CreateRoomTrees(void); //#26
-        virtual void LoadRoomTrees(void); //#27
-        virtual void CreateSoundGraph(void); //#28
-        virtual void LoadSoundGraph(void); //#29
-        virtual ZMSGID RegisterZDefine(char const*,char *,int); //#30
-        virtual ZMSGID RegisterZMsg(char const*,uint, const char *,int); //#31
-        virtual const char* GetZMsgName(ZMSGID); //#32
-        virtual void CreateObjectFactories(void); //#33
-        virtual void StartUp(void); //#34
-        virtual void CloseDown(void); //#35
-        virtual void UnknownFunction_36(); //#36
-        virtual void UnknownFunction_37(); //#37
-        virtual void UnknownFunction_38(); //#38
-        virtual void ControlSceneChange(void); //#39
-        virtual void UnloadScene(void); //#40
-        virtual void LoadScene(char const*); //#41
-        virtual void CheckAndMakeStaticContainer(void); //#42
-        virtual void UnknownFunction_43(); //#43
-        virtual void FreeSceneMemory(void); //#44
-        virtual void PushValues(ZScene *); //#45
-        virtual void InstallTextureBuffer(void); //#46
-        virtual void GetPrimsSize(void); //#47
-        virtual void GetPrimsData(void *,uint); //#48
-        virtual void GetGeomsSize(void); //#49
-        virtual void GetGeomsData(void *,uint); //#50
-        virtual ZIOInputStream* CreatePropertyInputStream(); //#51
-        virtual void CleanupPropertyData(void); //#512
-        virtual void GetStaticSize(void); //#53
-        virtual void GetStaticData(void *,uint); //#54
-        virtual void GetTextureSize(void); //#55
-        virtual void GetTextureData(void *,uint); //#56
-        virtual void GetMaterialsSize(void); //#57
-        virtual void GetMaterialsData(void *,uint); //#58
-        virtual void GetSoundDataSize(void); //#59
-        virtual void GetSoundData(void *,uint); //#60
-        virtual void GetWaveDataSize(void); //#61
-        virtual void GetWaveData(void *,uint); //#62
-        virtual void GetWaveHeaderDataSize(void); //#63
-        virtual void GetWaveHeaderData(void *,uint); //#64
-        virtual uint32_t GetAnimsSize(void); //#65
-        virtual void* GetAnimsData(void *,uint); //#66
-        virtual uint32_t GetGeomFilesSize(void); //#67
-        virtual void* GetGeomFilesData(void *,uint); //#68
-        virtual uint32_t GetRoomColiTreeSize(void); //#69
-        virtual void* GetRoomColiTreeData(void *,uint); //#70
-        virtual uint32_t GetRoomInsideTreeSize(void); //#71
-        virtual uint32_t GetRoomInsideTreeSize_(void); //#72
-        virtual void* GetRoomInsideTreeData(void *,uint); //#73
-        virtual uint32_t GetGlobalColiTreeSize(void); //#74
-        virtual void* GetGlobalColiTreeData(void *,uint); //#75
-        virtual uint32_t GetGlobalStripColiTreeSize(void); //#76
-        virtual void* GetGlobalStripColiTreeData(void *,uint); //#77
-        virtual ZCAMERA* CreateDefaultCam(ZCAMERA *); //#78
-        virtual void CorrectEditorDestGroup(SCompiledGeom *,ZGROUP *); //#79
-        virtual void PackHookMissingOnlyInitialize(void); //#80
-        virtual void CreatePackedStaticGameLevelData(void); //#81
-        virtual void LoadPackedStaticGameLevelData(void); //#82
-
         // API
         CCom* GetSceneCom();
         std::intptr_t GetSceneVar(const char* varname);
         std::intptr_t SRefToPtr(Glacier::ZREF sref);
-        ZScheduledUpdate* GetEventScheduler();
 	    ZOldTypeInfo* GetGeomClassInfo(uint32_t typeId);
 
         // Static methods
         static CCom* GetGlobalCom();
     };
     RE_VERIFY_SIZE(ZEngineDataBase, 0x52D4); // verified
+    
+    // Really weird, but it is
+    #define g_pEngineData g_pSysInterface->m_pEngineData
 }

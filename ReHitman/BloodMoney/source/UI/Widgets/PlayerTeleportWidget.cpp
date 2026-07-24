@@ -30,7 +30,7 @@ namespace Hitman::BloodMoney {
         auto sysInterface = Glacier::getInterface<Glacier::ZSysInterfaceWintel>(Globals::kSysInterfaceAddr);
         if (!sysInterface) { return; }
 
-        auto engineDb = sysInterface->m_engineDataBase;
+        auto engineDb = sysInterface->m_pEngineData;
         if (!engineDb) { return; }
 
         auto sceneCom = engineDb->GetSceneCom();
@@ -75,7 +75,7 @@ namespace Hitman::BloodMoney {
                 &rTeleportListREF);
 
 
-        auto pTeleportList = Glacier::ZEventBuffer::EventRefToInstance<CTelePortList>(rTeleportListREF);
+        auto* pTeleportList = (CTelePortList*)Glacier::ZEventBase::RefToPtr(rTeleportListREF);
         if (pTeleportList) {
             ImGui::Separator();
             auto teleportPoints = reinterpret_cast<Glacier::ZLIST*>(pTeleportList->m_pBaseGeom)->m_entries;

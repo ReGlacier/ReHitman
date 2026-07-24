@@ -33,7 +33,7 @@ namespace Hitman::BloodMoney
         void __stdcall OnZHitman3Constructed(std::intptr_t instance)
         {
             auto pSysInterface = Glacier::getInterface<Glacier::ZSysInterfaceWintel>(Globals::kSysInterfaceAddr);
-            spdlog::info("Current scene: {}", pSysInterface->m_engineDataBase->GetSceneName());
+            spdlog::info("Current scene: {}", pSysInterface->m_pEngineData->GetSceneName());
             spdlog::info("ZHitman3 constructed at {:08X}", instance);
         }
 

@@ -104,7 +104,7 @@ namespace Hitman::BloodMoney
         auto sysInterface = Glacier::getInterface<Glacier::ZSysInterfaceWintel>(Globals::kSysInterfaceAddr);
         if (!sysInterface) { return; }
 
-        auto engineDb = sysInterface->m_engineDataBase;
+        auto engineDb = sysInterface->m_pEngineData;
         if (!engineDb) { return; }
 
         ImGui::Text("Scene Inspector");

@@ -13,13 +13,13 @@ namespace Glacier
     namespace
     {
         template <typename T>
-        T* NodeToObject(ZListNodeBase* pNode)
+        T* NodeToObject(ZListNodeBase<T>* pNode)
         {
             return static_cast<T*>(static_cast<ZListNode<T, 0>*>(pNode));
         }
 
         template <typename T>
-        const T* NodeToObject(const ZListNodeBase* pNode)
+        const T* NodeToObject(const ZListNodeBase<T>* pNode)
         {
             return static_cast<const T*>(static_cast<const ZListNode<T, 0>*>(pNode));
         }
@@ -165,9 +165,9 @@ namespace Glacier
             return nullptr;
 
         ZList<ZRTStringObject, true, 0>& rBucket = m_HashTable[GetHashCode(pStr)];
-        for (ZListNodeBase* pNode = rBucket.m_Head.m_Next; pNode != reinterpret_cast<ZListNodeBase*>(&rBucket); pNode = pNode->m_Next)
+        for (auto it = rBucket.Begin(); it != rBucket.End(); ++it)
         {
-            ZRTStringObject* pStringObject = NodeToObject<ZRTStringObject>(pNode);
+            ZRTStringObject* pStringObject = it;
             if (std::strcmp(*pStringObject, pStr) == 0)
                 return pStringObject;
         }
@@ -235,9 +235,9 @@ namespace Glacier
 
     ZStringMemoryManager::ZFreeHeader* ZStringMemoryManager::FindFreeBlock(uint32_t lSize)
     {
-        for (ZListNodeBase* pNode = m_FreeList.m_Head.m_Next; pNode != reinterpret_cast<ZListNodeBase*>(&m_FreeList); pNode = pNode->m_Next)
+        for (auto it = m_FreeList.Begin(); it != m_FreeList.End(); ++it)
         {
-            ZFreeHeader* pFreeBlock = NodeToObject<ZFreeHeader>(pNode);
+            ZFreeHeader* pFreeBlock = it;
             if (pFreeBlock->IsLargeEnough(lSize))
                 return pFreeBlock;
         }

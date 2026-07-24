@@ -196,8 +196,6 @@ namespace Glacier
 		void ExchangeContainer(ZTokenCache& tokenCache, uint32_t& count);
 		void ExchangeBitfield(const ZToken token, ZBitfieldBase& bitfield, const ZEnumInfo& enumInfo);
 
-		// TODO: serializer overloads still pending, see CodeContext.md for current status.
-
 		// members
 		int32_t m_Type; // It's masked?
 		EContent m_Content;

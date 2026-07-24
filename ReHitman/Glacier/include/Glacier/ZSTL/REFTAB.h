@@ -203,6 +203,31 @@ namespace Glacier
                 return !(*this == other);
             }
         };
+
+        template <typename T>
+        class TypedView
+        {
+        public:
+            explicit TypedView(REFTAB* container) : m_pContainer(container) {}
+
+            Iterator<T> begin() { return Iterator<T>(m_pContainer, false); }
+            Iterator<T> end() { return Iterator<T>(m_pContainer, true); }
+
+        private:
+            REFTAB* m_pContainer;
+        };
+
+        template <typename T>
+        TypedView<T> As()
+        {
+            return TypedView<T>(this);
+        }
+
+        template <typename T>
+        TypedView<T> As() const
+        {
+            return TypedView<T>(const_cast<REFTAB*>(this));
+        }
         
         Iterator<uint32_t> begin() { return Iterator<uint32_t>(this, false); }
         Iterator<uint32_t> end()   { return Iterator<uint32_t>(this, true); }

@@ -15,7 +15,7 @@ namespace Glacier
             ZASSERT(m_pBaseGeom);
             return m_pBaseGeom;
             */ 
-            return m_pBaseGeom; 
+            return m_pBaseGeom;
         }
     };
 }

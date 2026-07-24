@@ -24,6 +24,10 @@ namespace Glacier
         MYSTR& operator=(int);
         MYSTR& operator+=(const MYSTR&);
 
+        operator char*() const { return String; }
+        operator const char*() const { return String; }
+        operator bool() const { return String != nullptr; }
+
         friend MYSTR operator+(const MYSTR& lhs, const MYSTR& rhs);
     };
     RE_VERIFY_SIZE(MYSTR, 0x80);

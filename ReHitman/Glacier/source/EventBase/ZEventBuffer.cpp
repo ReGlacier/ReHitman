@@ -239,17 +239,4 @@ namespace Glacier
     }
 
     STATIC_CLASS_VAR_IMPL(ZEventBuffer, ZEventBuffer*, m_Instance, 0x008BA0B8, nullptr);
-
-    std::intptr_t ZEventBuffer::GetGQC(Glacier::ZREF ref) 
-    {
-        // TODO: Finish later 
-        // TODO2: Move to ZEventBase!
-
-        if (G1ConfigurationService::G1API_FunctionAddress_GetGQC != G1ConfigurationService::kNotConfiguredOption) 
-        {
-            return ((std::intptr_t(__cdecl*)(Glacier::ZREF))(G1ConfigurationService::G1API_FunctionAddress_GetGQC))(ref);
-        }
-
-        return 0x0;
-    }
 }

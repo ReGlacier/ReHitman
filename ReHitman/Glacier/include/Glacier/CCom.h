@@ -3,10 +3,24 @@
 #include <Glacier/ZSTL/ZOffsetAlloc.h>
 #include <Glacier/ZSTL/REFTAB32.h>
 #include <Glacier/ReGlacier.h>
+#include <cstdint>
 
 
 namespace Glacier 
 {
+	// fwds
+	class REFTAB;
+	struct CSharedCom;
+
+	enum CCOMFormat 
+	{
+		CCOM_FORMAT_BOOL = 1,
+		CCOM_FORMAT_CHAR = 2,
+		CCOM_FORMAT_int32 = 4,
+		CCOM_FORMAT_FLOAT = 8,
+		CCOM_FORMAT_CLASS = 32,
+	};
+
 	enum CCOMType : uint32_t
 	{
 		CCOM_TYPE_INVALID = 0xFFFFFFFF,
@@ -52,6 +66,24 @@ namespace Glacier
 		int lDataLen;
 	};
 
+	struct CComRead
+	{
+		// methods
+		CComRead(const CSharedCom* pCom, const char* pName);
+		CComRead(const CComRead& copy);
+
+		operator uint32_t() const;
+		operator int32_t() const;
+		operator float() const;
+		operator char*() const;
+		operator bool() const;
+
+		// members
+		const CSharedCom* m_pCom;
+		const char* m_pName;
+	};
+
+
 	struct CGlobalCom
 	{
 		// Types
@@ -80,14 +112,68 @@ namespace Glacier
 
 	struct CSharedCom
 	{
+		// TODO: This vtable missmatches to PC, need RE more correctly!
+		// vtbl
 		virtual ~CSharedCom();
-
-		// TODO: Finish me later pls
+		virtual void Clear() = 0;
+		// virtual void PrintStatus() = 0; - only in debug builds!
+		virtual void SetVal(const char*, bool, CCOMType);
+		virtual void SetVal(const char*, char, CCOMType);
+		virtual void SetVal(const char*, uint32_t, CCOMType);
+		virtual void SetVal(const char*, int32_t, CCOMType);
+		virtual void SetVal(const char*, float, CCOMType);
+		virtual void SetVal(const char*, bool);
+		virtual void SetVal(const char*, char);
+		virtual void SetVal(const char*, int);
+		virtual void SetVal(const char*, float);
+		virtual void SetVal(const char*, REFTAB*, CCOMType);
+		virtual void SetVal(const char*, const char*, CCOMType);
+		virtual void SetVal(const char*, const int*, CCOMType);
+		virtual void SetVal(const char*, const char*, int, CCOMType);
+		virtual void SetVal(const char*, const int*, int, CCOMType);
+		virtual void SetVal(const char*, const float*, int, CCOMType);
+		virtual void SetVal(char const*,char const*,int);
+		virtual void SetVal(char const*,int const*,int);
+		virtual void SetVal(char const*,float const*,int);
+		virtual void SetVal(char const*,char const*);
+		virtual void SetVal(char const*,int const*);
+		virtual void SetVal(char const*,float const*);
+		virtual void GetVal(char const*,bool *);
+		virtual void GetVal(char const*,char *);
+		virtual void GetVal(char const*,int *);
+		virtual void GetVal(char const*,float *);
+		virtual CComRead Get(const char*);
+		virtual CComRead operator[](const char*);
+		virtual int32_t GetVal(const char*, bool*&);
+		virtual int32_t GetVal(const char*, char*&);
+		virtual int32_t GetVal(const char*, int*&);
+		virtual int32_t GetVal(const char*, float*&);
+		virtual char* GetVal(const char*);
+		virtual char* GetValPtr(const char*, CCOMFormat);
+		virtual bool RemoveVal(const char*, int) = 0;
+		virtual bool Exists(const char* , int) = 0;
+		virtual int32_t GetDataLen(const char*);
+		virtual void AddValOfType(const char*, int, CCOMTypeCast*, int, const char*) = 0;
+		virtual ComValueInfo* GetpVal(const char*, int) = 0;
 	};
 	RE_VERIFY_SIZE(CSharedCom, 0x4);
 
 	struct CCom : public CSharedCom
 	{
+		// vtbl
+		~CCom() override;
+		void Clear() override;
+		bool RemoveVal(const char*, int) override;
+		bool Exists(const char* , int) override;
+		void AddValOfType(const char*, int, CCOMTypeCast*, int, const char*) override;
+		ComValueInfo* GetpVal(const char*, int) override;
+		virtual void CopyAll(CCom* pSource);
+
+		// methods
+		CCom();
+
+		// TODO: Finish methods
+
 		// members
 		char m_Memory[16384];
 		void* m_pMemory;

@@ -287,9 +287,9 @@ namespace ImGui
 
                         // And try to register this actor in ZDllSound::ActorRegister
                         auto sysInterface = Glacier::getInterface<Glacier::ZSysInterfaceWintel>(Hitman::BloodMoney::Globals::kSysInterfaceAddr);
-                        if (sysInterface && sysInterface->m_soundWintelDLL) {
+                        if (sysInterface && sysInterface->m_pSoundDll) {
                             // ZDllSound::ActorRegister
-                            ((void(__thiscall*)(int, Glacier::ZGEOM*))0x004C60E0)(sysInterface->m_soundWintelDLL, reinterpret_cast<Glacier::ZGEOM*>(clonedActor));
+                            ((void(__thiscall*)(Glacier::ZDllBase*, Glacier::ZGEOM*))0x004C60E0)(sysInterface->m_pSoundDll, reinterpret_cast<Glacier::ZGEOM*>(clonedActor));
                             spdlog::info("Cloned actor was register in sound subsystem as sound emitter");
                         }
                     }
@@ -375,7 +375,7 @@ namespace Hitman::BloodMoney
         auto sysInterface = Glacier::getInterface<Glacier::ZSysInterfaceWintel>(Globals::kSysInterfaceAddr);
         if (!sysInterface) { return; }
         
-        auto engineDb = sysInterface->m_engineDataBase;
+        auto engineDb = sysInterface->m_pEngineData;
         if (!engineDb) { return; }
         
         auto gameData = Glacier::getInterface<Hitman::BloodMoney::ZHM3GameData>(Globals::kGameDataAddr);

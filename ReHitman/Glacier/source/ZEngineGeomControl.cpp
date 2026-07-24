@@ -1,9 +1,12 @@
+#include <Glacier/Glacier.h>
 #include <Glacier/ZEngineGeomControl.h>
-#include <Glacier/Geom/ZBaseGeom.h> // ZBaseGeom
+#include <Glacier/Geom/ZBaseGeom.h>
 #include <Glacier/Geom/ZGeomBuffer.h>
 #include <Glacier/Geom/ZLIGHT.h>
+#include <Glacier/ZSysInterface.h>
+#include <Glacier/ZEngineDataBase.h>
+
 #include <G1ConfigurationService.h>
-#include <Glacier/Glacier.h>
 
 namespace Glacier
 {
@@ -78,13 +81,12 @@ namespace Glacier
 
     void ZEngineGeomControl::UpdateChangedLights(ZBaseGeom** pBaseGeomList, uint32_t lNrLights)
     {
-        //if (g_pEngineData->GetListUser() && lNrLights) // TODO: USEME
-        if (lNrLights)
+        if (g_pEngineData->GetListUser() && lNrLights)
         {
             for (int i = 0; i < lNrLights; ++i)
             {
                 ZASSERT(pBaseGeomList[i] && pBaseGeomList[i]->IsDerivedFrom<ZLIGHT>());
-                // pBaseGeomList[i]->LightNotifyPotentialDetachment(true); // TODO: Finish me
+                pBaseGeomList[i]->LightNotifyPotentialDetachment(true);
             }
         }
     }

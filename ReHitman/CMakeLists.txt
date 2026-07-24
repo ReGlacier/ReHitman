@@ -10,6 +10,7 @@ add_subdirectory(Modules/spdlog)
 add_subdirectory(Modules/ImGui)
 add_subdirectory(Modules/HF)
 add_subdirectory(Modules/gtest)
+add_subdirectory(Modules/zlib)
 
 add_subdirectory(Glacier)
 add_subdirectory(BloodMoney)

@@ -80,7 +80,7 @@ namespace Hitman::BloodMoney
         auto sysInterface = Glacier::getInterface<Glacier::ZSysInterfaceWintel>(Globals::kSysInterfaceAddr);
         if (!sysInterface) { return; }
 
-        auto engineDb = sysInterface->m_engineDataBase;
+        auto engineDb = sysInterface->m_pEngineData;
         if (!engineDb) { return; }
 
         auto sceneCom = engineDb->GetSceneCom();
@@ -148,7 +148,7 @@ namespace Hitman::BloodMoney
         ImGui::Begin("TEST");
 
         if (ImGui::Button("Give MP7 with tranquilizer ammo")) {
-            auto engineDB = sysInterface->m_engineDataBase;
+            auto engineDB = sysInterface->m_pEngineData;
             if (!engineDB) {
                 return;
             }
@@ -259,7 +259,7 @@ namespace Hitman::BloodMoney
         }
 
         if (ImGui::Button("Dump render draw")) {
-            spdlog::info("RenderDraw at {:08X}", sysInterface->m_renderer->m_pRenderDraw);
+            spdlog::info("RenderDraw at {:08X}", reinterpret_cast<Glacier::ZRenderWintelD3D*>(sysInterface->WindowFirst)->m_pRenderDraw);
         }
 
         if (ImGui::Button("Dump actor #0 matpos")) {

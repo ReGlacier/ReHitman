@@ -274,6 +274,57 @@ TEST_F(REFTABTest, RangeBasedForLoop)
     EXPECT_EQ(extractedValues[4], 55);
 }
 
+TEST_F(REFTABTest, TypedViewIteratesPointerValues)
+{
+    auto* first = reinterpret_cast<int*>(static_cast<uintptr_t>(0x1000));
+    auto* second = reinterpret_cast<int*>(static_cast<uintptr_t>(0x2000));
+    auto* third = reinterpret_cast<int*>(static_cast<uintptr_t>(0x3000));
+
+    pReftab->Add(static_cast<uint32_t>(reinterpret_cast<uintptr_t>(first)));
+    pReftab->Add(static_cast<uint32_t>(reinterpret_cast<uintptr_t>(second)));
+    pReftab->Add(static_cast<uint32_t>(reinterpret_cast<uintptr_t>(third)));
+
+    std::vector<int*> extractedPointers;
+    for (auto* value : pReftab->As<int*>())
+    {
+        extractedPointers.push_back(value);
+    }
+
+    ASSERT_EQ(extractedPointers.size(), 3);
+    EXPECT_EQ(extractedPointers[0], first);
+    EXPECT_EQ(extractedPointers[1], second);
+    EXPECT_EQ(extractedPointers[2], third);
+}
+
+TEST_F(REFTABTest, TypedViewDoesNotChangeDefaultIteration)
+{
+    pReftab->Add(11);
+    pReftab->Add(22);
+    pReftab->Add(33);
+
+    std::vector<uint32_t> defaultValues;
+    for (auto value : *pReftab)
+    {
+        defaultValues.push_back(value);
+    }
+
+    std::vector<uint16_t> typedValues;
+    for (auto value : pReftab->As<uint16_t>())
+    {
+        typedValues.push_back(value);
+    }
+
+    ASSERT_EQ(defaultValues.size(), 3);
+    EXPECT_EQ(defaultValues[0], 11);
+    EXPECT_EQ(defaultValues[1], 22);
+    EXPECT_EQ(defaultValues[2], 33);
+
+    ASSERT_EQ(typedValues.size(), 3);
+    EXPECT_EQ(typedValues[0], 11);
+    EXPECT_EQ(typedValues[1], 22);
+    EXPECT_EQ(typedValues[2], 33);
+}
+
 TEST_F(REFTABTest, CustomElementSizeHandling) 
 {
     auto* pCustomTab = new REFTAB(4, 1); 

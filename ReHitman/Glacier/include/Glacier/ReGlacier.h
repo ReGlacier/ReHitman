@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstddef>
+
 
 #define RE_VERIFY_SIZE(cls, expected) static_assert(sizeof(cls) == (expected), "Unexpected size of " #cls " (expected " #expected " byte(s))")
 #define RE_VERIFY_OFFSET(cls, mbr, expected) static_assert(offsetof(cls, mbr) == expected, "Unexpected offset of " #cls "::" #mbr " (expected +" #expected ")")

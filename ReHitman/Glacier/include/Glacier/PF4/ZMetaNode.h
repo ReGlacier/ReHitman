@@ -11,12 +11,20 @@ namespace Glacier::PF4
 
 	struct ZMetaNode
 	{
-		void* m_Data;
-		int m_Type;
-		ZPathFollower* m_Follower;
-		ZMetaNode* m_Next;
-		ZMetaNode* m_Prev;
-		ZLocation m_Location;
+		// methods
+		ZMetaNode();
+		ZMetaNode& operator=(const ZMetaNode& other);
+		const ZVector3& GetPosition() const;
+		const ZLocation& GetLocation() const;
+		bool IsRegistered() const;
+
+		// members
+		void* m_Data{nullptr};
+		int m_Type{0};
+		ZPathFollower* m_Follower{nullptr}; // WARNING: In PS2 build it's ZBoid* m_pBoid, check this!!!
+		ZMetaNode* m_Next{nullptr};
+		ZMetaNode* m_Prev{nullptr};
+		ZLocation m_Location{};
 	};
 	RE_VERIFY_SIZE(ZMetaNode, 0x28);
 }

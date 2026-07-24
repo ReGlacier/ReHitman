@@ -52,7 +52,7 @@ namespace Hitman::BloodMoney
             auto sysInterface = Glacier::getInterface<Glacier::ZSysInterfaceWintel>(Globals::kSysInterfaceAddr);
             if (!sysInterface) { return; }
 
-            auto engineDb = sysInterface->m_engineDataBase;
+            auto engineDb = sysInterface->m_pEngineData;
             if (!engineDb) { return; }
 
             auto listener = reinterpret_cast<Glacier::ZGEOM*>(pSelf);
@@ -73,8 +73,9 @@ namespace Hitman::BloodMoney
                                         0,
                                         270);
 
-            auto pAction = Glacier::ZEventBuffer::EventRefToInstance<Glacier::ZAction>(actionId);
-            if (pAction) { // It's not required but why not
+            auto* pAction = (Glacier::ZAction*)Glacier::ZEventBase::RefToPtr(actionId);
+            if (pAction) 
+            {
                 pAction->Show();
             }
 

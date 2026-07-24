@@ -1,9 +1,14 @@
 #include <Glacier/EventBase/ZEventBase.h>
 #include <Glacier/EventBase/ZEventBuffer.h>
+#include <Glacier/EventBase/ZEventList.h>
+#include <Glacier/EventBase/ZScheduledEvent.h>
+#include <Glacier/EventBase/ZScheduledUpdate.h>
 #include <Glacier/Geom/ZGEOM.h>
 #include <Glacier/Geom/ZSkipSaveGroup.h>
 #include <Glacier/RTP/Base.h>
 #include <Glacier/Serializer/ISerializerStream.h>
+#include <Glacier/ZEngineDataBase.h>
+#include <Glacier/ZSysInterface.h>
 #include <G1ConfigurationService.h>
 #include <cassert>
 
@@ -45,8 +50,24 @@ namespace Glacier
     {
         ZASSERT(!ZEventBase::m_LockCreation);
 
-        // NOT FINISHED YET
-        // TODO: Finish me
+        m_lRoutCases = 0;
+        m_lEventLists = 0;
+        m_TimerInterval = 0.1f;
+        m_fTimePassed.secs = g_pSysInterface->FrameTime.secs - static_cast<int>(g_pEngineData->m_fEvenOutTimers * m_TimerInterval * -TIMETYPE::kTicksPerSecond);
+
+        g_pEngineData->m_fEvenOutTimers += 0.1f;
+        if (g_pEngineData->m_fEvenOutTimers >= 1.0f)
+        {
+            g_pEngineData->m_fEvenOutTimers = 0.0f;
+        }
+
+        m_ClassCall = 0;
+        m_Status = EStatus::STATUS_New;
+        m_pBaseGeom = nullptr;
+        m_pScheduleEvent = nullptr;
+
+        g_pEngineData->NewEventClass(this);
+        g_pEngineData->m_EventList.AddEvent(this);
 
         if (ZEventBase::m_DirectRef)
         {
@@ -198,7 +219,46 @@ namespace Glacier
 
     void ZEventBase::ChangeEventActivity() 
     {
-        // TODO: Finish me
+        uint32_t lRoutCases = m_lRoutCases;
+
+        // Inactive geoms are not allowed to receive frame/time callbacks. The original
+        // code masks the requested rout cases locally, but keeps m_lRoutCases intact.
+        if (m_pBaseGeom != nullptr && !m_pBaseGeom->BaseGeom()->Active())
+        {
+            lRoutCases &= 0xEFE7u;
+        }
+
+        // Bits 0x10 and 0x08 share the same active event list. Moving an event between
+        // active and inactive lists is only needed when the tracked list bits change.
+        if ((lRoutCases & 0x18u) != 0)
+        {
+            if ((m_lEventLists & 0x18u) == 0)
+            {
+                g_pSysInterface->m_pEngineData->m_EventList.ActivateFrameUpdate(this);
+            }
+        }
+        else if ((m_lEventLists & 0x18u) != 0)
+        {
+            g_pSysInterface->m_pEngineData->m_EventList.DeactivateFrameUpdate(this);
+        }
+
+        // Scheduled updates are owned by ZScheduledUpdate, not by ZEventList. The event
+        // keeps m_pScheduleEvent while bit 0x1000 is reflected in m_lEventLists.
+        if ((lRoutCases & 0x1000u) != 0)
+        {
+            if ((m_lEventLists & 0x1000u) == 0)
+            {
+                g_pSysInterface->m_pEngineData->GetEventScheduler()->AddEvent(this);
+            }
+        }
+        else if ((m_lEventLists & 0x1000u) != 0)
+        {
+            g_pSysInterface->m_pEngineData->m_pScheduledUpdate->RemoveEvent(this);
+        }
+
+        // Mirror only the list-owned activity bits. Other rout flags, for example the
+        // run-while-paused bit 0x100, stay in m_lRoutCases and are checked at dispatch.
+        m_lEventLists = (m_lEventLists & ~0x1018u) | (lRoutCases & 0x1018u);
     }
 
     void ZEventBase::ActivateTimeUpdate(float timer_interval) 
@@ -208,7 +268,15 @@ namespace Glacier
             m_TimerInterval = timer_interval;
         }
 
-        // TODO: FINISH ME
+        ZEngineDataBase* pEngineData = g_pSysInterface->m_pEngineData;
+
+        m_fTimePassed.secs = g_pSysInterface->FrameTime.secs - static_cast<int>(pEngineData->m_fEvenOutTimers * m_TimerInterval * -TIMETYPE::kTicksPerSecond);
+
+        pEngineData->m_fEvenOutTimers += 0.1f;
+        if (pEngineData->m_fEvenOutTimers >= 1.0f)
+        {
+            pEngineData->m_fEvenOutTimers = 0.0f;
+        }
 
         if ((m_lRoutCases & 8) == 0)
         {
@@ -379,15 +447,14 @@ namespace Glacier
 
     void ZEventBase::OnlyUpdateMe(bool bOnlyUpdateMe)
     {
-        // TODO: Finish me
         if (bOnlyUpdateMe)
         {
-            // g_pEngineData->SetOnlyEventUpdate(this)
+            g_pEngineData->SetOnlyEventUpdate(this);
         }
-        // else if (g_pEngineData->GetOnlyEventUpdate() == this)
-        //{
-        //  g_pEngineData->SetOnlyEventUpdate(nullptr)
-        //}
+        else if (g_pEngineData->GetOnlyEventUpdate() == this)
+        {
+            g_pEngineData->SetOnlyEventUpdate(nullptr);
+        }
     }
 
     // TODO: Finish VirtualTable reconstruction!

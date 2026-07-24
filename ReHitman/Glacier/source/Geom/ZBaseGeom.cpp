@@ -2,6 +2,7 @@
 #include <Glacier/Geom/ZBaseGeomRoomList.h>
 #include <Glacier/Geom/GeomControlMasks.h>
 #include <Glacier/Geom/ZGeomBuffer.h>
+#include <Glacier/Geom/ZGeomListTypeUtils.h>
 #include <Glacier/Geom/ZGEOM.h>
 #include <Glacier/Geom/ZSTDOBJ.h>
 #include <Glacier/Geom/ZSHAPE.h>
@@ -630,7 +631,199 @@ namespace Glacier
 
     void ZBaseGeom::SetControl(uint32_t lAddBits, uint32_t lRemBits)
     {
-        // TODO: Finish me
+        ZASSERT((lAddBits & lRemBits) == 0);
+
+        const uint32_t lColiBits = lAddBits & ZCCOLIMASK;
+        if (lColiBits)
+        {
+            for (auto* pParent = Parent(); pParent; pParent = pParent->Parent())
+            {
+                pParent->m_lControl |= lColiBits;
+            }
+        }
+
+        uint32_t lRealAddBits = lAddBits & ~m_lControl;
+        uint32_t lRealRemBits = lRemBits & m_lControl;
+
+        constexpr uint32_t ZCUPDATELIGHT = 0x1000000u; // TODO: Find this mask
+        constexpr uint32_t kControlChangeMask = ZCOWNERDRAW | ZCDYNAMIC | ZCCHKLIGHT | ZCROOMASSIGN | ZCINVISIBLE | ZCHIDDEN | ZCINACTIVE;
+        constexpr uint32_t kRoomsDrawListMask = ZCOWNERDRAW | ZCDYNAMIC | ZCINVISIBLE | ZCHIDDEN | ZCINACTIVE;
+        constexpr uint32_t kDynamicContainerMask = ZCOWNERDRAW | ZCINVISIBLE | ZCHIDDEN | ZCINACTIVE;
+        constexpr uint32_t kRoomAssignMask = ZCOWNERDRAW | ZCROOMASSIGN | ZCHIDDEN | ZCINACTIVE;
+        constexpr uint32_t kRoomListMask = ZCOWNERDRAW | ZCHIDDEN | ZCINACTIVE;
+        constexpr uint32_t kRecursiveGroupMask = ZCOWNERDRAW | ZCINACTIVE;
+
+        if ((lRealAddBits | lRealRemBits) & kControlChangeMask)
+        {
+            if ((lRealAddBits & ZCDYNAMIC) && (Control() & ZCHASDYNAMICPARENT))
+            {
+                const MYSTR sName = CalcTotalName(true);
+                const MYSTR sParentName = GetDynamicParent() ? GetDynamicParent()->CalcTotalName(true) : MYSTR("<none>");
+                printf("ERROR: %s has dynamic parent %s", sName.String, sParentName.String);
+                lRealAddBits &= ~ZCDYNAMIC;
+            }
+
+            if ((lRealRemBits & ZCINACTIVE) && Parent() && (Parent()->Control() & ZCINACTIVE))
+            {
+                if (Name() && Parent()->Name())
+                {
+                    printf("ERROR: Can not activate geom %s when parent %s is inactive", Name(), Parent()->Name());
+                }
+
+                lRealRemBits &= ~ZCINACTIVE;
+            }
+
+            if (lRealRemBits & ZCDYNAMIC)
+            {
+                lRealRemBits |= ZCROOMASSIGN;
+            }
+
+            const uint32_t lOldControl = m_lControl;
+            const uint32_t lNewControl = (~lRealRemBits & m_lControl) | lRealAddBits;
+
+            const auto CheckBitfieldChanges = [](uint32_t lOldValue, uint32_t lNewValue, uint32_t lRequiredBits, uint32_t lForbiddenBits) -> int32_t
+            {
+                const bool bOldEnabled = ((lOldValue & lRequiredBits) == lRequiredBits) && ((lOldValue & lForbiddenBits) == 0);
+                const bool bNewEnabled = ((lNewValue & lRequiredBits) == lRequiredBits) && ((lNewValue & lForbiddenBits) == 0);
+
+                if (bOldEnabled == bNewEnabled)
+                {
+                    return 0;
+                }
+
+                return bNewEnabled ? 1 : -1;
+            };
+
+            const int32_t lRoomsDrawListChange = CheckBitfieldChanges(lOldControl, lNewControl, 0u, kRoomsDrawListMask);
+            const int32_t lDynamicContainerChange = CheckBitfieldChanges(lOldControl, lNewControl, ZCDYNAMIC, kDynamicContainerMask);
+            const int32_t lDynamicRoomListChange = CheckBitfieldChanges(lOldControl, lNewControl, ZCDYNAMIC, kRoomListMask);
+            const int32_t lStaticRoomListChange = CheckBitfieldChanges(lOldControl, lNewControl, ZCDYNAMIC, kRoomAssignMask);
+            const int32_t lAutoRoomAssignChange = CheckBitfieldChanges(lOldControl, lNewControl, ZCDYNAMIC | ZCROOMASSIGN, kRoomListMask);
+
+            if (lDynamicRoomListChange < 0)
+            {
+                DetachFromDynamicContainer(nullptr);
+            }
+
+            if (lStaticRoomListChange < 0 || lAutoRoomAssignChange < 0)
+            {
+                FreeRoomList();
+            }
+
+            if (lRoomsDrawListChange < 0 || lDynamicContainerChange < 0)
+            {
+                DetachFromRoomsDrawLists(nullptr);
+            }
+
+            m_lControl &= ~lRealRemBits;
+            m_lControl |= lRealAddBits;
+
+            // TODO: Finish after ZEngineDataBase/CListUser are reversed.
+            // Original runtime flow registers/unregisters lit ZSTDOBJ/ZLIGHT geoms in CListUser
+            // when ZCCHKLIGHT changes, updates m_uListID, and marks ZCUPDATELIGHT.
+            if (lRealAddBits & ZCCHKLIGHT)
+            {
+                ZASSERT((m_lControl & ZCNONRUNTIME) == 0);
+            }
+
+            if ((lRealAddBits | lRealRemBits) & ZCCHKLIGHT)
+            {
+                m_lControl |= ZCUPDATELIGHT;
+            }
+
+            if (lRealAddBits & ZCDYNAMIC)
+            {
+                SetDynamicParent(this);
+                if (auto* pParentGroup = ParentGroup())
+                {
+                    pParentGroup->InvalidateBounds();
+                }
+            }
+            else if (lRealRemBits & ZCDYNAMIC)
+            {
+                if (IsDerivedFrom<ZGROUP>())
+                {
+                    auto* pGroup = static_cast<ZGROUP*>(GetGeom());
+                    for (auto* pChild = pGroup->m_pGroupFirst; pChild; pChild = pChild->Next())
+                    {
+                        pChild->SetControl(0u, ZCHASDYNAMICPARENT);
+                        pChild->m_iDynamicParentNr = 0;
+                    }
+                }
+            }
+
+            if (lRoomsDrawListChange > 0 || lDynamicContainerChange > 0)
+            {
+                AttachToRoomsDrawLists(nullptr);
+            }
+
+            if (lDynamicRoomListChange > 0)
+            {
+                ZASSERT(!m_pDynId);
+                AttachToDynamicContainer();
+            }
+
+            if (lAutoRoomAssignChange > 0)
+            {
+                AutoAssignToRooms();
+            }
+            else if (lStaticRoomListChange > 0)
+            {
+                ZBaseGeom* pRoomBaseGeom = Parent();
+                for (; pRoomBaseGeom; pRoomBaseGeom = pRoomBaseGeom->Parent())
+                {
+                    if (pRoomBaseGeom->IsDerivedFrom<ZROOM>())
+                    {
+                        break;
+                    }
+                }
+
+                if (pRoomBaseGeom)
+                {
+                    AddToRoomList(static_cast<ZROOM*>(pRoomBaseGeom->GetGeom()));
+                }
+                else
+                {
+                    const MYSTR sName = CalcTotalName(true);
+                    printf("WARNING: Geom %s will never be drawn as it is not attached under a room!", sName.String);
+                }
+            }
+
+            if (lRealAddBits & ZCINACTIVE)
+            {
+                // TODO: Notify CListUser after ZEngineDataBase/CListUser are reversed.
+                // Original removes this geom from ListUser when m_uListID is set.
+                if (auto* pGeom = GetGeom())
+                {
+                    pGeom->Activate(false);
+                }
+            }
+            else if ((lRealRemBits & ZCINACTIVE) && GetGeom())
+            {
+                GetGeom()->Activate(true);
+            }
+
+            const uint32_t lRecursiveAddBits = lRealAddBits & kRecursiveGroupMask;
+            const uint32_t lRecursiveRemBits = lRealRemBits & kRecursiveGroupMask;
+            if ((lRecursiveAddBits | lRecursiveRemBits) && IsDerivedFrom<ZGROUP>())
+            {
+                auto* pGroup = static_cast<ZGROUP*>(GetGeom());
+                for (auto* pChild = pGroup->m_pGroupFirst; pChild; pChild = pChild->Next())
+                {
+                    pChild->SetControl(lRecursiveAddBits, lRecursiveRemBits);
+                }
+            }
+
+            if ((lRealAddBits | lRealRemBits) & ZCOWNERDRAW)
+            {
+                SetPrim(Prim());
+            }
+        }
+        else
+        {
+            m_lControl &= ~lRealRemBits;
+            m_lControl |= lRealAddBits;
+        }
     }
 
     void ZBaseGeom::SetControl(uint32_t lControl)
@@ -680,7 +873,22 @@ namespace Glacier
 
     void ZBaseGeom::DynamicPosChanged()
     {
-        // TODO: Finish me
+        ZASSERT(!(Control() & ZCOWNERDRAW));
+
+        if (Control())
+        {
+            auto* pDynamicTreeGroup = ParentGroup()->GetDynamicTreeGroup();
+
+            if (pDynamicTreeGroup)
+            {
+                pDynamicTreeGroup->MoveDynamicGeom(this);
+            }
+        }
+
+        if (Control() & ZCROOMASSIGN)
+        {
+            AutoAssignToRooms();
+        }
     }
 
     ZGROUP* ZBaseGeom::GetOwner(bool bCheckWorldGroup) const
@@ -878,12 +1086,185 @@ namespace Glacier
 
     void ZBaseGeom::AttachToRoomsDrawLists(ZROOM* pRoom)
     {
-        // TODO: Finish me
+        if (Control() & (ZCOWNERDRAW | ZCINVISIBLE | ZCHIDDEN | ZCINACTIVE))
+        {
+            return;
+        }
+
+        const auto eListType = GetBaseGeomListType(this);
+        if (eListType == eBaseGeomListTypes::BGLT_Light)
+        {
+            if (Control() & (ZCHASDYNAMICPARENT | ZCDYNAMIC))
+            {
+                if (pRoom)
+                {
+                    if (!ZGeomBuffer::Instance().Exists(pRoom->m_lDynamicGeomsDrawList, this))
+                    {
+                        pRoom->m_lDynamicGeomsDrawList = ZGeomBuffer::Instance().AddGeoms(pRoom->m_lDynamicGeomsDrawList, this, this);
+                    }
+                }
+                else
+                {
+                    auto* pDynamicParent = this;
+                    if (Control() & ZCHASDYNAMICPARENT)
+                    {
+                        pDynamicParent = GetDynamicParent();
+                    }
+
+                    if (auto* pRoomList = pDynamicParent ? pDynamicParent->GetRoomListPtr() : nullptr)
+                    {
+                        const uint32_t lRoomCount = pRoomList->Count();
+                        for (uint32_t i = 0; i < lRoomCount; ++i)
+                        {
+                            auto* pListRoom = pRoomList->GetRoomNr(i);
+                            if (!ZGeomBuffer::Instance().Exists(pListRoom->m_lDynamicGeomsDrawList, this))
+                            {
+                                pListRoom->m_lDynamicGeomsDrawList = ZGeomBuffer::Instance().AddGeoms(pListRoom->m_lDynamicGeomsDrawList, this, this);
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                ZBaseGeom* pRoomBaseGeom = Parent();
+                for (; pRoomBaseGeom; pRoomBaseGeom = pRoomBaseGeom->Parent())
+                {
+                    if (pRoomBaseGeom->IsDerivedFrom<ZROOM>())
+                    {
+                        break;
+                    }
+                }
+
+                if (pRoomBaseGeom)
+                {
+                    auto* pOwnerRoom = static_cast<ZROOM*>(pRoomBaseGeom->GetGeom());
+                    uint32_t* pDrawList = RequestCustomDraw() ? &pOwnerRoom->m_lStaticGeomsCustomDrawList : &pOwnerRoom->m_lStaticGeomsPrimDrawList;
+
+                    if (!ZGeomBuffer::Instance().Exists(*pDrawList, this))
+                    {
+                        *pDrawList = ZGeomBuffer::Instance().AddGeoms(*pDrawList, this, this);
+                    }
+
+                    // TODO: Notify ZSysInterface room visibility/debug component when g_pSysInterface is reversed.
+                }
+            }
+        }
+        else if (eListType == eBaseGeomListTypes::BGLT_Group)
+        {
+            auto* pGroup = static_cast<ZGROUP*>(GetGeom());
+            for (auto* pChild = pGroup->m_pGroupFirst; pChild; pChild = pChild->Next())
+            {
+                if (pChild->IsDerivedFrom<ZROOM>())
+                {
+                    continue;
+                }
+
+                if (pChild->IsDerivedFrom<ZTreeGroup>())
+                {
+                    auto* pTreeGroup = static_cast<ZTreeGroup*>(pChild->GetGeom());
+                    if (pTreeGroup->IsPrivate())
+                    {
+                        continue;
+                    }
+                }
+
+                pChild->AttachToRoomsDrawLists(pRoom);
+            }
+        }
     }
 
     void ZBaseGeom::DetachFromRoomsDrawLists(ZROOM* pRoom)
     {
-        // TODO: Finish me
+        if (Control() & ZCOWNERDRAW)
+        {
+            return;
+        }
+
+        const auto eListType = GetBaseGeomListType(this);
+        if (eListType == eBaseGeomListTypes::BGLT_Light)
+        {
+            if (Control() & (ZCHASDYNAMICPARENT | ZCDYNAMIC))
+            {
+                if (pRoom)
+                {
+                    if (ZGeomBuffer::Instance().Exists(pRoom->m_lDynamicGeomsDrawList, this))
+                    {
+                        ZASSERT((Control() & (ZCOWNERDRAW | ZCINVISIBLE | ZCHIDDEN | ZCINACTIVE)) == 0);
+                        pRoom->m_lDynamicGeomsDrawList = ZGeomBuffer::Instance().RemoveGeoms(pRoom->m_lDynamicGeomsDrawList, this, this);
+                    }
+                }
+                else
+                {
+                    auto* pDynamicParent = this;
+                    if (Control() & ZCHASDYNAMICPARENT)
+                    {
+                        pDynamicParent = GetDynamicParent();
+                    }
+
+                    if (auto* pRoomList = pDynamicParent ? pDynamicParent->GetRoomListPtr() : nullptr)
+                    {
+                        const uint32_t lRoomCount = pRoomList->Count();
+                        for (uint32_t i = 0; i < lRoomCount; ++i)
+                        {
+                            auto* pListRoom = pRoomList->GetRoomNr(i);
+                            if (ZGeomBuffer::Instance().Exists(pListRoom->m_lDynamicGeomsDrawList, this))
+                            {
+                                ZASSERT((Control() & (ZCOWNERDRAW | ZCINVISIBLE | ZCHIDDEN | ZCINACTIVE)) == 0);
+                                pListRoom->m_lDynamicGeomsDrawList = ZGeomBuffer::Instance().RemoveGeoms(pListRoom->m_lDynamicGeomsDrawList, this, this);
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                ZBaseGeom* pRoomBaseGeom = Parent();
+                for (; pRoomBaseGeom; pRoomBaseGeom = pRoomBaseGeom->Parent())
+                {
+                    if (pRoomBaseGeom->IsDerivedFrom<ZROOM>())
+                    {
+                        break;
+                    }
+                }
+
+                if (pRoomBaseGeom)
+                {
+                    auto* pOwnerRoom = static_cast<ZROOM*>(pRoomBaseGeom->GetGeom());
+                    uint32_t* pDrawList = RequestCustomDraw() ? &pOwnerRoom->m_lStaticGeomsCustomDrawList : &pOwnerRoom->m_lStaticGeomsPrimDrawList;
+
+                    if (ZGeomBuffer::Instance().Exists(*pDrawList, this))
+                    {
+                        ZASSERT((Control() & (ZCOWNERDRAW | ZCINVISIBLE | ZCHIDDEN | ZCINACTIVE)) == 0);
+                        *pDrawList = ZGeomBuffer::Instance().RemoveGeoms(*pDrawList, this, this);
+                    }
+
+                    // TODO: Notify ZSysInterface room visibility/debug component when g_pSysInterface is reversed.
+                }
+            }
+        }
+        else if (eListType == eBaseGeomListTypes::BGLT_Group)
+        {
+            auto* pGroup = static_cast<ZGROUP*>(GetGeom());
+            for (auto* pChild = pGroup->m_pGroupFirst; pChild; pChild = pChild->Next())
+            {
+                if (pChild->IsDerivedFrom<ZROOM>())
+                {
+                    continue;
+                }
+
+                if (pChild->IsDerivedFrom<ZTreeGroup>())
+                {
+                    auto* pTreeGroup = static_cast<ZTreeGroup*>(pChild->GetGeom());
+                    if (pTreeGroup->IsPrivate())
+                    {
+                        continue;
+                    }
+                }
+
+                pChild->DetachFromRoomsDrawLists(pRoom);
+            }
+        }
     }
 
     void ZBaseGeom::AttachToDynamicContainer()

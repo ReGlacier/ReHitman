@@ -82,7 +82,7 @@
 #include <Glacier/Serializer/ISerializerStream.h>
 #include <Glacier/ZEngineDataBase.h>
 #include <Glacier/ZSysInterfaceWintel.h>
-#include <Glacier/ZActionManager.h>
+#include <Glacier/Action/ZActionManager.h>
 #include <Glacier/ZRunMatPosAnim.h>
 #include <Glacier/SSplineMover.h>
 #include <Glacier/GUI/ZWINGROUP.h>
@@ -156,7 +156,7 @@ namespace Hitman::BloodMoney
             auto sysInterface = Glacier::getInterface<Glacier::ZSysInterfaceWintel>(Globals::kSysInterfaceAddr);
             if (sysInterface)
             {
-                auto engineDB = sysInterface->m_engineDataBase;
+                auto engineDB = sysInterface->m_pEngineData;
                 if (engineDB)
                 {
                     engineDB->CloseDown();
@@ -179,10 +179,8 @@ namespace Hitman::BloodMoney
     void DebugTools::toggleVisibility()
     {
         m_bIsVisible = !m_bIsVisible;
-
-        Glacier::ZActionManager* actionManager = Glacier::getInterface<Glacier::ZActionManager>(Hitman::BloodMoney::Globals::kActionManagerAddr);
-
-        actionManager->m_isEnabled = !m_bIsVisible;
+        
+        (m_bIsVisible ? Glacier::Action::instance->Enable() : Glacier::Action::instance->Disable());
     }
 
     bool DebugTools::isVisible() const
@@ -206,7 +204,7 @@ namespace Hitman::BloodMoney
         auto sysInterface = Glacier::getInterface<Glacier::ZSysInterfaceWintel>(Globals::kSysInterfaceAddr);
         if (!sysInterface) { return; }
 
-        auto engineDb = sysInterface->m_engineDataBase;
+        auto engineDb = sysInterface->m_pEngineData;
         if (!engineDb) { return; }
 
         if (ImGui::BeginMenu("Levels"))

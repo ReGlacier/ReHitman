@@ -423,5 +423,5 @@ namespace Glacier
 	}
 
 	STATIC_CLASS_VAR_IMPL(ZGeomBuffer, ZGeomBuffer*, m_Instance, 0x008BA0C0, nullptr); // addr from PC
-	STATIC_CLASS_VAR_IMPL(ZGeomBuffer, uint32_t, m_lDeleteGeomType, 0x0, 0); // TODO: Find where is that on PC
+	STATIC_CLASS_VAR_IMPL(ZGeomBuffer, uint32_t, m_lDeleteGeomType, 0x008BA0BC, 0); // addr from PC
 }

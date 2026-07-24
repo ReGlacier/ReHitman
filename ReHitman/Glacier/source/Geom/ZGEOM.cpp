@@ -9,6 +9,8 @@
 #include <Glacier/CHUNKFILE.h>
 #include <Glacier/Serializer/ISerializerStream.h>
 #include <Glacier/Serializer/IOutputSerializerStream.h>
+#include <Glacier/ZSysInterface.h>
+#include <Glacier/ZEngineDataBase.h>
 #include <cstring>
 
 namespace Glacier
@@ -435,7 +437,7 @@ namespace Glacier
         {
             FreeEvents();
 
-            if (m_pExData->_ExtraInitData) // && !g_pEngineData->CheckInPackBuffer(m_pExData->_ExtraInitData) // TODO: Finish after ZEngineDataBase reversed
+            if (m_pExData->_ExtraInitData && !g_pEngineData->CheckInPackBuffer(m_pExData->_ExtraInitData))
             {
                 ZUniMemory::Free(m_pExData->_ExtraInitData);
             }
@@ -460,9 +462,7 @@ namespace Glacier
             m_pExData->_ExtraInitData = Source->m_pExData->_ExtraInitData;
             if (m_pExData->_ExtraInitData)
             {
-                // TODO: Uncomment after ZEngineDataBase reversed
-                // ZASSERT(g_pEngineData->CheckInPackBuffer(m_pExData->_ExtraInitData));
-
+                ZASSERT(g_pEngineData->CheckInPackBuffer(m_pExData->_ExtraInitData));
                 const auto iTotalExtraInitSize = Source->m_pExData->_ExtraInitData->GetTotalSizeAligned();
 
                 m_pExData->_ExtraInitData = (CHUNKFILE*)ZUniMemory::Allocate(sizeof(uint8_t) * iTotalExtraInitSize);
@@ -824,18 +824,16 @@ namespace Glacier
 
         if (pFoundEvent)
         {
-            // TODO: Finish after g_pSysInterface finished (ZSysInterface)
-            // pFoundEvent->m_fTimePassed = g_pSysInterface->m_fRealPreTime;
+            pFoundEvent->m_fTimePassed = g_pSysInterface->FrameTime;
             pFoundEvent->m_lRoutCases |= (Cases & 0x1118);
         }
         else
         {
-            // TODO: Finish after ZEngineDataBase will be reversed
-            // pFoundEvent = g_pEngineData->AllocGeomCallEvent(this);
-            // pFoundEvent->m_lRoutCases = (Cases & 0x1118);
-            // m_pExData->_Events.Add(pFoundEvent->GetRef());
-            // pFoundEvent->m_pBaseGeom = this; // Assign
-            // pFoundEvent->ChangeEventActivity();
+            pFoundEvent = g_pEngineData->AllocGeomCallEvent(this);
+            pFoundEvent->m_lRoutCases = (Cases & 0x1118);
+            m_pExData->_Events.Add(pFoundEvent->GetRef());
+            pFoundEvent->m_pBaseGeom = this; // Assign
+            pFoundEvent->ChangeEventActivity();
         }
     }
 
@@ -1241,13 +1239,11 @@ namespace Glacier
 
     ZGEOM* ZGEOM::DuplicateToResource(ZGROUP* DestGroup, uint32_t lGeomResourceId, const char* DupName, bool Recursive)
     {
-        // TODO: Fix after ZEngineDataBase reversed
-        // if (g_pEngineData->ResourcesDisabled())
-        // {
-        //     return Duplicate(DestGroup, DupName, Recursive);
-        // }
-        // else if (BaseGeom()->ParentGroup())
-        if (BaseGeom()->ParentGroup())
+        if (g_pEngineData->ResourcesDisabled())
+        {
+            return Duplicate(DestGroup, DupName, Recursive);
+        }
+        else if (BaseGeom()->ParentGroup())
         {
             DupName = DupName ? DupName : Name();
 
@@ -1270,11 +1266,10 @@ namespace Glacier
 
     ZGEOM* ZGEOM::DuplicateToResourceInit(ZGROUP* DestGroup, uint32_t lGeomResourceId, const ZMat3x3* mMat, const ZVector3* vPos, const char* DupName, bool Recursive)
     {
-        // TODO: Fix after ZEngineDataBase reversed
-        // if (g_pEngineData->ResourcesDisabled())
-        // {
-        //     return DuplicateInit(DestGroup, mMat, vPos, DupName, Recursive);
-        // }
+        if (g_pEngineData->ResourcesDisabled())
+        {
+            return DuplicateInit(DestGroup, mMat, vPos, DupName, Recursive);
+        }
         
         auto* pGeom = DuplicateToResource(DestGroup, lGeomResourceId, DupName, Recursive);
         if (!pGeom) return nullptr;
@@ -1468,7 +1463,8 @@ namespace Glacier
 
         if (parent)
         {
-            if (bRoot) // TODO: Finish me when will be ready ` || parent->GetGeom() != g_pEngineData->m_pRootGeom`
+            // really reinterpret_cast? I though we've may cast ZROOM -> ZTreeGroup -> ZGROUP -> ZGEOM, but ok
+            if (parent && (bRoot || parent->GetGeom() != reinterpret_cast<ZGEOM*>(g_pEngineData->m_pRoot)))
             {
                 parent->GetGeom()->CalcTotalNameRecur(sName, bRoot);
                 sName += "\\";
@@ -1679,8 +1675,7 @@ namespace Glacier
 
     void ZGEOM::SetRootPos(const ZVector3& vPos)
     {
-        // TODO: Need check, maybe it's not right
-        SetWorldPosition(vPos);
+        SetPos(vPos); // Like in PS2
     }
 
     void ZGEOM::SetAutoRoomAssign(bool bAutoAssign)

@@ -34,6 +34,27 @@ namespace Glacier
         /** @brief Copies the raw fixed-point value from another TIMETYPE. */
         TIMETYPE& operator=(const TIMETYPE& tp) { if (this != &tp) secs = tp.secs; return *this; }
 
+        bool operator==(const TIMETYPE& rhs) const 
+        { 
+            return secs == rhs.secs; 
+        }
+        
+        bool operator!=(const TIMETYPE& rhs) const
+        {
+            return secs != rhs.secs; 
+        }
+        
+        bool operator==(int lTime) const 
+        {
+            TIMETYPE tmp { lTime };
+            return tmp == *this;
+        }
+
+        bool operator!=(int lTime) const { return !operator==(lTime); }
+        bool operator<(const TIMETYPE& rhs) const { return secs < rhs.secs; }
+        bool operator>(const TIMETYPE& rhs) const  { return rhs < *this; }
+        bool operator<=(const TIMETYPE& rhs) const { return !(*this > rhs); }
+        bool operator>=(const TIMETYPE& rhs) const { return !(*this < rhs); }
         /** @brief Converts to whole seconds by truncating the fixed-point fraction. */
         operator int() const
         {
@@ -62,6 +83,11 @@ namespace Glacier
         [[nodiscard]] int convert(float sec) const
         {
             return (int)(float)(sec * kTicksPerSecond);
+        }
+
+        TIMETYPE operator-(const TIMETYPE& rhs) const
+        {
+            return { secs - rhs.secs };
         }
     };
 }

@@ -11,7 +11,9 @@
 
 namespace Glacier::PF4
 {
+    // fwds
     struct ZInterface;
+    struct ZPath;
 
     struct ZDataRef 
     {
@@ -20,18 +22,6 @@ namespace Glacier::PF4
         ZVector2 m_Pos;
     };
     RE_VERIFY_SIZE(ZDataRef, 0xC);
-
-    struct ZPath 
-    {
-        ZDataRef* m_PathIdx;
-        int m_iMaxSize;
-        ZVector3 m_Vertices[4];
-        int m_CustomVertices;
-        ZInterface* m_PathFinder;
-        int m_Size;
-        float m_Cost;
-    };
-    RE_VERIFY_SIZE(ZPath, 0x48);
 
     struct ZPathRequest 
     {

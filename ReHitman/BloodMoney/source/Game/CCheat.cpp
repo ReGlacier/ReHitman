@@ -105,7 +105,7 @@ namespace Hitman::BloodMoney {
             return;
         }
 
-        auto engineDB = sysInterface->m_engineDataBase;
+        auto engineDB = sysInterface->m_pEngineData;
         if (!engineDB) {
             return;
         }
@@ -163,7 +163,7 @@ namespace Hitman::BloodMoney {
             return;
         }
 
-        auto engineDB = sysInterface->m_engineDataBase;
+        auto engineDB = sysInterface->m_pEngineData;
         if (!engineDB) {
             return;
         }

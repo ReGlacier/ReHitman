@@ -40,15 +40,6 @@ namespace Glacier
 		ZOffsetAlloc* m_pEventAlloc;
         uint32_t m_lAllocatedEventsRam;
         uint32_t m_lNrAllocatedEvents;
-
-    public:
-	    // Custom API
-	    static std::intptr_t GetGQC(Glacier::ZREF ref);
-
-	    template <typename TEntity>
-	    static TEntity* EventRefToInstance(Glacier::ZREF ref) {
-		    return reinterpret_cast<TEntity*>(ZEventBuffer::GetGQC(ref));
-	    }
     };
     RE_VERIFY_SIZE(ZEventBuffer, 0x1C); // verified
 }

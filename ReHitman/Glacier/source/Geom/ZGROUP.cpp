@@ -1,6 +1,8 @@
 #include <Glacier/Geom/ZGROUP.h>
 #include <Glacier/Geom/ZGEOM.h>
 #include <Glacier/Geom/ZGeomBuffer.h>
+#include <Glacier/ZSysInterface.h>
+#include <Glacier/ZEngineDataBase.h>
 
 #include <G1ConfigurationService.h>
 
@@ -37,11 +39,10 @@ namespace Glacier
 
     ZGEOM* ZGROUP::CreateResourceGeom(const char* pName, uint32_t iGeomResourceId, uint32_t lGeomClassType, bool bCalcMinMax)
     {
-        // TODO: Fixme after ZEngineDataBase reversed
-        // if (g_pEngineData->ResourcesDisabled())
-        // {
-        //     return CreateGeom(pName, lGeomClassType, bCalcMinMax);
-        // }
+        if (g_pEngineData->ResourcesDisabled())
+        {
+            return CreateGeom(pName, lGeomClassType, bCalcMinMax);
+        }
         
         auto* pResourceBaseGeom = ZGeomBuffer::Instance().AllocResourceGeom(pName, iGeomResourceId, lGeomClassType);
         if (!pResourceBaseGeom)

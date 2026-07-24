@@ -4,7 +4,6 @@
 #include <Glacier/ZSTL/ZRTTI.h>
 #include <Glacier/GlacierFWD.h>
 #include <Glacier/ZSTL/ZList.h>
-#include <Glacier/ZScheduledScript.h>
 #include <Glacier/RTP/Base.h>
 #include <Glacier/ZSTL/TIMETYPE.h>
 #include <Glacier/Serializer/ZSerializable.h>
@@ -13,7 +12,12 @@
 
 namespace Glacier
 {
+    // fwds
+    class ZScheduledEvent;
     struct ZCheckPointBuffer;
+
+    static constexpr uint32_t EV_FRMUPD = 0x8;
+    static constexpr uint32_t EV_TIMEUPD = 0x10;
     
     class ZEventBase : public RTP::cBase, public ZListNode<ZEventBase, 0>
     {
@@ -116,15 +120,18 @@ namespace Glacier
         float m_TimerInterval; // +0x10
         TIMETYPE m_fTimePassed; // +0x14
         uint32_t m_lRoutCases; // +0x18
-        uint32_t m_lEventLists; // +0x1C
+        uint32_t m_lEventLists; // +0x1C | Related to EV_FRMUPD, EV_TIMEUPD masks
         uint8_t m_ClassCall; // +0x20
-        EStatus m_Status; // +0x24
-        uint16_t m_lEventAllocSize; // +0x28
+        EStatus m_Status; // +0x21
+        uint16_t m_lEventAllocSize; // +0x22
         ZGEOM* m_pBaseGeom; // +0x2C
         ZScheduledEvent* m_pScheduleEvent; // +0x30
     }; //Size: 0x002С
     RE_VERIFY_SIZE(ZEventBase, 0x2C);
     RE_VERIFY_OFFSET(ZEventBase, m_Ref, 0xC);
+    RE_VERIFY_OFFSET(ZEventBase, m_ClassCall, 0x20);
+    RE_VERIFY_OFFSET(ZEventBase, m_Status, 0x21);
+    RE_VERIFY_OFFSET(ZEventBase, m_lEventAllocSize, 0x22);
     RE_VERIFY_OFFSET(ZEventBase, m_pBaseGeom, 0x24);
     RE_VERIFY_OFFSET(ZEventBase, m_pScheduleEvent, 0x28);
 

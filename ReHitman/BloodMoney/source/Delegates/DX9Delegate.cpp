@@ -51,7 +51,7 @@ namespace Hitman::BloodMoney
         ImGui::StyleColorsDark();
 
         auto systemInterface = Glacier::getInterface<Glacier::ZSysInterfaceWintel>(Globals::kSysInterfaceAddr);
-        Glacier::ZRenderWintelD3D* renderer = systemInterface ? systemInterface->m_renderer : nullptr;
+        Glacier::ZRenderWintelD3D* renderer = systemInterface ? reinterpret_cast<Glacier::ZRenderWintelD3D*>(systemInterface->WindowFirst) : nullptr;
 
         const auto hwnd = renderer ? renderer->m_HWND : nullptr;
         if (!hwnd)
