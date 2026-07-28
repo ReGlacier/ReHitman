@@ -82,7 +82,7 @@ namespace Glacier
     struct ZPoolAllocRefTab;
     struct ZPoolAllocLinkSortRefTab;
 
-    enum ALLOCSEQUENCESTATUS {};
+    enum ALLOCSEQUENCESTATUS;
     struct LocomotionInfo;
 
     class ZCheckPointBuffer; // NOT AVAILABLE FOR PC ?

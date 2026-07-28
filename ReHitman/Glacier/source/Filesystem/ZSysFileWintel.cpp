@@ -3,7 +3,7 @@
 #include <Glacier/Filesystem/SSystemTime.h>
 #include <Glacier/Filesystem/_FILETIME.h>
 #include <Glacier/ZSTL/CHUNK.h>
-#include <Glacier/ZSysInterface.h>
+#include <Glacier/System/ZSysInterface.h>
 
 #include <Windows.h>
 #include <cstdio>
@@ -979,8 +979,7 @@ namespace Glacier
     {
         if (!m_sSaveGamePath.Length())
         {
-            const auto* saveGamePath = g_pSysInterface->SaveGamePath();
-            m_sSaveGamePath = *saveGamePath;
+            m_sSaveGamePath = g_pSysInterface->SaveGamePath();
         }
 
         auto* sysInterface = g_pSysInterface->BeforeFormat();

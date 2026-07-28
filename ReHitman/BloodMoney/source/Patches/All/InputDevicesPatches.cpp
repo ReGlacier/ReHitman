@@ -1,7 +1,7 @@
 #include <BloodMoney/Patches/All/InputDevicesPatches.h>
 #include <BloodMoney/Delegates/IInputDelegate.h>
 #include <BloodMoney/Game/Globals.h>
-#include <Glacier/ZSysInterfaceWintel.h>
+#include <Glacier/System/ZSysInterfaceWintel.h>
 #include <Glacier/ZSysInputWintel.h>
 #include <Glacier/ZInputDevice.h>
 

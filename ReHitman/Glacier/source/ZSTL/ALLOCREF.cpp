@@ -1,6 +1,6 @@
 #include <Glacier/ZSTL/ALLOCREF.h>
 #include <Glacier/ZSTL/REFTAB.h>
-#include <Glacier/ZSysInterfaceWintel.h>
+#include <Glacier/System/ZSysInterfaceWintel.h>
 #include <Glacier/ZUniAssert.h>
 #include <Glacier/ZUniMemory.h>
 #include <vector>

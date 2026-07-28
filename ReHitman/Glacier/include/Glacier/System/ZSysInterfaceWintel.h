@@ -2,7 +2,7 @@
 
 #include <Glacier/ReGlacier.h>
 #include <Glacier/GlacierFWD.h>
-#include <Glacier/ZSysInterfacePack.h>
+#include <Glacier/System/ZSysInterfacePack.h>
 #include <Glacier/ZSTL/REFTAB32.h>
 #include <Glacier/ZSTL/MYSTR.h>
 
@@ -42,7 +42,7 @@ namespace Glacier
         void ParseOptions() override;
         void InitConfiguration() override;
         void SetGameName(const char* psGameName) override;
-        MYSTR* ConvertFileName(const char* pName) override;
+        MYSTR ConvertFileName(const char* pName) override;
         bool IsPacking() const override;
         void SetIsPacking(bool bPacking) override;
         void RunMain(char* StartCmdLine) override;
@@ -56,8 +56,8 @@ namespace Glacier
         void CalcCycSec() override;
         void Sleep(float fTime) override;
         bool DisplayAssert(const char* pMessage, const char* pFileName, int lLineNr) override; // weird, maybe Ferral Interactive stuff?
-        const MYSTR* GetSuggestedUserPath() override;
-        void SRand(int lSeed, char* pSourceFile, int lLineNr) override;
+        MYSTR GetSuggestedUserPath() const override;
+        void SRand(int lSeed, const char* pSourceFile, int lLineNr) override;
         int Rand(char* pSourceFile, int lLineNr) override;
         float FRand(char* pSourceFile, int lLineNr) override;
         float FRand1(char* pSourceFile, int lLineNr) override;

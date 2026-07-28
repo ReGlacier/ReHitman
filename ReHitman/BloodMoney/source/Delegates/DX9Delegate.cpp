@@ -15,7 +15,7 @@
 #include <BloodMoney/Game/ZHM3Actor.h>
 #include <BloodMoney/Game/ZHM3GameData.h>
 
-#include <Glacier/ZSysInterfaceWintel.h>
+#include <Glacier/System/ZSysInterfaceWintel.h>
 #include <Glacier/ZRenderWintelD3D.h>
 #include <Glacier/ZEngineDataBase.h>
 #include <Glacier/ZCameraSpace.h>

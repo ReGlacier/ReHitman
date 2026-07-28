@@ -153,6 +153,8 @@ namespace Glacier
 		void Exchange(const ZToken token, int16_t& data);
 		void Exchange(const char* psName, int32_t& data);
 		void Exchange(const ZToken token, int32_t& data);
+		void Exchange(const char* psName, double& data);
+		void Exchange(const ZToken token, double& data);
 		void Exchange(const char* psName, float& data);
 		void Exchange(const ZToken token, float& data);
 		void Exchange(const char* psName, char& data);

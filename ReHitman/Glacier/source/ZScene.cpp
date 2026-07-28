@@ -5,7 +5,7 @@
 #include <Glacier/Geom/ZROOM.h>
 #include <Glacier/Runtime/ZGEOMCLASSINFO.h>
 #include <Glacier/EventBase/ZEventList.h>
-#include <Glacier/CCom.h>
+#include <Glacier/Com/CCom.h>
 
 #include <Glacier/ZUniMemory.h>
 #include <Glacier/ZUniAssert.h>

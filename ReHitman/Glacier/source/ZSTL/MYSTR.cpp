@@ -1,8 +1,10 @@
 #include <Glacier/ZSTL/MYSTR.h>
 #include <Glacier/ZUniMemory.h>
 #include <Glacier/ZUniAssert.h>
+#include <charconv>
 #include <cstring>
 #include <cstdlib>
+#include <system_error>
 
 
 namespace Glacier
@@ -96,13 +98,58 @@ namespace Glacier
 
     MYSTR& MYSTR::operator=(int nr)
     {
-        char buf[128];
+        return AssignSignedInteger(nr);
+    }
 
-        _ltoa_s(nr, buf, sizeof(buf), 10);
-        
-        MYSTR temp(buf);
-        *this = temp; 
-        
+    MYSTR& MYSTR::operator=(bool value)
+    {
+        return AssignSignedInteger(value ? 1 : 0);
+    }
+
+    MYSTR& MYSTR::operator=(float value)
+    {
+        return AssignFloatingPoint(value);
+    }
+
+    MYSTR& MYSTR::AssignSignedInteger(long long value)
+    {
+        char buffer[32];
+        auto result = std::to_chars(buffer, buffer + sizeof(buffer) - 1, value);
+
+        ZASSERT(result.ec == std::errc());
+        if (result.ec != std::errc())
+            return SetString(""), *this;
+
+        *result.ptr = '\0';
+        SetString(buffer);
+        return *this;
+    }
+
+    MYSTR& MYSTR::AssignUnsignedInteger(unsigned long long value)
+    {
+        char buffer[32];
+        auto result = std::to_chars(buffer, buffer + sizeof(buffer) - 1, value);
+
+        ZASSERT(result.ec == std::errc());
+        if (result.ec != std::errc())
+            return SetString(""), *this;
+
+        *result.ptr = '\0';
+        SetString(buffer);
+        return *this;
+    }
+
+    MYSTR& MYSTR::AssignFloatingPoint(double value)
+    {
+        char buffer[124];
+        auto result = std::to_chars(buffer, buffer + sizeof(buffer) - 1, value);
+
+        ZASSERT(result.ec == std::errc());
+        if (result.ec != std::errc())
+            return SetString(""), *this;
+
+        *result.ptr = '\0';
+        SetString(buffer);
         return *this;
     }
 

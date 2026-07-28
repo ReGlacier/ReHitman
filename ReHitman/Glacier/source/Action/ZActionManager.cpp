@@ -1,7 +1,7 @@
 #include <Glacier/Action/ZActionManager.h>
 #include <Glacier/Serializer/ZTokenStream.h>
 #include <Glacier/Filesystem/ZSysFile.h>
-#include <Glacier/ZSysInterface.h>
+#include <Glacier/System/ZSysInterface.h>
 #include <Glacier/ZUniMemory.h>
 
 

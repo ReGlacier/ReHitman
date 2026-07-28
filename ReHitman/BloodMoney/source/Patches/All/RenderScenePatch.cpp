@@ -1,7 +1,7 @@
 #include <BloodMoney/Patches/All/RenderScenePatch.h>
 #include <BloodMoney/Game/Globals.h>
 #include <Glacier/ZEngineDataBase.h>
-#include <Glacier/ZSysInterfaceWintel.h>
+#include <Glacier/System/ZSysInterfaceWintel.h>
 #include <Glacier/Geom/ZGROUP.h>
 #include <Glacier/Geom/ZGEOM.h>
 #include <Glacier/Geom/ZBaseGeom.h>

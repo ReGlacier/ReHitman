@@ -3,7 +3,7 @@
 #include <Glacier/Geom/ZBaseGeom.h>
 #include <Glacier/Geom/ZGeomBuffer.h>
 #include <Glacier/Geom/ZLIGHT.h>
-#include <Glacier/ZSysInterface.h>
+#include <Glacier/System/ZSysInterface.h>
 #include <Glacier/ZEngineDataBase.h>
 
 #include <G1ConfigurationService.h>

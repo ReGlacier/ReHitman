@@ -115,6 +115,8 @@ namespace Glacier
     void ISerializerStream::Exchange(const ZToken token, int16_t& data) { ExchangePrimitive(this, token, data); }
     void ISerializerStream::Exchange(const char* psName, int32_t& data) { Exchange(TokenFromName(this, psName), data); }
     void ISerializerStream::Exchange(const ZToken token, int32_t& data) { ExchangePrimitive(this, token, data); }
+    void ISerializerStream::Exchange(const char* psName, double& data) { Exchange(TokenFromName(this, psName), data); }
+    void ISerializerStream::Exchange(const ZToken token, double& data) { ExchangePrimitive(this, token, data); }
     void ISerializerStream::Exchange(const char* psName, float& data) { Exchange(TokenFromName(this, psName), data); }
     void ISerializerStream::Exchange(const ZToken token, float& data) { ExchangePrimitive(this, token, data); }
     void ISerializerStream::Exchange(const char* psName, char& data) { Exchange(TokenFromName(this, psName), data); }

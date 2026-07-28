@@ -3,6 +3,7 @@
 #include <Glacier/Geom/ZGEOM.h>
 #include <Glacier/Serializer/IOutputSerializerStream.h>
 #include <Glacier/ZSTL/ZOffsetAlloc.h>
+#include <Tests/EngineFixture.h>
 #include <gtest/gtest.h>
 
 #include <string>
@@ -135,7 +136,9 @@ TEST(ZEventBuffer, AllocRefDirectStoresRequestedReference)
     EXPECT_EQ(buffer.ConvEventRefToPtr(5), event);
 }
 
-TEST(ZEventBuffer, SaveObjectWritesEventRefsAndTypes)
+using ZEventBufferEngineTest = Tests::EngineFixture;
+
+TEST_F(ZEventBufferEngineTest, SaveObjectWritesEventRefsAndTypes)
 {
     ZEventBuffer buffer(128);
     TestEvent event;

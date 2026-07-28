@@ -1,7 +1,7 @@
 #include <Glacier/Geom/ZGROUP.h>
 #include <Glacier/Geom/ZGEOM.h>
 #include <Glacier/Geom/ZGeomBuffer.h>
-#include <Glacier/ZSysInterface.h>
+#include <Glacier/System/ZSysInterface.h>
 #include <Glacier/ZEngineDataBase.h>
 
 #include <G1ConfigurationService.h>

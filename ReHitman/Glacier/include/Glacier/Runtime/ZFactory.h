@@ -55,6 +55,54 @@ namespace Glacier
 
         struct Iterator
         {
+            // methods
+            Iterator(ProducerData* p, ZFactory<T>* pFactory, uint32_t hashIndex)
+                : m_p(p)
+                , m_HashIndex(hashIndex)
+                , m_Factory(pFactory)
+            {
+            }
+
+
+            Iterator(const Iterator& copy)
+                : m_p(copy.m_p)
+                , m_HashIndex(copy.m_HashIndex)
+                , m_Factory(copy.m_Factory)
+            {
+            }
+
+            Iterator& operator++()
+            {
+                m_Factory->Next(m_p, m_HashIndex);
+                return *this;
+            }
+
+            ProducerData* operator->()
+            {
+                return m_p;
+            }
+
+
+            ProducerData* operator*()
+            {
+                return m_p;
+            }
+
+            ProducerData* operator*() const
+            {
+                return m_p;
+            }
+
+            bool operator==(const Iterator& rhs) const
+            {
+                return m_p == rhs.m_p;
+            }
+
+            bool operator!=(const Iterator& rhs) const
+            {
+                return m_p != rhs.m_p;
+            }
+
             // members
             ProducerData* m_p;
             uint32_t m_HashIndex;
@@ -142,6 +190,59 @@ namespace Glacier
             else
             {
                return std::strcmp(k1, k2) == 0;
+            }
+        }
+
+        Iterator Begin() const
+        {
+            uint32_t i = 0;
+
+            while (i < MAX_ENTRIES_IN_BUCKET && !m_DataMap[i])
+            {
+                ++i;
+            }
+
+            if (i >= MAX_ENTRIES_IN_BUCKET)
+            {
+                return End();
+            }
+
+            return Iterator(m_DataMap[i], const_cast<ZFactory<T>*>(this), i);
+        }
+
+        Iterator End() const
+        {
+            return Iterator(nullptr, const_cast<ZFactory<T>*>(this), MAX_ENTRIES_IN_BUCKET);
+        }
+
+        Iterator begin() const
+        {
+            return Begin();
+        }
+
+        Iterator end() const
+        {
+            return End();
+        }
+
+        void Next(ZFactory<T>::ProducerData*& p, uint32_t& l)
+        {
+            ZASSERT(p);
+
+            p = p->m_pNext;
+            if (!p)
+            {
+                ++l;
+
+                while (l < 0x10 && !m_DataMap[l])
+                {
+                    ++l;
+                }
+
+                if (l < 0x10)
+                {
+                    p = m_DataMap[l];
+                }
             }
         }
 

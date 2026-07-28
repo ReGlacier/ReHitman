@@ -1,6 +1,6 @@
 #include <Glacier/ScriptEngine/SF.h>
 #include <Glacier/ScriptEngine/Globals.h>
-#include <Glacier/ZSysInterface.h>
+#include <Glacier/System/ZSysInterface.h>
 #include <cstring>
 #include <cstdarg>
 

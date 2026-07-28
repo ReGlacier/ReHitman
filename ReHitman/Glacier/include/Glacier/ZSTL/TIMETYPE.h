@@ -2,6 +2,9 @@
 
 namespace Glacier
 {
+    // fwds
+    class ISerializerStream;
+
     /**
      * @brief Fixed-point game time value used by Glacier systems.
      *
@@ -89,5 +92,7 @@ namespace Glacier
         {
             return { secs - rhs.secs };
         }
+
+        void LoadSave(ISerializerStream& stream);
     };
 }

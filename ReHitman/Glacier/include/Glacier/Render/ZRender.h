@@ -15,6 +15,7 @@ namespace Glacier
 
     struct ZRender
     {
+        // vtbl
         virtual ~ZRender();
         virtual void Close();
         virtual void CrashClose();
@@ -101,6 +102,13 @@ namespace Glacier
         virtual int GetEditCursor();
         virtual unsigned int SetMaxFrameInterval(unsigned int);
         virtual void UpdateShortCuts();
+
+        // methods
+        // members
+        struct ZRender* SubChain; // +0x4
+        struct ZRender* Nxt; // +0x8
+        struct ZRender* Bef; // +0xC
+        // TODO: Finish me
     };
 
     // TBC

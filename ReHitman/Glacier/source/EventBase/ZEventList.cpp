@@ -1,7 +1,7 @@
 #include <Glacier/EventBase/ZEventList.h>
 #include <Glacier/EventBase/ZEventBase.h>
 #include <Glacier/Geom/ZGEOM.h>
-#include <Glacier/ZSysInterface.h>
+#include <Glacier/System/ZSysInterface.h>
 #include <Glacier/ZEngineDataBase.h>
 #include <Glacier/ZUniAssert.h>
 

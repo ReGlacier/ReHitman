@@ -15,7 +15,7 @@
 
 #include <BloodMoney/Game/Globals.h>
 
-#include <Glacier/ZSysInterfaceWintel.h>
+#include <Glacier/System/ZSysInterfaceWintel.h>
 #include <Glacier/ZEngineDataBase.h>
 #include <Glacier/Geom/ZBaseGeom.h>
 #include <Glacier/Geom/ZGeomBuffer.h>
@@ -24,7 +24,7 @@
 #include <Glacier/Geom/ZGEOM.h>
 #include <Glacier/IK/ZLNKOBJ.h>
 #include <Glacier/CInventory.h>
-#include <Glacier/CConfiguration.h>
+#include <Glacier/System/CConfiguration.h>
 #include <Glacier/ZSTL/REFTAB32.h>
 #include <Glacier/Items/ZItem.h>
 #include <Glacier/Items/ZItemTemplate.h>
@@ -56,7 +56,7 @@
 #include <Glacier/ZRenderWintelD3DDll.h>
 #include <Glacier/ZPrimControlWintel.h>
 #include <Glacier/ZEngineGeomControl.h>
-#include <Glacier/CCom.h>
+#include <Glacier/Com/CCom.h>
 #include <Glacier/EventBase/ZEventBuffer.h>
 
 #include <BloodMoney/Game/OnLevel/ZVCR.h>
@@ -131,11 +131,11 @@ namespace Hitman::BloodMoney
 				}
 				else
 				{
-					spdlog::info("Found type '{}' (of id {})", tp->m_psName, g_typeId);
+					spdlog::info("Found type '{}' (of id {})", tp->ClassInfoName(), g_typeId);
 
-					spdlog::info("TypeID : {}", tp->m_iTypeId);
-					spdlog::info("Mask   : {}", *tp->m_piMask);
-					spdlog::info("ID     : {}", *tp->m_piID);
+					spdlog::info("TypeID : {}", tp->Type());
+					spdlog::info("Mask   : {}", tp->GetMaskId());
+					spdlog::info("ID     : {}", tp->GetClassId());
 				}
 
 				g_typeId = 0;

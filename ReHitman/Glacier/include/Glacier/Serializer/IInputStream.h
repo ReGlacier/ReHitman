@@ -11,6 +11,6 @@ namespace Glacier
         virtual ~IInputStream() = default;
 
         /** Reads up to size bytes into the destination buffer. */
-        virtual uint32_t Read(void*, const uint32_t) = 0;
+        virtual uint32_t Read(void* address, const uint32_t size) = 0;
     };
 }

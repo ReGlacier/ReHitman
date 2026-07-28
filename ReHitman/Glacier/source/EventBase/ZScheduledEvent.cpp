@@ -2,7 +2,7 @@
 #include <Glacier/EventBase/ZScheduledEvent.h>
 #include <Glacier/EventBase/ZScheduledUpdate.h>
 #include <Glacier/EventBase/ZEventBase.h>
-#include <Glacier/ZSysInterface.h>
+#include <Glacier/System/ZSysInterface.h>
 #include <Glacier/ZUniAssert.h>
 #include <Glacier/ZUniMemory.h>
 

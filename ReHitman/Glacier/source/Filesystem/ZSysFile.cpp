@@ -1,5 +1,5 @@
 #include <Glacier/Filesystem/IOFilesystem_t.h>
-#include <Glacier/ZSysInterface.h>
+#include <Glacier/System/ZSysInterface.h>
 #include <Glacier/Filesystem/ZSysFile.h>
 #include <Glacier/Filesystem/ZBigFile.h>
 #include <Glacier/Filesystem/FsZip_t.h>

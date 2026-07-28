@@ -2,7 +2,7 @@
 
 #include <Glacier/ZSTL/REFTAB.h>
 #include <Glacier/ZSTL/ZRTTI.h>
-#include <Glacier/ZBaseConRout.h>
+#include <Glacier/EventBase/ZBaseConRout.h>
 
 namespace Hitman::BloodMoney
 {

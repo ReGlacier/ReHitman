@@ -4,7 +4,7 @@
 #include <Glacier/Serializer/IOutputSerializerStream.h>
 #include <Glacier/ZSTL/ZOffsetAlloc.h>
 #include <G1ConfigurationService.h>
-#include <Glacier/ZBaseConRout.h>
+#include <Glacier/EventBase/ZBaseConRout.h>
 #include <Glacier/ZUniAssert.h>
 #include <Glacier/ZUniMemory.h>
 #include <malloc.h>

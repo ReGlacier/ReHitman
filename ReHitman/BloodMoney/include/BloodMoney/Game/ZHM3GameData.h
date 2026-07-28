@@ -11,7 +11,7 @@
 #include <Glacier/ZSTL/REFTAB.h>
 #include <Glacier/ZSTL/ZStaticVector.h>
 #include <Glacier/ReGlacier.h>
-#include <Glacier/ZBaseConRout.h>
+#include <Glacier/EventBase/ZBaseConRout.h>
 
 #define DECLARE_UNKNOWN_TYPE_PTR(name) using name = std::uintptr_t;
 #define VERIFY_FIELD_POS(cls, fld, expected) static_assert(offsetof(cls, fld) == (expected), "Bad offset of " #cls "::" #fld);

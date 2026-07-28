@@ -1,6 +1,7 @@
 #include <Glacier/EventBase/ZEventList.h>
 #include <Glacier/EventBase/ZEventBase.h>
 #include <Glacier/EventBase/ZEventBuffer.h>
+#include <Tests/EngineFixture.h>
 #include <gtest/gtest.h>
 
 #include <array>
@@ -29,7 +30,7 @@ namespace
         EEventPriority Priority;
     };
 
-    struct ZEventListTest : testing::Test
+    struct ZEventListTest : Tests::EngineFixture
     {
         ZEventBuffer EventBuffer{ 512 };
         std::vector<PriorityEvent*> Events;
@@ -51,6 +52,7 @@ namespace
             Storage.push_back(storage);
 
             auto* event = std::construct_at(reinterpret_cast<PriorityEvent*>(storage), priority);
+            EngineData().m_EventList.RemoveEvent(event);
             Events.push_back(event);
             return event;
         }

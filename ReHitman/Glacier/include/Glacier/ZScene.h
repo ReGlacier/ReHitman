@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Glacier/ReGlacier.h>
 #include <cstdint>
 
 
@@ -61,4 +62,5 @@ namespace Glacier
         ZEventList* _pFrameUpdateList{nullptr};
         uint8_t* m_WordTable{nullptr};
     };
+    RE_VERIFY_SIZE(ZScene, 0x15C); // Verified in ZEngineDataBase::Initialize
 }

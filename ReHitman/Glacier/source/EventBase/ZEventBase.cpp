@@ -8,7 +8,7 @@
 #include <Glacier/RTP/Base.h>
 #include <Glacier/Serializer/ISerializerStream.h>
 #include <Glacier/ZEngineDataBase.h>
-#include <Glacier/ZSysInterface.h>
+#include <Glacier/System/ZSysInterface.h>
 #include <G1ConfigurationService.h>
 #include <cassert>
 
@@ -248,7 +248,7 @@ namespace Glacier
         {
             if ((m_lEventLists & 0x1000u) == 0)
             {
-                g_pSysInterface->m_pEngineData->GetEventScheduler()->AddEvent(this);
+                g_pSysInterface->m_pEngineData->GetEventScheduler().AddEvent(this);
             }
         }
         else if ((m_lEventLists & 0x1000u) != 0)

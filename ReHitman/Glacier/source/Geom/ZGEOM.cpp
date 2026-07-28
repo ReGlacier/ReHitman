@@ -3,13 +3,13 @@
 #include <Glacier/Geom/ZTreeGroup.h>
 #include <Glacier/Geom/ZGeomBuffer.h>
 #include <Glacier/EventBase/ZEventBase.h>
-#include <Glacier/ZBaseConRout.h>
+#include <Glacier/EventBase/ZBaseConRout.h>
 #include <Glacier/ZSTL/REFTAB32.h>
 #include <Glacier/RTP/Base.h>
 #include <Glacier/CHUNKFILE.h>
 #include <Glacier/Serializer/ISerializerStream.h>
 #include <Glacier/Serializer/IOutputSerializerStream.h>
-#include <Glacier/ZSysInterface.h>
+#include <Glacier/System/ZSysInterface.h>
 #include <Glacier/ZEngineDataBase.h>
 #include <cstring>
 

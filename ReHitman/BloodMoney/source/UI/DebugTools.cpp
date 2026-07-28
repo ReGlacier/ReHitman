@@ -81,7 +81,7 @@
 #include <Glacier/ResourceCollection.h>
 #include <Glacier/Serializer/ISerializerStream.h>
 #include <Glacier/ZEngineDataBase.h>
-#include <Glacier/ZSysInterfaceWintel.h>
+#include <Glacier/System/ZSysInterfaceWintel.h>
 #include <Glacier/Action/ZActionManager.h>
 #include <Glacier/ZRunMatPosAnim.h>
 #include <Glacier/SSplineMover.h>

@@ -7,7 +7,7 @@
 
 #include <Glacier/Glacier.h>
 #include <Glacier/ZAction.h>
-#include <Glacier/ZSysInterfaceWintel.h>
+#include <Glacier/System/ZSysInterfaceWintel.h>
 #include <Glacier/ZEngineDataBase.h>
 #include <Glacier/Geom/ZROOM.h>
 #include <Glacier/IK/ZLNKOBJ.h>

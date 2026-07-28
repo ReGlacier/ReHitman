@@ -86,23 +86,23 @@ namespace Glacier
         virtual bool IsControllerConnected(uint32_t lControlledId);
         virtual void SetGameName(const char* psGameName) = 0;
         virtual void SetEngineData(ZEngineDataBase* pEngineData) = 0;
-        virtual const MYSTR* ProjectPath() const;
-        virtual const MYSTR* DefaultScene() const;
-        virtual const MYSTR* DatabasePath() const;
-        virtual const MYSTR* ProjectName() const;
-        virtual const MYSTR* WorldPath() const;
-        virtual const MYSTR* DataPath() const;
-        virtual const MYSTR* ScenesPath() const;
-        virtual const MYSTR* MastersPath() const;
-        virtual const MYSTR* MaterialsPath() const;
-        virtual const MYSTR* SoundsPath() const;
-        virtual const MYSTR* TexturePath() const;
-        virtual const MYSTR* LocalePath() const;
+        virtual MYSTR ProjectPath() const;
+        virtual MYSTR DefaultScene() const;
+        virtual MYSTR DatabasePath() const;
+        virtual MYSTR ProjectName() const;
+        virtual MYSTR WorldPath() const;
+        virtual MYSTR DataPath() const;
+        virtual MYSTR ScenesPath() const;
+        virtual MYSTR MastersPath() const;
+        virtual MYSTR MaterialsPath() const;
+        virtual MYSTR SoundsPath() const;
+        virtual MYSTR TexturePath() const;
+        virtual MYSTR LocalePath() const;
         // NOTE: In MiniNInjas and later here we have an additional method
         // virtual ELocaleLanguages Locale() const; << this method returns current locale to load specific .LOC file
-        virtual const MYSTR* SaveGamePath() const;
-        virtual const MYSTR* ConvertFileName(const char* pName) = 0;
-        virtual const MYSTR* CorrectSceneFileName(const char* psSceneFileName);
+        virtual MYSTR SaveGamePath() const;
+        virtual MYSTR ConvertFileName(const char* pName) = 0;
+        virtual MYSTR CorrectSceneFileName(const char* psSceneFileName);
         virtual void SetCmdLine(const char* psCmdLine);
         virtual bool IsPacking() const;
         virtual void SetIsPacking(bool bPacking);
@@ -118,10 +118,10 @@ namespace Glacier
         virtual void Sleep(float fTime) = 0;
         virtual bool DisplayAssert(const char* pMessage, const char* pFileName, int lLineNr);
         virtual ZSysInterface* BeforeFormat();
-        virtual int Vsprintf(char* buffer, const char* format, char* argptr);
+        virtual int Vsprintf(char* buffer, const char* format, void* parg);
         virtual int SPrintF(char* buf, const char* format, ...);
-        virtual const MYSTR* GetSuggestedUserPath();
-        virtual void SRand(int lSeed, char* pSourceFile, int lLineNr);
+        virtual MYSTR GetSuggestedUserPath() const;
+        virtual void SRand(int lSeed, const char* pSourceFile, int lLineNr);
         virtual int Rand(char* pSourceFile, int lLineNr);
         virtual float FRand(char* pSourceFile, int lLineNr);
         virtual float FRand1(char* pSourceFile, int lLineNr);
@@ -203,8 +203,7 @@ namespace Glacier
         int m_lBitsPerPixelWanted; // 0xA0
         int m_lStartUpperLeftPos[2]; // 0xA4
         int m_lShadowDetail; // 0xAC
-        int m_lTextureResolution; // 0x00 
-        RE_ADD_PADDING(4); // 0x00B4 | ??? I don't know what's stored here lol
+        int m_lTextureResolution[2]; // +0xB0 | Approved by ZSysInterface::ParseOptions
         ZEngineDataBase *m_pEngineData; //0x00B8 [VALID]
         MYSTR m_sSystemPath; //0x00BC
         MYSTR m_sProjectPath; //0x013C

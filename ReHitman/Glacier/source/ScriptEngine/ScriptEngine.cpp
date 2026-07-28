@@ -1,5 +1,6 @@
 #include <Glacier/ScriptEngine/ScriptEngine.h>
 #include <Glacier/ScriptEngine/FUNCTIONCONTROLLER.h>
+#include <Glacier/ScriptEngine/ZScriptC_ZMessage.h>
 #include <Glacier/ScriptEngine/LocalVarEntry.h>
 #include <Glacier/ScriptEngine/ScriptState.h>
 #include <Glacier/ScriptEngine/Globals.h>
@@ -102,5 +103,73 @@ namespace Glacier
 
         auto lPrio = lPriority > 15 ? 15 : lPriority;
         pSchedEvent->SetPriority(lPrio);
+    }
+
+    void ScriptEngine::DestroyScriptMessages()
+    {
+        ZASSERT(g_pZScriptC_Messages != nullptr);
+        g_pZScriptC_Messages = nullptr;
+        g_pZScriptC_Uniques = nullptr;
+    }
+
+    uint16_t ScriptEngine::GetRegisterZMessageID(const char* psName)
+    {
+        if (!g_pZScriptC_Messages)
+        {
+            return 0u;
+        }
+
+        ZScriptC_ZMessage* pCurrentMsg = g_pZScriptC_Messages;
+        int nameOffset = 0;
+
+        while (pCurrentMsg)
+        {
+            int keyIndex = 0;
+
+            while (true)
+            {
+                char keyChar = pCurrentMsg->m_pKeys[keyIndex];
+                if (!keyChar)
+                    return 0;
+
+                if (keyChar == psName[nameOffset])
+                    break;
+
+                keyIndex++;
+            }
+
+            nameOffset++;
+
+            ZScriptC_Indexes* pIndex = &pCurrentMsg->m_pIndexes[keyIndex];
+
+            if (pIndex->m_lUniqueText != 0)
+            {
+                const char* pUniqueText = g_pZScriptC_Uniques[pIndex->m_lUniqueText - 1];
+                int uniqueOffset = 0;
+
+                while (true)
+                {
+                    char uChar = pUniqueText[uniqueOffset++];
+                    if (!uChar)
+                        break;
+
+                    char inputChar = psName[nameOffset++];
+                    if (inputChar != uChar)
+                        return 0;
+                }
+            }
+
+            if (pIndex->m_lZMsgID != 0 && psName[nameOffset] == '\0')
+            {
+                return pIndex->m_lZMsgID;
+            }
+
+            if (pIndex->m_lNextIndex == 0)
+                break;
+
+            pCurrentMsg = &g_pZScriptC_Messages[pIndex->m_lNextIndex];
+        }
+
+        return 0;
     }
 }

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Glacier/CCom.h>
+#include <Glacier/Com/CCom.h>
 #include <Glacier/Glacier.h>
 #include <Glacier/ReGlacier.h>
 #include <Glacier/Geom/ZBaseGeom.h>
@@ -29,7 +29,10 @@ namespace Glacier
     class ZGeomBuffer;
     struct IInputStream;
     struct ZGEOMCLASSINFO;
+    struct ZROUTCLASSINFO;
+    struct CGlobalCom;
     class ZScheduledUpdate;
+    class ZSoundObject;
 
     struct SGeomTypeCount
     {
@@ -39,18 +42,27 @@ namespace Glacier
     };
     RE_VERIFY_SIZE(SGeomTypeCount, 0xC);
 
+    enum ALLOCSEQUENCESTATUS 
+    {
+        AS_ZIPLOAD = 0,
+        AS_DLCLOAD = 1,
+        AS_TEXTURE = 2,
+        AS_GEOMS = 3,
+        AS_DATABLOCKS = 4,
+        AS_INIT = 5,
+        AS_INCLUDESCENE = 6,
+    };
+
     class ZEngineDataBase : public ZSerializable
     {
     public:
         // types
         // constants
+        static constexpr size_t MAXNRREGISTERMESSAGES = 0x400;
         // static
         // vtable
         ~ZEngineDataBase() override;
         void PreLoad(ISerializerStream& stream) override;
-        void LoadSave(ISerializerStream& stream, bool bSaving) override;
-        void LoadObject(IInputSerializerStream& stream) override;
-        void SaveObject(IOutputSerializerStream& stream) override;
         void ExchangeObject(ISerializerStream& stream) override;
 
         // ZEngineDataBase :
@@ -73,7 +85,7 @@ namespace Glacier
         virtual void LoadSoundGraph();
         virtual void RegisterZDefine(char const* pName, char*, int);
         virtual ZMSGID RegisterZMsg(char const* pMsgName, uint32_t lForcedValue, const char* pFile, int Line);
-        virtual const char* GetZMsgName(ZMSGID GetZMsgName);
+        virtual const char* GetZMsgName(ZMSGID lMsgNumber);
         virtual void CreateObjectFactories();
         virtual bool StartUp();
         virtual void CloseDown();
@@ -109,7 +121,7 @@ namespace Glacier
         virtual uint32_t GetAnimsSize();
         virtual void GetAnimsData(void* pData, uint32_t lSize);
         virtual uint32_t GetGeomFilesSize();
-        virtual void* GetGeomFilesData(void* pData, uint32_t lSize);
+        virtual void GetGeomFilesData(void* pData, uint32_t lSize);
         virtual uint32_t GetRoomColiTreeSize();
         virtual void GetRoomColiTreeData(void* pData, uint32_t lSize);
         virtual uint32_t GetRoomInsideTreeSize();
@@ -117,7 +129,7 @@ namespace Glacier
         virtual uint32_t GetGlobalColiTreeSize();
         virtual void GetGlobalColiTreeData(void* pData, uint32_t lSize);
         virtual uint32_t GetGlobalStripColiTreeSize();
-        virtual void* GetGlobalStripColiTreeData(void* pData, uint32_t lSize);
+        virtual void GetGlobalStripColiTreeData(void* pData, uint32_t lSize);
         virtual ZCAMERA* CreateDefaultCam(ZCAMERA* pCamera); 
         virtual void CorrectEditorDestGroup(SCompiledGeom* pCompiledGeom, ZGROUP* pCurrentDestGroup);
         virtual void PackHookMissingOnlyInitialize();
@@ -128,8 +140,10 @@ namespace Glacier
         ZEngineDataBase(const char* pFileName);
 
         // TODO: Make complete list of actual methods!!!
+        void Initialize(const char* pFileName);
         void NewEventClass(ZEventBase* pEvent);
-        ZScheduledUpdate* GetEventScheduler();
+        void DeleteEventClass(ZEventBase* pEvent);
+        ZScheduledUpdate& GetEventScheduler();
         void SetOnlyEventUpdate(ZEventBase* pEvent);
         ZEventBase* GetOnlyEventUpdate() const;
         bool IsPaused() const;
@@ -137,14 +151,101 @@ namespace Glacier
         ZEventBase* AllocGeomCallEvent(ZGEOM* pGeom);
         bool ResourcesDisabled() const;
         void EnableResources();
+        void DisableResources();
         CListUser* GetListUser() const;
         void DeleteCheck(void* ptr) const;
         bool RunTime() const;
+        void MarkRunTime();
+        void MarkNonRunTime();
         void UnlockMinMax();
         void LockMinMax();
         void UnlockScene();
         ZREF GetREFByName(const char* pszName) const;
         ZGEOM* GeomRefToPtr(ZREF rGeom) const;
+        CCom* GetSceneCom();
+        std::intptr_t GetSceneVar(const char* varname);
+        ZSoundObject* SRefToPtr(Glacier::ZREF sref);
+	    ZGEOMCLASSINFO* GetGeomClassInfo(uint32_t lTypeId);
+        ZROUTCLASSINFO* GetRoutClassInfo(const char* pszRoutInfo);
+        void FreeMsgValues();
+        uint32_t GetTreesSize();
+        void GetTreesData(void* pData, unsigned int lSize);
+        void DoLoadScene();
+        MYSTR CalcCacheFileName(MYSTR sFileName, const char* pExt);
+
+#if 0   // TO FILTER & IMPL
+        public: uint16 AddGeomResource(const char*, unsigned int);
+        public: uint32 GetNextAnimId();
+        public: bool IsLoadingGame();
+        public: bool IsSavingGame();
+        public: bool SaveGame(unsigned int);
+        public: bool LoadGame(unsigned int);
+        public: bool SaveGame(IOutputStream&, IOutputStream&);
+        public: bool LoadGame();
+        public: void SetLoadCallBack(ILoadCallBack*);
+        public: bool DeleteSaveGame(unsigned int);
+        public: void SetSaveObject(ZSaveClass*);
+        public: REF GetREFByName(const char*);
+        public: REF GeomPtrToRef(const ZBaseGeom*);
+        public: REF GeomPtrToRef(const ZGEOM*);
+        public: ZBaseGeom* GeomRefToBasePtr(unsigned int);
+        public: ZGEOM* GeomRefToPtr(unsigned int);
+        public: ZSoundObject* SRefToPtr(unsigned int);
+        public: SREF SPtrToRef(ZSoundObject*);
+        public: void LockMinMax();
+        public: void UnlockMinMax();
+        public: bool MinMaxLocked();
+        public: void CalcAllMinMax();
+        public: void CalcAllMinMax(REFTAB*);
+        public: void ClearSaveLoadFlags();
+        public: void ScheduledUpdate();
+        public: void FrameUpdate();
+        public: int32 GetSceneDepth();
+        public: void PauseScene(bool);
+        public: void FreezeScene(bool);
+        public: bool IsFrozen();
+        public: void CreateGeomClassInfoData();
+        public: void LoadZDefines(IInputSerializerStream&);
+        public: void CreateGeoms(REFTAB*, MakeDynArray*, const char*, const char*, IInputStream&);
+        public: void LoadProperties(unsigned int, ZBaseGeom**, IInputSerializerStream&);
+        public: void LoadPropertiesRecursive(IInputSerializerStream&, ZBaseGeom**&, ZBaseGeom&);
+        public: void MakeDynamicGeomsDynamic(MakeDynArray*);
+        public: void MakeAutoAssignGeomsAutoAssign(MakeDynArray*);
+        public: void DeleteBoundTrees();
+        public: void FreeLightTable();
+        public: void DumpUsedResources();
+        public: void Init();
+        public: void PostInit();
+        public: void PostInit2();
+        public: char* GetStaticBuffer();
+        public: char* GetAnimBuffer();
+        public: bool CheckInPackBuffer(const void*);
+        public: bool CheckInAnimBuffer(const void*);
+        public: void SetPackTime(bool);
+        public: bool GetPackTime();
+        public: CListUser* GetListUser();
+        public: bool EnableDrawGizmo(unsigned int, bool);
+        public: bool IsDrawGizmoEnabled(unsigned int);
+        public: void SetDrawColiMask(int);
+        public: int GetDrawColiMask();
+        public: void SetStripViewEnabled(bool);
+        public: bool IsStripViewEnabled();
+        public: void SetWaterRenderingEnabled(bool);
+        public: bool IsWaterRenderingEnabled();
+        public: void HandleLoadGameFailure();
+        protected: void InitPathfinder4Data(const char*);
+        protected: bool InitPhysicsData(const uint8*);
+        protected: void FreeRoutsLists();
+        protected: void FreeScheduledUpdate();
+        protected: uint32 GetSoundGraphSize();
+        protected: void GetSoundGraphData(void*, unsigned int);
+        protected: uint32 GetStaticGameLevelDataSize();
+        protected: void GetStaticGameLevelData(void*, unsigned int);
+        private: void PurgePrimBuffer();
+#endif
+
+        // Static methods
+        static CGlobalCom* GetGlobalCom();
 
         // members
         bool m_SavingGame;
@@ -155,7 +256,7 @@ namespace Glacier
         PF4::ZInterface* m_pPathfinder4Data;
         Animation::Manager* m_AnimationManager;
         ZEntityTracker* m_pEntityTracker;
-        uint32_t m_rParticleControllerGeom;
+        ZREF m_rParticleControllerGeom;
         ZScene* m_pScene;
         CHUNKFILE* m_pPackedAnims;
         uint32_t m_lPackedAnimsLength;
@@ -200,17 +301,10 @@ namespace Glacier
         int m_lDisableResources;
         int m_AnimIdCount;
         ZEventBase* m_pOnlyEventUpdate;
-
-        // API
-        CCom* GetSceneCom();
-        std::intptr_t GetSceneVar(const char* varname);
-        std::intptr_t SRefToPtr(Glacier::ZREF sref);
-	    ZOldTypeInfo* GetGeomClassInfo(uint32_t typeId);
-
-        // Static methods
-        static CCom* GetGlobalCom();
     };
     RE_VERIFY_SIZE(ZEngineDataBase, 0x52D4); // verified
+    RE_VERIFY_OFFSET(ZEngineDataBase, m_FileName, 0xD4); // Verified ZEngineDataBase::ZEngineDataBase
+    RE_VERIFY_OFFSET(ZEngineDataBase, m_SceneCom, 0x1164); // Verified ZEngineDataBase::ZEngineDataBase
     
     // Really weird, but it is
     #define g_pEngineData g_pSysInterface->m_pEngineData

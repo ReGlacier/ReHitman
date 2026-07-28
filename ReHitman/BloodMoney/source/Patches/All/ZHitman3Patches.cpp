@@ -3,7 +3,7 @@
 #include <BloodMoney/Game/Globals.h>
 
 #include <Glacier/Glacier.h>
-#include <Glacier/ZSysInterfaceWintel.h>
+#include <Glacier/System/ZSysInterfaceWintel.h>
 #include <Glacier/ZEngineDataBase.h>
 
 #include <spdlog/spdlog.h>

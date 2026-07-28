@@ -2,7 +2,7 @@
 
 #include <Glacier/ReGlacier.h>
 #include <Glacier/GlacierFWD.h>
-#include <Glacier/ZSysInterface.h>
+#include <Glacier/System/ZSysInterface.h>
 #include <Glacier/ZUniMemory.h>
 #include <Glacier/ZSTL/TIMETYPE.h>
 #include <Glacier/ZSTL/MYSTR.h>

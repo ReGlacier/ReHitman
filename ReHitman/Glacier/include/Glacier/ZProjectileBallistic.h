@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Glacier/ZBaseConRout.h>
+#include <Glacier/EventBase/ZBaseConRout.h>
 #include <Glacier/ZProjectileBase.h>
 #include <Glacier/CProjectileActivate.h>
 #include <Glacier/ZProjectileBase.h>

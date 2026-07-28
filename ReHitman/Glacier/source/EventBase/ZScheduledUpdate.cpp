@@ -4,7 +4,7 @@
 #include <Glacier/EventBase/ZScheduledScript.h>
 #include <Glacier/EventBase/ZEventBase.h>
 #include <Glacier/ZEngineDataBase.h>
-#include <Glacier/ZSysInterface.h>
+#include <Glacier/System/ZSysInterface.h>
 #include <cassert>
 
 

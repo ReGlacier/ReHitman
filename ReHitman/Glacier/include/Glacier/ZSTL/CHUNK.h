@@ -44,6 +44,7 @@ namespace Glacier
     {
         // methods
         CHUNK(int Name = 0);
+        CHUNK(int, CHUNK*, int);
         ~CHUNK();
 
         void SetPosition(CHUNK* Parent, int No);
@@ -63,11 +64,11 @@ namespace Glacier
         CHUNKDATA* DataFirst;
         CHUNKDATA* DataLast;
         int Name;
-        CHUNK* ChildFirst;
-        CHUNK* ChildLast;
-        CHUNK* Parent;
-        CHUNK* Next;
-        CHUNK* Prev;
+        struct CHUNK* ChildFirst;
+        struct CHUNK* ChildLast;
+        struct CHUNK* Parent;
+        struct CHUNK* Next;
+        struct CHUNK* Prev;
     };
     RE_VERIFY_SIZE(CHUNK, 0x34);
 }

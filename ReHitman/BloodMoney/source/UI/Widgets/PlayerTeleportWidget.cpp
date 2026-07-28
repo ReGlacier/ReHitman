@@ -4,7 +4,7 @@
 #include <BloodMoney/UI/ImGuiInspector.h>
 #include <BloodMoney/Game/CTelePortList.h>
 
-#include <Glacier/ZSysInterfaceWintel.h>
+#include <Glacier/System/ZSysInterfaceWintel.h>
 #include <Glacier/ZEngineDataBase.h>
 #include <Glacier/ZCTRLIKLNKOBJ.h>
 #include <Glacier/EventBase/ZEventBuffer.h>
