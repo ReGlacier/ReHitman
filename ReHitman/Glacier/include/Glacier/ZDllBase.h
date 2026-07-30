@@ -29,7 +29,7 @@ namespace Glacier
         ZDllBase();
 
         // members
-        char* m_pName{nullptr};
-        void* m_pHandle{nullptr};
+        char* m_pName{nullptr}; // +0x4
+        void* m_pHandle{nullptr}; // +0x8
     };
 }

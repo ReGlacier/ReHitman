@@ -79,8 +79,8 @@ namespace Glacier
         virtual void GetMouse3D(float *);
         virtual void GetMouseButtons(bool *, bool *, bool *);
         virtual void DrawMouse(int);
-        virtual void UPlotF(int, int, const char *);
-        virtual void UPlotFNxt(const char *);
+        virtual void UPlotF(int PosX, int PosY, const char* Text);
+        virtual void UPlotFNxt(const char* Text);
         virtual void SetViewport(const float, const float, const float, const float);
         virtual void ClearViewport(const unsigned int, const unsigned int);
         virtual void SetState();

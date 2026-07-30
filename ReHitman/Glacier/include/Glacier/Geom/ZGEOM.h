@@ -21,7 +21,7 @@ namespace Glacier
     class ZRTTI;
     class ZBaseGeom;
     class ZTreeGroup;
-    struct ZBaseConRout;
+    class ZBaseConRout;
 
     extern const char* g_pGeomName;
     extern ZBaseGeom* g_pBaseGeom;
@@ -139,7 +139,7 @@ namespace Glacier
         virtual void Freeze(bool OnOff);
         virtual void DispBound(bool OnOff);
         virtual void SetMoving(bool bMoving);
-        virtual bool RequestCustomDraw() const;
+        virtual bool RequestCustomDraw();
         virtual bool HasOwnerDraw() const;
         virtual void OwnerDraw(ZBaseGeom *,uint,ZDrawBuffer *,ZCAMERA *,float const*,float const*,void const*);
         virtual void CorrectOwnerDrawMatrix(ZMat3x3& mMat, ZVector3& vPos, ZBaseGeom *pOwnerBaseGeom, uint32_t lBoneId);
@@ -250,6 +250,7 @@ namespace Glacier
         void SetRootPos(const ZVector3& vPos);
         void SetAutoRoomAssign(bool bAutoAssign);
         void MakeDynamic(bool bDynamic);
+        uint32_t Control() const;
         uint16_t GeomControl() const;
         void SetGeomControl(uint16_t lBitsAdd, uint16_t lBitsRem);
         void SetControl(uint32_t lBitsAdd, uint32_t lBitsRem);
@@ -273,6 +274,12 @@ namespace Glacier
         {
             static_assert(std::is_base_of_v<ZGEOM, T>, "T must be derived from ZGEOM");
             return T::m_Id == (GetObjectId() & T::m_Mask);
+        }
+
+        template <typename T>
+        bool Is() const
+        {
+            return GetObjectId() == T::m_Id;
         }
 
         // Static API

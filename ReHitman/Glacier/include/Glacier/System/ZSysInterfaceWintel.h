@@ -25,7 +25,6 @@ namespace Glacier
         using MainLoopFunc_t = void(ZSysInterfaceWintel::*)(bool);
 
         // vtbl
-        void SaveGameProgress(ZSysInterface::ESaveGameProgress) override;
         ~ZSysInterfaceWintel() override;
         void Init() override;
         void PrintStatus() override;
@@ -34,8 +33,6 @@ namespace Glacier
         void CloseDownMain() override;
         void CloseAllWindows() override;
         void ReloadDLLs() override;
-        void EditorMessage(int, void*, int) override;
-        ZDllBase* AddDll(const char* psDllPath) override;
         bool RemoveDll(ZDllBase* pDllBase) override;
         void ReloadRender() override;
         void CloseForRestart() override;
@@ -47,7 +44,6 @@ namespace Glacier
         void SetIsPacking(bool bPacking) override;
         void RunMain(char* StartCmdLine) override;
         bool RunMainOnce(bool UpdateViews) override;
-        void DumpAutoShots() override;
         void StepFrameTime() override;
         TIMETYPE StepTime() override;
         void StillFrame() override;
@@ -55,31 +51,36 @@ namespace Glacier
         void ResetTime() override;
         void CalcCycSec() override;
         void Sleep(float fTime) override;
-        bool DisplayAssert(const char* pMessage, const char* pFileName, int lLineNr) override; // weird, maybe Ferral Interactive stuff?
+        bool DisplayAssert(const char* pMessage, const char* pFileName, int lLineNr) override;
         MYSTR GetSuggestedUserPath() const override;
         void SRand(int lSeed, const char* pSourceFile, int lLineNr) override;
         int Rand(char* pSourceFile, int lLineNr) override;
         float FRand(char* pSourceFile, int lLineNr) override;
-        float FRand1(char* pSourceFile, int lLineNr) override;
         int64_t TimeStampCounter(const char* pSourceFile, int lLineNr) override;
-
         virtual void NotifySystemClose(ZDllBase*);
         virtual void SaveGraphicsOptions();
         virtual void SetFixedTimeStep(float fTimeStep);
         virtual void ReplaceDll(ZDllBase* pDll);
         virtual void SendToPartner(const char*, uint32_t);
         virtual void GetFromPartner(const char*, uint32_t);
-        virtual void UPlotF(ZRender*, int, int, const char*, ...);
-        virtual void UPlotF(int,int,char const*,...);
-        virtual void UPlotFNxt(char const*,...);
+        virtual void UPlotF(ZRender* Window, int PosX, int PosY, const char* Format, ...);
+        virtual void UPlotF(int PosX, int PosY,const char* Format,...);
+        virtual void UPlotFNxt(const char* Format,...);
         virtual void ProcessReplay(void *pBuffer, uint32_t lDataSize, int lChannelIdx, const char *pFuncName, int lFuncLine);
 
         // methods
         ZSysInterfaceWintel(int hInstance, bool bEditorMode);
-        void StartUpMain();
+        bool StartUpMain();
         bool MainWindowInit();
-        void NormalMainLoop(bool);
+        void NormalMainLoop(bool UpdateViews);
         void TryCatchMainLoop(bool);
+        void GenerateLogPath(MYSTR& pLogFilePath);
+        void WriteReplayBuffer();
+        void UnloadRuntimeLoadedDLLs();
+        void SaveReplayBuffer();
+        void ClosePlayFile();
+        void PlaybackFrame(void *pBuffer, uint32_t lDataSize, int lChannelIdx, const char *pFuncName, int lFuncLine);
+        void RecordFrame(void *pBuffer, uint32_t lDataSize, int lChannelIdx, const char *pFuncName, int lFuncLine);
 
         // members (starts at 0xDE0)
         bool m_bFullScreenWanted;

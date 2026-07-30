@@ -10,6 +10,7 @@
 #include <Glacier/Serializer/ISerializerStream.h>
 #include <Glacier/Serializer/IOutputSerializerStream.h>
 #include <Glacier/System/ZSysInterface.h>
+#include <Glacier/Runtime/Macro.h>
 #include <Glacier/ZEngineDataBase.h>
 #include <cstring>
 
@@ -627,7 +628,7 @@ namespace Glacier
         }
     }
     
-    bool ZGEOM::RequestCustomDraw() const
+    bool ZGEOM::RequestCustomDraw()
     {
         return (m_lGeomControl & 0x20u) != 0;
     }
@@ -1688,6 +1689,11 @@ namespace Glacier
         BaseGeom()->MakeDynamic(bDynamic);
     }
 
+    uint32_t ZGEOM::Control() const
+    {
+        return BaseGeom()->Control();
+    }
+
     uint16_t ZGEOM::GeomControl() const
     {
         return m_lGeomControl;
@@ -1707,7 +1713,8 @@ namespace Glacier
     STATIC_CLASS_VAR_IMPL(ZGEOM, ZFactory<ZGEOM>, m_Factory, 0x00972930, ZFactory<ZGEOM>{});
     STATIC_CLASS_VAR_IMPL(ZGEOM, const char*, FactoryName, 0x00769CF4, "ZGEOM");
     DECLARE_ID_AND_MASK_IMPL(ZGEOM, 0x009728C4, 0x009728C8);
-    STATIC_CLASS_VAR_IMPL(ZGEOM, ZGEOMCLASSINFO*, m_OldClassInfo, 0x00972928, nullptr);
+    REGISTER_GLACIER_GEOM_BASE_CLASS(ZGEOM, 0x0, 0x00972928); // Really 0x0? Game says 'yep', but I don't trust
+
     STATIC_CLASS_VAR_IMPL(ZGEOM, ZGEOM::EStatus, m_PreferedStatus, 0x009728C0, ZGEOM::EStatus::STATUS_New);
     STATIC_CLASS_VAR_IMPL_EZ(ZGEOM, ZGEOM*, s_pLastSendCommandCaller, nullptr);
 }

@@ -1,6 +1,7 @@
 #include <Glacier/System/ZSysInterfacePack.h>
 #include <Glacier/Render/ZRenderBaseDll.h>
 #include <Glacier/Com/CGlobalCom.h>
+#include <Glacier/Filesystem/ZSysFile.h>
 #include <Glacier/ZSTL/CHUNK.h>
 #include <Glacier/ZEngineDataBase.h>
 #include <Glacier/ZDllBase.h>
@@ -8,7 +9,8 @@
 
 namespace Glacier
 {
-    ZSysInterfacePack::ZSysInterfacePack(int hInstance) : ZSysInterface(hInstance)
+    ZSysInterfacePack::ZSysInterfacePack(int hInstance) 
+        : ZSysInterface(hInstance)
     {
         m_sRecordFile = "";
         m_sPlayFile = "";
@@ -62,7 +64,82 @@ namespace Glacier
     
     void ZSysInterfacePack::ParseOptions()
     {
-        // TODO: Finish me later
+        ZSysInterface::ParseOptions();
+
+        char* pszResult = nullptr;
+
+        if (GetOption("AlwaysPack", &pszResult))
+        {
+            m_bAlwaysPack = true;
+        }
+
+        /*
+        DronCode: iOS build contains refs to PackXenon, PackPS3, PackDurango, PackOrbis. I'm not sure that this required in this case
+
+        Code looks like this:
+
+        m_bSimpleRepack = ZSysInterface::GetOption(g_pSysInterface, (__int64)"PackPS2", 0)
+            || ZSysInterface::GetOption(g_pSysInterface, (__int64)"PackXBOX", 0)
+            || ZSysInterface::GetOption(g_pSysInterface, (__int64)"PackPS2NTSC", 0)
+            || ZSysInterface::GetOption(g_pSysInterface, (__int64)"PackPS2PAL", 0)
+            || ZSysInterface::GetOption(g_pSysInterface, (__int64)"PackXenon", 0)
+            || ZSysInterface::GetOption(g_pSysInterface, (__int64)"PackPS3", 0)
+            || ZSysInterface::GetOption(g_pSysInterface, (__int64)"PackDurango", 0)
+            || ZSysInterface::GetOption(g_pSysInterface, (__int64)"PackOrbis", 0);
+        */
+        m_bSimpleRepack = GetOption("SimpleRepack", nullptr) &&
+            !GetOption("PackPS2", nullptr) &&
+            !GetOption("PackXBOX", nullptr) &&
+            !GetOption("PackPS2NTSC", nullptr) &&
+            !GetOption("PackPS2PAL", nullptr) &&
+            !GetOption("PackXenon", nullptr);
+
+        if (GetOption("AlwaysPackPathFinder", &pszResult))
+        {
+            m_bAlwaysPackPathFinder = true;
+        }
+
+        if (GetOption("LoadFilter", &pszResult))
+        {
+            ZASSERT(!m_bUsingRawProjectPath);
+            g_pSysFile->SetLoadFilter(pszResult);
+        }
+
+        if (GetOption("PackFile", &pszResult))
+        {
+            m_sPackFile = MYSTR(pszResult);
+        }
+
+        if (GetOption("PackPC", &pszResult))
+        {
+            m_sPackDestinationPath = MYSTR(pszResult);
+            NormalizePath(&m_sPackDestinationPath);
+            m_bAlwaysPack = true;
+        }
+
+        if (GetOption("PackPS2", &pszResult) ||
+            GetOption("PackPS2PAL", &pszResult) ||
+            GetOption("PackPS2NTSC", &pszResult))
+        {
+            m_sPackDestinationPath = MYSTR(pszResult);
+            NormalizePath(&m_sPackDestinationPath);
+            m_bAlwaysPack = true;
+            m_bSimpleRepack = false;
+        }
+
+        if (GetOption("PackXBox", &pszResult))
+        {
+            m_sPackDestinationPath = MYSTR(pszResult);
+            NormalizePath(&m_sPackDestinationPath);
+            m_bAlwaysPack = true;
+        }
+
+        if (GetOption("PackXenon", &pszResult))
+        {
+            m_sPackDestinationPath = MYSTR(pszResult);
+            NormalizePath(&m_sPackDestinationPath);
+            m_bAlwaysPack = true;
+        }
     }
 
     void ZSysInterfacePack::SetEngineData(ZEngineDataBase* pEngineData)

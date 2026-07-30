@@ -270,7 +270,37 @@ namespace Glacier
 
         ~ZFactoryProducer() = default;
 
-        // embers
+        // members
+        ZFactory<T>::ProducerData m_Data;
+    };
+
+    /**
+     * @brief This template used for ZGEOM, ZLIGHT, ZFONT and ZPlayer.
+     * @note This template used only for declare RTTI, but not produce new instance (object lifetime restrictions)
+     */
+    template <typename T, typename TProduced = T>
+    struct ZFactoryProducerPure
+    {
+        // types
+        using ClassInfo = typename ZFactory<T>::ClassInfo;
+        using ProducerId = typename ZFactory<T>::ProducerId;
+
+        // methods
+        static T* Create(const ClassInfo&)
+        {
+            // Always nullptr
+            return nullptr;
+        }
+
+        ZFactoryProducerPure(ProducerId id, const ClassInfo& classInfo)
+            : m_Data(id, ZFactoryProducerPure<T, TProduced>::Create, classInfo)
+        {
+            T::GetFactory().Add(&m_Data);
+        }
+
+        ~ZFactoryProducerPure() = default;
+
+        // members
         ZFactory<T>::ProducerData m_Data;
     };
 }
