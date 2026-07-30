@@ -3,9 +3,6 @@
 
 namespace Glacier
 {
-    // fwds
-    struct ZComponentGlobalList;
-
-    void InitGlacierSystem(ZComponentGlobalList* pComponents, bool, char* pszGameName);
+    void InitGlacierSystem(int hInstance, bool bEditorMode, char* pszGameName);
     void FreeGlacierSystem();
 }

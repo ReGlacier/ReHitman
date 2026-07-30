@@ -4,6 +4,7 @@
 #include <Glacier/Filesystem/ZBigFile.h>
 #include <Glacier/Filesystem/FsZip_t.h>
 #include <Glacier/Filesystem/IBuffer.h>
+#include <Glacier/Com/CGlobalCom.h>
 #include <Glacier/ZSTL/CHUNK.h>
 #include <cstdio>
 #include <cstring>
@@ -669,10 +670,9 @@ namespace Glacier
         MYSTR saveGamePath { pszSaveGamePath };
         m_sSaveGamePath = saveGamePath;
 
-        // TODO: Finish me after CSharedCom will be reversed.
-        // const auto length = m_sSaveGamePath.Length();
-        // const auto* value = m_sSaveGamePath.String;
-        // g_pGlobalCom->SetVal("SavePath", 8, value, length);
+        const auto length = m_sSaveGamePath.Length();
+        const auto* value = m_sSaveGamePath.String;
+        g_pGlobalCOM->SetVal("SavePath", 8, value, length);
     }
 
     void ZSysFile::SetSaveGameName(const char* pszSaveGameName)
@@ -680,18 +680,15 @@ namespace Glacier
         MYSTR saveGameName { pszSaveGameName };
         m_sSaveGameName = saveGameName;
 
-        // TODO: Finish me after CSharedCom will be reversed.
-        // const auto length = m_sSaveGameName.Length();
-        // const auto* value = m_sSaveGameName.String;
-        // CSharedCom::SetVal(static_cast<CSharedCom*>(g_pGlobalCom), "SaveName", 8, value, length);
+        const auto length = m_sSaveGameName.Length();
+        const auto* value = m_sSaveGameName.String;
+        g_pGlobalCOM->SetVal("SaveName", 8, value, length);
     }
 
     void ZSysFile::RestoreSaveGamePath()
     {
-        char savePath[128] {};
-
-        // TODO: Finish me after CSharedCom will be reversed.
-        // CSharedCom::GetVal(static_cast<CSharedCom*>(g_pGlobalCom), savePath, "SavePath", 8);
+        char savePath[128] { 0 };
+        g_pGlobalCOM->GetVal(savePath, "SavePath", 8);
 
         MYSTR restoredSavePath { savePath };
         m_sSaveGamePath = restoredSavePath;
@@ -699,10 +696,8 @@ namespace Glacier
 
     void ZSysFile::RestoreSaveGameName()
     {
-        char saveName[128] {};
-
-        // TODO: Finish me after CSharedCom will be reversed.
-        // CSharedCom::GetVal(static_cast<CSharedCom*>(g_pGlobalCom), saveName, "SaveName", 8);
+        char saveName[128] {0};
+        g_pGlobalCOM->GetVal(saveName, "SaveName", 8);
 
         MYSTR restoredSaveName { saveName };
         m_sSaveGameName = restoredSaveName;
@@ -712,7 +707,7 @@ namespace Glacier
     {
         // Nothing here
     }
-
+    
     uint32_t* ZSysFile::AddBig(const char* pFileName, bool bLoadWhole)
     {
         MYSTR normalizedName { pFileName };

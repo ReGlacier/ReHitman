@@ -92,7 +92,6 @@ namespace Glacier
         virtual bool McFileExists(uint32_t, uint32_t, const char* ) = 0;
         virtual uint32_t MaxNumSlots() = 0;
         virtual bool IsValid(uint32_t, uint32_t) = 0;
-        virtual MYSTR NormalizeFilename(const char* ) = 0;
         virtual uint32_t* AddBig(const char* pFileName, bool bLoadWhole);
         virtual MYSTR ConvertFileNameFromZipToHD(const char* ) = 0;
         virtual const char* RemoveSysPath(const char* pFileName);

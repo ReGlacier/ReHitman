@@ -1,12 +1,13 @@
 #include <Glacier/Glacier.h>
 #include <Glacier/ZEngineGeomControl.h>
-#include <Glacier/Geom/ZBaseGeom.h>
+#include <Glacier/Geom/GeomControlMasks.h>
 #include <Glacier/Geom/ZGeomBuffer.h>
+#include <Glacier/Geom/ZBaseGeom.h>
+#include <Glacier/Geom/ZGROUP.h>
 #include <Glacier/Geom/ZLIGHT.h>
 #include <Glacier/System/ZSysInterface.h>
 #include <Glacier/ZEngineDataBase.h>
 
-#include <G1ConfigurationService.h>
 
 namespace Glacier
 {
@@ -76,11 +77,68 @@ namespace Glacier
 
     void ZEngineGeomControl::JonsLights()
     {
-        // TODO: Finish me
+        ZBaseGeom* pChangedLights[MAX_MOVED_GEOMS_NR];
+        uint32_t lNrLights = 0;
+
+        for (int i = 0; i < m_lNrMovedGeoms; ++i)
+        {
+            auto* pBaseGeom = ZGeomBuffer::Instance().GeomRefToBasePtr(m_MovedGeoms[i]);
+            ZASSERT(pBaseGeom);
+
+            if (!pBaseGeom || (pBaseGeom->Control() & (ZCINACTIVE | ZCHIDDEN)) != 0)
+            {
+                continue;
+            }
+
+            if (pBaseGeom->IsDerivedFrom<ZLIGHT>())
+            {
+                if (pBaseGeom->ListId() != 0)
+                {
+                    ZASSERT(lNrLights < MAX_MOVED_GEOMS_NR);
+                    pChangedLights[lNrLights++] = pBaseGeom;
+                }
+
+                continue;
+            }
+
+            if (pBaseGeom->IsDerivedFrom<ZGROUP>())
+            {
+                auto* pGroup = static_cast<ZGROUP*>(pBaseGeom->GetGeom());
+                ZASSERT(pGroup);
+
+                if (!pGroup)
+                {
+                    continue;
+                }
+
+                for (auto* pCurrentGeom = pGroup->BaseGeom(); pCurrentGeom; pGroup->RecurGetNext(&pCurrentGeom))
+                {
+                    if (pCurrentGeom->ListId() == 0 || (pCurrentGeom->Control() & (ZCINACTIVE | ZCHIDDEN)) != 0)
+                    {
+                        continue;
+                    }
+
+                    if ((pCurrentGeom->Control() & 0x3000000u) != 0x3000000u)
+                    {
+                        pCurrentGeom->SetControl(0x3000000u, 0);
+                    }
+
+                    if (pCurrentGeom->IsDerivedFrom<ZLIGHT>())
+                    {
+                        ZASSERT(lNrLights < MAX_MOVED_GEOMS_NR);
+                        pChangedLights[lNrLights++] = pCurrentGeom;
+                    }
+                }
+            }
+        }
+
+        UpdateChangedLights(pChangedLights, lNrLights);
     }
 
     void ZEngineGeomControl::UpdateChangedLights(ZBaseGeom** pBaseGeomList, uint32_t lNrLights)
     {
+        if (!g_pEngineData) return; // DronCode: in original code no checks for this, but it's better for testing purposes
+
         if (g_pEngineData->GetListUser() && lNrLights)
         {
             for (int i = 0; i < lNrLights; ++i)

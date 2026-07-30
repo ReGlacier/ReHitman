@@ -57,6 +57,10 @@ namespace Glacier
         int GetStatus(int, int, int* ) override { return 0; }
         uint32_t GetNumSlots(int) override { return 0u; }
         bool IsValid(uint32_t a, uint32_t b) override { return ((static_cast<uint64_t>(a) << 32) | static_cast<uint64_t>(b)) == 0u; }
+        bool Format(int, int) override { return true; }
+        bool McFileExists(uint32_t, uint32_t, const char* ) override { return false; }
+        uint32_t MaxNumSlots() override { return 1u; }
+
         // new methods in PC
         virtual void EnumSaveGames(STRREFTAB* pFound, const char* pDirPath);
         virtual int32_t GetFilePos(void* vfile, int sectPos, uint32_t NamePos);

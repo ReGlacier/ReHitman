@@ -159,6 +159,7 @@ namespace Glacier
         void MarkNonRunTime();
         void UnlockMinMax();
         void LockMinMax();
+        bool MinMaxLocked() const;
         void UnlockScene();
         ZREF GetREFByName(const char* pszName) const;
         ZGEOM* GeomRefToPtr(ZREF rGeom) const;
@@ -192,9 +193,6 @@ namespace Glacier
         public: ZGEOM* GeomRefToPtr(unsigned int);
         public: ZSoundObject* SRefToPtr(unsigned int);
         public: SREF SPtrToRef(ZSoundObject*);
-        public: void LockMinMax();
-        public: void UnlockMinMax();
-        public: bool MinMaxLocked();
         public: void CalcAllMinMax();
         public: void CalcAllMinMax(REFTAB*);
         public: void ClearSaveLoadFlags();

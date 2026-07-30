@@ -524,7 +524,10 @@ namespace Glacier
 
     void CConfiguration::Apply()
     {
-        // TODO: Implement me
+        Load();
+        ApplyKeys();
+        ApplySound();
+        ApplyDisplay();
     }
     
     void CConfiguration::ApplyDisplay()

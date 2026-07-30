@@ -1063,6 +1063,11 @@ namespace Glacier
         ++m_lLockMinMax;
     }
 
+    bool ZEngineDataBase::MinMaxLocked() const
+    {
+        return m_lLockMinMax > 0;
+    }
+
     void ZEngineDataBase::UnlockScene()
     {
         // NOTE: Need check this code twice, but I guess it's ok

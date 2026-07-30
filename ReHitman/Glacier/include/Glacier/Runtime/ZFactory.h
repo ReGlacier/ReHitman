@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Glacier/GlacierFWD.h>
+#include <Glacier/NotCopyable.h>
 #include <Glacier/Runtime/ZGEOMCLASSINFO.h>
 #include <Glacier/Runtime/ZROUTCLASSINFO.h>
 #include <type_traits>
@@ -10,13 +11,6 @@
 
 namespace Glacier
 {
-    struct NotCopyable
-    {
-        NotCopyable() = default;
-        NotCopyable(const NotCopyable&) = delete;
-        NotCopyable& operator=(const NotCopyable&) = delete;
-    };
-
     #define DECLARE_FACTORY(classInfo_t, typeId_t, creatorTrampoline_t) \
         using ClassInfo_t = classInfo_t; \
         using ProducerId_t = typeId_t; \

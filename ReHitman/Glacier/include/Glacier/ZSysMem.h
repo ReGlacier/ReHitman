@@ -4,13 +4,14 @@
 #include <Glacier/ReGlacier.h>
 #include <Glacier/ZSTL/EAllocType.h>
 #include <Glacier/Component/ZComponentSingleton.h>
+#include <Glacier/Component/ZGlobalComponentBase.h>
 
 
 namespace Glacier
 {
     struct ZAllocatorBase;
 
-    struct ZSysmemDebugHandler : ZGlobalComponentBase
+    struct ZSysmemDebugHandler : public ZGlobalComponentBase
     {
         virtual void PreAllocChange(unsigned int*);
         virtual void PostAllocChange(char**, unsigned int*);

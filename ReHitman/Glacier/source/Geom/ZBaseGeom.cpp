@@ -14,6 +14,9 @@
 #include <Glacier/Geom/ZTreeGroup.h>
 #include <Glacier/Serializer/ISerializerStream.h>
 #include <Glacier/ZEngineGeomControl.h>
+#include <Glacier/ZEngineDataBase.h>
+#include <Glacier/System/ZSysInterface.h>
+#include <Glacier/Render/ZRender.h>
 #include <cstring>
 
 
@@ -88,30 +91,28 @@ namespace Glacier
 
         m_lControl |= 0x1000000; // TODO: Find this mask
 
-        // TODO: Uncomment when ZEngineDataBase will be reversed
-        // if (g_pEngineData->RunTime())
-        // {
-        //     m_lControl |= ZCBOUNDSDIRTY;
-        // }
-        // else
-        // {
-        //     SetControl(ZCNONRUNTIME, 0u);
-        // }
+        if (g_pEngineData->RunTime())
+        {
+            m_lControl |= ZCBOUNDSDIRTY;
+        }
+        else
+        {
+            SetControl(ZCNONRUNTIME, 0u);
+        }
     }
 
     ZBaseGeom::~ZBaseGeom()
     {
         if (ListId())
         {
-            // TODO: Uncomment when ZEngineDataBase will be reversed
-            // if (g_pEngineData)
-            // {
-            //     auto* pLightList = g_pEngineData->GetListUser();
-            //     if (pLightList)
-            //     {
-            //         pLightList->DisconnectFromAllMembers(this);
-            //     }
-            // }
+            if (g_pEngineData)
+            {
+                auto* pLightList = g_pEngineData->GetListUser();
+                if (pLightList)
+                {
+                    pLightList->DisconnectFromAllMembers(this);
+                }
+            }
         }
 
         SetControl(0u, ZCCHKLIGHT);
@@ -156,8 +157,7 @@ namespace Glacier
         ZGeomBuffer::Instance().FreeBaseGeom(this);
         m_pExtraGeom = nullptr;
 
-        // TODO: Uncomment next line after ZEngineDataBase reversed
-        // g_pEngineData->DeleteCheck(m_Name);
+        g_pEngineData->DeleteCheck((void*)m_Name);
     }
 
     void ZBaseGeom::LoadSave(ISerializerStream& stream, bool bSaving)
@@ -180,13 +180,12 @@ namespace Glacier
         
         if (bSaving)
         {
-            // TODO: Finish after ZEngineDataBase reversed.
-            // auto* pListUser = g_pEngineData->GetListUser();
-            // ZASSERT(pListUser);
-            // if (pListUser->IsRuntimeMember(lListID))
-            // {
-            //     lListID = 0xFFFFFFFFu;
-            // }
+            auto* pListUser = g_pEngineData->GetListUser();
+            ZASSERT(pListUser);
+            if (pListUser->IsRuntimeMember(lListID))
+            {
+                lListID = 0xFFFFFFFFu;
+            }
         }
 
         stream.Exchange("ListID", lListID);
@@ -246,9 +245,7 @@ namespace Glacier
                 return pRoomList->GetRoomNr(0);
             }
 
-            // TODO: Return ZEngineDataBase current/default room after ZEngineDataBase reversed.
-            // return g_pEngineData->m_pCurrentRoom;
-            return nullptr;
+            return g_pEngineData->m_pRoot;
         }
 
         for (auto* pBaseGeom = const_cast<ZBaseGeom*>(this); pBaseGeom; pBaseGeom = pBaseGeom->Parent())
@@ -264,14 +261,13 @@ namespace Glacier
 
     void ZBaseGeom::SetName(const char* name) 
     {
-        // TODO: Uncomment next lines when ZEngineDataBase reversed!
-        // g_pEngineData->DeleteCheck(m_Name);
+        g_pEngineData->DeleteCheck((void*)m_Name);
 
-        // if (g_pEngineData->CheckInPackBuffer(name))
-        // {
-        //     m_Name = name;
-        // }
-        // else
+        if (g_pEngineData->CheckInPackBuffer((void*)name))
+        {
+            m_Name = name;
+        }
+        else
         {
             m_Name = (const char*)ZUniMemory::Allocate(sizeof(char) * strlen(name) + 1);
             std::strcpy(const_cast<char*>(m_Name), name);
@@ -285,9 +281,7 @@ namespace Glacier
 
         if (Prim() && DrawId() && !IsDerivedFrom<ZLIGHT>())
         {
-            // TODO: Finish me! I guess it's some kind of call to ZRender or smth like that
-            // TODO: Uncomment when ZSysInterface & ZRender will be reversed!
-            // g_pSysInterface->m_pRender->ChangePrim(this, primId);
+            g_pSysInterface->WindowFirst->ChangePrim(this, primId);            
         }
 
         if (lOldPrim != m_lPrim)
@@ -896,8 +890,7 @@ namespace Glacier
         if (Control() & ZCDYNAMIC)
         {
             printf("WARNING: ZBaseGeom::GetOwner() called on dynamic object\n");
-            // TODO: Return g_pEngineData->m_pRoot | FIXME After ZEngineDataBase reversed
-            return nullptr;
+            return g_pEngineData->m_pRoot;
         }
         else if (Parent())
         {
@@ -1146,7 +1139,7 @@ namespace Glacier
                         *pDrawList = ZGeomBuffer::Instance().AddGeoms(*pDrawList, this, this);
                     }
 
-                    // TODO: Notify ZSysInterface room visibility/debug component when g_pSysInterface is reversed.
+                    g_pSysInterface->WindowFirst->UpdateBaseGeom(this);
                 }
             }
         }
@@ -1238,8 +1231,8 @@ namespace Glacier
                         ZASSERT((Control() & (ZCOWNERDRAW | ZCINVISIBLE | ZCHIDDEN | ZCINACTIVE)) == 0);
                         *pDrawList = ZGeomBuffer::Instance().RemoveGeoms(*pDrawList, this, this);
                     }
-
-                    // TODO: Notify ZSysInterface room visibility/debug component when g_pSysInterface is reversed.
+                    
+                    g_pSysInterface->WindowFirst->UpdateBaseGeom(this);
                 }
             }
         }
@@ -1391,10 +1384,7 @@ namespace Glacier
 
     bool ZBaseGeom::ChkUpdateMinMax() const
     {
-        // TODO: Uncomment when ZEngineDataBase will be reversed!
-        // return !g_pEngineData->MinMaxLocked() && ((Control() & ZCDYNAMIC) == 0);
-        // Remove next line when ZEngineDataBase rdy
-        return ((Control() & ZCDYNAMIC) == 0);
+        return !g_pEngineData->MinMaxLocked() && ((Control() & ZCDYNAMIC) == 0);
     }
 
     void ZBaseGeom::SendCommand(ZMSGID Msg, void* pData, ZGEOM* pTarget)
