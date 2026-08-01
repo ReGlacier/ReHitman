@@ -1,6 +1,7 @@
 #include <Glacier/Geom/ZBaseGeomLists.h>
 #include <Glacier/Geom/ZGeomBuffer.h>
 #include <Glacier/ZSTL/ZOffsetAlloc.h>
+#include <Tests/EngineFixture.h>
 #include <gtest/gtest.h>
 
 #include <array>
@@ -35,15 +36,18 @@ namespace
         return value;
     }
 
-    struct ZBaseGeomListsTest : testing::Test
+    struct ZBaseGeomListsTest : Tests::EngineFixture
     {
         ZGeomBuffer Buffer{ sizeof(ZBaseGeom) * 16, 256, 512, 128 };
         std::vector<ZBaseGeom*> Geoms;
 
-        ~ZBaseGeomListsTest() override
+        void TearDown() override
         {
             for (auto it = Geoms.rbegin(); it != Geoms.rend(); ++it)
                 delete *it;
+
+            Geoms.clear();
+            Tests::EngineFixture::TearDown();
         }
 
         ZBaseGeom* AllocGeom()

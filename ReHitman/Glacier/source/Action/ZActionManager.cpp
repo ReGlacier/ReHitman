@@ -1,6 +1,8 @@
 #include <Glacier/Action/ZActionManager.h>
 #include <Glacier/Serializer/ZTokenStream.h>
 #include <Glacier/Filesystem/ZSysFile.h>
+#include <Glacier/Input/SysInput.h>
+#include <Glacier/Input/ZInterface.h>
 #include <Glacier/System/ZSysInterface.h>
 #include <Glacier/ZUniMemory.h>
 
@@ -25,9 +27,11 @@ namespace Glacier
 
     ZActionManager::~ZActionManager()
     {
-        for (auto* pCurrent = m_kRoot.FirstChild(); pCurrent; pCurrent = pCurrent->Next())
+        for (auto* pCurrent = m_kRoot.FirstChild(); pCurrent; )
         {
-            ZUniMemory::Delete(pCurrent);
+            auto* pNext = pCurrent->Next();
+            DeleteTree(pCurrent);
+            pCurrent = pNext;
         }
     }
 
@@ -236,9 +240,11 @@ namespace Glacier
                 {
                     pCurrent->RemoveFromTree();
 
-                    for (pCurrent = pCurrent->FirstChild(); pCurrent; pCurrent = pCurrent->Next())
+                    for (pCurrent = pCurrent->FirstChild(); pCurrent; )
                     {
+                        auto* pNext = pCurrent->Next();
                         DeleteTree(pCurrent);
+                        pCurrent = pNext;
                     }
                 }
 
@@ -387,12 +393,10 @@ namespace Glacier
                 if (!stream.Swallow(ZTokenStream::EToken::eRPAR))
                     return nullptr;
 
-                // TODO: Finsih this place after SysInput reversed
-                // Smth like
-                // if (SysInput::instance)
-                // {
-                //     SysInput::instance->GetInputIndices(aBuffer1, aBuffer2, &iDeviceId, &iControlId);
-                // }
+                if (SysInput::instance)
+                {
+                    SysInput::instance->MapDigital(aBuffer1, aBuffer2, &iDeviceId, &iControlId);
+                }
 
                 auto* pEntry = AllocMap();
                 pEntry->Init(eToken, iDeviceId, iControlId);
@@ -419,12 +423,7 @@ namespace Glacier
                 if (!stream.Swallow(ZTokenStream::EToken::eRPAR))
                     return nullptr;
 
-                // TODO: Finsih this place after SysInput reversed
-                // Smth like that
-                // if (SysInput::instance)
-                // {
-                //     SysInput::instance->GetAnalogIndices(aBuffer1, aBuffer2, &iDeviceId, &iControlId);
-                // }
+                SysInput::instance->MapAnalog(aBuffer1, aBuffer2, &iDeviceId, &iControlId);
 
                 auto* pEntry = AllocMap();
                 pEntry->Init(ZTokenStream::EToken::eANA, iDeviceId, iControlId);
@@ -451,8 +450,8 @@ namespace Glacier
                 if (!stream.Swallow(ZTokenStream::EToken::eRPAR))
                     return nullptr;
 
-                // TODO: Finsih this place after SysInput reversed
-                
+                SysInput::instance->MapAnalog(aBuffer1, aBuffer2, &iDeviceId, &iControlId);
+
                 auto* pEntry = AllocMap();
                 pEntry->Init(ZTokenStream::EToken::eREL, iDeviceId, iControlId);
                 return pEntry;
@@ -552,9 +551,11 @@ namespace Glacier
 
     void ZActionManager::DeleteTree(ZActionMapTree* pTree)
     {
-        for (auto* pCurrent = pTree->FirstChild(); pCurrent; pCurrent = pCurrent->Next())
+        for (auto* pCurrent = pTree->FirstChild(); pCurrent; )
         {
+            auto* pNext = pCurrent->Next();
             DeleteTree(pCurrent);
+            pCurrent = pNext;
         }
 
         FreeMap(pTree);

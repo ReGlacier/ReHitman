@@ -2,6 +2,7 @@
 #include <Glacier/Geom/ZGeomBuffer.h>
 #include <Glacier/ZSTL/CListUser.h>
 #include <Glacier/ZUniMemory.h>
+#include <Tests/EngineFixture.h>
 #include <gtest/gtest.h>
 
 #include <array>
@@ -30,7 +31,7 @@ namespace
         return *reinterpret_cast<uint32_t*>(reinterpret_cast<uint8_t*>(geom) + 0x54);
     }
 
-    struct CListUserTest : testing::Test
+    struct CListUserTest : Tests::EngineFixture
     {
         ZGeomBuffer GeomBuffer{ sizeof(ZBaseGeom) * 8, 256, 512, 128 };
         std::array<uint32_t, kStaticWords + kRuntimeWords + kDynamicWords> Buffer{};

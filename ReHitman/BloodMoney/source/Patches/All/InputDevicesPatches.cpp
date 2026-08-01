@@ -2,8 +2,8 @@
 #include <BloodMoney/Delegates/IInputDelegate.h>
 #include <BloodMoney/Game/Globals.h>
 #include <Glacier/System/ZSysInterfaceWintel.h>
-#include <Glacier/ZSysInputWintel.h>
-#include <Glacier/ZInputDevice.h>
+#include <Glacier/Input/ZSysInputWintel.h>
+#include <Glacier/Input/ZInputDevice.h>
 
 #include <spdlog/spdlog.h>
 

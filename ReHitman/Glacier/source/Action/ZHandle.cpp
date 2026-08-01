@@ -1,5 +1,9 @@
 #include <Glacier/Action/ActionInterface.h>
 #include <Glacier/Action/ZActionManager.h>
+#include <Glacier/Input/SysInput.h>
+#include <Glacier/Input/ZInterface.h>
+#include <Glacier/ZUniAssert.h>
+
 
 namespace Glacier
 {
@@ -36,19 +40,59 @@ namespace Glacier
 
     bool Action::ZHandle::Digital()
     {
-        // TODO: Finish after SysInput reversed
-        return false;
+        ZASSERT(Action::instance);
+        if (!Action::instance)
+            return false;
+
+        if (!CheckMap())
+        {
+            return false;
+        }
+
+        if (!Action::instance->GetJoinControllers())
+            return m_pkMap->Digital();
+
+        bool bResult = false;
+        for (int i = 0; i < SysInput::instance->DeviceCount(SysInput::EDeviceType::eGAMECONTROL_TYPE); ++i)
+        {
+            const auto lDevId = SysInput::instance->GetNthDevice(SysInput::EDeviceType::eGAMECONTROL_TYPE, i);
+            m_pkMap->SetDevice(lDevId);
+            bResult |= m_pkMap->Digital();
+        }
+        
+        return bResult;
     }
 
     float Action::ZHandle::Analog()
     {
-        // TODO: Finish after SysInput reversed
-        return 0.f;
+        ZASSERT(Action::instance);
+        if (!Action::instance)
+            return false;
+
+        if (!CheckMap())
+        {
+            return false;
+        }
+        
+        if (Action::instance->GetJoinControllers())
+        {
+            float fResult = 0.0f;
+
+            for (int i = 0; i < SysInput::instance->DeviceCount(SysInput::EDeviceType::eGAMECONTROL_TYPE); ++i)
+            {
+                const auto lDevId = SysInput::instance->GetNthDevice(SysInput::EDeviceType::eGAMECONTROL_TYPE, i);
+                m_pkMap->SetDevice(lDevId);
+                fResult += m_pkMap->Analog();
+            }
+            return fResult;
+        }
+        
+        return m_pkMap->Analog();
     }
 
     int Action::ZHandle::ActivatedBy()
     {
-        return (CheckMap() ? ActivatedBy() : -1);
+        return (CheckMap() ? m_pkMap->ActivatedBy() : -1);
     }
 
     void Action::ZHandle::ClearInputKeys()

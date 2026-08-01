@@ -11,7 +11,7 @@
 namespace Glacier
 {
     /**
-     * Mostly used for ANM file format
+     * Mostly used for ZGF/GMS/ANM file format
      */
     struct CHUNKFILE
     {

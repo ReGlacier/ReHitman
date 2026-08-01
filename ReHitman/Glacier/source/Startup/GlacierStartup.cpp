@@ -2,6 +2,7 @@
 #include <Glacier/Filesystem/ZSysFileWintel.h>
 #include <Glacier/System/ZSysInterfaceWintel.h>
 #include <Glacier/Component/ZComponentGlobalList.h>
+#include <Glacier/Input/SysInput.h>
 #include <Glacier/Com/CGlobalCom.h>
 #include <Glacier/ZSTL/MYSTR.h>
 
@@ -17,8 +18,7 @@ namespace Glacier
 
         g_pSysInterface = ZUniMemory::New<ZSysInterfaceWintel>(hInstance, bEditorMode);
 
-        // TODO: Uncomment next line after SysInput reversed
-        // SysInput::Initialize();
+        SysInput::Initialize();
 
         if (pszGameName)
         {

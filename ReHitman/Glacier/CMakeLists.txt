@@ -19,6 +19,10 @@ set(GLACIER_COMMON_LIBS
         HF::Core
 )
 
+if(WIN32)
+    list(APPEND GLACIER_COMMON_LIBS PUBLIC dinput8 dxguid)
+endif()
+
 if(MSVC)
     set(CMAKE_ASM_MASM_FLAGS "/c /coff")
 endif()
@@ -32,6 +36,7 @@ add_library(Glacier STATIC ${GLACIER_ALL_SOURCES})
 add_library(G1::Core ALIAS Glacier)
 target_include_directories(Glacier PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(Glacier ${GLACIER_COMMON_LIBS})
+target_compile_definitions(Glacier PUBLIC DIRECTINPUT_VERSION=0x0800)
 
 if(REHITMAN_BUILD_TESTS)
     # Target for testing (STL allocators, no extra deps to game instance)
@@ -39,7 +44,7 @@ if(REHITMAN_BUILD_TESTS)
     add_library(G1::TestCore ALIAS GlacierTest)
     target_include_directories(GlacierTest PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
     target_link_libraries(GlacierTest ${GLACIER_COMMON_LIBS})
-    target_compile_definitions(GlacierTest PUBLIC REHITMAN_TESTS)
+    target_compile_definitions(GlacierTest PUBLIC REHITMAN_TESTS DIRECTINPUT_VERSION=0x0800)
 endif()
 
 # Fixes for raw asm
