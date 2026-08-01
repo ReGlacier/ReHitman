@@ -15,8 +15,7 @@ namespace Glacier
         g_pGlobalCOM = &g_GlobalCom;
         g_pSysFile = ZUniMemory::New<ZSysFileWintel>();
 
-        // TODO: Init g_pSysInterface with ZSysInterfaceWintel! Finish me after ZSysInterfaceWintel reversed
-        // g_pSysInterface = ZUniMemory::New<ZSysInterfaceWintel>(hInstance, bEditorMode);
+        g_pSysInterface = ZUniMemory::New<ZSysInterfaceWintel>(hInstance, bEditorMode);
 
         // TODO: Uncomment next line after SysInput reversed
         // SysInput::Initialize();

@@ -33,7 +33,7 @@ namespace Glacier
     void ZEventBase::operator delete(void* ptr) noexcept 
     {
         printf("%s:%d Attempted manual delete!\n", __FILE__, __LINE__);
-        __debugbreak();
+        ZASSERT(false);
     }
 
     ZEventBase* ZEventBase::RefToPtr(ZREF rRef)

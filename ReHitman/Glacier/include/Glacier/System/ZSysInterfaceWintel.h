@@ -5,6 +5,9 @@
 #include <Glacier/System/ZSysInterfacePack.h>
 #include <Glacier/ZSTL/REFTAB32.h>
 #include <Glacier/ZSTL/MYSTR.h>
+#include <Glacier/ZUniMemory.h>
+
+#include <Windows.h>
 
 namespace Glacier
 {
@@ -17,6 +20,8 @@ namespace Glacier
         char*  m_pData;
         uint32_t m_lDataLen;
     };
+
+    STATIC_GLOBAL_CLASS_INSTANCE(uint32_t, g_lRunOutOfFocus);
 
     class ZSysInterfaceWintel : public ZSysInterfacePack
     {
@@ -33,6 +38,8 @@ namespace Glacier
         void CloseDownMain() override;
         void CloseAllWindows() override;
         void ReloadDLLs() override;
+        void EditorMessage(int, void*, int) override;
+        ZDllBase* AddDll(const char* psDllPath) override;
         bool RemoveDll(ZDllBase* pDllBase) override;
         void ReloadRender() override;
         void CloseForRestart() override;
@@ -44,6 +51,7 @@ namespace Glacier
         void SetIsPacking(bool bPacking) override;
         void RunMain(char* StartCmdLine) override;
         bool RunMainOnce(bool UpdateViews) override;
+        void DumpAutoShots() override;
         void StepFrameTime() override;
         TIMETYPE StepTime() override;
         void StillFrame() override;
@@ -69,12 +77,14 @@ namespace Glacier
         virtual void ProcessReplay(void *pBuffer, uint32_t lDataSize, int lChannelIdx, const char *pFuncName, int lFuncLine);
 
         // methods
+        static LRESULT CALLBACK MainWindowProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
         ZSysInterfaceWintel(int hInstance, bool bEditorMode);
         bool StartUpMain();
         bool MainWindowInit();
         void NormalMainLoop(bool UpdateViews);
         void TryCatchMainLoop(bool);
         void GenerateLogPath(MYSTR& pLogFilePath);
+        bool SetupThreadAffinity();
         void WriteReplayBuffer();
         void UnloadRuntimeLoadedDLLs();
         void SaveReplayBuffer();

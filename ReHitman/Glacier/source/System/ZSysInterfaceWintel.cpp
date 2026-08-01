@@ -17,14 +17,18 @@
 #include <cstring>
 #include <cstdarg>
 #include <ctime>
+#include <cmath>
 
 
 
 namespace Glacier
 {
+    static char ClassName[] = "ZSystemClass000";
+
     // Globals
     STATIC_GLOBAL_CLASS_INSTANCE(MYSTR*, psErrorLog);
     STATIC_GLOBAL_CLASS_INSTANCE_IMPL(MYSTR*, psErrorLog, 0x008B4FB8, nullptr);
+    STATIC_GLOBAL_CLASS_INSTANCE_IMPL(uint32_t, g_lRunOutOfFocus, 0x008EE930, false);
 
     // ZSysInterfaceWintel
     ZSysInterfaceWintel::ZSysInterfaceWintel(int hInstance, bool bEditorMode)
@@ -230,6 +234,16 @@ namespace Glacier
     {
         m_pEngineData->FreeDlcFiles();
         // ^^ That's all folks   
+    }
+
+    void ZSysInterfaceWintel::EditorMessage(int, void*, int)
+    {
+        // Do nothing
+    }
+
+    ZDllBase* ZSysInterfaceWintel::AddDll(const char* psDllPath)
+    {
+        return nullptr;
     }
 
     bool ZSysInterfaceWintel::RemoveDll(ZDllBase* pDllBase)
@@ -705,6 +719,11 @@ namespace Glacier
         DumpAutoShots();
         return true;
     }
+    
+    void ZSysInterfaceWintel::DumpAutoShots()
+    {
+        // Do nothing
+    }
 
     void ZSysInterfaceWintel::StepFrameTime()
     {
@@ -930,8 +949,7 @@ namespace Glacier
             MB_OK | MB_ICONEXCLAMATION | MB_TOPMOST
         );
 
-        // ---< DEBUG HERE >---
-        DebugBreak();
+        ZASSERT(false);
         return true;
     }
     
@@ -1211,19 +1229,414 @@ namespace Glacier
 
     bool ZSysInterfaceWintel::StartUpMain()
     {
-        // TODO: Finish me
+        if (!ReadCmdLine(m_sCmdLine))
+        {
+            return false;
+        }
+
+        ParseOptions();
+
+        if (m_bUseTryCatch)
+        {
+            DoMainLoop = &ZSysInterfaceWintel::TryCatchMainLoop;
+
+            const char* errorLogFileName = m_sErrorLog;
+            g_pSysFile->StartTemp(const_cast<char*>(errorLogFileName));
+
+            time_t currentTime;
+            std::time(&currentTime);
+
+            char logLine[508];
+            std::sprintf(logLine, "Starting error log on: %s", std::ctime(&currentTime));
+            g_pSysFile->Append(errorLogFileName, logLine, static_cast<int>(std::strlen(logLine)));
+        }
+
+        m_sDefaultScene = CorrectSceneFileName(m_sDefaultScene);
+
+        ResetTime();
+        CalcCycSec();
+        InitConfiguration();
+
+        // TODO: Finish this place after ZDllMain will be reversed
+        // m_pMainDll = ZDllMain::ZDllMain();
+        // if (m_pMainDll)
+        // {
+        //     m_pMainDll->Init();
+        // }
+        m_pMainDll = nullptr;
+
+        if (!g_pRenderDll)
+        {
+            // TODO: Finish this place after ZRenderBaseDll and CreateD3DDll will be reversed
+            // g_pRenderDll = CreateD3DDll();
+            // g_pRenderDll->CreateMaterialBuffer();
+        }
+
+        m_pSoundDll = nullptr;
+        if (!GetOption("DisableAudio", nullptr))
+        {
+            // TODO: Finish this place after ZDllSoundWintel will be reversed
+            // m_pSoundDll = ZDllSoundWintel::BuildInstance();
+        }
+
+        if (m_pSoundDll)
+        {
+            m_pSoundDll->Init();
+        }
+
+        m_pEngineData->CreateObjectFactories();
+
+        // TODO: Finish this place after SysInput will be reversed
+        // if (SysInput::instance)
+        // {
+        //     SysInput::instance->Init();
+        // }
+
+        m_pEngineData->StartUp();
+        ResetTime();
+
+        if (WindowFirst)
+        {
+            // TODO: Finish this place after ZRender will be fully reversed
+            // WindowFirst->InitRender(); // vftable + 0x214
+        }
+
+        SetupThreadAffinity();
         return true;
+    }
+
+    bool ZSysInterfaceWintel::SetupThreadAffinity()
+    {
+        if (GetOption("DisableThreadAffinity", nullptr))
+        {
+            return true;
+        }
+
+        ULONG_PTR processAffinityMask = 0;
+        ULONG_PTR systemAffinityMask = 0;
+        if (!GetProcessAffinityMask(GetCurrentProcess(), &processAffinityMask, &systemAffinityMask))
+        {
+            return false;
+        }
+
+        if (!processAffinityMask)
+        {
+            ZASSERT(false);
+        }
+
+        if (!systemAffinityMask)
+        {
+            ZASSERT(false);
+        }
+
+        if (processAffinityMask == 1)
+        {
+            return (systemAffinityMask & 0xFF) != 0;
+        }
+
+        int processorCount = 0;
+        for (ULONG_PTR mask = 1; mask; mask <<= 1)
+        {
+            if (processAffinityMask & mask)
+            {
+                ++processorCount;
+            }
+        }
+
+        if (processorCount <= 1)
+        {
+            return false;
+        }
+
+        const int seed = static_cast<int>(TimeStampCounter(__FILE__, __LINE__));
+        SRand(seed, __FILE__, __LINE__);
+
+        const int selectedProcessor = Rand(const_cast<char*>(__FILE__), __LINE__) % processorCount;
+        int processorIndex = 0;
+        DWORD_PTR threadAffinityMask = 0;
+
+        for (ULONG_PTR mask = 1; mask; mask <<= 1)
+        {
+            if (!(processAffinityMask & mask))
+            {
+                continue;
+            }
+
+            if (processorIndex == selectedProcessor)
+            {
+                threadAffinityMask = mask;
+                break;
+            }
+
+            ++processorIndex;
+        }
+
+        if (!threadAffinityMask)
+        {
+            ZASSERT(false);
+        }
+
+        if ((threadAffinityMask & processAffinityMask) == 0)
+        {
+            ZASSERT(false);
+        }
+
+        return SetThreadAffinityMask(GetCurrentThread(), threadAffinityMask) != 0;
     }
 
     bool ZSysInterfaceWintel::MainWindowInit()
     {
-        // TODO: Finish me
+        WNDCLASSEXA wcx;
+        char errorMessage[512]{};
+
+        int classIndex = 0;
+        for (; classIndex != 1000; ++classIndex)
+        {
+            std::sprintf(&ClassName[12], "%03d", classIndex);
+
+            wcx.cbSize = sizeof(wcx);
+            if (!GetClassInfoExA(static_cast<HINSTANCE>(m_hInstance), ClassName, &wcx))
+            {
+                break;
+            }
+        }
+
+        const int screenWidth = GetSystemMetrics(SM_CXFULLSCREEN);
+        const int screenHeight = GetSystemMetrics(SM_CYFULLSCREEN);
+        const int x = screenWidth / 2 - 320;
+        const int y = screenHeight / 2 - 240;
+        const int right = screenWidth / 2 + 320;
+        const int bottom = screenHeight / 2 + 240;
+
+        std::memset(&wcx, 0, sizeof(wcx));
+        wcx.cbSize = sizeof(wcx);
+        wcx.style = 0xAB;
+        wcx.lpfnWndProc = ZSysInterfaceWintel::MainWindowProc;
+        wcx.cbClsExtra = 0;
+        wcx.cbWndExtra = 4;
+        wcx.hInstance = static_cast<HINSTANCE>(m_hInstance);
+        wcx.hIcon = LoadIconA(static_cast<HINSTANCE>(m_hInstance), MAKEINTRESOURCEA(0x65));
+        wcx.hCursor = LoadCursorA(nullptr, IDC_ARROW);
+        wcx.hbrBackground = static_cast<HBRUSH>(GetStockObject(GRAY_BRUSH));
+        wcx.lpszMenuName = nullptr;
+        wcx.lpszClassName = ClassName;
+        wcx.hIconSm = LoadIconA(static_cast<HINSTANCE>(m_hInstance), MAKEINTRESOURCEA(0x65));
+
+        if (!RegisterClassExA(&wcx))
+        {
+            const DWORD lastError = GetLastError();
+            FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM, nullptr, lastError, 0, errorMessage, sizeof(errorMessage), nullptr);
+            ZASSERT(false);
+        }
+
+        MainhWnd = CreateWindowExA(
+            0,
+            ClassName,
+            "Glacier",
+            WS_OVERLAPPEDWINDOW,
+            x,
+            y,
+            right - x,
+            bottom - y,
+            nullptr,
+            nullptr,
+            static_cast<HINSTANCE>(m_hInstance),
+            nullptr);
+
+        if (!MainhWnd)
+        {
+            const DWORD lastError = GetLastError();
+            FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM, nullptr, lastError, 0, errorMessage, sizeof(errorMessage), nullptr);
+            ZASSERT(false);
+        }
+
+        SetWindowLongA(static_cast<HWND>(MainhWnd), 0, reinterpret_cast<LONG>(this));
         return true;
+    }
+
+    LRESULT CALLBACK ZSysInterfaceWintel::MainWindowProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
+    {
+        if (Msg > WM_SETFOCUS)
+        {
+            if (Msg == WM_KILLFOCUS)
+            {
+                // TODO: Finish this place after ZDllSoundWintel will be reversed
+                // if (g_pSysInterface->m_pSoundDll && !g_pSysInterface->m_pSoundDll->IsMuted())
+                // {
+                //     g_pSysInterface->m_bUnPauseAudio = true;
+                //     g_pSysInterface->m_pSoundDll->Pause(1, 1);
+                // }
+
+                // TODO: Finish this place after fullscreen deactivate lock flag will be identified
+                if (!g_lRunOutOfFocus)
+                {
+                    g_pSysInterface->m_lIsActive = 0;
+
+                    // TODO: Finish this place after SysInput will be reversed
+                    // if (SysInput::instance)
+                    // {
+                    //     SysInput::OnFocusLost();
+                    // }
+                }
+            }
+            else if (Msg == WM_SYSCOMMAND)
+            {
+                if (wParam == 0x1000)
+                {
+                    MessageBoxA(nullptr, "Censured by tech", "", 0);
+                }
+                else if (wParam == SC_CLOSE)
+                {
+                    return 0;
+                }
+            }
+        }
+        else
+        {
+            switch (Msg)
+            {
+            case WM_SETFOCUS:
+                // TODO: Finish this place after ZDllSoundWintel will be reversed
+                // if (g_pSysInterface->m_pSoundDll && g_pSysInterface->m_bUnPauseAudio)
+                // {
+                //     g_pSysInterface->m_bUnPauseAudio = false;
+                //     g_pSysInterface->m_pSoundDll->Pause(0, 1);
+                // }
+
+                g_pSysInterface->ResetTime();
+                g_pSysInterface->m_lIsActive = 1;
+
+                // TODO: Finish this place after SysInput will be reversed
+                // if (SysInput::instance)
+                // {
+                //     SysInput::OnFocusGained();
+                // }
+                break;
+
+            case WM_DESTROY:
+                PostQuitMessage(0);
+                return 0;
+
+            case WM_ACTIVATE:
+                if (LOWORD(wParam))
+                {
+                    g_pSysInterface->ResetTime();
+                    g_pSysInterface->m_lIsActive = 1;
+
+                    if (g_pSysInterface->m_bFullScreen)
+                    {
+                        SetWindowPos(hWnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+                        ShowWindow(hWnd, SW_RESTORE);
+                    }
+                }
+                else
+                {
+                    // TODO: Finish this place after fullscreen deactivate lock flag will be identified
+                    if (!g_lRunOutOfFocus)
+                    {
+                        g_pSysInterface->m_lIsActive = 0;
+
+                        if (g_pSysInterface->m_bFullScreen)
+                        {
+                            SetWindowPos(hWnd, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+                        }
+
+                        // TODO: Finish this place after ZDllSoundWintel will be reversed
+                        // if (g_pSysInterface->m_pSoundDll)
+                        // {
+                        //     g_pSysInterface->m_pSoundDll->SetActive(false);
+                        // }
+                    }
+                }
+                break;
+            }
+        }
+
+        if (g_pSysInterface->WindowFirst)
+        {
+            // TODO: Finish this place after ZRender window message handler will be reversed
+            // return g_pSysInterface->WindowFirst->HandleWindowMessage(Msg, wParam, lParam); // vftable + 0x1D8
+        }
+
+        return DefWindowProcA(hWnd, Msg, wParam, lParam);
     }
 
     void ZSysInterfaceWintel::NormalMainLoop(bool UpdateViews)
     {
-        // TODO: Finish me
+        if (m_lIsActive)
+        {
+            TimeStampCounter(__FILE__, __LINE__);
+            StepFrameTime();
+
+            if (std::isnan(g_pSysInterface->DeltaFrameTime))
+            {
+                ZASSERT(false);
+            }
+
+            if (g_pSysInterface->DeltaFrameTime < 0.0f)
+            {
+                ZASSERT(false);
+            }
+
+            if (FrameTime.secs >= 0)
+            {
+                // TODO: Finish this place after SysInput will be reversed
+                // if (SysInput::instance)
+                // {
+                //     SysInput::instance->Update();
+                // }
+
+                // TODO: Finish this place after ZSysInterface::CheckDebugKeys will be reversed
+                // CheckDebugKeys();
+
+                if (!g_pSysInterface->m_bUseDirectInputMouse && g_pSysInterface->WindowFirst)
+                {
+                    POINT point;
+                    GetCursorPos(&point);
+
+                    // TODO: Finish this place after ZRender Win32 window fields and mouse input will be reversed
+                    // ScreenToClient(g_pSysInterface->WindowFirst->m_hWnd, &point);
+                    // g_pSysInterface->WindowFirst->SetMousePosition(0, point.x, point.y); // vftable + 0x208
+                }
+
+                m_pEngineData->MainLoop(UpdateViews);
+            }
+            else
+            {
+                m_pEngineData->LoadScene(m_pEngineData->GetSceneName());
+                m_pEngineData->ControlSceneChange();
+            }
+
+            if (m_sMovieOutput.Length())
+            {
+                static int lFrameNr = 0;
+
+                char frameFileName[512];
+                ZSysInterface* formatter = BeforeFormat();
+                formatter->SPrintF(frameFileName, "%s/%04d.bmp", static_cast<const char*>(m_sMovieOutput), lFrameNr);
+                ++lFrameNr;
+
+                if (WindowFirst)
+                {
+                    WindowFirst->Dump(frameFileName);
+                }
+
+                const size_t frameFileNameLength = std::strlen(frameFileName);
+                frameFileName[frameFileNameLength] = '\n';
+                frameFileName[frameFileNameLength + 1] = '\0';
+
+                MYSTR frameGrabListName = m_sMovieOutput + MYSTR("/FrameGrab.lst");
+                g_pSysFile->Append(frameGrabListName, frameFileName, static_cast<int>(std::strlen(frameFileName)));
+            }
+        }
+        else
+        {
+            MSG msg;
+            if (!PeekMessageA(&msg, nullptr, 0, 0, 0))
+            {
+                WaitMessage();
+            }
+        }
     }
 
     void ZSysInterfaceWintel::TryCatchMainLoop(bool UpdateViews)
