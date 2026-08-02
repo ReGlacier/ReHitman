@@ -43,5 +43,8 @@ namespace Glacier
     struct _MsgLocalVarEntry;
     using MsgLocalVarEntry = _MsgLocalVarEntry;
 
+    struct _STATECONTROLLER;
+    using STATECONTROLLER = _STATECONTROLLER;
+
     struct ScriptStateInfo;
 }

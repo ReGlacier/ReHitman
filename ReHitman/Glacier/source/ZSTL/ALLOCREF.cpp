@@ -11,14 +11,7 @@ namespace
 {
     inline bool IsRefsLocked()
     {
-#       if defined(REHITMAN_TESTS)
-        // Never knocked in test env
-        return false;
-#       else
-        // But need to ask real env
-        auto* pSysInterface = reinterpret_cast<ZSysInterfaceWintel*>(0x00820820);
-        return pSysInterface && pSysInterface->m_bRefsLocked;
-#       endif
+        return g_pSysInterface && g_pSysInterface->m_bRefsLocked;
     }
 }
 

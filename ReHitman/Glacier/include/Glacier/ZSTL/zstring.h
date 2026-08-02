@@ -11,6 +11,10 @@ namespace Glacier
      * zstring stores a null-terminated byte string in a heap buffer owned by the object.
      * It intentionally mirrors the original 12-byte layout and avoids std::string so the
      * type remains binary-compatible with game structures.
+     *
+     * TODO: zstring should eventually become an alias/wrapper around stlp::string. The original
+     * game type derives from STLport 4.6.1 basic_string, but keep this explicit layout until all
+     * zstring relationships are reversed and verified.
      */
     class zstring
     {

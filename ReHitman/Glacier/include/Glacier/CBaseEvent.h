@@ -7,6 +7,10 @@ namespace Glacier
     template<typename T>
     struct CBaseEvent : public ZBaseConRout
     {
+        // vtbl
+        // methods
+        CBaseEvent() = default;
+
         // From PS2 Pre-alpha build
         ZGEOM* GetGeom() 
         {

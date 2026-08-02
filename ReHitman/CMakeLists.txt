@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 4.0)
 project(ReHitman)
+enable_testing()
 
 set(CMAKE_CXX_STANDARD 20)
 
@@ -11,6 +12,7 @@ add_subdirectory(Modules/ImGui)
 add_subdirectory(Modules/HF)
 add_subdirectory(Modules/gtest)
 add_subdirectory(Modules/zlib)
+add_subdirectory(Modules/stlport)
 
 add_subdirectory(Glacier)
 add_subdirectory(BloodMoney)

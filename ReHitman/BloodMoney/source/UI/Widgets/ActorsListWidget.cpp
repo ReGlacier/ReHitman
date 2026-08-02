@@ -6,7 +6,6 @@
 #include <BloodMoney/Game/Globals.h>
 #include <BloodMoney/Game/ZGuardQuarterController.h>
 #include <BloodMoney/Game/PF4/PF4RunTime.h>
-#include <BloodMoney/Game/ZScriptC.h>
 #include <BloodMoney/Game/CCheat.h>
 
 #include <BloodMoney/UI/ImGuiInspector.h>
@@ -23,6 +22,7 @@
 #include <Glacier/EventBase/ZEventBuffer.h>
 #include <Glacier/Geom/ZGeomBuffer.h>
 #include <Glacier/ZActorCommunication.h>
+#include <Glacier/ScriptEngine/ZScriptC.h>
 
 #include <Glacier/Fysix/CRigidBody.h>
 #include <Glacier/Geom/ZROOM.h>
@@ -228,7 +228,7 @@ namespace ImGui
                 spdlog::info("OACT: {:08X}", (int)actor);
                 spdlog::info("Dup: {:08X} / ADup: {:08X}", (int)duplicateGroup, (int)clonedActor);
 
-                Hitman::BloodMoney::ZScriptC* pClonedActorScript = nullptr;
+                Glacier::ZScriptC* pClonedActorScript = nullptr;
                 Glacier::CInventory* pClonedActorInventory = nullptr;
 
                 {
@@ -238,10 +238,10 @@ namespace ImGui
 
                         //TODO: Here we need to fix ZGEOM vftable. One method is lost between FindEvent and AddEvent
                         pClonedActorInventory = HF::Hook::VFHook<Hitman::BloodMoney::ZHM3Actor>::invoke<Glacier::CInventory*, const char*>(clonedActor, 66, "ZGEOM_Inventory"); // Add inventory
-                        pClonedActorScript = HF::Hook::VFHook<Hitman::BloodMoney::ZHM3Actor>::invoke<Hitman::BloodMoney::ZScriptC*, const char*>(clonedActor, 66, "ZGEOM_ScriptC"); // AddEvent
+                        pClonedActorScript = HF::Hook::VFHook<Hitman::BloodMoney::ZHM3Actor>::invoke<Glacier::ZScriptC*, const char*>(clonedActor, 66, "ZGEOM_ScriptC"); // AddEvent
 
                         // And PathFollower
-                        HF::Hook::VFHook<Hitman::BloodMoney::ZHM3Actor>::invoke<Hitman::BloodMoney::ZScriptC*, const char*>(clonedActor, 66, "ZGEOM_PathFollower"); // AddEvent
+                        HF::Hook::VFHook<Hitman::BloodMoney::ZHM3Actor>::invoke<Glacier::ZScriptC*, const char*>(clonedActor, 66, "ZGEOM_PathFollower"); // AddEvent
                     }
                     // And don't forget to restore it back to avoid other issues
                     Glacier::ZEventBase::m_DefaultStatus = eOldDefaultStatus;
@@ -260,8 +260,8 @@ namespace ImGui
                         // And then call 'create script'
 						spdlog::info("Script found, start attach...");
 
-                        pClonedActorScript->m_pScriptCreator = pClonedActorScript->CreateScript(foundScript);
-                        spdlog::info("AI script attached ({:08X})", (std::intptr_t)(pClonedActorScript->m_pScriptCreator));
+                        pClonedActorScript->m_pInitialScriptStateInfo = pClonedActorScript->CreateScript(foundScript);
+                        spdlog::info("AI script attached ({:08X})", (std::intptr_t)(pClonedActorScript->m_pInitialScriptStateInfo));
 
                         // Here we need to call internal methods
                         clonedActor->Activate(true);

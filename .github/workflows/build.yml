@@ -38,6 +38,22 @@ jobs:
         cd build
         cmake --build . --config Release
 
+    - name: Build Glacier tests
+      run: |
+        cd build
+        cmake --build . --config Release --target GlacierTests
+
+    - name: Run Glacier tests
+      run: |
+        cd build
+        ctest -C Release --output-on-failure -R Glacier
+
+    - name: Check STLport layout probe
+      run: |
+        cd build
+        cmake --build . --config Release --target STLportLayoutProbe
+        ctest -C Release --output-on-failure -R STLportLayoutProbe
+
     - name: Prepare artifact
       shell: pwsh
       run: |
