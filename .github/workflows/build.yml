@@ -44,9 +44,20 @@ jobs:
         cmake --build . --config Release --target GlacierTests
 
     - name: Run Glacier tests
+      shell: pwsh
       run: |
         cd build
-        ctest -C Release --output-on-failure -R Glacier
+        $failed = $false
+        for ($i = 1; $i -le 5; $i++) {
+          Write-Host "Glacier test run $i/5"
+          ctest -C Release --output-on-failure -R Glacier
+          if ($LASTEXITCODE -ne 0) {
+            $failed = $true
+          }
+        }
+        if ($failed) {
+          exit 1
+        }
 
     - name: Check STLport layout probe
       run: |

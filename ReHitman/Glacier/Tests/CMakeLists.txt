@@ -10,4 +10,4 @@ target_include_directories(GlacierTests PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/inclu
 
 target_link_libraries(GlacierTests PUBLIC G1::TestCore gtest gtest_main)
 
-add_test(NAME GlacierInputTests COMMAND GlacierTests --gtest_filter=InputDevice.*:SysInput.*)
+add_test(NAME GlacierTests COMMAND GlacierTests)

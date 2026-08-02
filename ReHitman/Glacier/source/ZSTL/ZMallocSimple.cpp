@@ -220,28 +220,7 @@ namespace Glacier
     
     uint32_t ZMallocSimple::AllocSize(const char* pRam)
     {
-        // Guard against pointers we do not own: the payload must lie inside
-        // the pool's address span. Each free link knows its block end exactly
-        // (m_pFreeRam + m_lFreeSize); the block start is that minus what has
-        // ever been handed out, bounded below by (end - m_lTotalSize).
-        // Without a separate block list this is a conservative span check.
         if (!pRam)
-        {
-            return 0u;
-        }
-
-        const char* pPoolLo = nullptr;
-        const char* pPoolHi = nullptr;
-        for (uint32_t i = 0u; i < m_lNrFreeLinks; ++i)
-        {
-            const char* pBlockEnd = m_pFreeLinks[i].m_pFreeRam + m_pFreeLinks[i].m_lFreeSize;
-            const char* pBlockStart = pBlockEnd - m_lTotalSize; // conservative lower bound
-            if (!pPoolLo || pBlockStart < pPoolLo) pPoolLo = pBlockStart;
-            if (!pPoolHi || pBlockEnd > pPoolHi)   pPoolHi = pBlockEnd;
-        }
-
-        // No blocks registered (empty pool) or pointer outside the span.
-        if (!pPoolLo || pRam < pPoolLo + m_lAlignment || pRam >= pPoolHi)
         {
             return 0u;
         }
