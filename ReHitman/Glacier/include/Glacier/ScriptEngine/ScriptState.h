@@ -3,14 +3,12 @@
 #include <Glacier/ReGlacier.h>
 #include <Glacier/GlacierFWD.h>
 #include <Glacier/ScriptEngine/Fwd.h>
+#include <Glacier/ScriptEngine/ScriptFlags.h>
 #include <cstdint>
 
 
 namespace Glacier
 {
-    // flags for _ScriptState::m_Flags
-    static constexpr uint16_t ZSF_TERMINATE = 0x80u;
-
     struct _ScriptState
     {
         void* m_pScriptVariables;

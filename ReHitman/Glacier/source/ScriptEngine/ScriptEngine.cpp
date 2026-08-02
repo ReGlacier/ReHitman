@@ -4,6 +4,7 @@
 #include <Glacier/ScriptEngine/ZScriptC_ZMessage.h>
 #include <Glacier/ScriptEngine/SCRIPTFUNCTIONS.h>
 #include <Glacier/ScriptEngine/SCRIPTCREATOR.h>
+#include <Glacier/ScriptEngine/ZScriptC.h>
 #include <Glacier/ScriptEngine/LocalVarEntry.h>
 #include <Glacier/ScriptEngine/ScriptState.h>
 #include <Glacier/ScriptEngine/Globals.h>
@@ -409,48 +410,23 @@ namespace Glacier
     ZREF ScriptEngine::FindScriptStateByRef(ZREF rRef, const char* psScriptName)
     {
         ZGEOM* pGeom = ZGEOM::RefToPtr(rRef);
-        if (!pGeom || !pGeom->m_pExData->_Events.ChkEvents())
+        ZEventBase* pEvent = pGeom ? pGeom->FindEvent(ZScriptC::Name) : nullptr;
+        if (pEvent && pEvent->m_pScheduleEvent && pEvent->m_pScheduleEvent->m_pStoredStack)
         {
-            return 0;
-        }
-
-        if (reinterpret_cast<std::intptr_t>(pGeom->m_pExData) == static_cast<std::intptr_t>(-2))
-        {
-            return 0;
-        }
-
-        ZGeomEventListBuffers::ValueRun sRun {};
-        pGeom->m_pExData->_Events.InitValueRun(sRun);
-        ZREF rEvent = pGeom->m_pExData->_Events.GetValueFromValueRun(sRun);
-
-        // Walk the geom's event list; for each ZScriptC event check its
-        // creator chain (m_pParentCreator) for a matching script name.
-        while (rEvent != 1)
-        {
-            ZEventBase* pEvent = ZEventBase::RefToPtr(rEvent);
-            if (pEvent && pEvent->EventName() && !strcmp(pEvent->EventName(), "ScriptC"))
+            auto* pState = *reinterpret_cast<_ScriptState**>(pEvent->m_pScheduleEvent->m_pStoredStack);
+            if (pState)
             {
-                ZScheduledEvent* pSchedEvent = pEvent->m_pScheduleEvent;
-                if (pSchedEvent && pSchedEvent->m_pStoredStack)
+                const SCRIPTCREATOR* pCreator = pState->m_pCreator;
+                while (pCreator)
                 {
-                    auto* pState = *reinterpret_cast<_ScriptState**>(pSchedEvent->m_pStoredStack);
-                    if (pState)
+                    if (strscriptccmp(pCreator->m_pName, psScriptName))
                     {
-                        const SCRIPTCREATOR* pCreator = pState->m_pCreator;
-                        while (pCreator)
-                        {
-                            if (strscriptccmp(pCreator->m_pName, psScriptName))
-                            {
-                                return pEvent->GetRef();
-                            }
-                            pCreator = pCreator->m_pParentCreator;
-                        }
+                        return pEvent->GetRef();
                     }
+
+                    pCreator = pCreator->m_pParentCreator;
                 }
             }
-
-            pGeom->m_pExData->_Events.NextValueRun(sRun);
-            rEvent = pGeom->m_pExData->_Events.GetValueFromValueRun(sRun);
         }
 
         return 0;

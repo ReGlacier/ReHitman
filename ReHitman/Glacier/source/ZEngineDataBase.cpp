@@ -319,7 +319,7 @@ namespace Glacier
     
     ZMSGID ZEngineDataBase::RegisterZMsg(char const* pMsgName, uint32_t lForcedValue, const char* pFile, int Line)
     {
-        if (m_pZMessageHash)
+        if (!m_pZMessageHash)
         {
             m_pZMessageHash = ZUniMemory::New<ZPStrHash<unsigned int>>(1024);
         }
