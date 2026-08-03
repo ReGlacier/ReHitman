@@ -25,6 +25,4 @@ namespace Glacier
     RE_VERIFY_SIZE(_MessageCue, 0xC);
 
     using MessageCue = _MessageCue;
-
-    void PrepareMessageCue(_MessageCue* pQue);
 }

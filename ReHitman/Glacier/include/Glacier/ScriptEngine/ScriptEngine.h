@@ -49,5 +49,6 @@ namespace Glacier
         static int SendScriptCommand(ZREF rGeomTarget, ZMSGID Msg, void* pData, int rGeomSender);
         static void SetForkStateController(const _STATECONTROLLER* pController);
         static int GetPriority(_ScriptState* pScript);
+        static bool IsScriptCode(const void* ptr);
     };
 }

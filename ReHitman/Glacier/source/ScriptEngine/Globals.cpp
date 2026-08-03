@@ -27,6 +27,7 @@ namespace Glacier
     STATIC_GLOBAL_CLASS_INSTANCE_IMPL(bool, s_bSaving, 0x009A2680, false);
     STATIC_GLOBAL_CLASS_INSTANCE_IMPL(ZScriptC*, s_pCurrentSaveGameObject, 0x009A2658, nullptr);
     STATIC_GLOBAL_CLASS_INSTANCE_IMPL(SaveTableMap*, g_pSavedPointersMap, 0x009A265C, nullptr);
+    STATIC_GLOBAL_CLASS_INSTANCE_IMPL(SaveTableVector*, g_pSaveTable, 0x009A2660, nullptr);
 
     // The script heap pool must cover exactly [0x008289C8, 0x008A89C8):
     // AddBlock(g_ScriptMemory, 0x80000) on PC and the next named global

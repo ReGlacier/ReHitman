@@ -328,6 +328,13 @@ namespace Glacier
         return static_cast<int>(pSchedEvent->GetPriority());
     }
 
+    bool ScriptEngine::IsScriptCode(const void* ptr)
+    {
+        // PS2: Must check ptr. Smth like return ptr >= GetScriptBaseAddress() && ptr < GetScriptBaseAddress() + GetScriptSize()
+        // iOS, PC: return false always
+        return false;
+    }
+
     void ScriptEngine::SetPriority(_ScriptState* pScript, int lPriority)
     {
         if (!pScript) return;

@@ -3,10 +3,15 @@
 // This is intentionally kept as a tiny C++98-compatible executable so CI can catch
 // accidental namespace, compiler, or include-path changes that would break ABI parity.
 
+#define _STL stlp
+
 #include <map>
 #include <set>
 #include <string>
 #include <vector>
+
+#undef std
+#undef _STL
 
 extern "C" int printf(const char*, ...);
 

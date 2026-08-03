@@ -12,6 +12,7 @@
 #include <Glacier/ScriptEngine/SCRIPTCREATOR.h>
 #include <Glacier/ScriptEngine/SpecialScriptReturnType.h>
 #include <Glacier/ScriptEngine/STATECONTROLLER.h>
+#include <Glacier/ScriptEngine/ScriptSaveLoad.h>
 #include <Glacier/System/ZSysInterface.h>
 #include <Glacier/Geom/ZGEOM.h>
 #include <Glacier/ZEngineDataBase.h>
@@ -207,8 +208,7 @@ namespace Glacier
                 auto* pScriptStateInfo = static_cast<ScriptStateInfo*>(pScheduledScript->GetUserData());
                 if (pScriptStateInfo)
                 {
-                    // TODO: Finish this place after PrepareSave will be reversed
-                    // PrepareSave(pScriptStateInfo->m_pRootScriptState);
+                    PrepareSave(pScriptStateInfo->m_pRootScriptState);
                 }
 
                 pThread = pThread->GetNextThread();
@@ -941,6 +941,29 @@ namespace Glacier
         return nullptr;
     }
 
+    bool ZScriptC::IsValidThread(ScriptState* pScriptState)
+    {
+        auto* pThread = const_cast<ZScheduledScript*>(GetSchedEvent());
+        ZScheduledScript* pFirstThread = pThread;
+
+        while (pThread)
+        {
+            auto* pScriptStateInfo = static_cast<ScriptStateInfo*>(pThread->GetUserData());
+            if (pScriptStateInfo && pScriptStateInfo->m_pRootScriptState == pScriptState)
+            {
+                return true;
+            }
+
+            pThread = static_cast<ZScheduledScript*>(pThread->GetNextThread());
+            if (pThread == pFirstThread)
+            {
+                return false;
+            }
+        }
+
+        return false;
+    }
+
     bool ZScriptC::TerminateScript()
     {
         if (auto* pScript = GetSchedEvent())
@@ -1129,6 +1152,5 @@ namespace Glacier
         }
     }
 
-
-    STATIC_CLASS_VAR_IMPL(ZScriptC, RTP::ZPropertyInfo, Info, 0x00811984, {});
+    STATIC_CLASS_VAR_IMPL(ZScriptC, RTP::ZPropertyInfo, Info, 0x00811984, {}); // TODO: Finish me
 }

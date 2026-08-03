@@ -36,32 +36,40 @@ if(MSVC)
     endif()
 endif()
 
-target_include_directories(stlport INTERFACE
-    ${STLPORT461_STAGE_DIR}/stlport
-    ${STLPORT461_STAGE_DIR}/include
-)
+if(MSVC)
+    # Keep the native STL ahead of STLport's compatibility wrappers. This lets
+    # normal <vector>/<map> includes keep using std while STLport is selected
+    # explicitly with <stlport/vector>, <stlport/map>, etc.
+    target_include_directories(stlport INTERFACE
+        ${STLPORT461_STAGE_DIR}
+        ${MSVC_NATIVE_INCLUDE_DIR}
+        ${STLPORT461_STAGE_DIR}/include
+        ${STLPORT461_STAGE_DIR}/stlport
+    )
+else()
+    target_include_directories(stlport INTERFACE
+        ${STLPORT461_STAGE_DIR}
+        ${STLPORT461_STAGE_DIR}/stlport
+    )
+endif()
 
 # The original engine used STLport 4.6.1. We only need STL containers here;
 # building/linking STLport iostreams is unnecessary and makes modern MSVC integration harder.
 target_compile_definitions(stlport INTERFACE
-    _STLP_NO_OWN_IOSTREAMS=1
     _STLP_NO_IOSTREAMS=1
     _STLP_VENDOR_GLOBAL_CSTD=1
     _STLP_NO_CSTD_FUNCTION_IMPORTS=1
-    _STL=stlp
 )
-
-if(MSVC)
-    target_compile_options(stlport INTERFACE
-        /permissive
-    )
-endif()
 
 option(REHITMAN_STLPORT_LAYOUT_PROBE "Build STLport 4.6.1 layout probe" ON)
 
 if(REHITMAN_STLPORT_LAYOUT_PROBE)
     add_executable(STLportLayoutProbe STLportLayoutProbe.cpp)
     target_link_libraries(STLportLayoutProbe PRIVATE stlport)
+    target_include_directories(STLportLayoutProbe BEFORE PRIVATE
+        ${STLPORT461_STAGE_DIR}/stlport
+        ${STLPORT461_STAGE_DIR}/include
+    )
     set_target_properties(STLportLayoutProbe PROPERTIES
         CXX_STANDARD 98
         CXX_STANDARD_REQUIRED ON
@@ -69,8 +77,21 @@ if(REHITMAN_STLPORT_LAYOUT_PROBE)
     )
 
     if(MSVC)
-        target_compile_options(STLportLayoutProbe PRIVATE /W0)
+        target_compile_options(STLportLayoutProbe PRIVATE /permissive /W0)
     endif()
 
     add_test(NAME STLportLayoutProbe COMMAND STLportLayoutProbe)
+
+    add_executable(STLportInteropProbe STLportInteropProbe.cpp)
+    target_link_libraries(STLportInteropProbe PRIVATE stlport)
+    target_include_directories(STLportInteropProbe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../Glacier/include
+    )
+    set_target_properties(STLportInteropProbe PROPERTIES
+        CXX_STANDARD 20
+        CXX_STANDARD_REQUIRED ON
+        CXX_EXTENSIONS OFF
+    )
+
+    add_test(NAME STLportInteropProbe COMMAND STLportInteropProbe)
 endif()

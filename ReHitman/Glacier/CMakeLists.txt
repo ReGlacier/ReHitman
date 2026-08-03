@@ -17,6 +17,7 @@ set(GLACIER_COMMON_LIBS
         zlib 
     PUBLIC 
         HF::Core
+        stlport
 )
 
 if(WIN32)

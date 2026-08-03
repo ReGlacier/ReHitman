@@ -41,6 +41,7 @@ namespace Glacier
         static const SCRIPTCREATOR* FindScript(const char* pszScriptName);
         ScriptState* ForkState(const STATECONTROLLER* pController);
         ScriptState* GetRootScriptState();
+        bool IsValidThread(ScriptState* pScriptState);
         bool TerminateScript();
         bool FreeThread(ScriptStateInfo* pState);
         int GetNrThreads();
