@@ -5,16 +5,10 @@
 #include <Glacier/ZSTL/ZMath.h>
 #include <Glacier/ZSTL/REFTAB.h>
 #include <Glacier/Geom/ZTreeGroup.h>
+#include <Glacier/RTP/PropertyTypes.h>
 
 namespace Glacier
 {
-    struct ZRawData
-    {
-        void* m_Data;
-        uint32_t m_Size;
-    };
-    RE_VERIFY_SIZE(ZRawData, 0x8);
-
     class ZROOM : public ZTreeGroup
     {
     public:

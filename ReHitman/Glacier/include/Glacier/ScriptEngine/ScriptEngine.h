@@ -50,5 +50,7 @@ namespace Glacier
         static void SetForkStateController(const _STATECONTROLLER* pController);
         static int GetPriority(_ScriptState* pScript);
         static bool IsScriptCode(const void* ptr);
+        static uint32_t GetOffsetInScriptCode(const void* ptr);
+        static void* GetAddressInScriptCode(uint32_t rRef);
     };
 }

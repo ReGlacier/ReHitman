@@ -21,6 +21,9 @@
 
 namespace Glacier
 {
+    // Named .data singleton from ZScriptC.cpp that g_pForkStateFree points at on PC.
+    extern const FUNCTIONCONTROLLER ForkStateFree_FUNCTIONCONTROLLER;
+
     namespace
     {
         // Case-insensitive compare with the original quirks (PC sub_549B50):
@@ -333,6 +336,44 @@ namespace Glacier
         // PS2: Must check ptr. Smth like return ptr >= GetScriptBaseAddress() && ptr < GetScriptBaseAddress() + GetScriptSize()
         // iOS, PC: return false always
         return false;
+    }
+
+    uint32_t ScriptEngine::GetOffsetInScriptCode(const void* ptr)
+    {
+        // Encodes a script-code pointer for the save table: the ForkStateFree singleton maps to -1
+        // (decoded back by ResolveScriptCodeRef via the 0x7FFFFFFF offset), other pointers become
+        // the offset from g_pScripts with the high bit set, nullptr stays 0.
+        if (ptr == g_pForkStateFree)
+        {
+            return 0xFFFFFFFFu;
+        }
+
+        if (ptr)
+        {
+            return (static_cast<uint32_t>(static_cast<const char*>(ptr) - static_cast<char*>(g_pScripts))) | 0x80000000u;
+        }
+
+        return 0;
+    }
+
+    void* ScriptEngine::GetAddressInScriptCode(uint32_t rRef)
+    {
+        // Inverse of GetOffsetInScriptCode: 0 stays nullptr, the 0x7FFFFFFF offset maps back to the
+        // ForkStateFree singleton, anything else must be a high-bit-tagged offset from g_pScripts.
+        if (!rRef)
+        {
+            return nullptr;
+        }
+
+        ZASSERT(static_cast<int32_t>(rRef) < 0);
+
+        const uint32_t offset = rRef & 0x7FFFFFFFu;
+        if (offset == 0x7FFFFFFFu)
+        {
+            return const_cast<FUNCTIONCONTROLLER*>(&ForkStateFree_FUNCTIONCONTROLLER);
+        }
+
+        return static_cast<char*>(g_pScripts) + offset;
     }
 
     void ScriptEngine::SetPriority(_ScriptState* pScript, int lPriority)

@@ -1,5 +1,6 @@
 #include <Glacier/ScriptEngine/ZScriptC.h>
 #include <Glacier/EventBase/ZScheduledScript.h>
+#include <Glacier/RTP/VirtualTables.h>
 #include <Glacier/ScriptEngine/AsyncCall_Struct.h>
 #include <Glacier/ScriptEngine/FUNCTIONCONTROLLER.h>
 #include <Glacier/ScriptEngine/Globals.h>
@@ -10,9 +11,13 @@
 #include <Glacier/ScriptEngine/ScriptState.h>
 #include <Glacier/ScriptEngine/ScriptStateInfo.h>
 #include <Glacier/ScriptEngine/SCRIPTCREATOR.h>
+#include <Glacier/ScriptEngine/SCRIPTIMPORTS.h>
+#include <Glacier/ScriptEngine/SCRIPTIMPORTTYPE.h>
 #include <Glacier/ScriptEngine/SpecialScriptReturnType.h>
 #include <Glacier/ScriptEngine/STATECONTROLLER.h>
 #include <Glacier/ScriptEngine/ScriptSaveLoad.h>
+#include <Glacier/ScriptEngine/SAVEGAMESTATICS.h>
+#include <Glacier/Serializer/ISerializerStream.h>
 #include <Glacier/System/ZSysInterface.h>
 #include <Glacier/Geom/ZGEOM.h>
 #include <Glacier/ZEngineDataBase.h>
@@ -42,16 +47,25 @@ namespace Glacier
 
             return -3.0f;
         }
+    }
 
-        const FUNCTIONCONTROLLER ForkStateFree_FUNCTIONCONTROLLER
-        {
-            reinterpret_cast<EntryPoint_t>(ForkStateFree),
-            0,
-            0,
-            nullptr,
-            nullptr
-        };
+    // Named .data singleton that g_pForkStateFree points at on PC
+    // (__ZL32ForkStateFree_FUNCTIONCONTROLLER); referenced from Globals.cpp.
+    extern const FUNCTIONCONTROLLER ForkStateFree_FUNCTIONCONTROLLER
+    {
+        reinterpret_cast<EntryPoint_t>(ForkStateFree),
+        0,
+        0,
+        nullptr,
+        nullptr
+    };
+    // ^
+    // | connect 'em between Globals.h and ZScriptC.cpp
+    // v
+    STATIC_GLOBAL_CLASS_INSTANCE_IMPL(const FUNCTIONCONTROLLER*, g_pForkStateFree, 0x007FD7FC, &ForkStateFree_FUNCTIONCONTROLLER);
 
+    namespace
+    {
         ZMessageResolver m_MSG_CAM_ENTERCAMERA("CAM_ENTERCAMERA");
         uint32_t lMessageAllocatorCount = 0;
 
@@ -125,6 +139,326 @@ namespace Glacier
 
             return ZMSG_Sizes[lIndex];
         }
+
+        void* ResolveScriptCodeRef(uint32_t rRef)
+        {
+            if (!rRef)
+            {
+                return nullptr;
+            }
+
+            ZASSERT(static_cast<int32_t>(rRef) < 0);
+
+            const uint32_t offset = rRef & 0x7FFFFFFFu;
+            if (offset == 0x7FFFFFFFu)
+            {
+                return reinterpret_cast<void*>(const_cast<FUNCTIONCONTROLLER*>(&ForkStateFree_FUNCTIONCONTROLLER));
+            }
+
+            return static_cast<char*>(g_pScripts) + offset;
+        }
+
+        void* LoadEntryAddress(uint32_t index)
+        {
+            return s_pLoadEntries[index].m_pAddr;
+        }
+
+        void FixupLoadedData(uint16_t* pStringOffsets, void* pBase)
+        {
+            if (!pStringOffsets || !pBase)
+            {
+                return;
+            }
+
+            const uint32_t length = ScriptEngine::AllocSize(pBase);
+            auto* pBaseBytes = static_cast<uint8_t*>(pBase);
+
+            for (uint16_t* pCurrent = pStringOffsets; *pCurrent; )
+            {
+                const uint16_t type = *pCurrent++;
+                const uint32_t start = *pCurrent++;
+                const uint32_t end = *pCurrent++;
+
+                ZASSERT(start < length);
+                ZASSERT(end <= length);
+
+                uint8_t* pStart = pBaseBytes + start;
+                uint8_t* pEnd = pBaseBytes + end;
+
+                switch (type)
+                {
+                    case SRT_VARIABLES:
+                    {
+                        for (auto* pValue = reinterpret_cast<uint32_t*>(pStart); reinterpret_cast<uint8_t*>(pValue) < pEnd; ++pValue)
+                        {
+                            if (static_cast<int32_t>(*pValue) < 0)
+                            {
+                                *pValue = reinterpret_cast<uint32_t>(ResolveScriptCodeRef(*pValue));
+                            }
+                            else if (*pValue)
+                            {
+                                *pValue = reinterpret_cast<uint32_t>(LoadEntryAddress(*pValue));
+                            }
+                        }
+                    }
+                    break;
+
+                    case SRT_SCRIPTSTATE:
+                    {
+                        for (auto* pValue = reinterpret_cast<uint32_t*>(pStart); reinterpret_cast<uint8_t*>(pValue) < pEnd; ++pValue)
+                        {
+                            *pValue = reinterpret_cast<uint32_t>(LoadEntryAddress(*pValue));
+                        }
+                    }
+                    break;
+
+                    case SRT_SCRIPTVARIABLES:
+                    case SRT_DYNSTRING:
+                    {
+                        for (auto* pValue = reinterpret_cast<uint32_t*>(pStart); reinterpret_cast<uint8_t*>(pValue) < pEnd; ++pValue)
+                        {
+                            *pValue = reinterpret_cast<uint32_t>(ResolveScriptCodeRef(*pValue));
+                        }
+                    }
+                    break;
+
+                    case SRT_STATEVARIABLES:
+                    {
+                        for (auto* pValue = reinterpret_cast<uint32_t*>(pStart); reinterpret_cast<uint8_t*>(pValue) < pEnd; pValue += 2)
+                        {
+                            if (pValue[1])
+                            {
+                                const auto& entry = s_pLoadEntries[pValue[1]];
+                                const auto offset = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(entry.m_pAddr));
+                                const auto baseIndex = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(entry.m_pExtra));
+                                pValue[1] = reinterpret_cast<uint32_t>(static_cast<uint8_t*>(LoadEntryAddress(baseIndex)) + offset);
+                            }
+                        }
+                    }
+                    break;
+
+                    case SRT_ASYNCCALL_STRUCT:
+                    {
+                        auto* pAsyncCallData = reinterpret_cast<uint32_t*>(pStart);
+                        if (pAsyncCallData[5])
+                        {
+                            pAsyncCallData[5] = reinterpret_cast<uint32_t>(LoadEntryAddress(pAsyncCallData[5]));
+                        }
+
+                        pAsyncCallData[7] = reinterpret_cast<uint32_t>(ResolveScriptCodeRef(pAsyncCallData[7]));
+                        pAsyncCallData[8] = reinterpret_cast<uint32_t>(ResolveScriptCodeRef(pAsyncCallData[8]));
+                    }
+                    break;
+
+                    default:
+                        break;
+                }
+            }
+        }
+
+        void FixupScriptState(ScriptState* pState)
+        {
+            pState->m_pAlienCall = static_cast<ScriptState*>(LoadEntryAddress(reinterpret_cast<uint32_t>(pState->m_pAlienCall)));
+            pState->m_pVariables = static_cast<LocalVarEntry*>(LoadEntryAddress(reinterpret_cast<uint32_t>(pState->m_pVariables)));
+            pState->m_pStateVariables = LoadEntryAddress(reinterpret_cast<uint32_t>(pState->m_pStateVariables));
+            pState->m_pScriptVariables = LoadEntryAddress(reinterpret_cast<uint32_t>(pState->m_pScriptVariables));
+            pState->m_pFunctionsVirtualTable = ResolveScriptCodeRef(reinterpret_cast<uint32_t>(pState->m_pFunctionsVirtualTable));
+            pState->m_pStateController = static_cast<const STATECONTROLLER*>(ResolveScriptCodeRef(reinterpret_cast<uint32_t>(pState->m_pStateController)));
+            pState->m_pNextStateController = static_cast<const STATECONTROLLER*>(ResolveScriptCodeRef(reinterpret_cast<uint32_t>(pState->m_pNextStateController)));
+            pState->m_pPreviousStateController = static_cast<const STATECONTROLLER*>(ResolveScriptCodeRef(reinterpret_cast<uint32_t>(pState->m_pPreviousStateController)));
+            pState->m_pCreator = static_cast<const SCRIPTCREATOR*>(ResolveScriptCodeRef(reinterpret_cast<uint32_t>(pState->m_pCreator)));
+            pState->m_pAsyncCall = static_cast<AsyncCall_Struct*>(LoadEntryAddress(reinterpret_cast<uint32_t>(pState->m_pAsyncCall)));
+            pState->m_pAsyncCallLast = pState->m_pAsyncCall ? static_cast<AsyncCall_Struct*>(LoadEntryAddress(reinterpret_cast<uint32_t>(pState->m_pAsyncCallLast))) : nullptr;
+            pState->m_pMessageCue = static_cast<MessageCue*>(LoadEntryAddress(reinterpret_cast<uint32_t>(pState->m_pMessageCue)));
+        }
+
+        void FixupLoadedEntry(const SaveRefEntry& entry)
+        {
+            switch (entry.m_srt)
+            {
+                case SRT_NULL:
+                case SRT_DYNSTRING:
+                case SRT_EVENTREF:
+                    break;
+
+                case SRT_VARIABLES:
+                {
+                    auto* pVariables = static_cast<LocalVarEntry*>(entry.m_pAddr);
+                    if (pVariables)
+                    {
+                        pVariables->m_pFunctionController = static_cast<const FUNCTIONCONTROLLER*>(ResolveScriptCodeRef(reinterpret_cast<uint32_t>(pVariables->m_pFunctionController)));
+                        pVariables->m_pNextVariables = static_cast<LocalVarEntry*>(LoadEntryAddress(reinterpret_cast<uint32_t>(pVariables->m_pNextVariables)));
+                        pVariables->m_pPrevVariables = static_cast<LocalVarEntry*>(LoadEntryAddress(reinterpret_cast<uint32_t>(pVariables->m_pPrevVariables)));
+                        FixupLoadedData(static_cast<uint16_t*>(const_cast<void*>(entry.m_pExtra)), pVariables);
+                    }
+                }
+                break;
+
+                case SRT_SCRIPTSTATE:
+                    if (entry.m_pAddr)
+                    {
+                        FixupScriptState(static_cast<ScriptState*>(entry.m_pAddr));
+                    }
+                    break;
+
+                case SRT_SCRIPTVARIABLES:
+                {
+                    for (auto* pController = static_cast<const STATECONTROLLER*>(entry.m_pExtra); pController; pController = pController->m_pParent)
+                    {
+                        FixupLoadedData(pController->m_lStringOffsets, entry.m_pAddr);
+                    }
+                }
+                break;
+
+                case SRT_STATEVARIABLES:
+                {
+                    for (auto* pController = static_cast<const STATECONTROLLER*>(entry.m_pExtra); pController && pController->m_lScriptLevel > 1; pController = pController->m_pParent)
+                    {
+                        FixupLoadedData(pController->m_lStringOffsets, entry.m_pAddr);
+                    }
+                }
+                break;
+
+                case SRT_ASYNCCALL_STRUCT:
+                {
+                    auto* pAsyncCall = static_cast<AsyncCall_Struct*>(entry.m_pAddr);
+                    if (pAsyncCall)
+                    {
+                        pAsyncCall->pNext = static_cast<AsyncCall_Struct*>(LoadEntryAddress(reinterpret_cast<uint32_t>(pAsyncCall->pNext)));
+                        pAsyncCall->m_pLVE = static_cast<LocalVarEntry*>(LoadEntryAddress(reinterpret_cast<uint32_t>(pAsyncCall->m_pLVE)));
+                    }
+                }
+                break;
+
+                case SRT_ENTERS:
+                {
+                    auto* pRefs = static_cast<uint32_t*>(entry.m_pAddr);
+                    for (uint32_t i = 0; pRefs && i < entry.m_lSize / sizeof(uint32_t); ++i)
+                    {
+                        pRefs[i] = reinterpret_cast<uint32_t>(ResolveScriptCodeRef(pRefs[i]));
+                    }
+                }
+                break;
+
+                case SRT_MESSAGECUE:
+                {
+                    auto* pMessageCue = static_cast<MessageCue*>(entry.m_pAddr);
+                    if (pMessageCue)
+                    {
+                        pMessageCue->m_pLast = static_cast<MessageCue*>(LoadEntryAddress(reinterpret_cast<uint32_t>(pMessageCue->m_pLast)));
+                        pMessageCue->m_pNext = static_cast<MessageCue*>(LoadEntryAddress(reinterpret_cast<uint32_t>(pMessageCue->m_pNext)));
+                    }
+                }
+                break;
+
+                default:
+                    ZASSERT(false);
+                    break;
+            }
+        }
+
+        void LoadSaveGameStatics(ISerializerStream& stream)
+        {
+            if (!ScriptsPtr)
+            {
+                return;
+            }
+
+            for (uint32_t i = 1; ScriptsPtr[i]; ++i)
+            {
+                const SAVEGAMESTATICS* pStatic = ScriptsPtr[i]->m_pSaveGameStatics;
+                if (!pStatic)
+                {
+                    continue;
+                }
+
+                // The statics list ends at the first SRT_DYNSTRING entry.
+                for (; pStatic->m_eType != SRT_DYNSTRING; ++pStatic)
+                {
+                    switch (pStatic->m_eType)
+                    {
+                        case SRT_NULL:
+                            stream.ExchangeRaw(ZToken::Void, pStatic->m_pAddr, static_cast<uint32_t>(pStatic->m_lSize));
+                            break;
+
+                        case SRT_VARIABLES:
+                        case SRT_SCRIPTSTATE:
+                        case SRT_SCRIPTVARIABLES:
+                        case SRT_STATEVARIABLES:
+                            ZASSERT(false);
+                            break;
+
+                        default:
+                            break;
+                    }
+                }
+            }
+        }
+
+        uint32_t GetSaveGameDataSize(const SCRIPTIMPORT* pImport, uint32_t& lMaxCount)
+        {
+            uint32_t lSize = 0;
+            lMaxCount = 0;
+
+            for (const SCRIPTIMPORT* pCurrent = pImport; pCurrent->m_SIT != SIT_END; ++pCurrent)
+            {
+                const uint32_t lCount = pCurrent->m_lAmount;
+                switch (pCurrent->m_SIT)
+                {
+                    case SIT_BYTE:
+                        lSize += lCount;
+                        break;
+
+                    case SIT_SHORT:
+                        lSize += sizeof(uint16_t) * lCount;
+                        break;
+
+                    case SIT_LONG:
+                    case SIT_FLOAT:
+                    case SIT_STRING:
+                    case SIT_REF:
+                        lSize += sizeof(uint32_t) * lCount;
+                        break;
+
+                    default:
+                        ZASSERT(false);
+                        break;
+                }
+
+                if (lMaxCount < lCount)
+                {
+                    lMaxCount = lCount;
+                }
+            }
+
+            return lSize;
+        }
+
+        const char* InternSaveGameString(const char* pszString)
+        {
+            zstring key(pszString);
+            const char*& storedString = (*s_pStringMap)[key];
+            if (!storedString)
+            {
+                auto* pszStoredString = static_cast<char*>(ScriptEngine::Alloc(static_cast<uint32_t>(strlen(pszString) + 1), __FILE__, __LINE__));
+                strcpy(pszStoredString, pszString);
+                storedString = pszStoredString;
+            }
+
+            return storedString;
+        }
+
+        bool ShouldStoreScriptDataBlock()
+        {
+            auto* pEngineData = g_pSysInterface ? g_pSysInterface->m_pEngineData : nullptr;
+            if (!pEngineData)
+            {
+                return false;
+            }
+
+            const char* pszSceneName = pEngineData->GetSceneName();
+            return strcmp(pszSceneName, "M00_MAIN") != 0 || strcmp(pszSceneName, "Respawn") == 0;
+        }
     }
 
     ZScriptC::ZScriptC()
@@ -160,13 +494,296 @@ namespace Glacier
 
     void ZScriptC::PostSave(ISerializerStream& stream)
     {
-        // TODO: Finish me
+        // The saved-game block is written by the first ZScriptC that reaches PostSave after PreSaveGame
+        // filled g_pSaveTable/g_pSavedPointersMap: first the SaveRefEntry descriptors (for SRT_EVENTREF
+        // m_pAddr/m_lSize swap roles, storing the data offset and the base entry index instead), then
+        // the raw entry payloads, then the script SAVEGAMESTATICS blobs. After that every ZScriptC
+        // appends its own scheduler thread list (state indices, priority, sleep time). Once the last
+        // object has been saved the global save table and pointer map are released.
+        static int s_lPostSaveCount = 0;
+
+        if (s_bSaving)
+        {
+            s_lPostSaveCount = 0;
+            s_bSaving = false;
+
+            FixupSaveTable(false);
+
+            uint32_t lSaveEntryCount = static_cast<uint32_t>(g_pSaveTable->size());
+            stream.Exchange(ZToken::Void, lSaveEntryCount);
+
+            for (uint32_t i = 0; i < lSaveEntryCount; ++i)
+            {
+                SaveRefEntry& entry = (*g_pSaveTable)[i];
+
+                uint32_t lSize = 0;
+                uint32_t lSaveRefType = static_cast<uint32_t>(entry.m_srt);
+                uint32_t lExtra = 0;
+
+                if (entry.m_srt == SRT_EVENTREF)
+                {
+                    lSize = reinterpret_cast<uint32_t>(entry.m_pAddr);
+                    lExtra = reinterpret_cast<uint32_t>(entry.m_pExtra);
+                }
+                else
+                {
+                    lSize = entry.m_lSize;
+                    lExtra = ScriptEngine::GetOffsetInScriptCode(entry.m_pExtra);
+                }
+
+                stream.Exchange(ZToken::Void, lSize);
+                stream.Exchange(ZToken::Void, lSaveRefType);
+                stream.Exchange(ZToken::Void, lExtra);
+            }
+
+            for (uint32_t i = 0; i < lSaveEntryCount; ++i)
+            {
+                SaveRefEntry& entry = (*g_pSaveTable)[i];
+                if (entry.m_srt != SRT_EVENTREF)
+                {
+                    stream.ExchangeRaw(ZToken::Void, entry.m_pAddr, entry.m_lSize);
+                }
+            }
+
+            FixupSaveTable(true);
+
+            if (ScriptsPtr)
+            {
+                for (uint32_t i = 1; ScriptsPtr[i]; ++i)
+                {
+                    const SAVEGAMESTATICS* pStatic = ScriptsPtr[i]->m_pSaveGameStatics;
+
+                    // The statics list ends at the first SRT_DYNSTRING entry.
+                    for (; pStatic->m_eType != SRT_DYNSTRING; ++pStatic)
+                    {
+                        switch (pStatic->m_eType)
+                        {
+                            case SRT_NULL:
+                                stream.ExchangeRaw(ZToken::Void, pStatic->m_pAddr, static_cast<uint32_t>(pStatic->m_lSize));
+                                break;
+
+                            default:
+                                ZASSERT(false);
+                                break;
+                        }
+                    }
+                }
+            }
+        }
+
+        uint32_t lThreadCount = static_cast<uint32_t>(GetNrThreads());
+        stream.Exchange(ZToken::Void, lThreadCount);
+
+        auto* pScheduledScript = static_cast<ZScheduledScript*>(m_pScheduleEvent);
+        for (uint32_t i = 0; i < lThreadCount; ++i)
+        {
+            auto* pScriptStateInfo = static_cast<ScriptStateInfo*>(pScheduledScript->GetUserData());
+
+            uint32_t lRootStateIndex = (*g_pSavedPointersMap)[&pScriptStateInfo->m_pRootScriptState];
+            uint32_t lCurrentStateIndex = (*g_pSavedPointersMap)[&pScriptStateInfo->m_pCurrentScriptState];
+            float fSleepTimeLeft = pScheduledScript->GetSleepTimeLeft();
+            uint32_t lPriority = pScheduledScript->GetPriority();
+
+            stream.Exchange(ZToken::Void, lRootStateIndex);
+            stream.Exchange(ZToken::Void, lCurrentStateIndex);
+            stream.Exchange(ZToken::Void, lPriority);
+            stream.Exchange(ZToken::Void, fSleepTimeLeft);
+
+            pScheduledScript = static_cast<ZScheduledScript*>(pScheduledScript->GetNextThread());
+        }
+
+        if (++s_lPostSaveCount == s_lObjectSaveCount)
+        {
+            g_pSaveTable->clear();
+            ISaveMemoryManager::Free(g_pSaveTable);
+            g_pSaveTable = nullptr;
+
+            g_pSavedPointersMap->clear();
+            ISaveMemoryManager::Free(g_pSavedPointersMap);
+            g_pSavedPointersMap = nullptr;
+        }
     }
 
     bool ZScriptC::PostLoad(ISerializerStream& stream)
     {
-        // TODO: Finish me
-        return false;
+        // ScriptC post-load has two distinct modes:
+        // 1. Saved-game streams restore already serialized script runtime state via LoadSaveGame().
+        // 2. Normal level streams read the script import descriptor table from the original SCRIPTCREATOR,
+        //    build a temporary stack data block with all imported values, create the initial script state
+        //    when the engine is not already loading a game, and then feed that block to the script DLL
+        //    Imports/UnpackResources callbacks through g_pZScriptCDataBlock.
+        // The descriptor table is a SCRIPTIMPORT array terminated by SIT_END. Each descriptor tells how
+        // many values of a given packed type to exchange from the stream and how those values are packed
+        // into the script data block. The temporary block intentionally uses alloca to match the PC code.
+        constexpr uint32_t kSavedGameStreamFilter = 1u << ISerializerStream::CONTENT_SavedGame;
+
+        const SCRIPTCREATOR* pCreator = m_pScriptCreator;
+        if (pCreator)
+        {
+            const bool bLoadingGame = g_pSysInterface->m_pEngineData->m_LoadingGame;
+            if (stream.TestStreamFilter(kSavedGameStreamFilter))
+            {
+                LoadSaveGame(stream);
+            }
+            else
+            {
+                if (!s_pStringMap)
+                {
+                    s_pStringMap = ZUniMemory::New<StringMap>();
+                }
+
+                s_bLoading = true;
+
+                if (!bLoadingGame)
+                {
+                    m_pInitialScriptStateInfo = CreateScript(pCreator);
+                }
+
+                const SCRIPTIMPORT* pImport = pCreator->m_pImports;
+                if (pImport)
+                {
+                    uint32_t lMaxCount = 0;
+                    const uint32_t lBlockSize = GetSaveGameDataSize(pImport, lMaxCount);
+                    uint8_t* pDataBlock = nullptr;
+
+                    if (!bLoadingGame)
+                    {
+                        pDataBlock = static_cast<uint8_t*>(alloca(lBlockSize));
+                    }
+
+                    auto* pExchangeBuffer = static_cast<uint32_t*>(alloca(sizeof(uint32_t) * lMaxCount));
+                    uint32_t lOffset = 0;
+
+                    for (const SCRIPTIMPORT* pCurrent = pImport; pCurrent->m_SIT != SIT_END; ++pCurrent)
+                    {
+                        const uint32_t lCount = pCurrent->m_lAmount;
+                        switch (pCurrent->m_SIT)
+                        {
+                            case SIT_BYTE:
+                            {
+                                stream.ExchangeArray(ZToken::Void, pExchangeBuffer, lCount);
+                                if (!bLoadingGame)
+                                {
+                                    auto* pDestination = pDataBlock + lOffset;
+                                    for (uint32_t i = 0; i < lCount; ++i)
+                                    {
+                                        pDestination[i] = static_cast<uint8_t>(pExchangeBuffer[i]);
+                                    }
+
+                                    lOffset += lCount;
+                                }
+                            }
+                            break;
+
+                            case SIT_SHORT:
+                            {
+                                stream.ExchangeArray(ZToken::Void, pExchangeBuffer, lCount);
+                                if (!bLoadingGame)
+                                {
+                                    auto* pDestination = reinterpret_cast<uint16_t*>(pDataBlock + lOffset);
+                                    for (uint32_t i = 0; i < lCount; ++i)
+                                    {
+                                        pDestination[i] = static_cast<uint16_t>(pExchangeBuffer[i]);
+                                    }
+
+                                    lOffset += sizeof(uint16_t) * lCount;
+                                }
+                            }
+                            break;
+
+                            case SIT_LONG:
+                                stream.ExchangeArray(ZToken::Void, pExchangeBuffer, lCount);
+                                if (!bLoadingGame)
+                                {
+                                    memcpy(pDataBlock + lOffset, pExchangeBuffer, sizeof(uint32_t) * lCount);
+                                    lOffset += sizeof(uint32_t) * lCount;
+                                }
+                                break;
+
+                            case SIT_FLOAT:
+                                stream.ExchangeArray(ZToken::Void, reinterpret_cast<float*>(pExchangeBuffer), lCount);
+                                if (!bLoadingGame)
+                                {
+                                    memcpy(pDataBlock + lOffset, pExchangeBuffer, sizeof(float) * lCount);
+                                    lOffset += sizeof(float) * lCount;
+                                }
+                                break;
+
+                            case SIT_STRING:
+                                stream.ExchangeArray(ZToken::Void, reinterpret_cast<const char**>(pExchangeBuffer), lCount);
+                                if (!bLoadingGame && m_pInitialScriptStateInfo)
+                                {
+                                    auto** pStrings = reinterpret_cast<const char**>(pExchangeBuffer);
+                                    for (uint32_t i = 0; i < lCount; ++i)
+                                    {
+                                        pStrings[i] = InternSaveGameString(pStrings[i]);
+                                    }
+
+                                    memcpy(pDataBlock + lOffset, pExchangeBuffer, sizeof(const char*) * lCount);
+                                    lOffset += sizeof(const char*) * lCount;
+                                }
+                                break;
+
+                            case SIT_REF:
+                                if (!bLoadingGame)
+                                {
+                                    auto* pRefs = reinterpret_cast<ZREF*>(pDataBlock + lOffset);
+                                    for (uint32_t i = 0; i < lCount; ++i)
+                                    {
+                                        const char* pszName = nullptr;
+                                        stream.Exchange(ZToken::Void, pszName);
+                                        pRefs[i] = g_pSysInterface->m_pEngineData->GetREFByName(pszName);
+                                    }
+                                }
+                                else
+                                {
+                                    for (uint32_t i = 0; i < lCount; ++i)
+                                    {
+                                        const char* pszName = nullptr;
+                                        stream.Exchange(ZToken::Void, pszName);
+                                    }
+                                }
+
+                                lOffset += sizeof(ZREF) * lCount;
+                                break;
+
+                            default:
+                                ZASSERT(false);
+                                break;
+                        }
+                    }
+
+                    ZASSERT(lOffset <= lBlockSize);
+
+                    if (!bLoadingGame && ShouldStoreScriptDataBlock())
+                    {
+                        m_pStoredDataBlock = ZUniMemory::Allocate(static_cast<int>(lOffset));
+                        memcpy(m_pStoredDataBlock, pDataBlock, lOffset);
+                    }
+                    else
+                    {
+                        m_pStoredDataBlock = nullptr;
+                    }
+
+                    if (!bLoadingGame && m_pInitialScriptStateInfo)
+                    {
+                        using ScriptCreatorFunction = void (*)(ScriptState*);
+
+                        g_pZScriptCDataBlock = pDataBlock;
+                        auto* pScriptState = m_pInitialScriptStateInfo->m_pRootScriptState;
+                        reinterpret_cast<ScriptCreatorFunction>(pCreator->Imports)(pScriptState);
+                        reinterpret_cast<ScriptCreatorFunction>(pCreator->UnpackResources)(pScriptState);
+                    }
+                }
+            }
+        }
+
+        if (!stream.TestStreamFilter(kSavedGameStreamFilter) && (stream.m_Type & ISerializerStream::TYPE_Tags) != 0)
+        {
+            stream.Skip();
+        }
+
+        return true;
     }
 
     const RTP::ZPropertyInfo& ZScriptC::GetProperties() const
@@ -176,7 +793,29 @@ namespace Glacier
 
     void ZScriptC::Init2()
     {
-        // TODO: Finish me
+        if (s_pStringMap)
+        {
+            ZUniMemory::Delete(s_pStringMap);
+            s_pStringMap = nullptr;
+        }
+
+        if (g_pSysInterface->m_pEngineData->m_LoadingGame)
+        {
+            DeactivateFrameUpdate();
+        }
+        else if (m_pInitialScriptStateInfo)
+        {
+            auto* pScheduleEvent = static_cast<ZScheduledScript*>(m_pScheduleEvent);
+            pScheduleEvent->SetUserData(m_pInitialScriptStateInfo);
+            m_pInitialScriptStateInfo->m_pRootScriptState->m_pThreadInfo = pScheduleEvent;
+        }
+        else
+        {
+            DeactivateFrameUpdate();
+            DeactivateScheduleUpdate();
+            m_lRoutCases &= ~0x20u;
+            Remove();
+        }
     }
 
     void ZScriptC::PostInit()
@@ -1097,6 +1736,97 @@ namespace Glacier
         return GetSchedEvent()->GetPriority();
     }
 
+    void ZScriptC::LoadSaveGame(ISerializerStream& stream)
+    {
+        if (s_bLoading)
+        {
+            s_bLoading = false;
+
+            uint32_t lLoadEntryCount = 0;
+            stream.Exchange(ZToken::Void, lLoadEntryCount);
+            ZASSERT(s_pLoadEntries == nullptr);
+
+            s_pLoadEntries = static_cast<SaveRefEntry*>(ZUniMemory::Allocate(sizeof(SaveRefEntry) * lLoadEntryCount));
+            for (uint32_t i = 0; i < lLoadEntryCount; ++i)
+            {
+                uint32_t lSize = 0;
+                uint32_t lSaveRefType = 0;
+                uint32_t rExtra = 0;
+
+                stream.Exchange(ZToken::Void, lSize);
+                stream.Exchange(ZToken::Void, lSaveRefType);
+                stream.Exchange(ZToken::Void, rExtra);
+
+                const auto srt = static_cast<SaveRefType>(lSaveRefType);
+
+                SaveRefEntry& entry = s_pLoadEntries[i];
+                entry.m_srt = srt;
+
+                if (srt == SRT_EVENTREF)
+                {
+                    entry.m_pAddr = reinterpret_cast<void*>(lSize);
+                    entry.m_lSize = 0;
+                    entry.m_pExtra = reinterpret_cast<void*>(rExtra);
+                }
+                else
+                {
+                    entry.m_pAddr = ScriptEngine::Alloc(lSize, __FILE__, __LINE__);
+                    ZASSERT(lSize == 0 || entry.m_pAddr != nullptr);
+                    entry.m_lSize = lSize;
+                    entry.m_pExtra = ResolveScriptCodeRef(rExtra);
+                }
+            }
+
+            for (uint32_t i = 0; i < lLoadEntryCount; ++i)
+            {
+                SaveRefEntry& entry = s_pLoadEntries[i];
+                if (entry.m_srt != SRT_EVENTREF)
+                {
+                    ZASSERT(entry.m_lSize == 0 || entry.m_pAddr != nullptr);
+                    stream.ExchangeRaw(ZToken::Void, entry.m_pAddr, entry.m_lSize);
+                }
+
+                FixupLoadedEntry(entry);
+            }
+
+            LoadSaveGameStatics(stream);
+        }
+
+        uint32_t lScheduledScriptCount = 0;
+        stream.Exchange(ZToken::Void, lScheduledScriptCount);
+        auto* pScheduledScript = static_cast<ZScheduledScript*>(m_pScheduleEvent);
+
+        for (uint32_t i = 0; i < lScheduledScriptCount; ++i)
+        {
+            uint32_t lRootStateIndex = 0;
+            uint32_t lCurrentStateIndex = 0;
+            uint32_t lPriority = 0;
+            float fSleepTime = 0.0f;
+
+            stream.Exchange(ZToken::Void, lRootStateIndex);
+            stream.Exchange(ZToken::Void, lCurrentStateIndex);
+            stream.Exchange(ZToken::Void, lPriority);
+            stream.Exchange(ZToken::Void, fSleepTime);
+
+            auto* pScriptStateInfo = static_cast<ScriptStateInfo*>(ScriptEngine::Alloc(sizeof(ScriptStateInfo), __FILE__, __LINE__));
+            ZASSERT(pScriptStateInfo != nullptr);
+
+            pScriptStateInfo->m_pRootScriptState = static_cast<ScriptState*>(LoadEntryAddress(lRootStateIndex));
+            pScriptStateInfo->m_pCurrentScriptState = static_cast<ScriptState*>(LoadEntryAddress(lCurrentStateIndex));
+
+            if (i != 0)
+            {
+                pScheduledScript = static_cast<ZScheduledScript*>(pScheduledScript->Fork());
+            }
+
+            pScheduledScript->SetUserData(pScriptStateInfo);
+            pScheduledScript->SetPriority(lPriority);
+            pScheduledScript->Sleep(fSleepTime);
+
+            pScriptStateInfo->m_pRootScriptState->m_pThreadInfo = pScheduledScript;
+        }
+    }
+
     void ZScriptC::NukeAndRestart()
     {
         // I guess, NukeAndRestart concept does not exists in PC build
@@ -1152,5 +1882,25 @@ namespace Glacier
         }
     }
 
-    STATIC_CLASS_VAR_IMPL(ZScriptC, RTP::ZPropertyInfo, Info, 0x00811984, {}); // TODO: Finish me
+
+    namespace cProperties
+    {
+        static RTP::ZVirtualProperty<ZRTString> NamespaceItem_3160 {
+            .m_Node = {
+                .m_Next = nullptr,
+                .m_Name = "ScriptName",
+                .m_Filter = 5
+            },
+            .m_VirtualTable = &RTP::VirtualTables::ZRTString,
+            .m_Get = &ZScriptC::GetName,
+            .m_Set = &ZScriptC::SetName
+        };
+    }
+
+    STATIC_CLASS_VAR_IMPL(ZScriptC, RTP::ZPropertyInfo, Info, 0x00811984, (RTP::ZPropertyInfo {
+        .First = cProperties::NamespaceItem_3160,
+        .Super = &ZEventBase::Info,
+        .Name = "ScriptC"
+    }));
+
 }

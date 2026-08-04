@@ -48,6 +48,7 @@ namespace Glacier
         const ZScheduledScript* GetSchedEvent();
         TIMETYPE GetNextRun();
         int GetPriority();
+        void LoadSaveGame(ISerializerStream& stream);
         static void NukeAndRestart();
 
 #       pragma region " --- Runtime --- "

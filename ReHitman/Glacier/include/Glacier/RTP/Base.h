@@ -3,12 +3,17 @@
 #include <Glacier/ZUniMemory.h>
 #include <Glacier/Runtime/ZEnum.h>
 #include <Glacier/Serializer/ZSerializable.h>
+#include <cstring>
+#include <cstddef>
+#include <cstdint>
+#include <utility>
 
 
 namespace Glacier
 {
     struct ISerializerStream;
     struct ZSerializableBase;
+    struct ZRTString;
 }
 
 namespace Glacier::RTP
@@ -18,10 +23,11 @@ namespace Glacier::RTP
 
     struct cNode
     {
-        struct cNode* m_Next{nullptr};
-        const char* m_Name{nullptr};
-        unsigned int m_Filter{0};
+        struct cNode* m_Next{nullptr}; // +0x0
+        const char* m_Name{nullptr}; // +0x4
+        unsigned int m_Filter{0}; // +0x8
     };
+    RE_VERIFY_OFFSET(cNode, m_Filter, 0x8);
 
     struct cVirtualTable
     {
@@ -42,11 +48,11 @@ namespace Glacier::RTP
         const char* Name{nullptr};
     };
 
-    template <typename T>
+    template <typename TProperty>
     struct tVirtualTable
     {
-        void(*Load)(RTP::ZDataProperty<T>* pProperty, Glacier::ISerializerStream& stream, Glacier::ZSerializableBase& object) = nullptr;
-        void(*Save)(RTP::ZDataProperty<T>* pProperty, Glacier::ISerializerStream& stream, Glacier::ZSerializableBase& object) = nullptr;
+        void(*Load)(TProperty* pProperty, Glacier::ISerializerStream& stream, Glacier::ZSerializableBase& object) = nullptr;
+        void(*Save)(TProperty* pProperty, Glacier::ISerializerStream& stream, Glacier::ZSerializableBase& object) = nullptr;
     };
 
     template <typename T>
@@ -58,6 +64,22 @@ namespace Glacier::RTP
 
         static void Load(Glacier::ISerializerStream& stream, Glacier::ZSerializableBase& object);
         static void Save(Glacier::ISerializerStream& stream, Glacier::ZSerializableBase& object);
+
+        // Layout-neutral helper: allows `.m_Next = Item` instead of `.m_Next = &Item.m_Node` in property lists.
+        operator RTP::cNode*() { return &m_Node; }
+        operator const RTP::cNode*() const { return &m_Node; }
+    };
+
+    struct ZEnumProperty
+    {
+        RTP::cNode m_Node{};
+        RTP::tVirtualTable<RTP::ZEnumProperty>* m_VirtualTable{nullptr};
+        void* m_Offset{nullptr};
+        ZEnumInfo* m_Info{nullptr};
+
+        // Layout-neutral helper: allows `.m_Next = Item` instead of `.m_Next = &Item.m_Node` in property lists.
+        operator RTP::cNode*() { return &m_Node; }
+        operator const RTP::cNode*() const { return &m_Node; }
     };
 
     template <typename T>
@@ -65,15 +87,60 @@ namespace Glacier::RTP
     {
         RTP::cNode m_Node{};
         RTP::tVirtualTable<RTP::ZVirtualProperty<T>>* m_VirtualTable { nullptr };
-        struct GetPMF 
+
+        // Layout-neutral helper: allows `.m_Next = Item` instead of `.m_Next = &Item.m_Node` in property lists.
+        operator RTP::cNode*() { return &m_Node; }
+        operator const RTP::cNode*() const { return &m_Node; }
+
+        struct GetPMF
         {
             void(ZSerializableBase::*__pfn)(T&) = nullptr;
             int __delta = 0;
+
+            GetPMF() = default;
+
+            template <typename TOwner>
+            GetPMF(void(TOwner::*pfn)(T&))
+            {
+                *this = pfn;
+            }
+
+            template <typename TOwner>
+            GetPMF& operator=(void(TOwner::*pfn)(T&))
+            {
+                static_assert(sizeof(__pfn) <= sizeof(pfn));
+
+                __pfn = nullptr;
+                __delta = 0;
+                std::memcpy(&__pfn, &pfn, sizeof(__pfn));
+
+                return *this;
+            }
         } m_Get{};
         struct SetPMF 
         {
             void(ZSerializableBase::*__pfn)(const T&) = nullptr;
             int __delta = 0;
+
+            SetPMF() = default;
+
+            template <typename TOwner>
+            SetPMF(void(TOwner::*pfn)(const T&))
+            {
+                *this = pfn;
+            }
+
+            template <typename TOwner>
+            SetPMF& operator=(void(TOwner::*pfn)(const T&))
+            {
+                static_assert(sizeof(__pfn) <= sizeof(pfn));
+
+                __pfn = nullptr;
+                __delta = 0;
+                std::memcpy(&__pfn, &pfn, sizeof(__pfn));
+
+                return *this;
+            }
         } m_Set{};
     };
 
@@ -82,15 +149,60 @@ namespace Glacier::RTP
     {
         RTP::cNode m_Node{};
         RTP::tVirtualTable<RTP::ZVirtualEnumProperty<T>>* m_VirtualTable { nullptr };
-        struct GetPMF 
+
+        // Layout-neutral helper: allows `.m_Next = Item` instead of `.m_Next = &Item.m_Node` in property lists.
+        operator RTP::cNode*() { return &m_Node; }
+        operator const RTP::cNode*() const { return &m_Node; }
+
+        struct GetPMF
         {
             void(ZSerializableBase::*__pfn)(T&) = nullptr;
             int __delta = 0;
+
+            GetPMF() = default;
+
+            template <typename TOwner>
+            GetPMF(void(TOwner::*pfn)(T&))
+            {
+                *this = pfn;
+            }
+
+            template <typename TOwner>
+            GetPMF& operator=(void(TOwner::*pfn)(T&))
+            {
+                static_assert(sizeof(__pfn) <= sizeof(pfn));
+
+                __pfn = nullptr;
+                __delta = 0;
+                std::memcpy(&__pfn, &pfn, sizeof(__pfn));
+
+                return *this;
+            }
         } m_Get{};
         struct SetPMF 
         {
             void(ZSerializableBase::*__pfn)(const T&) = nullptr;
             int __delta = 0;
+
+            SetPMF() = default;
+
+            template <typename TOwner>
+            SetPMF(void(TOwner::*pfn)(const T&))
+            {
+                *this = pfn;
+            }
+
+            template <typename TOwner>
+            SetPMF& operator=(void(TOwner::*pfn)(const T&))
+            {
+                static_assert(sizeof(__pfn) <= sizeof(pfn));
+
+                __pfn = nullptr;
+                __delta = 0;
+                std::memcpy(&__pfn, &pfn, sizeof(__pfn));
+
+                return *this;
+            }
         } m_Set{};
         ZEnumInfo* m_Info { nullptr };
     };
@@ -108,4 +220,9 @@ namespace Glacier::RTP
 
     void LoadSerializable(ZSerializableBase* serializable, const ZPropertyInfo* properties, ISerializerStream& stream);
     void SaveSerializable(ZSerializableBase* serializable, const ZPropertyInfo* properties, ISerializerStream& stream);
+    void LoadConstString(ISerializerStream& stream, const char* name, ZRTString& value);
+    void SaveConstString(ISerializerStream& stream, const char* name, ZRTString& value);
 }
+
+#define CLASS_PROPERTY(Class, Member) \
+    reinterpret_cast<decltype(std::declval<Class>().Member)*>(offsetof(Class, Member))

@@ -111,6 +111,11 @@ namespace Glacier
         return equal(rhs);
     }
 
+    bool zstring::operator<(const zstring& rhs) const
+    {
+        return std::strcmp(c_str(), rhs.c_str()) < 0;
+    }
+
     zstring& zstring::operator=(const zstring& str)
     {
         if (this == &str)

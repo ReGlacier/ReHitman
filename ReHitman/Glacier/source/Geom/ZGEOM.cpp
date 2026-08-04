@@ -6,6 +6,7 @@
 #include <Glacier/EventBase/ZBaseConRout.h>
 #include <Glacier/ZSTL/REFTAB32.h>
 #include <Glacier/RTP/Base.h>
+#include <Glacier/RTP/VirtualTables.h>
 #include <Glacier/CHUNKFILE.h>
 #include <Glacier/Serializer/ISerializerStream.h>
 #include <Glacier/Serializer/IOutputSerializerStream.h>
@@ -13,6 +14,7 @@
 #include <Glacier/Runtime/Macro.h>
 #include <Glacier/ZEngineDataBase.h>
 #include <cstring>
+
 
 namespace Glacier
 {
@@ -1717,4 +1719,102 @@ namespace Glacier
 
     STATIC_CLASS_VAR_IMPL(ZGEOM, ZGEOM::EStatus, m_PreferedStatus, 0x009728C0, ZGEOM::EStatus::STATUS_New);
     STATIC_CLASS_VAR_IMPL_EZ(ZGEOM, ZGEOM*, s_pLastSendCommandCaller, nullptr);
+
+#   pragma region "RTTI"
+    namespace cProperties
+    {
+        static ZEnumEntry NamespaceItem_3409_BOUNDING_Static
+        { 
+            .m_Prev = nullptr, 
+            .m_Value = static_cast<int>(EBoundingBox::BOUNDING_Static), 
+            .m_Name = "BOUNDING_Dynamic" 
+        };
+
+        static ZEnumEntry NamespaceItem_3409_BOUNDING_Dynamic 
+        {
+            .m_Prev = &NamespaceItem_3409_BOUNDING_Static,
+            .m_Value = static_cast<int>(EBoundingBox::BOUNDING_Dynamic),
+            .m_Name = "BOUNDING_Dynamic"
+        };
+
+        static ZEnumEntry NamespaceItem_3409_BOUNDING_DynamicAutoAssign 
+        {
+            .m_Prev = &NamespaceItem_3409_BOUNDING_Dynamic,
+            .m_Value = static_cast<int>(EBoundingBox::BOUNDING_DynamicAutoAssign),
+            .m_Name = "BOUNDING_DynamicAutoAssign"
+        };
+
+        static ZEnumInfo NamespaceItem_3409 
+        {
+            .m_Last = &NamespaceItem_3409_BOUNDING_DynamicAutoAssign,
+            .m_Name = "EBoundingBox",
+            .m_Size = 4 // Count of elements
+        };
+
+        struct RTP::ZVirtualProperty<uint32_t> NamespaceItem_3417 {
+            .m_Node = {
+                .m_Next = nullptr,
+                .m_Name = "Prim",
+                .m_Filter = 1
+            },
+            .m_VirtualTable = VirtualTable_VP__6,
+            .m_Get = &ZGEOM::GetPrim,
+            .m_Set = &ZGEOM::SetPrim
+        };
+
+        struct RTP::ZVirtualProperty<bool> NamespaceItem_3416 {
+            .m_Node = {
+                .m_Next = NamespaceItem_3417,
+                .m_Name = "bInactive",
+                .m_Filter = 1
+            },
+            .m_VirtualTable = VirtualTable_VP__1,
+            .m_Get = &ZGEOM::GetInactive,
+            .m_Set = &ZGEOM::SetInactive
+        };
+
+        struct RTP::ZVirtualProperty<float[3]> NamespaceItem_3515 {
+            .m_Node = {
+                .m_Next = NamespaceItem_3416,
+                .m_Name = "Position",
+                .m_Filter = 5
+            },
+            .m_VirtualTable = VirtualTable_VP__12,
+            .m_Get = &ZGEOM::GetPosition,
+            .m_Set = &ZGEOM::SetPosition
+        };
+
+        struct RTP::ZVirtualProperty<float[9]> NamespaceItem_3414 {
+            .m_Node {
+                .m_Next = NamespaceItem_3515,
+                .m_Name = "Matrix",
+                .m_Filter = 1
+            },
+            .m_VirtualTable = VirtualTable_VP__28,
+            .m_Get = &ZGEOM::GetMatrix,
+            .m_Set = &ZGEOM::SetMatrix
+        };
+
+        static RTP::ZVirtualEnumProperty<EBoundingBox> NamespaceItem_3413 
+        {
+            .m_Node {
+                .m_Next = NamespaceItem_3414,
+                .m_Name = "BoundingBox",
+                .m_Filter = 1
+            },
+            .m_VirtualTable = VirtualTable_VP__189,
+            .m_Get = &ZGEOM::GetBoundingBox,
+            .m_Set = &ZGEOM::SetBoundingBox,
+            .m_Info = &NamespaceItem_3409
+        };
+    }
+
+
+    // Entry
+    STATIC_CLASS_VAR_IMPL(ZGEOM, RTP::ZPropertyInfo, Info, 0x00806848, (RTP::ZPropertyInfo {
+        .First = cProperties::NamespaceItem_3413,
+        .Super = &RTP::cBase::Info,
+        .Name = ZGEOM::FactoryName
+    }));
+#   pragma endregion
 }

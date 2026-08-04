@@ -29,6 +29,317 @@ namespace Glacier
             g_pSaveTable->push_back(entry);
             return index;
         }
+
+        void* FieldToSaveForm(void* ptr)
+        {
+            return reinterpret_cast<void*>((*g_pSavedPointersMap)[ptr]);
+        }
+
+        void* FieldFromSaveForm(uint32_t lIndex)
+        {
+            return (*g_pSaveTable)[lIndex].m_pAddr;
+        }
+    }
+
+    // In-place counterpart of FixupLoadedData: bEncode == false converts the block into save form
+    // (script-code pointers become high-bit offsets, saved pointers become save-table indices),
+    // bEncode == true restores the original pointers after the table was streamed out.
+    void FixupData(uint16_t* pStringOffsets, int8_t* pBase, bool bEncode, bool /*bTopLevel*/)
+    {
+        if (!pBase || !pStringOffsets)
+        {
+            return;
+        }
+
+        const uint32_t length = ScriptEngine::AllocSize(pBase);
+        for (uint16_t* pCurrent = pStringOffsets; *pCurrent; )
+        {
+            const uint16_t type = *pCurrent++;
+            const uint32_t start = *pCurrent++;
+            const uint32_t end = *pCurrent++;
+
+            ZASSERT(start < length);
+            ZASSERT(end <= length);
+
+            auto* pStart = reinterpret_cast<uint32_t*>(pBase + start);
+            auto* pEnd = reinterpret_cast<uint32_t*>(pBase + end);
+
+            switch (type)
+            {
+                case SRT_VARIABLES:
+                    if (!bEncode)
+                    {
+                        for (auto* pValue = pStart; pValue < pEnd; ++pValue)
+                        {
+                            const uint32_t value = *pValue;
+                            if (static_cast<int32_t>(value) < 0)
+                            {
+                                *pValue = ScriptEngine::GetOffsetInScriptCode(reinterpret_cast<void*>(value));
+                            }
+                            else if (value)
+                            {
+                                *pValue = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(FieldToSaveForm(reinterpret_cast<void*>(value))));
+                            }
+                        }
+                    }
+                    else
+                    {
+                        for (auto* pValue = pStart; pValue < pEnd; ++pValue)
+                        {
+                            const uint32_t value = *pValue;
+                            if (static_cast<int32_t>(value) < 0)
+                            {
+                                *pValue = reinterpret_cast<uint32_t>(ScriptEngine::GetAddressInScriptCode(value));
+                            }
+                            else
+                            {
+                                *pValue = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(FieldFromSaveForm(value)));
+                            }
+                        }
+                    }
+                    break;
+
+                case SRT_SCRIPTSTATE:
+                    if (bEncode)
+                    {
+                        for (auto* pValue = pStart; pValue < pEnd; ++pValue)
+                        {
+                            *pValue = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(FieldFromSaveForm(*pValue)));
+                        }
+                    }
+                    break;
+
+                case SRT_SCRIPTVARIABLES:
+                case SRT_DYNSTRING:
+                    if (!bEncode)
+                    {
+                        for (auto* pValue = pStart; pValue < pEnd; ++pValue)
+                        {
+                            *pValue = ScriptEngine::GetOffsetInScriptCode(reinterpret_cast<void*>(*pValue));
+                        }
+                    }
+                    else
+                    {
+                        for (auto* pValue = pStart; pValue < pEnd; ++pValue)
+                        {
+                            *pValue = reinterpret_cast<uint32_t>(ScriptEngine::GetAddressInScriptCode(*pValue));
+                        }
+                    }
+                    break;
+
+                case SRT_STATEVARIABLES:
+                    if (bEncode)
+                    {
+                        for (auto* pValue = pStart; pValue < pEnd; pValue += 2)
+                        {
+                            if (pValue[1])
+                            {
+                                auto* pEntry = (*g_pSaveTable)[pValue[1]].m_pExtra;
+                                const auto baseIndex = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(pEntry));
+                                const auto offset = static_cast<uint32_t>(reinterpret_cast<uintptr_t>((*g_pSaveTable)[baseIndex].m_pExtra));
+                                pValue[1] = reinterpret_cast<uint32_t>(static_cast<int8_t*>((*g_pSaveTable)[pValue[1]].m_pAddr) + offset);
+                            }
+                        }
+                    }
+                    break;
+
+                case SRT_ASYNCCALL_STRUCT:
+                {
+                    auto* pAsyncCallData = pStart;
+                    if (bEncode && pAsyncCallData[5])
+                    {
+                        pAsyncCallData[5] = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(FieldFromSaveForm(pAsyncCallData[5])));
+                    }
+
+                    pAsyncCallData[7] = bEncode
+                        ? reinterpret_cast<uint32_t>(ScriptEngine::GetAddressInScriptCode(pAsyncCallData[7]))
+                        : ScriptEngine::GetOffsetInScriptCode(reinterpret_cast<void*>(pAsyncCallData[7]));
+                    pAsyncCallData[8] = bEncode
+                        ? reinterpret_cast<uint32_t>(ScriptEngine::GetAddressInScriptCode(pAsyncCallData[8]))
+                        : ScriptEngine::GetOffsetInScriptCode(reinterpret_cast<void*>(pAsyncCallData[8]));
+                }
+                break;
+
+                default:
+                    break;
+            }
+        }
+    }
+
+    void FixupSaveTable(bool bEncode)
+    {
+        const uint32_t lEntryCount = static_cast<uint32_t>(g_pSaveTable->size());
+        for (uint32_t i = 0; i < lEntryCount; ++i)
+        {
+            SaveRefEntry& entry = (*g_pSaveTable)[i];
+
+            switch (entry.m_srt)
+            {
+                case SRT_VARIABLES:
+                {
+                    auto* pVar = static_cast<LocalVarEntry*>(entry.m_pAddr);
+                    if (!bEncode)
+                    {
+                        pVar->m_pFunctionController = reinterpret_cast<const FUNCTIONCONTROLLER*>(static_cast<uintptr_t>(ScriptEngine::GetOffsetInScriptCode(pVar->m_pFunctionController)));
+                        pVar->m_pNextVariables = static_cast<LocalVarEntry*>(FieldToSaveForm(pVar->m_pNextVariables));
+                        pVar->m_pPrevVariables = static_cast<LocalVarEntry*>(FieldToSaveForm(pVar->m_pPrevVariables));
+                        FixupData(static_cast<uint16_t*>(const_cast<void*>(entry.m_pExtra)), reinterpret_cast<int8_t*>(pVar), false, true);
+                    }
+                    else
+                    {
+                        pVar->m_pFunctionController = static_cast<const FUNCTIONCONTROLLER*>(ScriptEngine::GetAddressInScriptCode(reinterpret_cast<uint32_t>(const_cast<FUNCTIONCONTROLLER*>(pVar->m_pFunctionController))));
+                        pVar->m_pNextVariables = static_cast<LocalVarEntry*>(FieldFromSaveForm(reinterpret_cast<uint32_t>(pVar->m_pNextVariables)));
+                        pVar->m_pPrevVariables = static_cast<LocalVarEntry*>(FieldFromSaveForm(reinterpret_cast<uint32_t>(pVar->m_pPrevVariables)));
+
+                        if (entry.m_pExtra)
+                        {
+                            FixupData(static_cast<uint16_t*>(const_cast<void*>(entry.m_pExtra)), reinterpret_cast<int8_t*>(pVar), true, true);
+                        }
+                    }
+                }
+                break;
+
+                case SRT_SCRIPTSTATE:
+                {
+                    auto* pState = static_cast<ScriptState*>(entry.m_pAddr);
+                    if (!pState)
+                    {
+                        break;
+                    }
+
+                    if (!bEncode)
+                    {
+                        pState->m_pAlienCall = static_cast<ScriptState*>(FieldToSaveForm(pState->m_pAlienCall));
+                        pState->m_pVariables = static_cast<LocalVarEntry*>(FieldToSaveForm(pState->m_pVariables));
+                        pState->m_pStateVariables = FieldToSaveForm(pState->m_pStateVariables);
+                        pState->m_pScriptVariables = FieldToSaveForm(pState->m_pScriptVariables);
+                        pState->m_pFunctionsVirtualTable = reinterpret_cast<const void*>(static_cast<uintptr_t>(ScriptEngine::GetOffsetInScriptCode(pState->m_pFunctionsVirtualTable)));
+                        pState->m_pStateController = reinterpret_cast<const STATECONTROLLER*>(static_cast<uintptr_t>(ScriptEngine::GetOffsetInScriptCode(pState->m_pStateController)));
+                        pState->m_pNextStateController = reinterpret_cast<const STATECONTROLLER*>(static_cast<uintptr_t>(ScriptEngine::GetOffsetInScriptCode(pState->m_pNextStateController)));
+                        pState->m_pPreviousStateController = reinterpret_cast<const STATECONTROLLER*>(static_cast<uintptr_t>(ScriptEngine::GetOffsetInScriptCode(pState->m_pPreviousStateController)));
+                        pState->m_pCreator = reinterpret_cast<const SCRIPTCREATOR*>(static_cast<uintptr_t>(ScriptEngine::GetOffsetInScriptCode(pState->m_pCreator)));
+                        pState->m_pAsyncCall = static_cast<AsyncCall_Struct*>(FieldToSaveForm(pState->m_pAsyncCall));
+                        if (pState->m_pAsyncCall)
+                        {
+                            pState->m_pAsyncCallLast = static_cast<AsyncCall_Struct*>(FieldToSaveForm(pState->m_pAsyncCallLast));
+                        }
+                        else
+                        {
+                            pState->m_pAsyncCallLast = nullptr;
+                        }
+
+                        pState->m_pMessageCue = static_cast<MessageCue*>(FieldToSaveForm(pState->m_pMessageCue));
+                    }
+                    else
+                    {
+                        pState->m_pAlienCall = static_cast<ScriptState*>(FieldFromSaveForm(reinterpret_cast<uint32_t>(pState->m_pAlienCall)));
+                        pState->m_pVariables = static_cast<LocalVarEntry*>(FieldFromSaveForm(reinterpret_cast<uint32_t>(pState->m_pVariables)));
+                        pState->m_pStateVariables = FieldFromSaveForm(reinterpret_cast<uint32_t>(pState->m_pStateVariables));
+                        pState->m_pScriptVariables = FieldFromSaveForm(reinterpret_cast<uint32_t>(pState->m_pScriptVariables));
+                        pState->m_pFunctionsVirtualTable = ScriptEngine::GetAddressInScriptCode(reinterpret_cast<uint32_t>(const_cast<void*>(pState->m_pFunctionsVirtualTable)));
+                        pState->m_pStateController = static_cast<const STATECONTROLLER*>(ScriptEngine::GetAddressInScriptCode(reinterpret_cast<uint32_t>(const_cast<STATECONTROLLER*>(pState->m_pStateController))));
+                        pState->m_pNextStateController = static_cast<const STATECONTROLLER*>(ScriptEngine::GetAddressInScriptCode(reinterpret_cast<uint32_t>(const_cast<STATECONTROLLER*>(pState->m_pNextStateController))));
+                        pState->m_pPreviousStateController = static_cast<const STATECONTROLLER*>(ScriptEngine::GetAddressInScriptCode(reinterpret_cast<uint32_t>(const_cast<STATECONTROLLER*>(pState->m_pPreviousStateController))));
+                        pState->m_pCreator = static_cast<const SCRIPTCREATOR*>(ScriptEngine::GetAddressInScriptCode(reinterpret_cast<uint32_t>(const_cast<SCRIPTCREATOR*>(pState->m_pCreator))));
+                        pState->m_pAsyncCall = static_cast<AsyncCall_Struct*>(FieldFromSaveForm(reinterpret_cast<uint32_t>(pState->m_pAsyncCall)));
+                        if (pState->m_pAsyncCall)
+                        {
+                            pState->m_pAsyncCallLast = static_cast<AsyncCall_Struct*>(FieldFromSaveForm(reinterpret_cast<uint32_t>(pState->m_pAsyncCallLast)));
+                        }
+                        else
+                        {
+                            pState->m_pAsyncCallLast = nullptr;
+                        }
+
+                        pState->m_pMessageCue = static_cast<MessageCue*>(FieldFromSaveForm(reinterpret_cast<uint32_t>(pState->m_pMessageCue)));
+                    }
+                }
+                break;
+
+                case SRT_SCRIPTVARIABLES:
+                    for (auto* pController = static_cast<const STATECONTROLLER*>(entry.m_pExtra); pController; pController = pController->m_pParent)
+                    {
+                        FixupData(pController->m_lStringOffsets, static_cast<int8_t*>(entry.m_pAddr), bEncode, false);
+                    }
+                    break;
+
+                case SRT_STATEVARIABLES:
+                    for (auto* pController = static_cast<const STATECONTROLLER*>(entry.m_pExtra); pController && pController->m_lScriptLevel > 1; pController = pController->m_pParent)
+                    {
+                        FixupData(pController->m_lStringOffsets, static_cast<int8_t*>(entry.m_pAddr), bEncode, false);
+                    }
+                    break;
+
+                case SRT_ASYNCCALL_STRUCT:
+                {
+                    auto* pAsyncCall = static_cast<AsyncCall_Struct*>(entry.m_pAddr);
+                    if (!pAsyncCall)
+                    {
+                        break;
+                    }
+
+                    if (!bEncode)
+                    {
+                        pAsyncCall->pNext = static_cast<AsyncCall_Struct*>(FieldToSaveForm(pAsyncCall->pNext));
+                        pAsyncCall->m_pLVE = static_cast<LocalVarEntry*>(FieldToSaveForm(pAsyncCall->m_pLVE));
+                    }
+                    else
+                    {
+                        pAsyncCall->pNext = static_cast<AsyncCall_Struct*>(FieldFromSaveForm(reinterpret_cast<uint32_t>(pAsyncCall->pNext)));
+                        pAsyncCall->m_pLVE = static_cast<LocalVarEntry*>(FieldFromSaveForm(reinterpret_cast<uint32_t>(pAsyncCall->m_pLVE)));
+                    }
+                }
+                break;
+
+                case SRT_ENTERS:
+                {
+                    auto* pRefs = static_cast<uint32_t*>(entry.m_pAddr);
+                    if (!pRefs)
+                    {
+                        break;
+                    }
+
+                    const uint32_t lRefCount = entry.m_lSize / sizeof(uint32_t);
+                    for (uint32_t j = 0; j < lRefCount; ++j)
+                    {
+                        pRefs[j] = bEncode
+                            ? reinterpret_cast<uint32_t>(ScriptEngine::GetAddressInScriptCode(pRefs[j]))
+                            : ScriptEngine::GetOffsetInScriptCode(reinterpret_cast<void*>(pRefs[j]));
+                    }
+                }
+                break;
+
+                case SRT_MESSAGECUE:
+                {
+                    auto* pMessageCue = static_cast<MessageCue*>(entry.m_pAddr);
+                    if (!pMessageCue)
+                    {
+                        break;
+                    }
+
+                    if (!bEncode)
+                    {
+                        pMessageCue->m_pLast = static_cast<MessageCue*>(FieldToSaveForm(pMessageCue->m_pLast));
+                        pMessageCue->m_pNext = static_cast<MessageCue*>(FieldToSaveForm(pMessageCue->m_pNext));
+                    }
+                    else
+                    {
+                        pMessageCue->m_pLast = static_cast<MessageCue*>(FieldFromSaveForm(reinterpret_cast<uint32_t>(pMessageCue->m_pLast)));
+                        pMessageCue->m_pNext = static_cast<MessageCue*>(FieldFromSaveForm(reinterpret_cast<uint32_t>(pMessageCue->m_pNext)));
+                    }
+                }
+                break;
+
+                case SRT_NULL:
+                case SRT_DYNSTRING:
+                case SRT_EVENTREF:
+                    break;
+
+                default:
+                    ZASSERT(false);
+                    break;
+            }
+        }
     }
 
     void PrepareSave(_ScriptState* pScriptState)

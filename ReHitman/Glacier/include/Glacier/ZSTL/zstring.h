@@ -38,6 +38,8 @@ namespace Glacier
         bool operator==(const zstring& rhs) const;
         /** @brief Compares this string with a null-terminated C string. */
         bool operator==(const char* pCStr) const;
+        /** @brief Orders strings lexicographically for STLport maps. */
+        bool operator<(const zstring& rhs) const;
         /** @brief Replaces this string with a copy of @p str. */
         zstring& operator=(const zstring& str);
         /** @brief Formats text into this string using printf-style formatting. */

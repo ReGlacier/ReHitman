@@ -6,8 +6,9 @@
 #include <Glacier/ScriptEngine/ZScriptC_ZMessage.h>
 #include <Glacier/ScriptEngine/SaveRefEntry.h>
 #include <Glacier/ZSTL/PrivateAllocator.h>
-#include <Glacier/ZSTL/STLport.h>
 #include <Glacier/ZSTL/ZMallocSimple.h>
+#include <Glacier/ZSTL/STLport.h>
+#include <Glacier/ZSTL/zstring.h>
 #include <Glacier/ZUniMemory.h>
 #include <cstdint>
 
@@ -41,6 +42,18 @@ namespace Glacier
 
     using SaveTableVector = stlp::vector<SaveRefEntry, PrivateAllocator<SaveRefEntry, ISaveMemoryManager>>;
 
+    using StringMap = stlp::map<
+        zstring, 
+        const char*, 
+        stlp::less<zstring>, 
+        stlp::allocator<
+            stlp::pair<
+                const zstring, 
+                const char*
+            >
+        >
+    >;
+
     // decls
     STATIC_GLOBAL_CLASS_INSTANCE(uint32_t, g_lCurrentScriptMaxTime);
     STATIC_GLOBAL_CLASS_INSTANCE(uint8_t*, g_pZScriptCDataBlock);
@@ -64,7 +77,12 @@ namespace Glacier
     STATIC_GLOBAL_CLASS_INSTANCE(SaveRefEntry*, s_pLoadEntries);
     STATIC_GLOBAL_CLASS_INSTANCE(int, s_lObjectSaveCount);
     STATIC_GLOBAL_CLASS_INSTANCE(bool, s_bSaving);
+    STATIC_GLOBAL_CLASS_INSTANCE(bool, s_bLoading);
     STATIC_GLOBAL_CLASS_INSTANCE(ZScriptC*, s_pCurrentSaveGameObject);
     STATIC_GLOBAL_CLASS_INSTANCE(SaveTableMap*, g_pSavedPointersMap);
     STATIC_GLOBAL_CLASS_INSTANCE(SaveTableVector*, g_pSaveTable);
+    STATIC_GLOBAL_CLASS_INSTANCE(StringMap*, s_pStringMap);
+    // Named .data slot holding the address of the ForkStateFree FUNCTIONCONTROLLER;
+    // ScriptEngine::GetOffsetInScriptCode maps it to -1.
+    STATIC_GLOBAL_CLASS_INSTANCE(const FUNCTIONCONTROLLER*, g_pForkStateFree);
 }

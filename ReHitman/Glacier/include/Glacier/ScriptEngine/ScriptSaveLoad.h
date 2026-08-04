@@ -14,4 +14,6 @@ namespace Glacier
     void PrepareAsyncCall(_AsyncCall_Struct* pAsyncCall);
     void PrepareMessageCue(_MessageCue* pQue);
     void PrepareVariables(_LocalVarEntry* pVar);
+    void FixupSaveTable(bool bEncode);
+    void FixupData(uint16_t* pStringOffsets, int8_t* pBase, bool bEncode, bool bTopLevel);
 }

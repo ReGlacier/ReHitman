@@ -9,6 +9,7 @@
 #include <Glacier/Serializer/ISerializerStream.h>
 #include <Glacier/ZEngineDataBase.h>
 #include <Glacier/System/ZSysInterface.h>
+#include <Glacier/RTP/VirtualTables.h>
 #include <G1ConfigurationService.h>
 #include <cassert>
 
@@ -457,8 +458,11 @@ namespace Glacier
         }
     }
 
-    // TODO: Finish VirtualTable reconstruction!
-    // TODO: Move to separated RTTI!
+    STATIC_CLASS_VAR_IMPL(ZEventBase, uint32_t, m_DirectRef, 0x009725AC, 0);
+    STATIC_CLASS_VAR_IMPL(ZEventBase, bool, m_LockCreation, 0x009725B0, false);
+    STATIC_CLASS_VAR_IMPL(ZEventBase, ZEventBase::EStatus, m_DefaultStatus, 0x009725B4, ZEventBase::EStatus::STATUS_New);
+
+#   pragma region "RTTI"
     namespace cProperties
     {
         static RTP::ZDataProperty<uint8_t> NamespaceItem_3654 {
@@ -467,8 +471,8 @@ namespace Glacier
                 .m_Name = "m_ClassCall",
                 .m_Filter = 2
             },
-            .m_VirtualTable = nullptr,
-            .m_Offset = (uint8_t*)offsetof(ZEventBase, m_ClassCall)
+            .m_VirtualTable = VirtualTable_DP__32,
+            .m_Offset = CLASS_PROPERTY(ZEventBase, m_ClassCall)
         };
 
         static RTP::ZDataProperty<uint32_t> NamespaceItem_3653 {
@@ -477,8 +481,8 @@ namespace Glacier
                 .m_Name = "m_lRoutCases",
                 .m_Filter = 2
             },
-            .m_VirtualTable = nullptr,
-            .m_Offset = (uint32_t*)offsetof(ZEventBase, m_lRoutCases)
+            .m_VirtualTable = VirtualTable_DP__6,
+            .m_Offset = CLASS_PROPERTY(ZEventBase, m_lRoutCases)
         };
 
         static RTP::ZDataProperty<TIMETYPE> NamespaceItem_3652 {
@@ -487,8 +491,8 @@ namespace Glacier
                 .m_Name = "m_fTimePassed",
                 .m_Filter = 2
             },
-            .m_VirtualTable = nullptr,
-            .m_Offset = (TIMETYPE*)offsetof(ZEventBase, m_fTimePassed)
+            .m_VirtualTable = VirtualTable_DP__39,
+            .m_Offset = CLASS_PROPERTY(ZEventBase, m_fTimePassed)
         };
 
         static RTP::ZDataProperty<float> NamespaceItem_3651 {
@@ -497,8 +501,8 @@ namespace Glacier
                 .m_Name = "m_TimeInterval",
                 .m_Filter = 2
             },
-            .m_VirtualTable = nullptr,
-            .m_Offset = (float*)offsetof(ZEventBase, m_TimerInterval)
+            .m_VirtualTable = VirtualTable_DP__11,
+            .m_Offset = CLASS_PROPERTY(ZEventBase, m_TimerInterval)
         };
     }
 
@@ -507,8 +511,5 @@ namespace Glacier
         .Super = &RTP::cBase::Info,
         .Name = "ZEventBase"
     }));
-
-    STATIC_CLASS_VAR_IMPL(ZEventBase, uint32_t, m_DirectRef, 0x009725AC, 0);
-    STATIC_CLASS_VAR_IMPL(ZEventBase, bool, m_LockCreation, 0x009725B0, false);
-    STATIC_CLASS_VAR_IMPL(ZEventBase, ZEventBase::EStatus, m_DefaultStatus, 0x009725B4, ZEventBase::EStatus::STATUS_New);
+#   pragma endregion
 }
