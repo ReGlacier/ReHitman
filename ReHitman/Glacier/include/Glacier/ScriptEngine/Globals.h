@@ -26,7 +26,7 @@ namespace Glacier
     // Engine-side script interface table copied into the scene script DLL on
     // attach (AttachSceneScripts copies exactly 0x2CC entries). On PC it spans
     // [0x007F2D20, 0x007F3850) right up to the Uniques symbol.
-    using ScriptInterfacesArray_t = void*[0x2CC];
+    using ScriptInterfacesArray_t = void**; // size 0x2CC
     // Script heap pool: on PC AddBlock(g_ScriptMemory, 0x80000) registers the
     // whole region [0x8289C8, 0x8A89C8), so the buffer must span 0x80000 bytes
     // (the named .data symbol g_ScriptMemory[30264] is only its head).

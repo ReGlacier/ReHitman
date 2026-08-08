@@ -254,6 +254,7 @@ namespace Glacier
         uint16_t GeomControl() const;
         void SetGeomControl(uint16_t lBitsAdd, uint16_t lBitsRem);
         void SetControl(uint32_t lBitsAdd, uint32_t lBitsRem);
+        void GetWorldPosition(ZVector3& vPosition);
 
         // RTTI custom methods
 #       pragma region " --- RTTI generated stuff --- "

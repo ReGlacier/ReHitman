@@ -243,4 +243,25 @@ namespace Glacier
 
     using anim = uint16_t;
     using STATEREF = const void**;
+
+    enum _eMoveSet 
+    {
+        eMoveSet_NORMAL = 0,
+        eMoveSet_SLOW = 1,
+        eMoveSet_DRUNK = 2,
+        eMoveSet_DOG = 3,
+        eMoveSet_RAT = 4,
+        eMoveSet_DRAG = 5,
+        eMoveSet_JOGG = 6,
+        eMoveSet_DRILL = 7,
+        eMoveSet_TOURGUIDE = 8,
+        eMoveSet_SNEAK = 9,
+        eMoveSet_CRATE = 10,
+        eMoveSet_BELLYDANCE = 11,
+        eMoveSet_M11ASSASSINCARTWHEELLEFT = 12,
+        eMoveSet_M11ASSASSINCARTWHEELRIGHT = 13,
+        eMoveSet_M11ASSASSINFASTRUN = 14,
+        eMoveSet_eMoveSetEnd = 15,
+    };
+    using eMoveSet = _eMoveSet;
 }

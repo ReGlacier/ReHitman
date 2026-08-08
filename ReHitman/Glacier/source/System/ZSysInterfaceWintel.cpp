@@ -270,7 +270,7 @@ namespace Glacier
         }
 
         // Backup old values
-        const uint32_t lResolution[2] = { m_lResolution[0], m_lResolution[1] };
+        const int lResolution[2] = { m_lResolution[0], m_lResolution[1] };
         const bool bFullScreen = m_bFullScreen;
         const auto lBpp = m_lBitsPerPixel;
 

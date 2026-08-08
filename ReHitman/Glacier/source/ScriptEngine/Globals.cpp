@@ -14,7 +14,6 @@ namespace Glacier
     STATIC_GLOBAL_CLASS_INSTANCE_IMPL(ZScriptC_ZMessagesArray_t, ZScriptC_ZMessages, 0x007596A0, {});
     STATIC_GLOBAL_CLASS_INSTANCE_IMPL(ZScriptC_ZMessage*, g_pZScriptC_Messages, 0x008A89CC, nullptr);
     STATIC_GLOBAL_CLASS_INSTANCE_IMPL(UniquesArray_t, Uniques, 0x007F3850, {});
-    STATIC_GLOBAL_CLASS_INSTANCE_IMPL(ScriptInterfacesArray_t, ScriptInterfaces, 0x007F2D20, {});
     STATIC_GLOBAL_CLASS_INSTANCE_IMPL(const char**, g_pZScriptC_Uniques, 0x008A89C8, nullptr);
     STATIC_GLOBAL_CLASS_INSTANCE_IMPL(bool, g_bScriptLoadResult, 0x008ACA2C, false);
     STATIC_GLOBAL_CLASS_INSTANCE_IMPL(ZMallocSimple, g_ScriptAllocator, 0x008A89E0, ZMallocSimple(0x800, 4));

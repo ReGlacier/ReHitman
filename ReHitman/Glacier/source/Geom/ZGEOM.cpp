@@ -1712,6 +1712,12 @@ namespace Glacier
         BaseGeom()->SetControl(lBitsAdd, lBitsRem);
     }
 
+    void ZGEOM::GetWorldPosition(ZVector3& vPosition)
+    {
+        GetRootPoint(vPosition);
+    }
+
+
     STATIC_CLASS_VAR_IMPL(ZGEOM, ZFactory<ZGEOM>, m_Factory, 0x00972930, ZFactory<ZGEOM>{});
     STATIC_CLASS_VAR_IMPL(ZGEOM, const char*, FactoryName, 0x00769CF4, "ZGEOM");
     DECLARE_ID_AND_MASK_IMPL(ZGEOM, 0x009728C4, 0x009728C8);
