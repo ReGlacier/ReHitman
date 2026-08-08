@@ -58,4 +58,9 @@ namespace Glacier
         // TODO: Finish me
         return 0;
     }
+
+    void Audio__Setsoundobjectautodelete(ZREF soundObject, bool autoDelete)
+    {
+        // TODO: Finish me
+    }
 }

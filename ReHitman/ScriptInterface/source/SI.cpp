@@ -22,7 +22,7 @@
 
 namespace Glacier
 {
-    static SI::ScriptInterfacesTable ScriptInterfacesDefault = {
+    static const SI::ScriptInterfacesTable ScriptInterfacesDefault = {
         &Zcar__Moveto, // 0
         &Zcar__Setspeedmultiplier, // 1
         &Zcar__Settargetspeedmultiplier, // 2
@@ -742,5 +742,18 @@ namespace Glacier
      };
     static_assert(sizeof(SI::ScriptInterfacesTable) == sizeof(void*) * 0x2CC);
 
-    STATIC_GLOBAL_CLASS_INSTANCE_IMPL(ScriptInterfacesArray_t, ScriptInterfaces, 0x007F2D20, (void**)&ScriptInterfacesDefault);
+    struct ScriptInterfacesInitializer
+    {
+        ScriptInterfacesInitializer()
+        {
+            auto* source = reinterpret_cast<const void* const*>(&ScriptInterfacesDefault);
+            for (int i = 0; i < 0x2CC; ++i)
+            {
+                ScriptInterfaces[i] = const_cast<void*>(source[i]);
+            }
+        }
+
+    };
+
+    static const ScriptInterfacesInitializer ScriptInterfacesInitializerInstance;
 }

@@ -52,7 +52,19 @@ target_compile_features(ScriptDllInterface INTERFACE cxx_std_20)
 
 add_library(ScriptInterface STATIC ${SI_SOURCES})
 
-target_include_directories(ScriptInterface PUBLIC include)
+if (MSVC)
+    target_link_options(ScriptInterface INTERFACE
+        "/WHOLEARCHIVE:$<TARGET_FILE:ScriptInterface>"
+    )
+endif()
+
+target_include_directories(ScriptInterface
+    PUBLIC
+        include
+        ${CMAKE_CURRENT_LIST_DIR}/../BloodMoney/include
+    PRIVATE
+        ${CMAKE_CURRENT_LIST_DIR}/../Glacier/include
+)
 target_link_libraries(ScriptInterface PUBLIC ScriptDllInterface)
 
 
@@ -61,7 +73,6 @@ if (REHITMAN_TESTS AND TARGET G1::TestCore)
     target_link_libraries(
         ScriptInterface 
         PUBLIC 
-            Hitman::BloodMoney   # Replace to test target
             G1::TestCore
     )
 else()
@@ -69,7 +80,6 @@ else()
     target_link_libraries(
         ScriptInterface 
         PUBLIC 
-            Hitman::BloodMoney 
             G1::Core
     )
 endif()
