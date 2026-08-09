@@ -125,6 +125,72 @@ TOOLS = {
             "additionalProperties": False,
         },
     },
+    "search_local_types": {
+        "description": "Search Local Types by name in selected IDA instances, or all instances when omitted.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string"},
+                "instances": {"type": "array", "items": {"type": "string"}},
+                "limit": {"type": "integer", "minimum": 1, "maximum": MAX_RESULTS},
+            },
+            "required": ["query"],
+            "additionalProperties": False,
+        },
+    },
+    "add_local_type": {
+        "description": "Parse a C declaration and add its named type to IDA Local Types.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "instance": {"type": "string"},
+                "declaration": {"type": "string"},
+                "replace": {"type": "boolean"},
+            },
+            "required": ["instance", "declaration"],
+            "additionalProperties": False,
+        },
+    },
+    "list_imports": {
+        "description": "List imported symbols from one IDA database.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "instance": {"type": "string"},
+                "limit": {"type": "integer", "minimum": 1, "maximum": MAX_RESULTS},
+            },
+            "required": ["instance"],
+            "additionalProperties": False,
+        },
+    },
+    "list_exports": {
+        "description": "List exported symbols from one IDA database.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "instance": {"type": "string"},
+                "limit": {"type": "integer", "minimum": 1, "maximum": MAX_RESULTS},
+            },
+            "required": ["instance"],
+            "additionalProperties": False,
+        },
+    },
+    "set_comment": {
+        "description": "Set or clear a regular or repeatable comment at an address.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "instance": {"type": "string"},
+                "address": {"oneOf": [{"type": "integer"}, {"type": "string"}]},
+                "comment": {"type": "string"},
+                "repeatable": {"type": "boolean"},
+                "expected_comment": {"type": "string"},
+                "force": {"type": "boolean"},
+            },
+            "required": ["instance", "address", "comment"],
+            "additionalProperties": False,
+        },
+    },
     "search_and_decompile": {
         "description": "Search a function in multiple builds and decompile each unambiguous match.",
         "inputSchema": {
@@ -352,6 +418,15 @@ HANDLERS = {
     ),
     "set_function_comment": lambda arguments: _single_instance_call(
         "set_function_comment", arguments, ("address", "comment")
+    ),
+    "search_local_types": lambda arguments: _search("search_local_types", arguments),
+    "add_local_type": lambda arguments: _single_instance_call(
+        "add_local_type", arguments, ("declaration",)
+    ),
+    "list_imports": lambda arguments: _single_instance_call("list_imports", arguments, ()),
+    "list_exports": lambda arguments: _single_instance_call("list_exports", arguments, ()),
+    "set_comment": lambda arguments: _single_instance_call(
+        "set_comment", arguments, ("address", "comment")
     ),
     "search_and_decompile": _search_and_decompile,
 }

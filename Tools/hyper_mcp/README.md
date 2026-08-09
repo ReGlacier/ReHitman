@@ -109,6 +109,11 @@ connection usually means the guest firewall is blocking the UDP reply or TCP
 - `rename_function`: rename an existing function with overwrite protection.
 - `set_function_comment`: set, replace, or clear a function comment with
   overwrite protection.
+- `search_local_types`: search Local Types by name in selected builds or all builds.
+- `add_local_type`: parse a C declaration and add its named type to Local Types.
+- `list_imports`: list imported symbols from one IDA database.
+- `list_exports`: list exported symbols from one IDA database.
+- `set_comment`: set, replace, or clear a comment at any address with overwrite protection.
 - `search_and_decompile`: search multiple builds and decompile unambiguous
   matches in one request.
 
@@ -146,8 +151,8 @@ and whether the target is already a function. The model can then decompile
 selected targets from each build instead of transferring every function at
 once.
 
-Renames and comments are the only IDB modifications currently exposed. They do
-not create functions or modify types. Prefer compare-and-set arguments so a
+Renames, comments, and Local Types are the IDB modifications currently exposed.
+Prefer compare-and-set arguments so a
 stale model request cannot overwrite newer manual work:
 
 ```json
@@ -171,6 +176,22 @@ stale model request cannot overwrite newer manual work:
 An existing user-defined name or non-empty comment is not replaced unless its
 current value is supplied as `expected_name`/`expected_comment`, or `force` is
 explicitly set to `true`. Passing an empty `comment` clears the selected comment.
+
+Add a named Local Type through IDA's declaration parser:
+
+```json
+{
+  "instance": "PC",
+  "declaration": "struct ZExample { int value; };",
+  "replace": false
+}
+```
+
+`search_local_types` returns matching names, ordinals, and printable
+declarations. `list_imports` and `list_exports` return symbol names, addresses,
+ordinals, and module/forwarder metadata where IDA provides it. `set_comment`
+accepts symbol names or numeric addresses and supports the same
+`expected_comment`/`force` protection as function comments.
 
 Example cross-build request:
 

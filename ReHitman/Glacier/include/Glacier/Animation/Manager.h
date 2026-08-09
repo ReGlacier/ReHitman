@@ -1,11 +1,26 @@
 #pragma once
 
 #include <Glacier/ReGlacier.h>
+#include <Glacier/ZUniMemory.h>
 #include <Glacier/Animation/Fwd.h>
+#include <Glacier/Animation/ZPose.h>
+#include <Glacier/Animation/ZBone.h>
 #include <cstdint>
+
 
 namespace Glacier::Animation
 {
+    struct ZMetaKey
+    {
+        uint32_t lFrame;
+        uint32_t lValue;
+        uint32_t length;
+        uint32_t lStringOffset;
+
+        const char* GetString();
+    };
+    RE_VERIFY_SIZE(ZMetaKey, 0x10);
+
     class CrowdHeader
     {
         char m_szName[32];
@@ -16,9 +31,14 @@ namespace Glacier::Animation
 
     struct ZNameList
     {
-        char* m_Names;
-        int m_Size;
-        int m_Count;
+        // members
+        char* m_Names { nullptr };
+        int m_Size { 0 };
+        int m_Count { 0 };
+
+        // methods
+        ZNameList() = default;
+        ~ZNameList() = default;
 
         int GetId(const char* pszAnimName, int iNoneIndex);
         const char* GetName(int id, int none);
@@ -60,10 +80,72 @@ namespace Glacier::Animation
     class Manager
     {
     public:
-        // Types
+        // types
         enum EResult : int32_t { eUndefinedError = 0x1 };
 
-        // Data
+        // methods
+        Manager();
+        ~Manager();
+
+        /**
+         * Allocates and initializes an animation manager from an ANM data block.
+         *
+         * This is the common operation performed by the engine after it has
+         * resolved the ANM chunk from the packed animation file. The returned
+         * manager owns its object allocation, while the loaded animation data
+         * remains borrowed from pBlock and must outlive the manager's use of
+         * that data. Destroy the returned manager with ZUniMemory::Delete.
+         *
+         * @param pBlock Pointer to the ANM payload, excluding its CHUNKFILE
+         *               header.
+         * @param lSize Size of the ANM payload in bytes.
+         * @return A newly allocated and loaded manager, or nullptr if object
+         *         allocation fails.
+         */
+        static Manager* CreateFromDataBlock(void* pBlock, int lSize);
+
+        /**
+         * Loads the animation manager's serialized data block.
+         *
+         * The block starts with the animation counts and byte sizes used by
+         * the manager, followed by an array of animation headers and the
+         * associated data, bone-name, animation-name, and pose-name buffers.
+         * The manager points into this caller-owned memory; it does not copy
+         * the block and marks the loaded buffers as non-owned.
+         *
+         * If packed animation data is available through the engine data base,
+         * this method also resolves chunks 8 and 9 as the metadata key data
+         * and metadata key string data, respectively. Missing packed animation
+         * data leaves both metadata pointers null. The state cache is reset to
+         * null after loading, matching the original PC implementation.
+         *
+         * @param pBlock Pointer to the serialized animation data block.
+         * @param lSize Size of the serialized block in bytes. The original
+         *              implementation accepts this value but does not use it
+         *              for bounds validation.
+         * @return Zero on completion.
+         */
+        int LoadDataBlock(void* pBlock, int lSize);
+        char* GetAnimName(int id);
+        BoneID GetBoneID(const char* pszAnimName);
+        void* GetArray(void*& pBuffer, int lOffset);
+        void GetInt32(void*& pBuffer, int32_t& result);
+        Header* FromIndex(int lIndex);
+        int ToIndex(const Header* pHeader);
+        PoseID GetPoseID(const char* pszPoseName);
+        const char* GetMetaKeyDataStrings();
+        bool GetPlayUncompressed();
+        int Clear();
+        uint32_t GetMetaKeyDataLength(int lMetaKey);
+        ZMetaKey* GetMetaKeyData(int lMetaKey);
+        ZMetaKey* GetMetaKeyAtFrame(int lMetaKey, uint32_t lFrame);
+        int32_t GetFrameFromMetaValue(int, uint32_t, int32_t*);
+        int32_t GetFrameFromMetaString(int, const char*, uint32_t);
+        void SetCompressionRatio(float ratio);
+        void SetCompressionRatioPC();
+
+
+        // members
         Header* m_Headers;
         int m_Animcount;
         CrowdHeader* m_pCrowdHeaders;
@@ -87,4 +169,6 @@ namespace Glacier::Animation
         char* m_pMetaKeyDataStrings;
     };
     RE_VERIFY_SIZE(Manager, 0x68); // Verified by ZEngineDataBase::AllocSequence method
+
+    STATIC_GLOBAL_CLASS_INSTANCE(Manager*, instance);
 }

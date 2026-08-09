@@ -24,6 +24,7 @@ import ida_kernwin
 import ida_name
 import ida_nalt
 import ida_netnode
+import ida_typeinf
 import idaapi
 import idautils
 
@@ -255,6 +256,107 @@ def _set_function_comment(arguments):
     }
 
 
+def _search_local_types(arguments):
+    query = str(arguments.get("query", "")).casefold()
+    if not query:
+        raise ValueError("query must not be empty")
+    limit = _bounded_limit(arguments)
+    til = ida_typeinf.get_idati()
+    results = []
+    for ordinal in range(1, ida_typeinf.get_ordinal_limit(til)):
+        name = ida_typeinf.get_numbered_type_name(til, ordinal)
+        if not name or query not in name.casefold():
+            continue
+        tif = ida_typeinf.tinfo_t()
+        declaration = ""
+        if tif.get_numbered_type(til, ordinal):
+            declaration = ida_typeinf.print_tinfo(
+                "", 0, 0,
+                ida_typeinf.PRTYPE_MULTI | ida_typeinf.PRTYPE_TYPE | ida_typeinf.PRTYPE_DEF,
+                tif, name, ""
+            ) or ""
+        results.append({"name": name, "ordinal": ordinal, "declaration": declaration})
+        if len(results) >= limit:
+            break
+    return results
+
+
+def _add_local_type(arguments):
+    declaration = str(arguments.get("declaration", "")).strip()
+    if not declaration:
+        raise ValueError("declaration must not be empty")
+    til = ida_typeinf.get_idati()
+    parse_flags = getattr(ida_typeinf, "PT_SIL", 0) | getattr(ida_typeinf, "PT_SEMICOLON", 0)
+    parsed = ida_typeinf.idc_parse_decl(til, declaration, parse_flags)
+    if not parsed or not isinstance(parsed, tuple) or len(parsed) != 3:
+        raise ValueError("IDA could not parse the declaration")
+    name, _, _ = parsed
+    if not name:
+        raise ValueError("the declaration must define a named type")
+    existing = ida_typeinf.tinfo_t()
+    if existing.get_named_type(til, name) and not arguments.get("replace", False):
+        raise ValueError("local type '%s' already exists; set replace to true to update it" % name)
+    errors = ida_typeinf.parse_decls(til, declaration, None, getattr(ida_typeinf, "HTI_NWR", 0))
+    if errors:
+        raise ValueError("IDA reported %d error(s) while adding local type '%s'" % (errors, name))
+    added = ida_typeinf.tinfo_t()
+    if not added.get_named_type(til, name):
+        raise RuntimeError("IDA parsed the declaration but local type '%s' was not created" % name)
+    ordinal = added.get_ordinal()
+    return {"name": name, "ordinal": ordinal, "declaration": declaration}
+
+
+def _list_imports(arguments):
+    limit = _bounded_limit(arguments)
+    results = []
+    for module_index in range(idaapi.get_import_module_qty()):
+        module_name = idaapi.get_import_module_name(module_index) or ""
+
+        def callback(ea, name, ordinal):
+            if len(results) >= limit:
+                return False
+            results.append({"address": "0x%X" % ea, "name": name or "", "ordinal": ordinal, "module": module_name})
+            return True
+
+        idaapi.enum_import_names(module_index, callback)
+        if len(results) >= limit:
+            break
+    return results
+
+
+def _list_exports(arguments):
+    limit = _bounded_limit(arguments)
+    results = []
+    get_forwarder = getattr(idaapi, "get_entry_forwarder", None)
+    for _, ordinal, ea, name in idautils.Entries():
+        results.append({
+            "address": "0x%X" % ea,
+            "name": name or "",
+            "ordinal": ordinal,
+            "forwarder": get_forwarder(ordinal) or "" if get_forwarder else "",
+        })
+        if len(results) >= limit:
+            break
+    return results
+
+
+def _set_comment(arguments):
+    if "address" not in arguments or "comment" not in arguments:
+        raise ValueError("address and comment are required")
+    ea = _parse_address(arguments["address"])
+    repeatable = bool(arguments.get("repeatable", False))
+    current = ida_bytes.get_cmt(ea, repeatable) or ""
+    expected = arguments.get("expected_comment")
+    if expected is not None and current != expected:
+        raise ValueError("current comment does not match expected_comment")
+    comment = str(arguments["comment"])
+    if current and current != comment and expected is None and not arguments.get("force", False):
+        raise ValueError("refusing to replace existing comment without expected_comment or force")
+    if current != comment and not ida_bytes.set_cmt(ea, comment, repeatable):
+        raise RuntimeError("IDA failed to set the comment")
+    return {"address": "0x%X" % ea, "old_comment": current, "comment": comment, "repeatable": repeatable}
+
+
 METHODS = {
     "search_functions": _search_functions,
     "search_globals": _search_globals,
@@ -263,6 +365,11 @@ METHODS = {
     "read_pointer_table": _read_pointer_table,
     "rename_function": _rename_function,
     "set_function_comment": _set_function_comment,
+    "search_local_types": _search_local_types,
+    "add_local_type": _add_local_type,
+    "list_imports": _list_imports,
+    "list_exports": _list_exports,
+    "set_comment": _set_comment,
 }
 
 
@@ -404,7 +511,9 @@ class IdaMcpPlugin(idaapi.plugin_t):
             return {"ok": False, "error": "unknown method"}
         try:
             arguments = command.get("arguments") or {}
-            write = command.get("method") in ("rename_function", "set_function_comment")
+            write = command.get("method") in (
+                "rename_function", "set_function_comment", "add_local_type", "set_comment"
+            )
             data = _run_in_ida(lambda: handler(arguments), write)
             return {"ok": True, "result": data}
         except Exception as exc:

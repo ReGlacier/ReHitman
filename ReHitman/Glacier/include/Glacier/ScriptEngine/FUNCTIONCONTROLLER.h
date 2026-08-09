@@ -7,7 +7,7 @@
 
 namespace Glacier
 {
-    using EntryPoint_t = void(*)(_ScriptState*);
+    using EntryPoint_t = float(*)(_ScriptState*); // DronCode: yep, I guess it's ok
 
     struct _FUNCTIONCONTROLLER 
     {
