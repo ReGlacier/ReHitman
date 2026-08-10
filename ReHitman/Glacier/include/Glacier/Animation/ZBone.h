@@ -12,6 +12,12 @@ namespace Glacier
 
     struct ZBone
     {
+        // methods
+        ZBone();
+        ZBone(const ZBone& copy);
+        ZBone& operator=(const ZBone& copy);
+
+        // members
         ZMat3x3 _Mat;
         ZVector3 _Pos;
     };

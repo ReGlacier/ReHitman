@@ -63,8 +63,7 @@ namespace Glacier::Animation
         m_QuatSize = 0;
         m_PoseSize = 0;
 
-        // TODO: Finish after ZHumanState reversed
-        // ZHumanState::InitStaticData()
+        ZHumanState::InitStaticData();
     }
 
     Manager::~Manager()

@@ -8,6 +8,7 @@ namespace Glacier::Animation
 {
     struct ZStateBlending 
     {
+        // members
         uint32_t m_MagicNumber;
         float  m_BlendTime;
     };

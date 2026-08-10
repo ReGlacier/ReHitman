@@ -3,7 +3,6 @@
 #include <Glacier/ZSTL/ZMemory.h>
 #include <algorithm>
 #include <cmath>
-#include <cmath>
 
 
 namespace Glacier
@@ -269,6 +268,53 @@ namespace Glacier
     {
         float i, j, k, w;
     };
+
+    inline void qmul(float* out, const float* lhs, const float* rhs)
+    {
+        const float x = rhs[3] * lhs[0] + rhs[0] * lhs[3] + rhs[1] * lhs[2] - rhs[2] * lhs[1];
+        const float y = rhs[3] * lhs[1] - rhs[0] * lhs[2] + rhs[1] * lhs[3] + rhs[2] * lhs[0];
+        const float z = rhs[3] * lhs[2] + rhs[0] * lhs[1] - rhs[1] * lhs[0] + rhs[2] * lhs[3];
+        const float w = rhs[3] * lhs[3] - rhs[0] * lhs[0] - rhs[1] * lhs[1] - rhs[2] * lhs[2];
+
+        out[0] = x;
+        out[1] = y;
+        out[2] = z;
+        out[3] = w;
+    }
+
+    inline void qmul(ZQuat& out, const ZQuat& lhs, const ZQuat& rhs)
+    {
+        qmul(&out.i, &lhs.i, &rhs.i);
+    }
+
+    inline void qrotaxis(float* out, const float* axis, float angle)
+    {
+        constexpr float TwoPi = 6.2831855f;
+        constexpr float InvTwoPi = 0.15915494f;
+        constexpr float Pi = 3.1415927f;
+
+        float halfAngle = 0.0f;
+        if (angle < 0.0f || angle >= TwoPi)
+        {
+            const float turns = angle * InvTwoPi;
+            halfAngle = (turns - std::floor(turns)) * Pi;
+        }
+        else
+        {
+            halfAngle = angle * 0.5f;
+        }
+
+        const float s = std::sin(halfAngle);
+        out[0] = axis[0] * s;
+        out[1] = axis[1] * s;
+        out[2] = axis[2] * s;
+        out[3] = std::cos(halfAngle);
+    }
+
+    inline void qrotaxis(ZQuat& out, const float* axis, float angle)
+    {
+        qrotaxis(&out.i, axis, angle);
+    }
 
     struct ZMatrix
     {
