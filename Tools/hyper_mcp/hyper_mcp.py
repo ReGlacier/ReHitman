@@ -21,9 +21,11 @@ import ida_hexrays
 import ida_ida
 import ida_idaapi
 import ida_kernwin
+import ida_lines
 import ida_name
 import ida_nalt
 import ida_netnode
+import ida_segment
 import ida_typeinf
 import idaapi
 import idautils
@@ -122,6 +124,63 @@ def _search_globals(arguments):
         if len(results) >= limit:
             break
     return results
+
+
+def _find_references(arguments):
+    if "address" not in arguments:
+        raise ValueError("address is required")
+    ea = _parse_address(arguments["address"])
+    limit = _bounded_limit(arguments)
+    target_function = ida_funcs.get_func(ea)
+    target_segment = ida_segment.getseg(ea)
+    references = []
+    total = 0
+    for xref in idautils.XrefsTo(ea, 0):
+        total += 1
+        if len(references) >= limit:
+            continue
+        source_function = ida_funcs.get_func(xref.frm)
+        source_segment = ida_segment.getseg(xref.frm)
+        source_name = ida_name.get_name(xref.frm) or ""
+        reference = {
+            "address": "0x%X" % xref.frm,
+            "type": idautils.XrefTypeName(xref.type),
+            "type_id": xref.type,
+            "is_code": bool(xref.iscode),
+            "is_user": bool(xref.user),
+            "name": source_name,
+            "segment": ida_segment.get_segm_name(source_segment) if source_segment is not None else "",
+            "disassembly": ida_lines.generate_disasm_line(
+                xref.frm, ida_lines.GENDSM_REMOVE_TAGS
+            ) or "",
+        }
+        if source_function is not None:
+            reference["function"] = {
+                "address": "0x%X" % source_function.start_ea,
+                "name": ida_funcs.get_func_name(source_function.start_ea),
+                "offset": xref.frm - source_function.start_ea,
+            }
+        else:
+            reference["function"] = None
+        references.append(reference)
+    return {
+        "address": "0x%X" % ea,
+        "name": ida_name.get_name(ea) or "",
+        "segment": ida_segment.get_segm_name(target_segment) if target_segment is not None else "",
+        "is_function": target_function is not None and target_function.start_ea == ea,
+        "containing_function": (
+            {
+                "address": "0x%X" % target_function.start_ea,
+                "name": ida_funcs.get_func_name(target_function.start_ea),
+                "offset": ea - target_function.start_ea,
+            }
+            if target_function is not None else None
+        ),
+        "total": total,
+        "returned": len(references),
+        "truncated": total > len(references),
+        "references": references,
+    }
 
 
 def _decompile(arguments):
@@ -233,6 +292,32 @@ def _rename_function(arguments):
     if current_name != new_name and not ida_name.set_name(function.start_ea, new_name, ida_name.SN_CHECK):
         raise ValueError("IDA rejected function name: %s" % new_name)
     return {"address": "0x%X" % function.start_ea, "old_name": current_name, "name": new_name}
+
+
+def _rename_global(arguments):
+    if "address" not in arguments:
+        raise ValueError("address is required")
+    ea = _parse_address(arguments["address"])
+    function = ida_funcs.get_func(ea)
+    if function is not None:
+        raise ValueError("address 0x%X belongs to function %s" % (
+            ea, ida_funcs.get_func_name(function.start_ea)
+        ))
+    if not ida_bytes.is_mapped(ea):
+        raise ValueError("address 0x%X is not mapped in the database" % ea)
+    new_name = str(arguments.get("new_name", "")).strip()
+    if not new_name:
+        raise ValueError("new_name must not be empty")
+    current_name = ida_name.get_name(ea) or ""
+    expected_name = arguments.get("expected_name")
+    if expected_name is not None and current_name != expected_name:
+        raise ValueError("current name is %s, expected %s" % (current_name or "<unnamed>", expected_name))
+    has_user_name = ida_bytes.has_user_name(ida_bytes.get_flags(ea))
+    if has_user_name and expected_name is None and not arguments.get("force", False) and current_name != new_name:
+        raise ValueError("refusing to replace user name %s without expected_name or force" % current_name)
+    if current_name != new_name and not ida_name.set_name(ea, new_name, ida_name.SN_CHECK):
+        raise ValueError("IDA rejected global name: %s" % new_name)
+    return {"address": "0x%X" % ea, "old_name": current_name, "name": new_name}
 
 
 def _set_function_comment(arguments):
@@ -360,10 +445,12 @@ def _set_comment(arguments):
 METHODS = {
     "search_functions": _search_functions,
     "search_globals": _search_globals,
+    "find_references": _find_references,
     "decompile": _decompile,
     "read_memory": _read_memory,
     "read_pointer_table": _read_pointer_table,
     "rename_function": _rename_function,
+    "rename_global": _rename_global,
     "set_function_comment": _set_function_comment,
     "search_local_types": _search_local_types,
     "add_local_type": _add_local_type,
@@ -512,7 +599,7 @@ class IdaMcpPlugin(idaapi.plugin_t):
         try:
             arguments = command.get("arguments") or {}
             write = command.get("method") in (
-                "rename_function", "set_function_comment", "add_local_type", "set_comment"
+                "rename_function", "rename_global", "set_function_comment", "add_local_type", "set_comment"
             )
             data = _run_in_ida(lambda: handler(arguments), write)
             return {"ok": True, "result": data}

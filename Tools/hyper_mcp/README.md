@@ -101,12 +101,15 @@ connection usually means the guest firewall is blocking the UDP reply or TCP
 - `list_instances`: list active IDA names, database paths, and persistent IDs.
 - `search_functions`: search selected builds or all active builds in parallel.
 - `search_globals`: search global names in selected builds or all builds.
+- `find_references`: find code and data references to an address, including xref
+  type, disassembly, segment, source name, and containing-function context.
 - `decompile`: decompile an address or exact symbol in one named build.
 - `read_memory`: read up to 64 KiB of database bytes as hex or base64.
 - `read_pointer_table`: read up to 4096 pointer-table entries with target
   names and function metadata. Supports custom pointer size, structure stride,
   and pointer offset.
 - `rename_function`: rename an existing function with overwrite protection.
+- `rename_global`: rename a non-function global address with overwrite protection.
 - `set_function_comment`: set, replace, or clear a function comment with
   overwrite protection.
 - `search_local_types`: search Local Types by name in selected builds or all builds.
@@ -164,6 +167,31 @@ stale model request cannot overwrite newer manual work:
 }
 ```
 
+Find references to any named or numeric address in one build:
+
+```json
+{
+  "instance": "PC",
+  "address": "ScriptInterfaces",
+  "limit": 200
+}
+```
+
+The result describes the target and each code or data xref. It reports the full
+xref count in `total`; `truncated` is true when only the first `limit` entries
+are returned.
+
+Rename a global using compare-and-set protection:
+
+```json
+{
+  "instance": "PC",
+  "address": "0x8A1234",
+  "expected_name": "dword_8A1234",
+  "new_name": "g_CurrentLevel"
+}
+```
+
 ```json
 {
   "instance": "PC",
@@ -173,9 +201,10 @@ stale model request cannot overwrite newer manual work:
 }
 ```
 
-An existing user-defined name or non-empty comment is not replaced unless its
-current value is supplied as `expected_name`/`expected_comment`, or `force` is
-explicitly set to `true`. Passing an empty `comment` clears the selected comment.
+An existing user-defined function/global name or non-empty comment is not
+replaced unless its current value is supplied as
+`expected_name`/`expected_comment`, or `force` is explicitly set to `true`.
+Passing an empty `comment` clears the selected comment.
 
 Add a named Local Type through IDA's declaration parser:
 

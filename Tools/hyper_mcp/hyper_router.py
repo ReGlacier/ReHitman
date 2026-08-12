@@ -52,6 +52,19 @@ TOOLS = {
             "additionalProperties": False,
         },
     },
+    "find_references": {
+        "description": "Find all code and data references to an address with source context and IDA metadata.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "instance": {"type": "string"},
+                "address": {"oneOf": [{"type": "integer"}, {"type": "string"}]},
+                "limit": {"type": "integer", "minimum": 1, "maximum": MAX_RESULTS},
+            },
+            "required": ["instance", "address"],
+            "additionalProperties": False,
+        },
+    },
     "decompile": {
         "description": "Return Hex-Rays pseudocode from one named IDA instance.",
         "inputSchema": {
@@ -96,6 +109,21 @@ TOOLS = {
     },
     "rename_function": {
         "description": "Rename an existing function in one IDA database with optional compare-and-set protection.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "instance": {"type": "string"},
+                "address": {"oneOf": [{"type": "integer"}, {"type": "string"}]},
+                "new_name": {"type": "string"},
+                "expected_name": {"type": "string"},
+                "force": {"type": "boolean"},
+            },
+            "required": ["instance", "address", "new_name"],
+            "additionalProperties": False,
+        },
+    },
+    "rename_global": {
+        "description": "Rename a non-function global address in one IDA database with optional compare-and-set protection.",
         "inputSchema": {
             "type": "object",
             "properties": {
@@ -408,6 +436,7 @@ HANDLERS = {
     "list_instances": _list_instances,
     "search_functions": lambda arguments: _search("search_functions", arguments),
     "search_globals": lambda arguments: _search("search_globals", arguments),
+    "find_references": lambda arguments: _single_instance_call("find_references", arguments, ("address",)),
     "decompile": lambda arguments: _single_instance_call("decompile", arguments, ("address",)),
     "read_memory": lambda arguments: _single_instance_call("read_memory", arguments, ("address", "size")),
     "read_pointer_table": lambda arguments: _single_instance_call(
@@ -415,6 +444,9 @@ HANDLERS = {
     ),
     "rename_function": lambda arguments: _single_instance_call(
         "rename_function", arguments, ("address", "new_name")
+    ),
+    "rename_global": lambda arguments: _single_instance_call(
+        "rename_global", arguments, ("address", "new_name")
     ),
     "set_function_comment": lambda arguments: _single_instance_call(
         "set_function_comment", arguments, ("address", "comment")
