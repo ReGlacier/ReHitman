@@ -34,6 +34,28 @@ if(WIN32)
         else()
             set(DXSDK_LIB_DIR "${DXSDK_DIR_PATH}/Lib/x86")
         endif()
+    else()
+        # Fallback to the vcpkg "directxsdk" port layout: headers live in the
+        # "directxsdk" include subdirectory, libs are split into lib/ and debug/lib/.
+        find_path(DXSDK_INCLUDE_DIR NAMES d3dx9.h PATH_SUFFIXES directxsdk)
+        find_library(DXSDK_D3DX9_RELEASE_LIB NAMES d3dx9)
+        find_library(DXSDK_D3DX9_DEBUG_LIB NAMES d3dx9d)
+
+        set(DXSDK_LIB_DIR)
+        foreach(DXSDK_LIB "${DXSDK_D3DX9_RELEASE_LIB}" "${DXSDK_D3DX9_DEBUG_LIB}")
+            if(DXSDK_LIB)
+                get_filename_component(DXSDK_LIB_PATH "${DXSDK_LIB}" DIRECTORY)
+                list(APPEND DXSDK_LIB_DIR "${DXSDK_LIB_PATH}")
+            endif()
+        endforeach()
+
+        if(DXSDK_LIB_DIR)
+            list(REMOVE_DUPLICATES DXSDK_LIB_DIR)
+        endif()
+    endif()
+
+    if(NOT DXSDK_INCLUDE_DIR)
+        message(FATAL_ERROR "[Glacier] DirectX SDK was not found. Install the legacy DirectX SDK (DXSDK_DIR) or the vcpkg 'directxsdk' port.")
     endif()
 
     list(
@@ -49,6 +71,8 @@ if(WIN32)
     )
 
     message(STATUS "[Glacier] DXSDK_DIR from ENV: $ENV{DXSDK_DIR}")
+    message(STATUS "[Glacier] DXSDK include dir: ${DXSDK_INCLUDE_DIR}")
+    message(STATUS "[Glacier] DXSDK lib dir(s): ${DXSDK_LIB_DIR}")
 endif()
 
 if(MSVC)
