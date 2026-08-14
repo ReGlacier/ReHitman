@@ -28,7 +28,9 @@ python hyper_router.py
 
 On the first load of each database, the plugin asks for its short name, such as
 `PC`, `iOS`, or `PS2`. That name is stored inside the IDB and is not requested
-again. Use `Edit -> Plugins -> IDA MCP Agent` to rename an instance later.
+again. Use `Edit -> Hyper Agent` or `Edit -> Plugins -> Hyper Agent` to open the
+settings window. It shows the connection status and connected agent UUID, lets
+you rename the instance, and can persistently disable the agent for that IDB.
 
 The agents broadcast a discovery packet on UDP port `8764`. The router replies
 with its TCP port both directly and through the subnet broadcast, then each

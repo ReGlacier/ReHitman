@@ -31,7 +31,8 @@ import idaapi
 import idautils
 
 
-PLUGIN_NAME = "IDA MCP Agent"
+PLUGIN_NAME = "Hyper Agent"
+ACTION_NAME = "hyper_mcp:settings"
 NODE_NAME = "$ ida_mcp_agent"
 ROUTER_URL = os.environ.get("IDA_MCP_ROUTER", "")
 DISCOVERY_PORT = 8764
@@ -43,6 +44,7 @@ MAX_MEMORY_READ = 64 * 1024
 MAX_TABLE_ENTRIES = 4096
 NODE_ID_SLOT = 0
 NODE_NAME_SLOT = 1
+NODE_ENABLED_SLOT = 2
 
 
 def _decode_node_string(value):
@@ -64,6 +66,71 @@ def _node_write_string(node, slot, value):
     saved = _decode_node_string(node.supval_idx8(slot, ida_netnode.stag))
     if saved != value:
         raise RuntimeError("failed to save agent identity in the IDA database")
+
+
+class HyperAgentSettingsForm(ida_kernwin.Form):
+    def __init__(self, plugin):
+        self.plugin = plugin
+        connected, agent_id = plugin._connection_status()
+        self.saved_name = plugin.instance_name
+        controls = {
+            "EnabledGroup": ida_kernwin.Form.ChkGroupControl(("Enabled",)),
+            "Status": ida_kernwin.Form.StringInput(value="Connected" if connected else "Disconnected", swidth=40),
+            "AgentId": ida_kernwin.Form.StringInput(value=agent_id if connected else "", swidth=40),
+            "InstanceName": ida_kernwin.Form.StringInput(value=self.saved_name, swidth=40),
+            "Apply": ida_kernwin.Form.ButtonInput(self._apply),
+            "Close": ida_kernwin.Form.ButtonInput(self._close),
+            "FormChangeCb": ida_kernwin.Form.FormChangeCb(self._changed),
+        }
+        super().__init__(
+            r"""STARTITEM {id:InstanceName}
+Hyper Agent
+{FormChangeCb}
+
+<Enabled:{Enabled}>{EnabledGroup}>
+<Status\::{Status}>
+<Our ID\::{AgentId}>
+<Our name\::{InstanceName}>
+
+<Apply:{Apply}> <Close:{Close}>
+""",
+            controls,
+        )
+    def _changed(self, field_id):
+        if field_id == -1:
+            self.EnableField(self.Status, False)
+            self.EnableField(self.AgentId, False)
+            self.EnableField(self.Apply, False)
+        elif field_id == self.InstanceName.id:
+            name = str(self.GetControlValue(self.InstanceName) or "").strip()
+            self.EnableField(self.Apply, bool(name) and name != self.saved_name)
+        elif field_id == self.Enabled.id:
+            self.plugin._set_enabled(bool(self.GetControlValue(self.Enabled)))
+        return 1
+
+    def _apply(self, code=0):
+        name = str(self.GetControlValue(self.InstanceName) or "").strip()
+        if not name or name == self.saved_name:
+            return
+        self.plugin._set_instance_name(name)
+        self.saved_name = name
+        self.EnableField(self.Apply, False)
+
+    def _close(self, code=0):
+        self.Close(0)
+
+
+class HyperAgentSettingsAction(ida_kernwin.action_handler_t):
+    def __init__(self, plugin):
+        super().__init__()
+        self.plugin = plugin
+
+    def activate(self, ctx):
+        self.plugin._show_settings()
+        return 1
+
+    def update(self, ctx):
+        return ida_kernwin.AST_ENABLE_FOR_IDB
 
 
 def _parse_address(value):
@@ -482,7 +549,7 @@ def _run_in_ida(function, write=False):
 class IdaMcpPlugin(idaapi.plugin_t):
     flags = idaapi.PLUGIN_FIX
     comment = "Register this IDA database with the unified MCP router"
-    help = "Run this plugin from the menu to rename the instance"
+    help = "Configure the Hyper MCP agent"
     wanted_name = PLUGIN_NAME
     wanted_hotkey = ""
 
@@ -502,6 +569,57 @@ class IdaMcpPlugin(idaapi.plugin_t):
             if not self.instance_name:
                 self.instance_name = filename or self.instance_id[:8]
         _node_write_string(self.node, NODE_NAME_SLOT, self.instance_name)
+        enabled_value = _node_read_string(self.node, NODE_ENABLED_SLOT, "enabled")
+        self.enabled = enabled_value != "0"
+        _node_write_string(self.node, NODE_ENABLED_SLOT, "1" if self.enabled else "0")
+
+    def _connection_status(self):
+        with self.state_lock:
+            return self.connected, self.instance_id if self.connected else ""
+
+    def _set_instance_name(self, name):
+        if name == self.instance_name:
+            return
+        self.instance_name = name
+        _node_write_string(self.node, NODE_NAME_SLOT, name)
+        self.reconnect_event.set()
+        print("[%s] Instance renamed to '%s'" % (PLUGIN_NAME, name))
+
+    def _set_enabled(self, enabled):
+        if enabled == self.enabled:
+            return
+        self.enabled = enabled
+        _node_write_string(self.node, NODE_ENABLED_SLOT, "1" if enabled else "0")
+        if enabled:
+            self.enabled_event.set()
+            print("[%s] Agent enabled" % PLUGIN_NAME)
+        else:
+            self.enabled_event.clear()
+            self.reconnect_event.set()
+            with self.state_lock:
+                self.connected = False
+            print("[%s] Agent disabled" % PLUGIN_NAME)
+
+    def _show_settings(self):
+        form = HyperAgentSettingsForm(self)
+        try:
+            form.Compile()
+            form.EnabledGroup.value = 1 if self.enabled else 0
+            form.Execute()
+        finally:
+            form.Free()
+
+    def _register_settings_action(self):
+        self.settings_action = HyperAgentSettingsAction(self)
+        descriptor = ida_kernwin.action_desc_t(
+            ACTION_NAME, "Hyper Agent", self.settings_action, None,
+            "Configure the Hyper MCP agent", -1
+        )
+        if not ida_kernwin.register_action(descriptor):
+            raise RuntimeError("failed to register the Hyper Agent settings action")
+        if not ida_kernwin.attach_action_to_menu("Edit/", ACTION_NAME, ida_kernwin.SETMENU_APP):
+            ida_kernwin.unregister_action(ACTION_NAME)
+            raise RuntimeError("failed to add Hyper Agent to the Edit menu")
 
     def _registration(self):
         return {
@@ -609,6 +727,9 @@ class IdaMcpPlugin(idaapi.plugin_t):
     def _connection_loop(self):
         connected_url = None
         while not self.stop_event.is_set():
+            if not self.enabled:
+                self.enabled_event.wait(DISCOVERY_INTERVAL)
+                continue
             router_url = self._discover_router()
             if not router_url:
                 self.stop_event.wait(DISCOVERY_INTERVAL)
@@ -617,6 +738,8 @@ class IdaMcpPlugin(idaapi.plugin_t):
                 connected_url = router_url
                 registration = self._post(router_url + "/agent/register", self._registration(), 5)
                 session = registration["session"]
+                with self.state_lock:
+                    self.connected = True
                 print("[%s] '%s' connected to %s" % (PLUGIN_NAME, self.instance_name, router_url))
                 while not self.stop_event.is_set() and not self.reconnect_event.is_set():
                     command = self._post(
@@ -624,6 +747,8 @@ class IdaMcpPlugin(idaapi.plugin_t):
                         {"id": self.instance_id, "session": session},
                         POLL_TIMEOUT,
                     ).get("command")
+                    if self.reconnect_event.is_set() or not self.enabled:
+                        break
                     if command is None:
                         continue
                     result = self._execute_command(command)
@@ -631,6 +756,8 @@ class IdaMcpPlugin(idaapi.plugin_t):
                     self._post(router_url + "/agent/result", result, 10)
             except (OSError, KeyError, ValueError, urllib.error.URLError, json.JSONDecodeError) as exc:
                 print("[%s] Could not use %s: %s; rediscovering router" % (PLUGIN_NAME, connected_url, exc))
+            with self.state_lock:
+                self.connected = False
             connected_url = None
             self.reconnect_event.clear()
             self.stop_event.wait(DISCOVERY_INTERVAL)
@@ -638,31 +765,42 @@ class IdaMcpPlugin(idaapi.plugin_t):
     def init(self):
         if not idaapi.get_path(idaapi.PATH_TYPE_IDB):
             return idaapi.PLUGIN_SKIP
+        self.settings_action = None
         try:
             self._load_identity()
             self.stop_event = threading.Event()
             self.reconnect_event = threading.Event()
+            self.enabled_event = threading.Event()
+            if self.enabled:
+                self.enabled_event.set()
+            self.state_lock = threading.Lock()
+            self.connected = False
             self.discovery_attempts = 0
+            self._register_settings_action()
             self.connection_thread = threading.Thread(target=self._connection_loop, name="hyper-mcp-channel", daemon=True)
             self.connection_thread.start()
-            print("[%s] '%s' searching for a Hyper MCP router" % (PLUGIN_NAME, self.instance_name))
+            if self.enabled:
+                print("[%s] '%s' searching for a Hyper MCP router" % (PLUGIN_NAME, self.instance_name))
+            else:
+                print("[%s] Agent is disabled for this database" % PLUGIN_NAME)
             return idaapi.PLUGIN_KEEP
         except Exception as exc:
+            if self.settings_action is not None:
+                ida_kernwin.detach_action_from_menu("Edit/", ACTION_NAME)
+                ida_kernwin.unregister_action(ACTION_NAME)
             print("[%s] Failed to start: %s" % (PLUGIN_NAME, exc))
             traceback.print_exc()
             return idaapi.PLUGIN_SKIP
 
     def run(self, arg):
-        name = ida_kernwin.ask_str(self.instance_name, 0, "Rename this IDA MCP instance")
-        if name and name != self.instance_name:
-            self.instance_name = name
-            _node_write_string(self.node, NODE_NAME_SLOT, name)
-            self.reconnect_event.set()
-            print("[%s] Instance renamed to '%s'" % (PLUGIN_NAME, name))
+        self._show_settings()
 
     def term(self):
         if hasattr(self, "stop_event"):
             self.stop_event.set()
+        if getattr(self, "settings_action", None) is not None:
+            ida_kernwin.detach_action_from_menu("Edit/", ACTION_NAME)
+            ida_kernwin.unregister_action(ACTION_NAME)
 
 
 def PLUGIN_ENTRY():
