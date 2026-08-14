@@ -39,7 +39,7 @@ namespace Glacier
             const char* pszCullMode, 
             uint32_t lZBias,
             float fZOffset) override;
-        void CreatePropertyBinderScroll(ZRenderBinderList* pMaterialBinderList, const char* pszBinderName, const float* pfScrollSpeed) override;
+        void CreatePropertyBinderScroll(ZRenderBinderList* pMaterialBinderList, const float* pfScrollSpeed) override;
 
         // methods
         ZRenderMaterialBinderParserD3DFX(ZRenderMaterialEffectD3DFX* pEffect, D3DXHANDLE hTechnique);

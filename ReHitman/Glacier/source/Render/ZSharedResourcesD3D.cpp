@@ -134,29 +134,11 @@ namespace Glacier
             }
 
             // TODO: Finish me
-#if 0
-            // ANother part of unknown things
-    if ( dword_90AE3C[0] )
-    {
-      (*(void (__stdcall **)(_DWORD *))(*dword_90AE3C[0] + 8))(dword_90AE3C[0]);
-      dword_90AE3C[0] = 0;
-    }
-    if ( dword_90AECC[0] )
-    {
-      (*(void (__stdcall **)(_DWORD *))(*dword_90AECC[0] + 8))(dword_90AECC[0]);
-      dword_90AECC[0] = 0;
-    }
-    if ( dword_90AE84[0] )
-    {
-      (*(void (__stdcall **)(_DWORD *))(*dword_90AE84[0] + 8))(dword_90AE84[0]);
-      dword_90AE84[0] = 0;
-    }
-    if ( dword_90ADF4[0] )
-    {
-      (*(void (__stdcall **)(_DWORD *))(*dword_90ADF4[0] + 8))(dword_90ADF4[0]);
-      dword_90ADF4[0] = 0;
-    }
-#endif
+            // dword_90AE3C - not initialized - skipped until usage found
+            // dword_90AECC - not initialized - skipped until usage found
+            // dword_90AE84 - not initialized - skipped until usage found
+            // dword_90ADF4 - used at sub_491390 but type unrecognized - skipped
+            // 
 
             if (g_pNormalizedCubeMap)
             {

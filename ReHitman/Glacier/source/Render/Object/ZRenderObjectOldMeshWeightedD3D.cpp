@@ -1,58 +1,49 @@
-#include <Glacier/Render/Object/ZRenderObjectInstanceOldMeshD3D.h>
-#include <Glacier/Render/Object/ZRenderObjectOldMeshD3D.h>
-#include <Glacier/Render/Prim/SD3DRenderVertex.h>
-#include <Glacier/Render/Prim/SVertexWintel.h>
+#include <Glacier/Render/Object/ZRenderObjectOldMeshWeightedD3D.h>
+#include <Glacier/Render/Object/ZRenderObjectInstanceOldMeshWeightedD3D.h>
+#include <Glacier/Render/Prim/SVertexW4Wintel.h>
 #include <Glacier/Render/Prim/SPrimSubMesh.h>
 #include <Glacier/Render/Prim/SPrimMesh.h>
-#include <Glacier/Render/Prim/EPrimType.h>
-#include <Glacier/Render/ZSharedResourcesD3D.h>
 #include <Glacier/Render/ZRD3DStaticVB.h>
 #include <Glacier/Render/ZRD3DStaticIB.h>
-#include <Glacier/Render/Globals.h>
+#include <Glacier/Render/ZSharedResourcesD3D.h>
 #include <Glacier/ZUniMemory.h>
 
 
 namespace Glacier
 {
-    ZRenderObjectOldMeshD3D::ZRenderObjectOldMeshD3D(const ZPrimHandle& hPrim, ZRenderMaterialInstance* pMaterialInstance)
+    ZRenderObjectOldMeshWeightedD3D::ZRenderObjectOldMeshWeightedD3D(const ZPrimHandle& hPrim, ZRenderMaterialInstance* pMaterialInstance)
         : ZRenderObjectD3D(hPrim, pMaterialInstance)
     {
         const SPrimMesh* pMesh = hPrim;
-        ZASSERT(pMesh->lType == EPrimType::PTMESH);
-        ZASSERT(pMesh->lSubMeshTable);
-
         const uint32_t lSubMeshTable = pMesh->lSubMeshTable;
         const uint32_t* pSubMeshTable = ZPrimHandle{lSubMeshTable};
         const uint32_t lFirstMesh = pSubMeshTable[0];
+        ZASSERT(lFirstMesh);
+        
         const SPrimSubMesh* pSubMesh = ZPrimHandle{lFirstMesh};
-        const uint32_t lVertices = pSubMesh->lVertices;
-        const uint32_t* pVertices = ZPrimHandle{lVertices};       
 
-        RE_VERIFY_SIZE(SD3DRenderVertex, 0x20);
-        const uint32_t lNumVertices = pSubMesh->lNumVertices * pMesh->lNumFrames;
+        // Init vertices storage
+        const uint32_t lVertices = pSubMesh->lVertices;
+        const uint32_t* pVertices = ZPrimHandle{lVertices};
+
+        RE_VERIFY_SIZE(SVertexW4Wintel, 0x34); // Twice
+
         m_VertexContainer.Create(
-            lNumVertices,
-            sizeof(SD3DRenderVertex), 
+            pSubMesh->lNumVertices, 
+            sizeof(SVertexW4Wintel), // 0x34
             ZSharedResourcesD3D::g_pInstance->m_pVertexAllocator, 
-            0
-        );
+            0);
 
         if (m_VertexContainer.m_lNumVertices)
         {
-            // Copy veritces with small transform (remove field 'c' (color) from final vertex due color computed in shaders)
-            auto* pLockedData = static_cast<uint8_t*>(ZSharedResourcesD3D::g_pInstance->m_pSVB->LockedData());
-            auto* pDstBuffer = reinterpret_cast<SD3DRenderVertex*>(pLockedData + m_VertexContainer.m_lVertexOffset);
-            auto* pSrcVertices = reinterpret_cast<const SVertexWintel*>(pVertices);
-
-            for (int i = 0; i < lNumVertices; ++i)
-            {
-                pDstBuffer[i].p = pSrcVertices[i].p;
-                pDstBuffer[i].n = pSrcVertices[i].n;
-                pDstBuffer[i].t = pSrcVertices[i].t;
-                // Don't copy SVertexWintel::c field, it's ok
-            }
+            memcpy(
+                reinterpret_cast<uint8_t*>(ZSharedResourcesD3D::g_pInstance->m_pSVB->LockedData()) + m_VertexContainer.m_lVertexOffset,
+                pVertices,
+                sizeof(SVertexW4Wintel) * pSubMesh->lNumVertices
+            );
         }
 
+        // Init indices storage
         const uint32_t lIndices = pSubMesh->lIndices;
         const uint16_t* pIndices = ZPrimHandle{lIndices};
 
@@ -82,14 +73,14 @@ namespace Glacier
         }
     }
 
-    ZRenderObjectOldMeshD3D::~ZRenderObjectOldMeshD3D()
+    ZRenderObjectOldMeshWeightedD3D::~ZRenderObjectOldMeshWeightedD3D()
     {
         m_VertexContainer.Release();
         m_IndexContainer.Release();
     }
 
-    ZRenderObjectInstance* ZRenderObjectOldMeshD3D::CreateInstance(ZBaseGeom* pBaseGeom)
+    ZRenderObjectInstance* ZRenderObjectOldMeshWeightedD3D::CreateInstance(ZBaseGeom* pBaseGeom)
     {
-        return ZUniMemory::New<ZRenderObjectInstanceOldMeshD3D>(this, pBaseGeom);
+        return ZUniMemory::New<ZRenderObjectInstanceOldMeshWeightedD3D>(this, pBaseGeom);
     }
 }

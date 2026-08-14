@@ -34,11 +34,12 @@ namespace Glacier
         virtual uint32_t GetPrim() const;
         virtual void* GetHiddenBoneIndices() const;
         virtual uint32_t GetBoneIndexMask(const SPrimObject* pPrimObject);
-        virtual void* GetPlanes() const;
+        virtual float* GetPlanes() const;
         virtual void CalcLODMask(SRenderEntryNotifyInfo* pEntry);
         virtual void GetAttachedBaseGeoms(ZStackArray<1024, ZRenderEntry::ZAttachedBaseGeom>* pArray);
 
         // methods
         // members
+        // TODO: Finish me
     };
 }

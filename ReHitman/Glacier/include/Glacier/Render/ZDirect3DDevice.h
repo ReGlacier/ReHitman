@@ -43,6 +43,16 @@ namespace Glacier
         // ...
         HRESULT Reset(D3DPRESENT_PARAMETERS* pPresentationParameters);
         HRESULT Clear(DWORD dwCount, const D3DRECT* Rect, DWORD dwFlags, D3DCOLOR Color, float fZ, DWORD dwStencil);
+        HRESULT StretchRect(IDirect3DSurface9* pSourceSurface, const RECT* pSourceRect, IDirect3DSurface9* pDestSurface, const RECT* pDestRect, D3DTEXTUREFILTERTYPE Filter);
+        HRESULT SetRenderTarget(DWORD dwRenderTargetIndex, IDirect3DSurface9* pRenderTarget);
+        HRESULT GetRenderTarget(DWORD dwRenderTargetIndex, IDirect3DSurface9** ppRenderTarget);
+        HRESULT SetDepthStencilSurface(IDirect3DSurface9* pNewZStencil);
+        HRESULT GetDepthStencilSurface(IDirect3DSurface9** ppZStencilSurface);
+        HRESULT SetViewport(const D3DVIEWPORT9* pViewport);
+        HRESULT GetViewport(D3DVIEWPORT9* pViewport);
+        HRESULT SetScissorRect(const RECT* pRect);
+        HRESULT DrawPrimitive(D3DPRIMITIVETYPE PrimitiveType, UINT StartVertex, UINT PrimitiveCount);
+        HRESULT SetVertexDeclaration(IDirect3DVertexDeclaration9* pDecl);
         HRESULT SetIndices(IDirect3DIndexBuffer9* pIndexBuffer);
         HRESULT SetStreamSource(uint32_t lStreamNumber, IDirect3DVertexBuffer9* pVertexBuffer, uint32_t lOffset, uint32_t lStride);
         HRESULT CreateTexture(UINT iWidth, UINT iHeight, UINT iLevels, DWORD dwUsage, D3DFORMAT format, D3DPOOL pool, IDirect3DTexture9** pOutTexture, HANDLE* pHandle);

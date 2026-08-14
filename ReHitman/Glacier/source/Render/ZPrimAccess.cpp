@@ -3,6 +3,8 @@
 #include <Glacier/Render/Material/ZRenderMaterialBuffer.h>
 #include <Glacier/Render/Material/ZRenderMaterialInstance.h>
 #include <Glacier/Render/Material/ZRenderMaterialSubClass.h>
+#include <Glacier/Render/Prim/SPrimObject.h>
+#include <Glacier/Render/ZPrimAccess.h>
 #include <Glacier/ZUniMemory.h>
 #include <Glacier/ZUniAssert.h>
 
@@ -40,21 +42,12 @@ namespace Glacier
 
     ZPrimAccess* ZPrimAccess::Create(const ZPrimHandle& hPrim)
     {
-        void* pPrimEntry = nullptr;
-
-        if (!(hPrim.m_lHandleValue & 0x80000000))
-        {
-            pPrimEntry = g_apPrimHandleToPointerTable[hPrim.m_lHandleValue];
-        }
-        else
-        {
-            pPrimEntry = (void*)(hPrim.m_lHandleValue & 0x7FFFFFFFu);
-        }
-
-        const auto arg = *reinterpret_cast<uint16_t*>(reinterpret_cast<int32_t>(pPrimEntry) + 18); // <<< TODO: Make me better
-        
         ZASSERT(g_pMaterialBufferInstance);
-        auto* pMaterialInstance = g_pMaterialBufferInstance->GetMaterialInstance(arg);
+        ZASSERT(hPrim);
+
+        const SPrimObject* pPrimObject = hPrim;
+
+        auto* pMaterialInstance = g_pMaterialBufferInstance->GetMaterialInstance(pPrimObject->lMaterialId);
         if (!pMaterialInstance)
         {
             return nullptr;

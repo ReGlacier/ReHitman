@@ -17,6 +17,9 @@ namespace Glacier
 
         // methods
         ZRenderObjectInstanceOldMeshD3D(ZRenderObject* pRenderObject, ZBaseGeom* pBaseGeom);
+        void CalcLightVertices(SVertexColorD3D* pDstVertices, const SVertexWintel* pSrcVertices, uint32_t lNumVertices, const SUpdateLightData* pLights, uint32_t lNumLights, uint32_t lDrawMode);
+        void UnpackVertices(const SVertexWintel* pSrcVertices, uint32_t lNumVertices, uint32_t lDrawMode);
+        void PackVertices(SVertexColorD3D* pDstVertices, const SVertexWintel* pSrcVertices, uint32_t lNumVertices);
 
         // members
         ZRVertexContainer m_VertexContrainer;

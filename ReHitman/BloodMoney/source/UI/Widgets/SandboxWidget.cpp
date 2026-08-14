@@ -31,7 +31,6 @@
 #include <Glacier/Geom/ZROOM.h>
 #include <Glacier/Geom/ZTreeGroup.h>
 #include <Glacier/ZTypeTraits.h>
-#include <Glacier/ZRenderWintelD3D.h>
 #include <Glacier/ZPrimControlWintel.h>
 #include <Glacier/Geom/ZLIST.h>
 #include <Glacier/Items/ZItemTemplateAmmo.h>
@@ -53,7 +52,6 @@
 #include <BloodMoney/Game/UI/ZLINEOBJ.h>
 
 #include <HF/HackingFramework.hpp>
-#include <Glacier/ZRenderWintelD3DDll.h>
 #include <Glacier/ZPrimControlWintel.h>
 #include <Glacier/ZEngineGeomControl.h>
 #include <Glacier/Com/CCom.h>
@@ -86,9 +84,6 @@ namespace Hitman::BloodMoney
         auto sceneCom = engineDb->GetSceneCom();
         if (!sceneCom) { return; }
 
-        auto renderDll = Glacier::getInterface<Glacier::ZRenderWintelD3DDll>(Globals::kD3DDllAddr);
-        if (!renderDll) { return; }
-
         auto geomBuffer = Glacier::getInterface<Glacier::ZGeomBuffer>(Globals::kGeomBufferAddr);
         if (!geomBuffer) { return; }
 
@@ -96,26 +91,6 @@ namespace Hitman::BloodMoney
         if (!hitman) return;
 
         ImGui::Begin("Test script");
-        if (ImGui::Button("Try to dump few prims")) {
-            spdlog::info("Hitman   prim {:08X}", (int)renderDll->m_primControlWintel->GetPrimData(reinterpret_cast<Glacier::ZGEOM*>(gameData->m_Hitman3)->m_baseGeom->m_lPrim));
-            spdlog::info("Actor[0] prim {:08X}", (int)renderDll->m_primControlWintel->GetPrimData(gameData->m_ActorsPool[0]->m_baseGeom->m_lPrim));
-            spdlog::info("Actor[1] prim {:08X}", (int)renderDll->m_primControlWintel->GetPrimData(gameData->m_ActorsPool[1]->m_baseGeom->m_lPrim));
-
-            char buffer[512] { 0 };
-
-            using GetPrimStats_t = int(__thiscall*)(int, char*, int, int);
-            auto GetPrimStats = (GetPrimStats_t)0x00487740;
-
-            auto r = GetPrimStats((int)renderDll->m_primControlWintel, &buffer[0], 511, reinterpret_cast<Glacier::ZGEOM*>(gameData->m_Hitman3)->m_baseGeom->m_lPrim);
-            spdlog::info("R: {:08X}| {}", r, buffer);
-            std::memset(&buffer[0], 0x0, 512);
-
-            for (int i = 0; i < gameData->m_ActorsPool.m_iSize; i++) {
-                GetPrimStats((int)renderDll->m_primControlWintel, &buffer[0], 511, gameData->m_ActorsPool[i]->m_baseGeom->m_lPrim);
-                spdlog::info("Actor[{}]: {}", i, buffer);
-                std::memset(&buffer[0], 0x0, 512);
-            }
-        }
 
 		{
 			static int g_typeId { 0 };
@@ -258,10 +233,6 @@ namespace Hitman::BloodMoney
             *reinterpret_cast<bool*>(((std::intptr_t)gameData->m_Hitman3) + 0xB58) = !v;
         }
 
-        if (ImGui::Button("Dump render draw")) {
-            spdlog::info("RenderDraw at {:08X}", reinterpret_cast<Glacier::ZRenderWintelD3D*>(sysInterface->WindowFirst)->m_pRenderDraw);
-        }
-
         if (ImGui::Button("Dump actor #0 matpos")) {
             Glacier::ZMat3x3 mat;
             Glacier::ZVector3 pos;
@@ -273,32 +244,6 @@ namespace Hitman::BloodMoney
             spdlog::info("Mat     : {};{};{}", mat.data[0], mat.data[1], mat.data[2]);
             spdlog::info("        : {};{};{}", mat.data[3], mat.data[4], mat.data[5]);
             spdlog::info("        : {};{};{}", mat.data[6], mat.data[7], mat.data[8]);
-        }
-
-        if (ImGui::Button("Test bone dumper")) {
-            spdlog::info("--------------- BEGIN DUMP -----------------");
-
-            auto pD3DDll = Glacier::getInterface<Glacier::ZRenderWintelD3DDll>(Globals::kD3DDllAddr);
-            auto pPrimControl = pD3DDll->m_primControlWintel;
-
-            auto pActor = gameData->m_ActorsPool[0];
-            const int iBonesCount = HF::Hook::VFHook<Glacier::ZPrimControlWintel>::invoke<int, int>(pPrimControl, 41, pActor->m_baseGeom->m_lPrim);
-            spdlog::info("Bones count: {}", iBonesCount);
-
-            for (int boneIx = 0; boneIx < iBonesCount; boneIx++) {
-                Glacier::Matrix3x3 mat {};
-                Glacier::Vector3 cenPos, pos;
-
-                pActor->GetBoneCenter(boneIx, &cenPos);
-                pActor->GetBoneMatPos(&mat, &pos, boneIx);
-
-                spdlog::info("Bone[{}] = {}", boneIx, pActor->GetBoneName(boneIx));
-                spdlog::info("Center: {};{};{}", cenPos.x, cenPos.y, cenPos.z);
-                spdlog::info("Pos   : {};{};{}", pos.x, pos.y, pos.z);
-                spdlog::info("Mat   : {};{};{}", mat.data[0], mat.data[1], mat.data[2]);
-                spdlog::info("        {};{};{}", mat.data[3], mat.data[4], mat.data[5]);
-                spdlog::info("        {};{};{}", mat.data[6], mat.data[7], mat.data[8]);
-            }
         }
 
 //        if (gameData->m_LevelControl && ImGui::Button("Arrive enemies")) {

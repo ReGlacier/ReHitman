@@ -15,13 +15,15 @@ namespace Glacier
     public:
         // vtbl
         ~ZRenderMaterialBuffer() override;
-        virtual ZRenderMaterialInstance* GetMaterialInstance(uint32_t lMaterialId);
-        virtual uint32_t CreateMaterialInstanceSprite(unsigned int, unsigned int, unsigned int);
-        virtual uint32_t GetTextureFromMaterial(uint32_t lMaterial, const char*);
-        virtual uint32_t GetAllTexturesFromMaterial(uint32_t lMaterial, uint32_t* ppTextures, uint32_t lMaxTexturesNr);
-        virtual uint32_t GetTextureAnimData(uint32_t lMaterialId);
+        virtual ZRenderMaterialInstance* GetMaterialInstance(uint32_t lMaterialId) = 0;
+        virtual uint32_t CreateMaterialInstanceSprite(uint32_t lTextureId, uint32_t lDrawMode, uint32_t lSpriteType) = 0;
+        virtual uint32_t GetTextureFromMaterial(uint32_t lMaterialId, const char* pszBinderName) = 0;
+        virtual uint32_t GetAllTexturesFromMaterial(uint32_t lMaterialId, uint32_t* ppTextures, uint32_t lMaxTexturesNr) = 0;
+        virtual uint32_t GetTextureAnimData(uint32_t lMaterialId) = 0;
 
         // methods
+        ZRenderMaterialBuffer();
+
         // members
         uint32_t m_lNumFullyOpaqueMaterials { 0u };
         uint32_t m_lNumOpaqueMaterials { 0u };

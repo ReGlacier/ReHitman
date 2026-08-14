@@ -12,7 +12,6 @@
 #include <BloodMoney/UI/GlacierInspectors.h>
 #include <BloodMoney/UI/BloodMoneyInspectors.h>
 
-#include <Glacier/ZRenderWintelD3DDll.h>
 #include <Glacier/System/ZSysInterfaceWintel.h>
 #include <Glacier/ZEngineDataBase.h>
 #include <Glacier/Geom/ZGeomBuffer.h>

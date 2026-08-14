@@ -125,7 +125,7 @@ namespace Glacier
             const char* pszCullMode, 
             uint32_t lZBias,
             float fZOffset) = 0;
-        virtual void CreatePropertyBinderScroll(ZRenderBinderList* pMaterialBinderList, const char* pszBinderName, const float* pfScrollSpeed) = 0;
+        virtual void CreatePropertyBinderScroll(ZRenderBinderList* pMaterialBinderList, const float* pfScrollSpeed) = 0;
         virtual void VerifyBinders(int lLayer, ZRenderMaterialBinderList* pMaterialBinderList, ZRenderMaterialInstance* pMaterialInstance);
 
         // methods

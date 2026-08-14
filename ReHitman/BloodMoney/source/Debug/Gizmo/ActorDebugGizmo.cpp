@@ -6,7 +6,7 @@
 #include <BloodMoney/Game/ZHitman3.h>
 
 #include <Glacier/System/ZSysInterfaceWintel.h>
-#include <Glacier/ZRenderWintelD3D.h>
+#include <Glacier/Render/Fwd.h>
 #include <Glacier/ZEngineDataBase.h>
 #include <Glacier/ZCameraSpace.h>
 #include <Glacier/ZCAMERA.h>
@@ -17,8 +17,6 @@
 #include <imgui_impl_win32.h>
 
 #include <spdlog/spdlog.h>
-#include <Glacier/ZPrimControlWintel.h>
-#include <Glacier/ZRenderWintelD3DDll.h>
 
 namespace Hitman::BloodMoney::Debug {
     void ActorDebugGizmo::OnDrawGizmo(EGizmoLayer layer, IDirect3DDevice9 *device) {

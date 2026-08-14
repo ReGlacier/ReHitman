@@ -262,6 +262,56 @@ namespace Glacier
         return m_pDevice->Clear(dwCount, pRect, dwFlags, Color, fZ, dwStencil);
     }
 
+    HRESULT ZDirect3DDevice::StretchRect(IDirect3DSurface9* pSourceSurface, const RECT* pSourceRect, IDirect3DSurface9* pDestSurface, const RECT* pDestRect, D3DTEXTUREFILTERTYPE Filter)
+    {
+        return m_pDevice->StretchRect(pSourceSurface, pSourceRect, pDestSurface, pDestRect, Filter);
+    }
+
+    HRESULT ZDirect3DDevice::SetRenderTarget(DWORD dwRenderTargetIndex, IDirect3DSurface9* pRenderTarget)
+    {
+        return m_pDevice->SetRenderTarget(dwRenderTargetIndex, pRenderTarget);
+    }
+
+    HRESULT ZDirect3DDevice::GetRenderTarget(DWORD dwRenderTargetIndex, IDirect3DSurface9** ppRenderTarget)
+    {
+        return m_pDevice->GetRenderTarget(dwRenderTargetIndex, ppRenderTarget);
+    }
+
+    HRESULT ZDirect3DDevice::SetDepthStencilSurface(IDirect3DSurface9* pNewZStencil)
+    {
+        return m_pDevice->SetDepthStencilSurface(pNewZStencil);
+    }
+
+    HRESULT ZDirect3DDevice::GetDepthStencilSurface(IDirect3DSurface9** ppZStencilSurface)
+    {
+        return m_pDevice->GetDepthStencilSurface(ppZStencilSurface);
+    }
+
+    HRESULT ZDirect3DDevice::SetViewport(const D3DVIEWPORT9* pViewport)
+    {
+        return m_pDevice->SetViewport(pViewport);
+    }
+
+    HRESULT ZDirect3DDevice::GetViewport(D3DVIEWPORT9* pViewport)
+    {
+        return m_pDevice->GetViewport(pViewport);
+    }
+
+    HRESULT ZDirect3DDevice::SetScissorRect(const RECT* pRect)
+    {
+        return m_pDevice->SetScissorRect(pRect);
+    }
+
+    HRESULT ZDirect3DDevice::DrawPrimitive(D3DPRIMITIVETYPE PrimitiveType, UINT StartVertex, UINT PrimitiveCount)
+    {
+        return m_pDevice->DrawPrimitive(PrimitiveType, StartVertex, PrimitiveCount);
+    }
+
+    HRESULT ZDirect3DDevice::SetVertexDeclaration(IDirect3DVertexDeclaration9* pDecl)
+    {
+        return m_pDevice->SetVertexDeclaration(pDecl);
+    }
+
     HRESULT ZDirect3DDevice::SetIndices(IDirect3DIndexBuffer9* pIndexBuffer)
     {
         return m_pDevice->SetIndices(pIndexBuffer);

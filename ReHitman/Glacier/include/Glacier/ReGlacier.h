@@ -8,6 +8,7 @@
 #define PAD_CONCAT_IMPL(x, y) x##y
 #define PAD_CONCAT(x, y) PAD_CONCAT_IMPL(x, y)
 #define RE_ADD_PADDING(size) uint8_t PAD_CONCAT(_pad_, __COUNTER__)[size]
+#define STATIC_ARR_LEN(arr) (sizeof(arr) / sizeof(arr[0]))
 
 #define RE_VERIFY_VTBL_INDEX(cls, method, expected_index) \
     { \

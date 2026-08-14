@@ -30,8 +30,9 @@ namespace Glacier
         // vtbl
         // methods
         ZRPropertyReader();
-        void Dump(int, const char*);
+        void Dump(int nIndent, const char* pszHeader) const;
         void GetNamedListElement(uint32_t lName, ZRPropertyReader& outElement) const;
+        bool TryGetNamedListElement(uint32_t lName, ZRPropertyReader& outElement) const;
 
         // members
         IBuffer* m_pBuffer { nullptr };

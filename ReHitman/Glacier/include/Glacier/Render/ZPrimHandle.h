@@ -34,5 +34,11 @@ namespace Glacier
         {
             return Get<T>();
         }
+
+        // Not BM/Glacier related stuff, just for runtime assertions
+        operator bool() const
+        {
+            return m_lHandleValue != 0u;
+        }
     };
 }

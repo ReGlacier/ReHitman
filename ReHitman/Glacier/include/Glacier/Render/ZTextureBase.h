@@ -34,4 +34,5 @@ namespace Glacier
         uint16_t m_lDrawEntryId { 0u };
     };
     RE_VERIFY_SIZE(ZTextureBase, 0x44);
+    RE_VERIFY_OFFSET(ZTextureBase, m_pAnimData, 0x30); // Verified PC ZRenderMaterialBinderParser::CreatePropertyBinders
 }

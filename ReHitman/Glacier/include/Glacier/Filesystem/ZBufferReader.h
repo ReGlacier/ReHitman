@@ -13,8 +13,6 @@ namespace Glacier
         // vtbl
         ~ZBufferReader() override;
         const void* GetData(uint32_t lOffset) override;
-        uint32_t GetBufferSize() override;
-        void GetBufferData(Callback_t pCallback, void* pData) override;
         virtual void InstallBuffer(void* pBuffer, uint32_t lBufferSize, uint32_t lBufferSizeAllocated);
         virtual void FreeBuffer();
         virtual void AllocateResources();

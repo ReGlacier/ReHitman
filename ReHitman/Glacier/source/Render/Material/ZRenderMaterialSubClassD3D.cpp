@@ -100,7 +100,7 @@ namespace Glacier
     bool ZRenderMaterialSubClassD3D::CanCreateMaterialInstance(const SRMaterialProperties* pMatProps)
     {
         ZASSERT(pMatProps);
-        if (pMatProps->lObjectSubType != m_lObjectType || pMatProps->lObjectSubType != m_lObjectSubType)
+        if (pMatProps->lObjectType != m_lObjectType || pMatProps->lObjectSubType != m_lObjectSubType)
         {
             return false;
         }
@@ -120,21 +120,23 @@ namespace Glacier
 
         for (uint32_t i = 0; i < pBindProperty->lSize; ++i)
         {
+            ZASSERT(pBindProperty->lType == ZRPropertyReader::PROPERTY_TYPE::PT_LIST);
+            ZASSERT(i < pBindProperty->lSize);
+
             ZRPropertyReader sElement{};
             sElement.m_pBuffer = sBindList.m_pBuffer;
             
             const auto* pElementsArray = static_cast<const ZRPropertyReader::SProperty*>(sBindList.m_pBuffer->GetData(pBindProperty->lData));
             sElement.m_pProperty = const_cast<ZRPropertyReader::SProperty*>(&pElementsArray[i]);
 
-            ZASSERT(sElement.m_pProperty->lType == ZRPropertyReader::PROPERTY_TYPE::PT_LIST);
-
             // Is enabled?
             ZRPropertyReader sEnabElem{};
             sElement.GetNamedListElement('ENAB', sEnabElem);
             ZASSERT(sEnabElem.m_pProperty->lType == ZRPropertyReader::PROPERTY_TYPE::PT_UINT32);
 
-            uint32_t bEnabled = 
-                (sEnabElem.m_pProperty->lSize == sizeof(uint32_t))
+            // lSize == 1: value is stored inline in lData, otherwise lData is a buffer offset.
+            uint32_t bEnabled =
+                (sEnabElem.m_pProperty->lSize == 1u)
                     ? sEnabElem.m_pProperty->lData
                     : *static_cast<const uint32_t*>(sEnabElem.m_pBuffer->GetData(sEnabElem.m_pProperty->lData));
 
@@ -156,14 +158,14 @@ namespace Glacier
                 const char* pszBinderName = static_cast<const char*>(sNameElem.m_pBuffer->GetData(sNameElem.m_pProperty->lData));
 
                 ZRPropertyReader sValuElem{};
-                sValuElem.GetNamedListElement('VALU', sValuElem);
+                sElement.GetNamedListElement('VALU', sValuElem);
                 if (sValuElem.m_pProperty->lType != ZRPropertyReader::PROPERTY_TYPE::PT_UINT32)
                 {
                     // Expected to have U32 here
                     continue;
                 }
 
-                uint32_t lVal = (sValuElem.m_pProperty->lSize == sizeof(uint32_t))
+                uint32_t lVal = (sValuElem.m_pProperty->lSize == 1u)
                     ? sValuElem.m_pProperty->lData
                     : *static_cast<const uint32_t*>(sValuElem.m_pBuffer->GetData(sValuElem.m_pProperty->lData));
 
@@ -188,10 +190,10 @@ namespace Glacier
             else if (sElement.m_pProperty->lName == 'RSTA') // Check by RenderState (RSTA)
             {
                 ZRPropertyReader sBenaElem{};
-                sBenaElem.GetNamedListElement('BENA', sBenaElem);
+                sElement.GetNamedListElement('BENA', sBenaElem);
                 ZASSERT(sBenaElem.m_pProperty->lType == ZRPropertyReader::PROPERTY_TYPE::PT_UINT32);
 
-                uint32_t lBenaVal = (sBenaElem.m_pProperty->lSize == sizeof(uint32_t))
+                uint32_t lBenaVal = (sBenaElem.m_pProperty->lSize == 1u)
                     ? sBenaElem.m_pProperty->lData
                     : *static_cast<const uint32_t*>(sBenaElem.m_pBuffer->GetData(sBenaElem.m_pProperty->lData));
 

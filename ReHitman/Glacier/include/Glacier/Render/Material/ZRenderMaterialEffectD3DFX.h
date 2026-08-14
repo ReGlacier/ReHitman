@@ -14,6 +14,7 @@ namespace Glacier
         // methods
         ZRenderMaterialEffectD3DFX(const char* pszFileName, const char* pszDefine, ID3DXEffect* pD3DXEffect, const D3DXMACRO* pMacros, uint32_t uNumMacros);
         ~ZRenderMaterialEffectD3DFX();
+        bool IsSame(const char* pszFileName, const D3DXMACRO* pDefined, uint32_t lNumDefines) const;
 
         // members
         char* m_pszFileName { nullptr }; // 0x0

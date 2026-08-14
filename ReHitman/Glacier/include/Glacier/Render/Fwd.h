@@ -28,6 +28,8 @@ namespace Glacier
     struct SPrims;
     struct SPrimLight;
     struct SPrimObject;
+    struct SVertexWintel;
+    struct SVertexColorD3D;
 
     // Prim Access
     class ZPrimAccess;
@@ -61,7 +63,6 @@ namespace Glacier
     class ZRenderObjectInstance;
     class ZRenderObject;
     class ZRenderMaterialLayer;
-    class ZRenderMaterialClass;
     class ZRenderMaterialSubClass;
     class ZRenderMaterialBinderList;
     struct SRMaterialProperties;

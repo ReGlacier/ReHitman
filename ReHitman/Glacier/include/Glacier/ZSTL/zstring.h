@@ -42,6 +42,10 @@ namespace Glacier
         bool operator<(const zstring& rhs) const;
         /** @brief Replaces this string with a copy of @p str. */
         zstring& operator=(const zstring& str);
+        /** @brief Returns a new string: @p lhs contents followed by @p rhs. */
+        friend zstring operator+(const zstring& lhs, const char* rhs);
+        /** @brief Returns a new string: @p lhs followed by @p rhs contents. */
+        friend zstring operator+(const char* lhs, const zstring& rhs);
         /** @brief Formats text into this string using printf-style formatting. */
         void format(const char* fmt, ...);
         /** @brief Returns true when this string has the same contents as @p rhs. */

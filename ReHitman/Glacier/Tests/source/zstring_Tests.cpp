@@ -107,3 +107,75 @@ TEST(zstring, FormatAssertsWhenOutputDoesNotFit)
 
     EXPECT_THROW(str.format("%s", large), std::runtime_error);
 }
+
+TEST(zstring, OperatorPlusZstringAndCStringConcatenates)
+{
+    zstring lhs("foo");
+
+    zstring result = lhs + "bar";
+
+    EXPECT_STREQ(result.c_str(), "foobar");
+    EXPECT_EQ(result.length(), 6u);
+    EXPECT_EQ(result.m_iCapacity, 6u);
+}
+
+TEST(zstring, OperatorPlusZstringAndCStringHandlesEmptyParts)
+{
+    zstring empty;
+    zstring str("foo");
+
+    EXPECT_STREQ((empty + "bar").c_str(), "bar");
+    EXPECT_STREQ((str + "").c_str(), "foo");
+    EXPECT_STREQ((str + static_cast<const char*>(nullptr)).c_str(), "foo");
+}
+
+TEST(zstring, OperatorPlusZstringAndCStringChains)
+{
+    zstring result = zstring("a") + "b" + "c";
+
+    EXPECT_STREQ(result.c_str(), "abc");
+    EXPECT_EQ(result.length(), 3u);
+}
+
+TEST(zstring, OperatorPlusZstringAndCStringDoesNotModifySource)
+{
+    zstring lhs("foo");
+
+    zstring result = lhs + "bar";
+    result.to_upper();
+
+    EXPECT_STREQ(lhs.c_str(), "foo");
+    EXPECT_STREQ(result.c_str(), "FOOBAR");
+}
+
+TEST(zstring, OperatorPlusCStringAndZstringConcatenates)
+{
+    zstring rhs("bar");
+
+    zstring result = "foo" + rhs;
+
+    EXPECT_STREQ(result.c_str(), "foobar");
+    EXPECT_EQ(result.length(), 6u);
+    EXPECT_EQ(result.m_iCapacity, 6u);
+}
+
+TEST(zstring, OperatorPlusCStringAndZstringHandlesEmptyParts)
+{
+    zstring rhs("bar");
+    zstring empty;
+
+    EXPECT_STREQ(("" + rhs).c_str(), "bar");
+    EXPECT_STREQ((static_cast<const char*>(nullptr) + rhs).c_str(), "bar");
+    EXPECT_STREQ(("foo" + empty).c_str(), "foo");
+}
+
+TEST(zstring, OperatorPlusCStringAndZstringDoesNotModifySource)
+{
+    zstring rhs("bar");
+
+    zstring result = "foo" + rhs;
+    result.to_upper();
+
+    EXPECT_STREQ(rhs.c_str(), "bar");
+    EXPECT_STREQ(result.c_str(), "FOOBAR");
+}

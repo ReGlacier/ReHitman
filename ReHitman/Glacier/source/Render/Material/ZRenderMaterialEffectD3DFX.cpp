@@ -72,6 +72,29 @@ namespace Glacier
         }
     }
 
+    bool ZRenderMaterialEffectD3DFX::IsSame(const char* pszFileName, const D3DXMACRO* pDefined, uint32_t lNumDefines) const
+    {
+        if (strcmp(pszFileName, m_pszFileName) != 0)
+        {
+            return false;
+        }
+
+        if (m_uNumMacros != lNumDefines)
+        {
+            return false;
+        }
+
+        for (uint32_t i = 0; i < m_uNumMacros; ++i)
+        {
+            if (strcmp(m_pMacros[i].Name, pDefined[i].Name) != 0 || strcmp(m_pMacros[i].Definition, pDefined[i].Definition) != 0)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     ZRenderMaterialEffectD3DFX::~ZRenderMaterialEffectD3DFX()
     {
         if (m_pD3DXEffect)

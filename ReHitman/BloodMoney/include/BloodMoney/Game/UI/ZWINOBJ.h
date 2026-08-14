@@ -1,8 +1,8 @@
 #pragma once
 
 #include <Glacier/ReGlacier.h>
+#include <Glacier/GlacierFWD.h>
 #include <Glacier/Geom/ZSTDOBJ.h>
-#include <Glacier/ZDrawBuffer.h>
 #include <Glacier/ZCameraSpace.h>
 #include <Glacier/SpriteDraw.h>
 

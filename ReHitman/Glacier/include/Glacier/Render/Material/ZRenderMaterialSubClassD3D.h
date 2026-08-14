@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Glacier/ReGlacier.h>
+#include <Glacier/Render/Material/SRenderMaterialBinderValidator.h>
 #include <Glacier/Render/Material/ZRenderMaterialSubClass.h>
 #include <Glacier/Render/Fwd.h>
 #include <cstdint>
@@ -8,15 +9,10 @@
 
 namespace Glacier
 {
-    struct SRenderMaterialBinderValidator
-    {
-        const char* m_pszBinderName;
-        bool m_bBinderValue;
-    };
-
     class ZRenderMaterialSubClassD3D : public ZRenderMaterialSubClass
     {
     public:
+        // types
         // vtbl
         ~ZRenderMaterialSubClassD3D() override;
         void Draw(const ZRenderMaterialInstance* pMaterial, ZRenderObjectInstance** ppObjects, uint32_t lObjectsNr, ZRenderContext* pCtx) override;

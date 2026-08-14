@@ -5,7 +5,8 @@
 #include <Glacier/Geom/ZGROUP.h>
 #include <Glacier/Geom/ZGEOM.h>
 #include <Glacier/Geom/ZBaseGeom.h>
-#include <Glacier/ZRenderEntry.h>
+#include <Glacier/Render/Fwd.h>
+#include <Glacier/Render/Entry/ZRenderEntry.h>
 #include <Glacier/ZCAMERA.h>
 #include <spdlog/spdlog.h>
 
@@ -24,12 +25,12 @@ namespace Hitman::BloodMoney {
                 return;
             }
 
-            Glacier::ZBaseGeom* pEntityLocator = pRenderEntry->GetEntityLocator();
-            if (!pEntityLocator) {
+            Glacier::ZBaseGeom* pBaseGeom = pRenderEntry->GetBaseGeom();
+            if (!pBaseGeom) {
                 return;
             }
 
-            auto pGeom = reinterpret_cast<Glacier::ZGEOM*>(pEntityLocator->m_pExtraGeom);
+            auto pGeom = pBaseGeom->m_pExtraGeom;
             if (!pGeom) {
                 return;
             }

@@ -132,6 +132,42 @@ namespace Glacier
         return *this;
     }
 
+    zstring operator+(const zstring& lhs, const char* rhs)
+    {
+        if (!rhs)
+            rhs = "";
+
+        const uint32_t lhsLen = lhs.m_iLength;
+        const uint32_t rhsLen = static_cast<uint32_t>(std::strlen(rhs));
+
+        zstring result;
+        ZUniMemory::Free(result.m_pData);
+        result.m_iLength = lhsLen + rhsLen;
+        result.m_iCapacity = result.m_iLength;
+        result.m_pData = AllocateString(result.m_iCapacity);
+        std::memcpy(result.m_pData, lhs.c_str(), lhsLen);
+        std::memcpy(result.m_pData + lhsLen, rhs, rhsLen + 1);
+        return result;
+    }
+
+    zstring operator+(const char* lhs, const zstring& rhs)
+    {
+        if (!lhs)
+            lhs = "";
+
+        const uint32_t lhsLen = static_cast<uint32_t>(std::strlen(lhs));
+        const uint32_t rhsLen = rhs.m_iLength;
+
+        zstring result;
+        ZUniMemory::Free(result.m_pData);
+        result.m_iLength = lhsLen + rhsLen;
+        result.m_iCapacity = result.m_iLength;
+        result.m_pData = AllocateString(result.m_iCapacity);
+        std::memcpy(result.m_pData, lhs, lhsLen);
+        std::memcpy(result.m_pData + lhsLen, rhs.c_str(), rhsLen + 1);
+        return result;
+    }
+
     void zstring::format(const char* fmt, ...)
     {
         char buffer[kFormatBufferSize + 1]{};

@@ -24,17 +24,6 @@ namespace Glacier
         return nullptr;
     }
 
-    uint32_t ZBufferReader::GetBufferSize()
-    {
-        return m_lBufferSize;
-    }
-
-    void ZBufferReader::GetBufferData(Callback_t pCallback, void* pData)
-    {
-        ZASSERT(pCallback);
-        pCallback(m_pBuffer, m_lBufferSize, pData);
-    }
-
     void ZBufferReader::InstallBuffer(void* pBuffer, uint32_t lBufferSize, uint32_t lBufferSizeAllocated)
     {
         FreeResources();

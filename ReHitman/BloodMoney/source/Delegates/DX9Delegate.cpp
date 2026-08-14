@@ -16,7 +16,7 @@
 #include <BloodMoney/Game/ZHM3GameData.h>
 
 #include <Glacier/System/ZSysInterfaceWintel.h>
-#include <Glacier/ZRenderWintelD3D.h>
+#include <Glacier/Render/Fwd.h>
 #include <Glacier/ZEngineDataBase.h>
 #include <Glacier/ZCameraSpace.h>
 #include <Glacier/ZCAMERA.h>
@@ -29,7 +29,8 @@
 #include <spdlog/spdlog.h>
 #include <HF/HackingFramework.hpp>
 #include <Glacier/ZPrimControlWintel.h>
-#include <Glacier/ZRenderWintelD3DDll.h>
+#include <Glacier/Render/ZRender.h>
+
 
 namespace Hitman::BloodMoney
 {
@@ -51,9 +52,7 @@ namespace Hitman::BloodMoney
         ImGui::StyleColorsDark();
 
         auto systemInterface = Glacier::getInterface<Glacier::ZSysInterfaceWintel>(Globals::kSysInterfaceAddr);
-        Glacier::ZRenderWintelD3D* renderer = systemInterface ? reinterpret_cast<Glacier::ZRenderWintelD3D*>(systemInterface->WindowFirst) : nullptr;
-
-        const auto hwnd = renderer ? renderer->m_HWND : nullptr;
+        const auto hwnd = (HWND)systemInterface->MasterHwnd;
         if (!hwnd)
             throw std::runtime_error { "Failed to get HWND. No renderer at systemInterface->m_renderer" };
 

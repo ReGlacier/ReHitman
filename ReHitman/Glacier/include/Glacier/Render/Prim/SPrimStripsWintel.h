@@ -27,4 +27,5 @@ namespace Glacier
         float fBmpMapLuminanceOffset;
         uint32_t lLengths;
     };
+    RE_VERIFY_SIZE(SPrimStripsWintel, 0x7C);
 }

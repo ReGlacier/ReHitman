@@ -24,7 +24,7 @@ namespace Glacier
         struct QUAD_VERTEX
         {
             D3DXVECTOR3 p;
-            D3DXVECTOR3 t;
+            D3DXVECTOR2 t;
         };
 
         // vtbl
@@ -38,8 +38,9 @@ namespace Glacier
 
         void StoreRenderTargets();
         void RestoreRenderTargets();
-        void CopyStretch(IDirect3DTexture9* pSrc, IDirect3DTexture9* pDst, int, int, int, int, bool);
-        void Blur(IDirect3DTexture9* pTex, float, float, int, bool);
+        void CopyStretch(IDirect3DTexture9* pSrc, IDirect3DTexture9* pDst, int s_w, int s_h, int d_w, int d_h, bool bScissor);
+        // fBlurScale is unused in the PC/iOS binaries (literal 0.0 in the tap-offset math).
+        IDirect3DTexture9* Blur(IDirect3DTexture9* pTex, float fBlurAmount, float fBlurScale, int iFlags, bool bSinglePass);
 
         // members
         uint32_t m_lWidth { 0 };

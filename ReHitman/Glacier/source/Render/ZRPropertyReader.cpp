@@ -158,14 +158,14 @@ namespace Glacier
     
     ZRPropertyReader::ZRPropertyReader() = default;
     
-    void ZRPropertyReader::Dump(int nIndent, const char* pszHeader)
+    void ZRPropertyReader::Dump(int nIndent, const char* pszHeader) const
     {
         DumpProperty(*this, static_cast<uint32_t>(nIndent), pszHeader);
     }
 
     void ZRPropertyReader::GetNamedListElement(uint32_t lName, ZRPropertyReader& outElement) const
     {
-        ZASSERT(m_pProperty && m_pProperty->lType != PT_LIST);
+        ZASSERT(m_pProperty && m_pProperty->lType == PT_LIST);
 
         auto pElements = static_cast<const SProperty*>(const_cast<IBuffer*>(m_pBuffer)->GetData(m_pProperty->lData));
         uint32_t nCount = m_pProperty->lSize;
@@ -181,6 +181,27 @@ namespace Glacier
         }
 
         // Not found
+        Dump(0, " <GetNamedListElement> ");
         ZASSERT(false);
+    }
+
+    bool ZRPropertyReader::TryGetNamedListElement(uint32_t lName, ZRPropertyReader& outElement) const
+    {
+        ZASSERT(m_pProperty && m_pProperty->lType == PT_LIST);
+
+        auto pElements = static_cast<const SProperty*>(const_cast<IBuffer*>(m_pBuffer)->GetData(m_pProperty->lData));
+        uint32_t nCount = m_pProperty->lSize;
+
+        for (uint32_t i = 0; i < nCount; ++i)
+        {
+            if (pElements[i].lName == lName)
+            {
+                outElement.m_pBuffer = m_pBuffer;
+                outElement.m_pProperty = const_cast<SProperty*>(&pElements[i]);
+                return true;
+            }
+        }
+
+        return false;
     }
 }

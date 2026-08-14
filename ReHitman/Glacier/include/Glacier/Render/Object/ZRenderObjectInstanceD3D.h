@@ -17,5 +17,6 @@ namespace Glacier
         using ZRenderObjectInstanceX86::ZRenderObjectInstanceX86;
 
         void DrawIndexedTriangles(const ZRIndexContainer* pIndexContainer, uint32_t lNumIndices, ZRenderWintelD3D* pRender, uint32_t lObjectSubType);
+        void DrawIndexedStrips(const ZRIndexContainer* pIndexContainer, uint32_t lNumIndices, ZRenderWintelD3D* pRender, uint32_t lObjectSubType);
     };
 }

@@ -6,7 +6,7 @@
 
 namespace Glacier
 {
-    struct SUpdateLightDataSSE // From XBOX - NOT CONFIRMED
+    struct SUpdateLightDataSSE // Layout confirmed by Mini Ninjas XBOX PDB and PC ZRenderSoftwareLight::CalcLight
     {
         float vPosX[4];
         float vPosY[4];
@@ -36,7 +36,10 @@ namespace Glacier
         float fLConst1[4];
     };
     
-    struct SUpdateLightData // From XBOX - NOT CONFIRMED
+    // Layout confirmed by Mini Ninjas XBOX PDB (stride 0x250).
+    // NOTE: PC (Blood Money) uses stride 0x240, so the scalar tail below differs on PC (not reversed yet).
+    // The SSE block, lType and lLightControl match PC exactly.
+    struct SUpdateLightData
     {
         SUpdateLightDataSSE SSE;
         unsigned int lType;
