@@ -7,6 +7,10 @@
 #include <Glacier/ZSTL/ZMath.h>
 #include <Glacier/Animation/ZBone.h>
 
+#include <tuple>
+#include <bit>
+
+
 namespace Glacier
 {
     namespace Animation
@@ -23,6 +27,22 @@ namespace Glacier
 
     struct alignas(4) ZPoseModel
     {
+        // methods
+        ZPoseModel();
+
+        void ResetIndex();
+        uint16_t GetIndex();
+        void SetIndex(uint16_t index);
+        float GetWeight(float fWeight);
+        void SetName(char cName);
+        void SetActive(bool bIsActive);
+        void SetKeys(SPoseKey* pKey);
+        void SetSize(uint16_t size);
+        uint16_t Size() const;
+        char Name() const;
+        bool Active() const;
+
+        // members
         uint8_t m_cName;
         SPoseKey* m_pPoseKeys;
         uint16_t m_dwIndex;
@@ -34,6 +54,42 @@ namespace Glacier
 
     struct ZPoseAnim
     {
+        // methods
+        ZPoseAnim();
+        ZPoseAnim(uint32_t rHost);
+        ~ZPoseAnim();
+
+        void SetID(uint32_t lId);
+        uint32_t GetID() const;
+        bool Create(char* pBuffer);
+        void UpdateData(char* pBuffer);
+        void UpdateFrame();
+        int8_t GetExpressionID() const;
+        uint8_t Count() const;
+        uint8_t StartCount() const;
+        float StartTime() const;
+        float TimeMultiplier() const;
+        float EndTime() const;
+        float FrameTime() const;
+        float FrameStartTime() const;
+        uint8_t ActivePoses() const;
+        uint32_t PoseSize() const;
+        void SetStartTime(float);
+        void SetTimeMultiplier(float);
+        void SetEndTime(float);
+        void SetCount(int);
+        void SetStartCount(int);
+        void SetActivePoses(uint8_t);
+        void SetPoseSize(uint32_t);
+        void SetFrameStartTime(float);
+        void SetFrameTime(float);
+        void SetEmotionID(uint16_t);
+        float GetPoseWeight(int lIdx, float fWeight);
+        char GetPoseName(int lIdx);
+        void SetHost(uint32_t rHost);
+        uint32_t GetHost() const;
+
+        // members
         uint32_t m_rHost;
         uint32_t m_dwID;
         uint8_t m_lCount;
@@ -62,6 +118,57 @@ namespace Glacier
         };
     };
     RE_VERIFY_SIZE(ActBoneMotion2, 0x4);
+    
+    struct SFlagOffsetPair
+    {
+        // methods
+        SFlagOffsetPair() = default;
+
+        SFlagOffsetPair(const SFlagOffsetPair& copy)
+            : iFlags(copy.iFlags)
+            , iOffset(copy.iOffset)
+        {}
+
+        SFlagOffsetPair& operator=(const SFlagOffsetPair& copy)
+        {
+            iFlags = copy.iFlags;
+            iOffset = copy.iOffset;
+            return *this;
+        }
+
+        int GetNumSetFlags(uint32_t flags) const
+        {
+            const uint32_t iMasked = iFlags & flags;
+            return std::popcount(iMasked);
+        }
+
+        bool operator<(const SFlagOffsetPair& rhs) const
+        {
+            return std::tie(iFlags, iOffset) < std::tie(rhs.iFlags, rhs.iOffset);
+        }
+
+        // members
+        uint32_t iFlags { 0u };
+        int32_t iOffset { 0 };
+    };
+    RE_VERIFY_SIZE(SFlagOffsetPair, 0x8);
+
+    struct ZAnimVariation
+    {
+        // methods
+        ZAnimVariation();
+        
+        void SetData(const char* pData);
+        int32_t GetNumVariations() const;
+        uint32_t GetAnimOffset(uint32_t lId, float fRand) const;
+        bool IsValid() const;
+        float AnimWeight(uint32_t mask) const;
+        SFlagOffsetPair* GetPairs() const;
+
+        // members
+        const char* m_Data{ nullptr };
+    };
+    RE_VERIFY_SIZE(ZAnimVariation, 0x4); // Not confirmed yet
 
     struct GameEntity
     {
@@ -72,19 +179,45 @@ namespace Glacier
 
     struct ZAnimVariationBuffer
     {
-        const char* m_pBuffer;
-        int* m_AnimList;
+        // methods
+        ZAnimVariationBuffer();
+        void SetBuffer(const char* pBuffer);
+        bool IsValid() const;
+        bool GetAnimVariation(ZAnimVariation& variation, ZAnimVariationHandle& handle);
+        void FindAnimListStart();
+        const char* GetBuffer() const;
+         
+        // members
+        const char* m_pBuffer{ nullptr };
+        int* m_AnimList{ nullptr };
     };
     RE_VERIFY_SIZE(ZAnimVariationBuffer, 0x8);
 
     struct ZAnimTemplatesNames
     {
-        const char* m_pBuffer;
+        // methods
+        ZAnimTemplatesNames();
+        bool FindAnimVariationHandle(ZAnimVariationHandle& handle, const char* pszName);
+        void SetBuffer(const char* pBuffer);
+        bool Init();
+        int32_t GetAnimCount() const;
+        bool GetAnim(int, ZAnimVariationHandle& handle);
+        const char* GetNameFromAnimVariationHandle(const ZAnimVariationHandle& handle);
+
+        // members
+        const char* m_pBuffer{ nullptr };
     };
     RE_VERIFY_SIZE(ZAnimTemplatesNames, 0x4);
 
     struct ZDeltaBone
     {
+        // methods
+        ZDeltaBone();
+        ZDeltaBone(const ZDeltaBone& copy);
+        ZDeltaBone& operator=(const ZDeltaBone& copy);
+        void LoadSave(ISerializerStream& stream, bool bSaving);
+
+        // members
         float m_OffsetQuat[4];
         float m_OffsetPos[3];
     };
@@ -101,7 +234,7 @@ namespace Glacier
         };
         RE_VERIFY_SIZE(SAnimSound, 0x8);
 
-        //vftable
+        // vtbl
         virtual void InitObjMatBone();
         virtual void CloseObjMatBone();
         virtual void* GetAnim(const char*);
@@ -177,7 +310,9 @@ namespace Glacier
         virtual bool WantBloodOnHit();
         virtual void LoadSaveAnimations(ZPackedInput*, bool);
 
-        //data (total size is 0xF4, base size is 0x10)
+        // methods
+
+        // members
         ZPoseAnim* m_pPoseAnim;
         ActBoneMotion2* m_pMotions2;
         int m_pMotions2BoneCount;
@@ -196,7 +331,7 @@ namespace Glacier
         int m_pBoneModify;
         bool m_bCutSequence;
         bool m_bHideInThisView;
-        bool m_pad8A[2];
+        RE_ADD_PADDING(2);
         ZDeltaBone m_QGroundAnimDestOld;
         ZDeltaBone m_QGroundAnimDest;
         ZDeltaBone m_QGroundAnimCurrent;

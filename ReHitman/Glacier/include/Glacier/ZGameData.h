@@ -1,6 +1,10 @@
 #pragma once
 
-#include <Glacier/Glacier.h>
+#include <Glacier/ReGlacier.h>
+#include <Glacier/GlacierFWD.h>
+#include <Glacier/ZUniMemory.h>
+#include <cstdint>
+
 
 namespace Glacier
 {
@@ -9,7 +13,7 @@ namespace Glacier
     class ZGameData
     {
     public:
-        virtual void Release(bool);
+        virtual ~ZGameData();
         virtual void LoadSave(ISerializerStream &,bool);
         virtual void Init();
         virtual void Init2();
@@ -42,4 +46,6 @@ namespace Glacier
         virtual void LoadGameFailureScene();
         virtual void AddIconToText(const zstring& str, const char*, bool);
     };
+
+    STATIC_GLOBAL_CLASS_INSTANCE(ZGameData*, g_pGameData);
 }

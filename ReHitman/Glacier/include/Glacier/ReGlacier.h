@@ -31,3 +31,12 @@
 #	define RE_PACKED_STRUCT(al)
 #	define RE_PACKED_STRUCT_END
 #endif
+
+namespace Glacier
+{
+    template <typename T>
+    T* fuck_cast(const void* ptr)
+    {
+        return const_cast<T*>(reinterpret_cast<const T*>(ptr));
+    }
+}

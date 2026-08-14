@@ -7,7 +7,7 @@
 #include <Glacier/Geom/ZBaseGeom.h>
 #include <Glacier/IK/ZIKHAND.h>
 #include <Glacier/ZHumanBoid.h>
-#include <Glacier/ZAnimVariationHandle.h>
+#include <Glacier/Animation/ZAnimVariationHandle.h>
 #include <BloodMoney/Game/ZHM3HmAs.h>
 #include <BloodMoney/Game/ZActor.h>
 

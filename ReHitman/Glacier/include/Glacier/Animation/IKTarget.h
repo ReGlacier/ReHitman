@@ -8,12 +8,36 @@ namespace Glacier::Animation
 {
     struct IKTarget
     {
-        ZVector3 m_Pos2;
-        float m_Weight2;
+        // methods
+        IKTarget()
+        {
+            m_Pos2.Reset();
+            memset(&m_Data[0], 0, sizeof(m_Data));
+            m_Weight2 = 0.0f;
+        }
+
+        IKTarget(const IKTarget& copy)
+        {
+            m_Pos2 = copy.m_Pos2;
+            memcpy(&m_Data[0], &copy.m_Data[0], sizeof(m_Data));
+            m_Weight2 = copy.m_Weight2;
+        }
+
+        IKTarget& operator=(const IKTarget& copy)
+        {
+            m_Pos2 = copy.m_Pos2;
+            memcpy(&m_Data[0], &copy.m_Data[0], sizeof(m_Data));
+            m_Weight2 = copy.m_Weight2;
+            return *this;
+        }
+
+        // members
+        ZVector3 m_Pos2{};
+        float m_Weight2{1.f};
 
         union
         {
-            float m_Data[6];
+            float m_Data[6] { 0.f };
 
             struct 
             {

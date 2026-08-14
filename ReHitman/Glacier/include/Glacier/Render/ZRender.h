@@ -1,7 +1,7 @@
 #pragma once
 
-#include <Glacier/Geom/ZBaseGeom.h> // ZBaseGeom
-#include <Glacier/Render/ZDrawSurface.h>
+#include <Glacier/Geom/ZBaseGeom.h>
+#include <Glacier/Render/Draw/ZDrawSurface.h>
 
 namespace Glacier
 {
@@ -109,6 +109,11 @@ namespace Glacier
         struct ZRender* Nxt; // +0x8
         struct ZRender* Bef; // +0xC
         // TODO: Finish me
+
+        // +0x210 - bool m_lInCutSequence
+        // +0x21C - bool m_bMovieRunning
+        // +0x2C4 - LINKSORTREFTAB
+        // biggest: 0x30C
     };
 
     // TBC

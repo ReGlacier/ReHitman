@@ -8,7 +8,7 @@
 #include <Glacier/ZSTL/ZMath.h>
 #include <Glacier/Items/ITEMSTATE.h>
 #include <Glacier/Animation/ZBlendBone.h>
-#include <Glacier/ZAnimVariationHandle.h>
+#include <Glacier/Animation/ZAnimVariationHandle.h>
 
 namespace Glacier
 {

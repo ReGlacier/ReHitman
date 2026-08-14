@@ -2,7 +2,7 @@
 
 #include <Glacier/ReGlacier.h>
 #include <Glacier/GlacierFWD.h>
-#include <Glacier/ZAnimVariationHandle.h>
+#include <Glacier/Animation/ZAnimVariationHandle.h>
 #include <Glacier/Items/EWeaponOperation.h>
 #include <BloodMoney/Game/Items/ZHM3ItemTemplateWeapon.h>
 #include <BloodMoney/Game/Items/ESilencerType.h>

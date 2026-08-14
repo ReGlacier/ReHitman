@@ -142,7 +142,7 @@ namespace Glacier
         float ActualFrameTimeDelta() const;
         TIMETYPE GetRealTime() const;
         float GetRealTimeDelta() const;
-        bool GetOption(const char*, char**);
+        static bool GetOption(const char*, char**);
         void InitActionMap();
         void FreeActionMap();
         float Set_TimeMultiplier(float fNewTimeMul);

@@ -16,34 +16,64 @@
 
 namespace Glacier::Animation
 {
+    // fwds
+    struct Manager;
+    class ZLNKOBJ;
+
     struct ZAngelBone 
     {
-        ZQuat m_Quat;
-        ZVector3 m_Pos;
+        // members
+        ZQuat m_Quat {};
+        ZVector3 m_Pos {};
     };
     RE_VERIFY_SIZE(ZAngelBone, 0x1C);
 
     struct ScaleInfo 
     {
-        float m_ArmScale;
-        float m_HipScale;
+        float m_ArmScale{ 1.f };
+        float m_HipScale{ 1.f };
     };
     RE_VERIFY_SIZE(ScaleInfo, 0x8);
 
     union ZAnimHistory 
     {
-        uint16_t m_Mask;
         struct 
         {
+            uint16_t m_Mask;
             uint16_t m_Id : 15;
             uint16_t m_Mirrored : 1;
         };
-        uint32_t raw_padding;
+
+        uint32_t m_Raw { 0u };
     };
     RE_VERIFY_SIZE(ZAnimHistory, 0x4);
 
     struct Model
     {
+        // static
+        static void ResolveStaticResourceRefs();
+        static void GetAimFrames(float &,float &,float &,float,float);
+
+        // methods
+        Model();
+        int DynamicSize(ZLNKOBJ* pLnkObj, uint32_t poseIdx, uint32_t id2IndexIdx, uint32_t index2IdIdx, uint32_t id2PosIdx, uint32_t parentIdx, bool stateModel);
+        void Init(ZLNKOBJ* pLnkObj, ZBone* pBones, uint32_t poseIdx, uint32_t id2IndexIdx, uint32_t index2IdIdx, uint32_t id2PosIdx, uint32_t parentIdx, bool stateModel, char* buffer);
+        int DepackOrder(uint8_t* order);
+        void PostAnim(float fUnused);
+        void PrepareAnim();
+        void PoseRotationAndTranslation();
+        void AnimateState(Manager* pManager, float);
+        void PrintDebugInfo();
+        void StateFit(ZAngelBone* pAngelBone);
+        void BlendOutPoseWeights();
+        void BlendQuats();
+        void ResetBones();
+        void AnimateQuats(Manager* pManager);
+        void ModelSpaceBones();
+        void LookAt(ZAngelBone* pAngelBone, Manager* pManager, float);
+        void Bank(float);
+
+        // members
         int16_t*           m_PoseIdToPosLookup;
         ZAngelBone*        m_AngelPose;
         BoneID*            m_BoneIndexToIdLookup;

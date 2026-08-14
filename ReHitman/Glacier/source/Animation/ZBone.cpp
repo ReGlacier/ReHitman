@@ -20,12 +20,6 @@ namespace Glacier
         memcpy(this, &copy, sizeof(ZBone));
     }
 
-    ZBone::ZBone(const ZBone& copy)
-    {
-        // A little bit risky, but fast as fuck
-        memcpy(this, &copy, sizeof(ZBone));
-    }
-
     ZBone& ZBone::operator=(const ZBone& copy)
     {
         // A little bit risky, but fast as fuck

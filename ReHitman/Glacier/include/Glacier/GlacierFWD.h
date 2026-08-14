@@ -91,6 +91,8 @@ namespace Glacier
     class FsZip_t;
 
     using AnimCallback_t = bool(ZGEOM::*)(void*, float, float, unsigned int);
+
+    class ZRX86AllocIf;
 }
 
 #define ZASSERT(cond) assert((cond));

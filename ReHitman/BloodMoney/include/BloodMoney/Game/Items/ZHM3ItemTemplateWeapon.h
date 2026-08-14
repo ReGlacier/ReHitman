@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Glacier/ReGlacier.h>
-#include <Glacier/ZAnimVariationHandle.h>
+#include <Glacier/Animation/ZAnimVariationHandle.h>
 #include <Glacier/ZSTL/ZRTStringObject.h>
 #include <Glacier/Items/ZItemTemplateWeapon.h>
 

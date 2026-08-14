@@ -1,16 +1,12 @@
 #pragma once
 
 #include <cstdint>
-
+#include <Glacier/Render/Fwd.h>
 #include <Glacier/ZSTL/LINKREFTAB.h>
-#include <Glacier/ZTextureManagerD3D.h>
+
 
 namespace Glacier
 {
-    class ZRenderMaterialBufferD3D;
-    class ZRenderWintelD3D;
-    class ZPrimControlWintel;
-
     class ZRenderWintelD3DDll
     {
     public:

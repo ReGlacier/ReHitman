@@ -266,7 +266,7 @@ namespace Glacier
 
     struct ZQuat
     {
-        float i, j, k, w;
+        float i { 0.f }, j { 0.f }, k { 0.f }, w { 1.f };
     };
 
     inline void qmul(float* out, const float* lhs, const float* rhs)
@@ -314,6 +314,38 @@ namespace Glacier
     inline void qrotaxis(ZQuat& out, const float* axis, float angle)
     {
         qrotaxis(&out.i, axis, angle);
+    }
+
+    inline void quattomat(float* pMat, const float* pQuat)
+    {
+        const float twoW = pQuat[3] + pQuat[3];
+        const float twoI = pQuat[0] + pQuat[0];
+        const float twoJ = pQuat[1] + pQuat[1];
+
+        const float twoWK = twoW * pQuat[2];
+        const float twoIK = twoI * pQuat[2];
+        const float twoJK = twoJ * pQuat[2];
+        const float twoWW = twoW * pQuat[3];
+        const float twoIW = twoI * pQuat[3];
+        const float twoJW = twoJ * pQuat[3];
+        const float twoII = twoI * pQuat[0];
+        const float twoJI = twoJ * pQuat[0];
+        const float twoJJ = twoJ * pQuat[1];
+
+        pMat[6] = 1.0f - (twoJJ + twoII);
+        pMat[7] = twoIW + twoJK;
+        pMat[8] = twoJW - twoIK;
+        pMat[3] = twoIW - twoJK;
+        pMat[4] = 1.0f - (twoJJ + twoWW);
+        pMat[5] = twoWK + twoJI;
+        pMat[0] = twoJW + twoIK;
+        pMat[1] = twoJI - twoWK;
+        pMat[2] = 1.0f - (twoII + twoWW);
+    }
+
+    inline void quattomat(ZMat3x3& mat, const ZQuat& quat)
+    {
+        quattomat(mat.data, &quat.i);
     }
 
     struct ZMatrix

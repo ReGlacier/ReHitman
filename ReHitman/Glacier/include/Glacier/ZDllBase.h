@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Glacier/ReGlacier.h>
+
 
 namespace Glacier
 {
@@ -32,4 +34,5 @@ namespace Glacier
         char* m_pName{nullptr}; // +0x4
         void* m_pHandle{nullptr}; // +0x8
     };
+    RE_VERIFY_SIZE(ZDllBase, 0xC);
 }

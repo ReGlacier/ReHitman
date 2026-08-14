@@ -14,14 +14,41 @@ set(GLACIER_ASM_SOURCES
 # Common dependencies (put all dependencies here!)
 set(GLACIER_COMMON_LIBS 
     PRIVATE 
-        zlib 
-    PUBLIC 
+        zlib
+    PUBLIC
         HF::Core
         stlport
 )
 
+set(GLACIER_COMMON_INCLUDE_DIRS)
+
+# Windows specific dependencies
 if(WIN32)
-    list(APPEND GLACIER_COMMON_LIBS PUBLIC dinput8 dxguid)
+    if(DEFINED ENV{DXSDK_DIR})
+        file(TO_CMAKE_PATH "$ENV{DXSDK_DIR}" DXSDK_DIR_PATH)
+        
+        set(DXSDK_INCLUDE_DIR "${DXSDK_DIR_PATH}/Include")
+        
+        if(CMAKE_CL_64)
+            set(DXSDK_LIB_DIR "${DXSDK_DIR_PATH}/Lib/x64")
+        else()
+            set(DXSDK_LIB_DIR "${DXSDK_DIR_PATH}/Lib/x86")
+        endif()
+    endif()
+
+    list(
+        APPEND GLACIER_COMMON_LIBS 
+        PUBLIC 
+            # DirectX 9
+            d3d9
+            $<$<CONFIG:Debug>:d3dx9d>$<$<NOT:$<CONFIG:Debug>>:d3dx9>
+            # DirectInput8
+            dinput8 
+            dxguid
+            # DirectSound
+    )
+
+    message(STATUS "[Glacier] DXSDK_DIR from ENV: $ENV{DXSDK_DIR}")
 endif()
 
 if(MSVC)
@@ -32,18 +59,36 @@ set(GLACIER_ALL_SOURCES ${GLACIER_SOURCES} ${GLACIER_ASM_SOURCES})
 
 option(REHITMAN_BUILD_TESTS "Build ReHitman tests" ON)
 
-# Game target with normal allocators
+# Game target
 add_library(Glacier STATIC ${GLACIER_ALL_SOURCES})
 add_library(G1::Core ALIAS Glacier)
-target_include_directories(Glacier PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+target_include_directories(Glacier PUBLIC 
+    ${CMAKE_CURRENT_SOURCE_DIR}/include 
+    $<$<BOOL:${DXSDK_INCLUDE_DIR}>:${DXSDK_INCLUDE_DIR}>
+)
+
+if(DXSDK_LIB_DIR)
+    target_link_directories(Glacier PUBLIC ${DXSDK_LIB_DIR})
+endif()
+
 target_link_libraries(Glacier ${GLACIER_COMMON_LIBS})
 target_compile_definitions(Glacier PUBLIC DIRECTINPUT_VERSION=0x0800)
 
+# Test target
 if(REHITMAN_BUILD_TESTS)
-    # Target for testing (STL allocators, no extra deps to game instance)
     add_library(GlacierTest STATIC ${GLACIER_ALL_SOURCES})
     add_library(G1::TestCore ALIAS GlacierTest)
-    target_include_directories(GlacierTest PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+    target_include_directories(GlacierTest PUBLIC 
+        ${CMAKE_CURRENT_SOURCE_DIR}/include 
+        $<$<BOOL:${DXSDK_INCLUDE_DIR}>:${DXSDK_INCLUDE_DIR}>
+    )
+
+    if(DXSDK_LIB_DIR)
+        target_link_directories(GlacierTest PUBLIC ${DXSDK_LIB_DIR})
+    endif()
+
     target_link_libraries(GlacierTest ${GLACIER_COMMON_LIBS})
     target_compile_definitions(GlacierTest PUBLIC REHITMAN_TESTS DIRECTINPUT_VERSION=0x0800)
 endif()
