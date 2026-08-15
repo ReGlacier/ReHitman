@@ -18,6 +18,9 @@ namespace Glacier
         struct Model;
     }
 
+    // fwds
+    class ZBoneModifyBase;
+
     RE_PACKED_STRUCT(1)
     struct SPoseKey {
         uint16_t Frame;             //+0x00
@@ -311,6 +314,10 @@ namespace Glacier
         virtual void LoadSaveAnimations(ZPackedInput*, bool);
 
         // methods
+        ZBoneModifyBase* GetBoneModifier() { return m_pBoneModify; }
+        const ZBoneModifyBase* GetBoneModifier() const { return m_pBoneModify; }
+        const ZBone* GetBones() const;
+        const ZBone* GetGlobalPrimBones() const;
 
         // members
         ZPoseAnim* m_pPoseAnim;
@@ -328,7 +335,7 @@ namespace Glacier
         ZAnimVariationBuffer m_AnimVariations;
         ZAnimTemplatesNames m_TemplateNames;
         uint32_t m_iAnimVariationFlags;
-        int m_pBoneModify;
+        ZBoneModifyBase* m_pBoneModify;
         bool m_bCutSequence;
         bool m_bHideInThisView;
         RE_ADD_PADDING(2);

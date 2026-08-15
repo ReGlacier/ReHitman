@@ -19,8 +19,6 @@ namespace Glacier
         virtual void Begin();
         virtual void End();
         virtual void SetViewport(uint32_t x, uint32_t y, uint32_t w, uint32_t h);
-        virtual void FreeDeviceBuffers();
-        virtual void AllocDeviceBuffers();
 
         // methods
         ZDrawSurface(ZDrawSurface::TARGET lTarget);

@@ -63,6 +63,9 @@ namespace Glacier
         HRESULT CreateVertexShader(DWORD* pFunction, IDirect3DVertexShader9** ppShader);
         HRESULT CreatePixelShader(DWORD* pFunction, IDirect3DPixelShader9** ppShader);
         HRESULT DrawIndexedPrimitive(D3DPRIMITIVETYPE ePrimitiveType, INT BaseVertexIndex, UINT MinVertexIndex, UINT NumVertices, UINT startIndex, UINT primCount);
+        HRESULT CreateDepthStencilSurface(DWORD lWidth, DWORD lHeight, _D3DFORMAT Format, _D3DMULTISAMPLE_TYPE MutlisampleType, DWORD Quality, bool Discard, IDirect3DSurface9** ppSurface, HANDLE* pHandle);
+        HRESULT GetDeviceCaps(D3DCAPS9* pCaps);
+        
         void ResetState();
 
         // members

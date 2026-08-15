@@ -41,6 +41,10 @@ namespace Glacier
     STATIC_GLOBAL_CLASS_INSTANCE(IDirect3DSurface9*, g_pShadowMapDepthBuffers);
     STATIC_GLOBAL_CLASS_INSTANCE(ShadowColorMapArray_t, g_texShadowMapColor);
     STATIC_GLOBAL_CLASS_INSTANCE(bool, g_bIsResettingDevice);
+    STATIC_GLOBAL_CLASS_INSTANCE(uint32_t, g_dwMinFilter);
+    STATIC_GLOBAL_CLASS_INSTANCE(uint32_t, g_dwMagFilter);
+    STATIC_GLOBAL_CLASS_INSTANCE(uint32_t, g_dwMipFilter);
+    STATIC_GLOBAL_CLASS_INSTANCE(uint32_t, g_lMaxAnisotropy);
 
     extern ZRenderMaterialBinderParser::SMapper g_TranslatorMapper[68];
 }

@@ -1,3 +1,4 @@
+#include <Glacier/Render/Material/ZRenderMaterialBinderTextureD3DFX.h>
 #include <Glacier/Render/Material/ZRenderMaterialBinderSpriteD3DFX.h>
 #include <Glacier/Render/Material/ZRenderMaterialEffectD3DFX.h>
 #include <Glacier/Render/ZRenderContext.h>
@@ -49,12 +50,11 @@ namespace Glacier
             hMapDiffuse = nullptr;
         }
 
-        // TODO: Finish this place after ZRenderMaterialBinderTextureD3DFX will be reversed
-        // m_pBinderMapDiffuse = ZUniMemory::New<ZRenderMaterialBinderTextureD3DFX>(
-        //     pD3DXEffect, "mapDiffuse", &g_texWhite, pEffect, hMapDiffuse,
-        //     nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, hTechnique
-        // );
-        m_pBinderMapDiffuse = nullptr;
+        // map diffuse
+        m_pBinderMapDiffuse = ZUniMemory::New<ZRenderMaterialBinderTextureD3DFX>(
+            "mapDiffuse", &g_texWhite, m_pEffect, hMapDiffuse, 
+            nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, hTechnique
+        );
 
         // mapDiffuseMask binder
         D3DXHANDLE hMapDiffuseMask = pD3DXEffect->GetParameterByName(nullptr, "mapDiffuseMask");
@@ -63,12 +63,11 @@ namespace Glacier
             hMapDiffuseMask = nullptr;
         }
 
-        // TODO: Finish this place after ZRenderMaterialBinderTextureD3DFX will be reversed
-        // m_pBinderMapDiffuseMask = ZUniMemory::New<ZRenderMaterialBinderTextureD3DFX>(
-        //     pD3DXEffect, "mapDiffuseMask", &g_texWhite, pEffect, hMapDiffuseMask,
-        //     nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, hTechnique
-        // );
-        m_pBinderMapDiffuseMask = nullptr;
+        // mapDiffuseMask binder
+        m_pBinderMapDiffuseMask = ZUniMemory::New<ZRenderMaterialBinderTextureD3DFX>(
+            "mapDiffuseMask", &g_texWhite, pEffect, hMapDiffuseMask,
+            nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, hTechnique
+        );
 
         // Effect parameters
         m_hGiAlphaBlendEnabled   = pD3DXEffect->GetParameterByName(nullptr, "gi_AlphaBlendEnabled");
@@ -90,18 +89,17 @@ namespace Glacier
 
     ZRenderMaterialBinderSpriteD3DFX::~ZRenderMaterialBinderSpriteD3DFX()
     {
-        // TODO: Uncomment me when ZRenderMaterialBinderTextureD3DFX reversed
-        // if (m_pBinderMapDiffuse)
-        // {
-        //     ZUniMemory::Delete(m_pBinderMapDiffuse);
-        //     m_pBinderMapDiffuse = nullptr;
-        // }
-        // 
-        // if (m_pBinderMapDiffuseMask)
-        // {
-        //     ZUniMemory::Delete(m_pBinderMapDiffuse);
-        //     m_pBinderMapDiffuse = nullptr;
-        // }
+        if (m_pBinderMapDiffuse)
+        {
+            ZUniMemory::Delete(m_pBinderMapDiffuse);
+            m_pBinderMapDiffuse = nullptr;
+        }
+        
+        if (m_pBinderMapDiffuseMask)
+        {
+            ZUniMemory::Delete(m_pBinderMapDiffuse);
+            m_pBinderMapDiffuse = nullptr;
+        }
     }
 
     void ZRenderMaterialBinderSpriteD3DFX::Execute(const ZRenderContext* pContext)
@@ -214,22 +212,23 @@ namespace Glacier
         const uint32_t dwBlendMode  = ((dwFlags & 0x8000) | 0x4000) >> 14;
         const uint32_t dwFilterMode = ((dwFlags & 0x4000) | 0x2000) >> 13;
 
-        // TODO: Uncomment me after ZRenderMaterialBinderTextureD3DFX reversed
-        // if (m_pBinderMapDiffuse)
-        // {
-        //     m_pBinderMapDiffuse->m_pTexture = m_pTextureDiffuse;
-        //     m_pBinderMapDiffuse->m_dwBlendMode = dwBlendMode;
-        //     m_pBinderMapDiffuse->m_dwFilterMode = dwFilterMode;
-        //     m_pBinderMapDiffuse->Execute(pContext);
-        // }
+        if (m_pBinderMapDiffuse)
+        {
+            // PC 004952E0: the sprite binder feeds the raw D3D texture and reuses
+            // the AddressU/AddressV value slots as per-frame filter/blend modes
+            m_pBinderMapDiffuse->m_pD3DTexture = reinterpret_cast<IDirect3DBaseTexture9*>(m_pTextureDiffuse);
+            m_pBinderMapDiffuse->m_lAddressV = dwBlendMode;
+            m_pBinderMapDiffuse->m_lAddressU = dwFilterMode;
+            m_pBinderMapDiffuse->Execute(pContext);
+        }
 
-        // if (m_pBinderMapDiffuseMask)
-        // {
-        //     m_pBinderMapDiffuseMask->m_pTexture = m_pTextureMask;
-        //     m_pBinderMapDiffuseMask->m_dwBlendMode = dwBlendMode;
-        //     m_pBinderMapDiffuseMask->m_dwFilterMode = dwFilterMode;
-        //     m_pBinderMapDiffuseMask->Execute(pContext);
-        // }
+        if (m_pBinderMapDiffuseMask)
+        {
+            m_pBinderMapDiffuseMask->m_pD3DTexture = reinterpret_cast<IDirect3DBaseTexture9*>(m_pTextureMask);
+            m_pBinderMapDiffuseMask->m_lAddressV = dwBlendMode;
+            m_pBinderMapDiffuseMask->m_lAddressU = dwFilterMode;
+            m_pBinderMapDiffuseMask->Execute(pContext);
+        }
 
         // SpriteBox Parameters
         if (m_hGiVSpriteBoxFar)

@@ -45,6 +45,14 @@ namespace Glacier
     // Light
     struct SUpdateLightData;
 
+    // Render entries
+    class ZRenderEntry;
+    class ZRenderEntryGeom;
+    class ZRenderEntryBones;
+    class ZRenderEntrySprite;
+    class ZRenderEntryLists;
+    struct SRenderEntryInstance;
+
     // Others
     class ZRenderBaseDll;
     struct ZRenderDrawBase;
@@ -80,11 +88,8 @@ namespace Glacier
     struct SRenderEntryNotifyInfo;
     struct SRenderEntryInstance;
     class ZCmdList;
-    class ZRenderEntry;
-    class ZRenderEntryGeom;
     class ZViewSpace;
     class ZRenderView;
-    class ZRenderEntryLists;
     class ZRenderMaterialSubClassD3D;
     class ZRenderMaterialLayerD3DFX;
     class ZRPropertyReader;
@@ -102,4 +107,9 @@ namespace Glacier
     class ZRD3DDynamicVB;
     class ZRD3DDynamicIB;
     class ZRD3DDynamicIB32;
+    class ZRenderViewD3D;
+
+    struct SBonesArray;
+    struct SSpriteArray;
+    struct SDrawArray;
 }

@@ -5,6 +5,7 @@
 #include <Glacier/Render/Fwd.h>
 #include <Glacier/Render/Draw/ZDrawSurface.h>
 #include <Glacier/ZSTL/ZStackArray.h>
+#include <type_traits>
 #include <cstdint>
 
 
@@ -30,6 +31,9 @@ namespace Glacier
 
     struct IDraw
     {
+        // constants
+        static constexpr int MAX_VIEWS_NR = 32;
+
         // vtbl
         virtual bool IsValid() = 0;
         virtual bool ShouldFlush() = 0;
@@ -79,10 +83,16 @@ namespace Glacier
         virtual void UpdateRenderSize(ZRender* pRender, uint32_t lWidth, uint32_t lHeight) = 0;
         virtual void FreeDeviceBuffers() = 0;
         virtual void AllocateDeviceBuffers() = 0;
-        virtual ZStackArrayInsert<32, ZRenderViewBase*, uint8_t>* GetViewList() = 0;
+        virtual ZStackArrayInsert<MAX_VIEWS_NR, ZRenderViewBase*, uint8_t>* GetViewList() = 0;
         virtual ZRenderViewBase* NewView(ZRender* pRender, uint32_t lViewNumber, uint32_t lViewId) = 0;
 
         // methods
         static IDraw* Instance();
+
+        template <typename T>
+        static T* Instance() requires (std::is_base_of_v<IDraw, T>)
+        {
+            return reinterpret_cast<T*>(Instance());
+        }
     };
 }

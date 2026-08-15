@@ -22,6 +22,11 @@ namespace Glacier
 			return m_lNrEntries; 
 		}
 
+		bool IsEmpty() const
+		{
+			return Count() == 0;
+		}
+
 		uint32_t TotalNrEntries() const
 		{
 			return CAPACITY;

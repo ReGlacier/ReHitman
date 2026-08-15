@@ -362,6 +362,16 @@ namespace Glacier
         return m_pDevice->DrawIndexedPrimitive(ePrimitiveType, BaseVertexIndex, MinVertexIndex, NumVertices, startIndex, primCount);
     }
 
+    HRESULT ZDirect3DDevice::CreateDepthStencilSurface(DWORD lWidth, DWORD lHeight, _D3DFORMAT Format, _D3DMULTISAMPLE_TYPE MutlisampleType, DWORD Quality, bool Discard, IDirect3DSurface9** ppSurface, HANDLE* pHandle)
+    {
+        return m_pDevice->CreateDepthStencilSurface(lWidth, lHeight, Format, MutlisampleType, Quality, Discard, ppSurface, pHandle);
+    }
+
+    HRESULT ZDirect3DDevice::GetDeviceCaps(D3DCAPS9* pCaps)
+    {
+        return m_pDevice->GetDeviceCaps(pCaps);
+    }
+
     void ZDirect3DDevice::ResetState()
     {
         static_assert((D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_TEX1) == 0x144);

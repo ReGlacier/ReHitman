@@ -24,6 +24,10 @@ namespace Glacier
     STATIC_GLOBAL_CLASS_INSTANCE_IMPL(SpotMapArray_t, g_pSpotAttenuationMap2, 0x0090A98C, {});
     STATIC_GLOBAL_CLASS_INSTANCE_IMPL(ShadowColorMapArray_t, g_texShadowMapColor, 0x0090AB34, {});
     STATIC_GLOBAL_CLASS_INSTANCE_IMPL(bool, g_bIsResettingDevice, 0x0090D58C, false);
+    STATIC_GLOBAL_CLASS_INSTANCE_IMPL(uint32_t, g_dwMinFilter, 0x007F6F28, 2);
+    STATIC_GLOBAL_CLASS_INSTANCE_IMPL(uint32_t, g_dwMagFilter, 0x007F6F2C, 2);
+    STATIC_GLOBAL_CLASS_INSTANCE_IMPL(uint32_t, g_dwMipFilter, 0x007F6F30, 2);
+    STATIC_GLOBAL_CLASS_INSTANCE_IMPL(uint32_t, g_lMaxAnisotropy, 0x007F6F34, 1);
 
     // stuff
     using SMapper = ZRenderMaterialBinderParser::SMapper;

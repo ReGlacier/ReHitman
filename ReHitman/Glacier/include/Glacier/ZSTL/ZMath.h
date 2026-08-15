@@ -155,18 +155,23 @@ namespace Glacier
             #undef FILL_GROUP
         }
 
+        Matrix3x3(const float* m)
+        {
+            memcpy(&data[0], m, sizeof(data));
+        }
+
+        Matrix3x3& operator=(const float* m)
+        {
+            memcpy(&data[0], m, sizeof(data));
+            return *this;
+        }
+
         bool operator==(const Matrix3x3& with) const {
             return std::equal(std::begin(data), std::end(data), std::begin(with.data), std::end(with.data));
         }
 
         const float* Get() const { return &data[0]; }
-
-        Matrix3x3& operator=(const float* p)
-        {
-            std::memcpy(&data[0], p, sizeof(float) * 9);
-            return *this;
-        }
-
+        
         Matrix3x3& operator*=(const Matrix3x3& mat)
         {
             const float zX = data[0];
@@ -438,6 +443,62 @@ namespace Glacier
         size[0] = std::fabs(x * mat[6]) + std::fabs(y * mat[3]) + std::fabs(z * mat[0]);
         size[1] = std::fabs(x * mat[7]) + std::fabs(y * mat[4]) + std::fabs(z * mat[1]);
         size[2] = std::fabs(x * mat[8]) + std::fabs(y * mat[5]) + std::fabs(z * mat[2]);
+    }
+
+    inline void vsub(float* out, const float* a, const float* b)
+    {
+        out[0] = a[0] - b[0];
+        out[1] = a[1] - b[1];
+        out[2] = a[2] - b[2];
+    }
+
+    inline void vsub(float* vec, const float* b)
+    {
+        vec[0] -= b[0];
+        vec[1] -= b[1];
+        vec[2] -= b[2];
+    }
+
+    inline void vadd(float* vec, const float* b)
+    {
+        vec[0] += b[0];
+        vec[1] += b[1];
+        vec[2] += b[2];
+    }
+
+    /**
+     * @brief Normalizes pVec into pRes.
+     * @return Length of the source vector (0.0f when pVec is a zero vector; pRes is zeroed then).
+     */
+    inline float vnorm(float* pRes, const float* pVec)
+    {
+        const float fLength = std::sqrt(pVec[0] * pVec[0] + pVec[1] * pVec[1] + pVec[2] * pVec[2]);
+
+        if (fLength == 0.0f)
+        {
+            pRes[0] = 0.0f;
+            pRes[1] = 0.0f;
+            pRes[2] = 0.0f;
+        }
+        else
+        {
+            const float fInvLength = 1.0f / fLength;
+
+            pRes[0] = pVec[0] * fInvLength;
+            pRes[1] = fInvLength * pVec[1];
+            pRes[2] = fInvLength * pVec[2];
+        }
+
+        return fLength;
+    }
+
+    /**
+     * @brief Transforms a world-space point into matrix-local space: pOut = (pIn - mat.p0) * mat.m0^T.
+     */
+    inline void MatrixTransformInverse(float* pOut, const float* pIn, const ZMatrix& mat)
+    {
+        vsub(pOut, pIn, mat.p0.Get());
+        vmtmul(pOut, mat.m0.Get());
     }
 #   pragma endregion
 }
