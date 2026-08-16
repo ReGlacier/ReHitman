@@ -1,6 +1,6 @@
 #include <Glacier/Render/Decal/ZDecalMarkControllerBase.h>
 #include <Glacier/Render/ZBoneModifyBase.h>
-#include <Glacier/Render/ZPrimAccess.h>
+#include <Glacier/Render/Prim/ZPrimAccess.h>
 #include <Glacier/Render/ZRenderBaseDll.h>
 #include <Glacier/Render/ZPrimControlBase.h>
 #include <Glacier/System/ZSysInterface.h>
@@ -85,8 +85,7 @@ namespace Glacier
             }
         }
 
-        // TODO: Finish this place after ZBaseGeom will be reversed
-        // pDecal->m_pLnkObj->BaseGeom()->SetAttachUpdate();
+        pDecal->m_pLnkObj->BaseGeom()->SetAttachUpdate();
 
         memset(pDecal, 0xD5, sizeof(ZDecalMarkControllerBase::ZBonesDecal));
         return pDecal;
@@ -123,8 +122,7 @@ namespace Glacier
                     }
                 }
 
-                // TODO: Finish this place after ZBaseGeom will be reversed
-                // pDecal->m_pLnkObj->BaseGeom()->SetAttachUpdate();
+                pDecal->m_pLnkObj->BaseGeom()->SetAttachUpdate();
 
                 m_BoneDecals.Remove(pDecal);
             }
@@ -169,8 +167,7 @@ namespace Glacier
             }
         }
 
-        // TODO: Finish this place after ZBaseGeom will be reversed
-        // pBonesDecal->m_pLnkObj->BaseGeom()->SetAttachUpdate();
+        pBonesDecal->m_pLnkObj->BaseGeom()->SetAttachUpdate();
 
         m_BoneDecals.Remove(pBonesDecal);
 
@@ -249,9 +246,7 @@ namespace Glacier
         // }
         // m_pBoneDecalsLookup[lDecalLookup] = pDecal;
         //
-        // pLnkObj->SetControl(ZCRENDERATTACHED, 0);
-        //
-        // // TODO: Finish this place after ZBaseGeom will be reversed
-        // // pLnkObj->BaseGeom()->SetAttachUpdate();
+        pLnkObj->SetControl(ZCRENDERATTACHED, 0);
+        pLnkObj->BaseGeom()->SetAttachUpdate();
     }
 }

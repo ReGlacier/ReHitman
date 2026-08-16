@@ -7,6 +7,11 @@
 
 namespace Glacier
 {
+    ZRenderEntrySpriteD3D::~ZRenderEntrySpriteD3D()
+    {
+        // TODO: Finish me
+    }
+
     ZRenderEntrySpriteD3D::ZRenderEntrySpriteD3D(ZRenderEntryGeomCreateInfo* pInfo)
         : ZRenderEntrySprite(pInfo)
     {
@@ -26,7 +31,6 @@ namespace Glacier
             return nullptr;
         }
 
-        return nullptr; // TODO: Finish me
-        //return ZUniMemory::New<ZRenderEntrySpriteD3D>(pInfo);
+        return ZUniMemory::New<ZRenderEntrySpriteD3D>(pInfo);
     }
 }

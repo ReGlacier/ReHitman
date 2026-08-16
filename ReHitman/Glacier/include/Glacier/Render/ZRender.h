@@ -2,6 +2,7 @@
 
 #include <Glacier/Geom/ZBaseGeom.h>
 #include <Glacier/Render/Draw/ZDrawSurface.h>
+#include <cstdint>
 
 namespace Glacier
 {
@@ -108,6 +109,7 @@ namespace Glacier
         struct ZRender* SubChain; // +0x4
         struct ZRender* Nxt; // +0x8
         struct ZRender* Bef; // +0xC
+        uint8_t m_aLODLookupTable[0x100]; // +0x10. Maps clamped scaled distance index (0-255) to LOD level; filled by ZRender::SetLOD
         // TODO: Finish me
 
         // +0x210 - bool m_lInCutSequence
@@ -115,6 +117,8 @@ namespace Glacier
         // +0x2C4 - LINKSORTREFTAB
         // biggest: 0x30C
     };
+
+    RE_VERIFY_OFFSET(ZRender, m_aLODLookupTable, 0x10); // Verified by ZRenderEntry::CalcLODMask (PC)
 
     // TBC
 }

@@ -5,7 +5,7 @@
 #if defined(REHITMAN_STANDALONE) || defined(REHITMAN_TESTS) // Only for separated testing without game instance
 #   define USE_STL_ALLOCATOR
 #else
-#   include <Glacier/ZSysMem.h>
+#   include <Glacier/System/ZSysMem.h>
 #   define USE_GLACIER_ALLOCATOR
 #endif
 

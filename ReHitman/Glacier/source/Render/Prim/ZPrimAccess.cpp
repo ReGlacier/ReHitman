@@ -1,10 +1,10 @@
-#include <Glacier/Render/ZPrimAccess.h>
+#include <Glacier/Render/Prim/ZPrimAccess.h>
 #include <Glacier/Render/Globals.h>
 #include <Glacier/Render/Material/ZRenderMaterialBuffer.h>
 #include <Glacier/Render/Material/ZRenderMaterialInstance.h>
 #include <Glacier/Render/Material/ZRenderMaterialSubClass.h>
 #include <Glacier/Render/Prim/SPrimObject.h>
-#include <Glacier/Render/ZPrimAccess.h>
+#include <Glacier/Render/Prim/ZPrimAccess.h>
 #include <Glacier/ZUniMemory.h>
 #include <Glacier/ZUniAssert.h>
 

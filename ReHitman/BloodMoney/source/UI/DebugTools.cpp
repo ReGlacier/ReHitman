@@ -93,7 +93,7 @@
 #include <Glacier/ZLnkActionQueue.h>
 #include <Glacier/ZLnkAction.h>
 #include <Glacier/Component/ZComponentBase.h>
-#include <Glacier/ZSysMem.h>
+#include <Glacier/System/ZSysMem.h>
 // Materials
 #include <Glacier/Materials/BS_Runtime.h>
 // Items (gamebase)

@@ -12,12 +12,12 @@ namespace Glacier
     {
     public:
         // vtbl
+        ~ZRenderEntrySpriteD3D() override;
+
         // methods
         ZRenderEntrySpriteD3D(ZRenderEntryGeomCreateInfo* pInfo);
         
         static ZRenderEntrySpriteD3D* Create(ZRenderEntryGeomCreateInfo* pInfo);
-
-        // members
     };
-    // RE_VERIFY_SIZE(ZRenderEntrySpriteD3D, 0x8c); // PC ALLOC
+    RE_VERIFY_SIZE(ZRenderEntrySpriteD3D, 0x8C); // PC ALLOC
 }

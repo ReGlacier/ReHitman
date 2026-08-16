@@ -200,6 +200,7 @@ namespace Glacier
         void FixLightList();
         void UpdateLightListForLight();
         void UpdateLightListForGeom();
+        void SetAttachUpdate();
 
         template <typename TGeom> bool IsDerivedFrom() const;
         bool IsDerivedFromStdObj(uint32_t lClassId) const;

@@ -16,6 +16,8 @@
 #include <Glacier/ZEngineGeomControl.h>
 #include <Glacier/ZEngineDataBase.h>
 #include <Glacier/System/ZSysInterface.h>
+#include <Glacier/Render/Entry/ZRenderEntry.h>
+#include <Glacier/Render/Draw/ZRenderDraw.h>
 #include <Glacier/Render/ZRender.h>
 #include <cstring>
 
@@ -2027,6 +2029,18 @@ namespace Glacier
     bool ZBaseGeom::IsDerivedFromStdObj(uint32_t lClassId) const
     {
         return ZSTDOBJ::m_Id == lClassId; // NOTE: In PS2 used ZSTDOBJ::GetClassId() call, but it's same
+    }
+
+    void ZBaseGeom::SetAttachUpdate()
+    {
+        if (!m_lDrawId)
+        {
+            return;
+        }
+
+        // TODO: Finish me after ZRenderDraw reversed!
+        // ZRenderEntry* pDrawEntry = IDraw::Instance<ZRenderDraw>()->m_DrawIdToPointer[m_lDrawId];
+        // pDrawEntry->m_lControl |= ZRenderEntry::RENDERENTRY_FLAGS::RE_ATTACH_UPDATE;
     }
 
     template bool ZBaseGeom::IsDerivedFrom<ZSTDOBJ>() const;

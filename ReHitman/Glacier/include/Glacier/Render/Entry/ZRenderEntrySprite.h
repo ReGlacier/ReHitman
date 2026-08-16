@@ -15,6 +15,10 @@ namespace Glacier
     {
     public:
         // vtbl
+        ~ZRenderEntrySprite() override;
+        RENDERENTRY_BASETYPE GetType() const override;
+        void Notify(const SRenderEntryNotifyInfo* pEntry) override;
+        void SetRenderContext(ZRenderContext* pContext, const ZRenderObjectInstance* pObjInstance) override;
 
         // methods
         ZRenderEntrySprite(ZRenderEntryGeomCreateInfo* pInfo);
@@ -25,7 +29,6 @@ namespace Glacier
         const SSpriteArray* m_pSpriteArray;
         bool m_bLocal;
         uint32_t m_lPrim;
-        // TODO: Finish me
     };
 
     RE_VERIFY_OFFSET(ZRenderEntrySprite, m_bLocal, 0x84); // Verified by ZDrawBufferSimple::DrawSpriteArray

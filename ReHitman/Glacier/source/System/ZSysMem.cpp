@@ -1,4 +1,4 @@
-#include <Glacier/ZSysMem.h>
+#include <Glacier/System/ZSysMem.h>
 
 
 namespace Glacier
@@ -18,5 +18,11 @@ namespace Glacier
         using ZSysMem_Delete_t = void(__thiscall*)(ISysMem*, void*);
         ZSysMem_Delete_t Impl = (ZSysMem_Delete_t)0x004468B0;
         Impl(this, pMem);
+    }
+
+    uint32_t SetMemColor(uint32_t lNewColor)
+    {
+        // TODO: Finish me
+        return lNewColor;
     }
 }

@@ -5,6 +5,7 @@
 #include <Glacier/Render/Fwd.h>
 #include <Glacier/Render/Material/ZRenderMaterialBinderParser.h>
 #include <Glacier/Render/ZTextureD3D.h>
+#include <Glacier/ZSTL/TIMETYPE.h>
 #include <cstdint>
 
 
@@ -45,6 +46,7 @@ namespace Glacier
     STATIC_GLOBAL_CLASS_INSTANCE(uint32_t, g_dwMagFilter);
     STATIC_GLOBAL_CLASS_INSTANCE(uint32_t, g_dwMipFilter);
     STATIC_GLOBAL_CLASS_INSTANCE(uint32_t, g_lMaxAnisotropy);
+    STATIC_GLOBAL_CLASS_INSTANCE(TIMETYPE, g_ttLastVideoEndTime);
 
     extern ZRenderMaterialBinderParser::SMapper g_TranslatorMapper[68];
 }

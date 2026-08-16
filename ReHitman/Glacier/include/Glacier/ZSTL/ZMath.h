@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Glacier/GlacierFWD.h>
 #include <Glacier/ZSTL/ZMemory.h>
 #include <algorithm>
 #include <cmath>
@@ -357,6 +358,20 @@ namespace Glacier
     {
         ZMat3x3 m0;
         ZVector3 p0;
+
+        ZMatrix& operator=(const ZMatrix& copy)
+        {
+            // Or just memcpy?
+            m0 = copy.m0;
+            p0 = copy.p0;
+            return *this;
+        }
+
+        void Reset()
+        {
+            m0.Reset();
+            p0.Reset();
+        }
     };
 
 
@@ -434,6 +449,24 @@ namespace Glacier
         vec[2] = x * mat[0] + y * mat[1] + z * mat[2];
     }
 
+    /**
+     * @brief Matrix multiply with transposed second operand: out = a * b^T (PC 0x436D80).
+     * @note out must not alias a or b.
+     */
+    inline void mmtmul(float* out, const float* a, const float* b)
+    {
+        ZASSERT(out != a && out != b);
+
+        vmtmul(&out[6], &a[6], b);
+        vmtmul(&out[3], &a[3], b);
+        vmtmul(out, a, b);
+    }
+
+    inline void mmtmul(ZMat3x3& out, const ZMat3x3& a, const ZMat3x3& b)
+    {
+        mmtmul(out.data, a.data, b.data);
+    }
+
     inline void TransformBox(const float* mat, float* size)
     {
         const float x = size[0];
@@ -467,6 +500,16 @@ namespace Glacier
     }
 
     /**
+     * @brief out = a + b * scalar (PC: 0x428690)
+     */
+    inline void vaddscalar(float* out, const float* a, const float* b, float scalar)
+    {
+        out[0] = a[0] + b[0] * scalar;
+        out[1] = a[1] + b[1] * scalar;
+        out[2] = a[2] + b[2] * scalar;
+    }
+
+    /**
      * @brief Normalizes pVec into pRes.
      * @return Length of the source vector (0.0f when pVec is a zero vector; pRes is zeroed then).
      */
@@ -490,6 +533,18 @@ namespace Glacier
         }
 
         return fLength;
+    }
+
+    /**
+     * @brief Returns distance between a and b, i.e. |a - b| (PC: 0x436980)
+     */
+    inline float vdist(const float* a, const float* b)
+    {
+        const float dx = a[0] - b[0];
+        const float dy = a[1] - b[1];
+        const float dz = a[2] - b[2];
+
+        return std::sqrt(dx * dx + dy * dy + dz * dz);
     }
 
     /**
@@ -529,14 +584,12 @@ vlen2(float const *)	.text	820DA210	0000001C	00000000	00000001	R	.	.	.	.	.	.	T	.
 vfscanf	.text	8241D550	000001AC	000000A0		R	.	.	.	.	.	.	T	.	.
 vdist2d(float const *,float const *)	.text	820EAC90	00000028	00000000	00000001	R	.	.	.	.	.	.	T	.	.
 vdist2(float const *,float const *)	.text	820EACB8	00000034	00000000	00000001	R	.	.	.	.	.	.	T	.	.
-vdist(float const *,float const *)	.text	820EAC58	00000038	00000000	00000001	R	.	.	.	.	.	.	T	.	.
 vcross(float *,float const *,float const *)	.text	820EA4F8	00000058	00000000	00000001	R	.	.	.	.	.	.	T	.	.
 vcpy<float,float>(float *,float const *)	.text	820D96D8	0000001C	00000000	00000001	R	.	.	.	.	.	.	T	.	.
 vangularpul(float * const,float const * const,float const * const,float,float)	.text	820ED7F8	00000314	000000F0		R	.	.	.	.	.	.	T	.	.
 vangpul(float * const,float const * const,float const * const,float)	.text	820EB590	00000230	000000E0		R	.	.	.	.	.	.	T	.	.
 vangle(float const * const,float const * const)	.text	820EAC00	00000058	00000000	00000001	R	.	.	.	.	.	.	T	.	.
 vaddscalar(float *,float const *,float)	.text	820EA488	00000034	00000000	00000001	R	.	.	.	.	.	.	T	.	.
-vaddscalar(float *,float const *,float const *,float)	.text	820EA4C0	00000034	00000000	00000001	R	.	.	.	.	.	.	T	.	.
 vadd(float *,float const *)	.text	820D9668	00000034	00000000	00000001	R	.	.	.	.	.	.	T	.	.
 vabs(float *,float const *)	.text	820EAD18	00000028	00000000	00000001	R	.	.	.	.	.	.	T	.	.
 vabs(float *)	.text	820EACF0	00000028	00000000	00000001	R	.	.	.	.	.	.	T	.	.

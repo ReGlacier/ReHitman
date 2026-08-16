@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <Glacier/ReGlacier.h>
+#include <Glacier/ZUniMemory.h>
 #include <Glacier/ZSTL/EAllocType.h>
 #include <Glacier/Component/ZComponentSingleton.h>
 #include <Glacier/Component/ZGlobalComponentBase.h>
@@ -122,4 +123,6 @@ namespace Glacier
 
     class ZWin32Allocator : public ZAllocatorBase, public VZWin32Allocator
     {};
+
+    uint32_t SetMemColor(uint32_t lColor);
 }
