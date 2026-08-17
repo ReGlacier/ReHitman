@@ -172,6 +172,7 @@ namespace Glacier
         }
 
         const float* Get() const { return &data[0]; }
+        float* Get() { return &data[0]; }
         
         Matrix3x3& operator*=(const Matrix3x3& mat)
         {
@@ -405,6 +406,110 @@ namespace Glacier
     }
 
 #   pragma region " --- Glacier pure math --- " // NOTE: Need optimize all this stuff to AVX2 (?)
+    /**
+     * @brief Copies 3-component vector: dst = src (PS2: vcpy<float,float>)
+     */
+    inline void vcpy(float* dst, const float* src)
+    {
+        dst[0] = src[0];
+        dst[1] = src[1];
+        dst[2] = src[2];
+    }
+
+    /**
+     * @brief Sets 3-component vector components (PS2: vset)
+     */
+    inline void vset(float* vec, float x, float y, float z)
+    {
+        vec[0] = x;
+        vec[1] = y;
+        vec[2] = z;
+    }
+
+    /**
+     * @brief Zeroes 3-component vector (PS2: vreset)
+     */
+    inline void vreset(float* vec)
+    {
+        vec[0] = 0.0f;
+        vec[1] = 0.0f;
+        vec[2] = 0.0f;
+    }
+
+    /**
+     * @brief Component-wise minimum: vec = min(vec, b) (PS2: vmin)
+     */
+    inline void vmin(float* vec, const float* b)
+    {
+        vec[0] = (std::min)(vec[0], b[0]);
+        vec[1] = (std::min)(vec[1], b[1]);
+        vec[2] = (std::min)(vec[2], b[2]);
+    }
+
+    /**
+     * @brief Component-wise maximum: vec = max(vec, b) (PS2: vmax)
+     */
+    inline void vmax(float* vec, const float* b)
+    {
+        vec[0] = (std::max)(vec[0], b[0]);
+        vec[1] = (std::max)(vec[1], b[1]);
+        vec[2] = (std::max)(vec[2], b[2]);
+    }
+
+    /**
+     * @brief out = a * scalar (PS2: vscalar)
+     */
+    inline void vscalar(float* out, const float* a, float scalar)
+    {
+        out[0] = a[0] * scalar;
+        out[1] = a[1] * scalar;
+        out[2] = a[2] * scalar;
+    }
+
+    /**
+     * @brief vec *= scalar (PS2: vscalar)
+     */
+    inline void vscalar(float* vec, float scalar)
+    {
+        vec[0] *= scalar;
+        vec[1] *= scalar;
+        vec[2] *= scalar;
+    }
+
+    /**
+     * @brief Dot product of two 3-component vectors (PS2: vdot)
+     */
+    inline float vdot(const float* a, const float* b)
+    {
+        return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+    }
+
+    /**
+     * @brief Cross product: out = a x b (PS2: vcross)
+     */
+    inline void vcross(float* out, const float* a, const float* b)
+    {
+        out[0] = a[1] * b[2] - a[2] * b[1];
+        out[1] = a[2] * b[0] - a[0] * b[2];
+        out[2] = a[0] * b[1] - a[1] * b[0];
+    }
+
+    /**
+     * @brief Length of 3-component vector (PS2: vlen)
+     */
+    inline float vlen(const float* vec)
+    {
+        return std::sqrt(vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2]);
+    }
+
+    /**
+     * @brief Squared length of 3-component vector (PS2: vlen2)
+     */
+    inline float vlen2(const float* vec)
+    {
+        return vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2];
+    }
+
     inline void vmmul(float* out, const float* in, const float* mat)
     {
         const float x = in[0];
@@ -492,6 +597,16 @@ namespace Glacier
         vec[2] -= b[2];
     }
 
+    /**
+     * @brief out = a + b (PS2: vadd)
+     */
+    inline void vadd(float* out, const float* a, const float* b)
+    {
+        out[0] = a[0] + b[0];
+        out[1] = a[1] + b[1];
+        out[2] = a[2] + b[2];
+    }
+
     inline void vadd(float* vec, const float* b)
     {
         vec[0] += b[0];
@@ -533,6 +648,53 @@ namespace Glacier
         }
 
         return fLength;
+    }
+
+    /**
+     * @brief Normalizes vector in-place (PS2: vnorm)
+     * @return Length of the source vector (0.0f when the vector is a zero vector).
+     */
+    inline float vnorm(float* vec)
+    {
+        return vnorm(vec, vec);
+    }
+
+    /**
+     * @brief Builds rotation matrix from unit axis and angle (Rodrigues' formula, PS2: mrotaxis2).
+     *        Uses the Glacier transposed storage (rows at [6],[3],[0]).
+     */
+    inline void mrotaxis2(float cosAngle, float sinAngle, const float* axis, float* out)
+    {
+        const float t = 1.0f - cosAngle;
+
+        out[6] = axis[0] * axis[0] * t + cosAngle;
+        out[7] = axis[0] * axis[1] * t - axis[2] * sinAngle;
+        out[8] = axis[0] * axis[2] * t + axis[1] * sinAngle;
+        out[3] = axis[1] * axis[0] * t + axis[2] * sinAngle;
+        out[4] = axis[1] * axis[1] * t + cosAngle;
+        out[5] = axis[1] * axis[2] * t - axis[0] * sinAngle;
+        out[0] = axis[2] * axis[0] * t - axis[1] * sinAngle;
+        out[1] = axis[2] * axis[1] * t + axis[0] * sinAngle;
+        out[2] = axis[2] * axis[2] * t + cosAngle;
+    }
+
+    /**
+     * @brief Matrix multiply in Glacier convention: out = a * b (PS2: mmmul).
+     * @note Safe when out aliases a (rows are computed independently).
+     */
+    inline void mmmul(float* out, const float* a, const float* b)
+    {
+        vmmul(&out[6], &a[6], b);
+        vmmul(&out[3], &a[3], b);
+        vmmul(out, a, b);
+    }
+
+    /**
+     * @brief Matrix multiply in-place in Glacier convention: mat *= b (PS2: mmmul).
+     */
+    inline void mmmul(float* mat, const float* b)
+    {
+        mmmul(mat, mat, b);
     }
 
     /**

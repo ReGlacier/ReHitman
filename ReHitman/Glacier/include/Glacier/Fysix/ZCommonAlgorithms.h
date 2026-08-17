@@ -76,5 +76,7 @@ namespace Glacier
                                  const Vector3& vMax, 
                                  float& fOutT, 
                                  float fMaxT);
+
+        static int CapsuleSphereCollision(ZVector3& vDir, float& fLen, const ZVector3& vp0, const ZVector3& cp1, const float& cr, const ZVector3& sc, const float& sr);
     };
 }

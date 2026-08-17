@@ -21,6 +21,4 @@ namespace Glacier
         struct Header;
         class ZMetaKey;
     }
-
-    struct SBoneDefinition {};
 }

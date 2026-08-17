@@ -5,24 +5,15 @@
 #include <Glacier/Geom/ZSTDOBJ.h>
 #include <Glacier/ZCameraSpace.h>
 #include <Glacier/SpriteDraw.h>
+#include <Glacier/Render/Sprite/SPRITETYPE.h>
 
 namespace Hitman::BloodMoney
 {
-    enum SPRITETYPE : int
-    {
-        SPRITETYPE_ARRAY = 0x1,
-        SPRITETYPE_ARRAY_BOX = 0x3,
-        SPRITETYPE_ARRAY_BOX_SCALE = 0x4,
-        SPRITETYPE_ARRAY_UV = 0x5,
-        SPRITETYPE_ARRAY_RAW = 0x6,
-        SPRITETYPE_ARRAY_PARTICLE = 0x7,
-    };
-
     class ZWINOBJ : public Glacier::ZSTDOBJ 
     {
     public:
         // vftable
-        virtual void CreateSpriteArray(uint32_t, uint32_t, SPRITETYPE);
+        virtual void CreateSpriteArray(uint32_t, uint32_t, Glacier::SPRITETYPE);
         virtual void FreeSpriteArray(uint32_t);
         virtual void DrawRaw(Glacier::ZDrawBuffer*, float const*, float const*, float const*, float);
         virtual void Draw(Glacier::ZDrawBuffer *, Glacier::ZCameraSpace*, float const*, float const*);

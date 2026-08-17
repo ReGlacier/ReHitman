@@ -27,9 +27,19 @@ namespace Glacier
     // Prims
     struct SPrims;
     struct SPrimLight;
+    struct SPrimLightOmni;
+    struct SPrimLightSpot;
+    struct SPrimLightSpotSquare;
+    struct SPrimLightEnvironment;
     struct SPrimObject;
     struct SVertexWintel;
     struct SVertexColorD3D;
+    struct SPrimVariant;
+    struct SHandleTableEntry;
+
+    // Sprites
+    struct SSpriteArray;
+    struct SSpriteArrayElementUV;
 
     // Prim Access
     class ZPrimAccess;
@@ -112,4 +122,8 @@ namespace Glacier
     struct SBonesArray;
     struct SSpriteArray;
     struct SDrawArray;
+    struct SBoneDefinition;
+    struct ZBoneConstraintsHeader;
+    struct ZBoneConstraint;
+    enum SPRITETYPE;
 }

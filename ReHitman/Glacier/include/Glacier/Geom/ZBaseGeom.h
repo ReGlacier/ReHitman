@@ -195,7 +195,7 @@ namespace Glacier
         void AdjustMinMax(ZBaseGeom* pChildBaseGeom);
         bool DisableParentBoundAdjust() const;
         bool GetParentBox(ZVector3& vCen, ZVector3& vSize) const;
-        bool CalcPrimCenSizeAlongMat(ZVector3& vCen, ZVector3& vSize, const ZMat3x3& mMat) const;
+        bool CalcPrimCenSizeAlongMat(ZVector3& vCen, ZVector3& vSize, ZMat3x3& mMat) const;
         void LightNotifyPotentialDetachment(bool bIncrease);
         void FixLightList();
         void UpdateLightListForLight();

@@ -12,7 +12,7 @@
 #include <Glacier/Render/ZSharedResourcesD3D.h>
 #include <Glacier/Render/ZDirect3DDevice.h>
 #include <Glacier/Render/ZRenderContext.h>
-#include <Glacier/Render/ZPrimHandle.h>
+#include <Glacier/Render/Prim/ZPrimHandle.h>
 #include <Glacier/ZUniAssert.h>
 
 

@@ -29,7 +29,12 @@ namespace Glacier
     STATIC_GLOBAL_CLASS_INSTANCE_IMPL(uint32_t, g_dwMipFilter, 0x007F6F30, 2);
     STATIC_GLOBAL_CLASS_INSTANCE_IMPL(uint32_t, g_lMaxAnisotropy, 0x007F6F34, 1);
     STATIC_GLOBAL_CLASS_INSTANCE_IMPL(TIMETYPE, g_ttLastVideoEndTime, 0x009AD144, {});
-
+    STATIC_GLOBAL_CLASS_INSTANCE_IMPL(int32_t, g_iCurrentDynamicPrimBuffersCount, 0x008EBE10, 0);
+    STATIC_GLOBAL_CLASS_INSTANCE_IMPL(uint32_t, g_lPrimHandleToPointerFreeBack, 0x007F646C, 0x9FFFu);
+    STATIC_GLOBAL_CLASS_INSTANCE_IMPL(uint32_t, g_lPrimToFreeCount, 0x008EBE14, 0);
+    STATIC_GLOBAL_CLASS_INSTANCE_IMPL(SPrimToFreeList_t, g_lPrimToFreeList, 0x008C3A08, {});
+    STATIC_GLOBAL_CLASS_INSTANCE_IMPL(SHandleTableEntry*, g_pPrimHandleTable, 0x008EBE08, nullptr);
+    
     // stuff
     using SMapper = ZRenderMaterialBinderParser::SMapper;
     using RT_TYPE = ZRenderMaterialBinderParser::RT_TYPE;

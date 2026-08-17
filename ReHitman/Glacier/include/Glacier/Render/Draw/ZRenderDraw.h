@@ -39,12 +39,12 @@ namespace Glacier
         bool ValidateReceiver(const ZBaseGeom* pBaseGeom) override;
 
         virtual void WaitRenderDone();
-        virtual void SetTextureFrameNumber(ZBaseGeom const*,float);
-        virtual SRenderEntryInstance* CreateRenderEntryInstance(ZPrimHandle const&,ZRenderEntry *,ZBaseGeom *,bool);
-        virtual void DestroyRenderEntryInstance(SRenderEntryInstance*);
+        virtual void SetTextureFrameNumber(const ZBaseGeom* pBaseGeom, float fTextureFrameNumber);
+        virtual SRenderEntryInstance* CreateRenderEntryInstance(const ZPrimHandle& hPrim, ZRenderEntry* pEntry, ZBaseGeom* pBaseGeom, bool bUniqueRenderObject);
+        virtual void DestroyRenderEntryInstance(SRenderEntryInstance* pRenderEntryInstance);
         virtual void CleanupUnused();
-        virtual void CalcBoneLightSources(ZBaseGeom* pBaseGeom, float*) = 0;
-        virtual void CalcBoneLightSources(ZRenderEntryBones* pEntryBones, float*);
+        virtual void CalcBoneLightSources(ZBaseGeom* pBaseGeom, float* pDirectLights) = 0;
+        virtual void CalcBoneLightSources(ZRenderEntryBones* pRenderEntryBones, float* pDirectLights);
 
         // methods
         ZRenderDraw();

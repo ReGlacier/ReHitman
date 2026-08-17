@@ -17,6 +17,8 @@ namespace Glacier
         ~ZMessageResolver();
 
         operator uint32_t() const;
+        operator uint16_t() const;
+        operator bool() const;
 
         static void ResolveAll();
         static void ClearAll();

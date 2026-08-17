@@ -2,7 +2,7 @@
 
 #include <Glacier/ReGlacier.h>
 #include <Glacier/Render/Fwd.h>
-#include <Glacier/Render/ZPrimHandle.h>
+#include <Glacier/Render/Prim/ZPrimHandle.h>
 #include <cstdint>
 
 

@@ -5,7 +5,7 @@
 #include <Glacier/Render/Prim/SPrimHeader.h>
 #include <Glacier/Render/Prim/EPrimType.h>
 #include <Glacier/Render/ZRenderContext.h>
-#include <Glacier/Render/ZPrimHandle.h>
+#include <Glacier/Render/Prim/ZPrimHandle.h>
 #include <Glacier/ZSTL/ZMath.h>
 
 

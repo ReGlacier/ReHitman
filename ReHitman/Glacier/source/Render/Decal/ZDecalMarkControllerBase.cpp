@@ -2,7 +2,7 @@
 #include <Glacier/Render/ZBoneModifyBase.h>
 #include <Glacier/Render/Prim/ZPrimAccess.h>
 #include <Glacier/Render/ZRenderBaseDll.h>
-#include <Glacier/Render/ZPrimControlBase.h>
+#include <Glacier/Render/Prim/ZPrimControlBase.h>
 #include <Glacier/System/ZSysInterface.h>
 #include <Glacier/Geom/GeomControlMasks.h>
 #include <Glacier/IK/ZLNKOBJ.h>

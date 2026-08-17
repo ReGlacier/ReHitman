@@ -40,5 +40,11 @@ namespace Glacier
         {
             return m_lHandleValue != 0u;
         }
+
+        // Not BM/Glacier related stuff, just for easier code
+        operator uint32_t() const
+        {
+            return m_lHandleValue;
+        }
     };
 }

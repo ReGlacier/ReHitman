@@ -93,6 +93,7 @@ namespace Glacier
     using AnimCallback_t = bool(ZGEOM::*)(void*, float, float, unsigned int);
 
     class ZRX86AllocIf;
+    struct SBoneDefinition;
 }
 
 #define ZASSERT(cond) assert((cond));

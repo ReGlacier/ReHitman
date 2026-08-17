@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Glacier/ReGlacier.h>
-#include <Glacier/Render/ZPrimHandle.h>
+#include <Glacier/Render/Prim/ZPrimHandle.h>
 #include <cstdint>
 
 
@@ -10,6 +10,20 @@ namespace Glacier
     class ZPrimAccess
     {
     public:
+        // types
+        enum STATUS_FLAGS
+        {
+            SF_LOCKED = 1,
+            SF_INPLACE = 2,
+            SF_DELAYDELETION = 4
+        };
+
+        enum LOCK_FLAGS
+        {
+            LF_READONLY = 1,
+            LF_WRITEONLY = 2
+        };
+        
         // vtbl
         virtual void Destroy();
         virtual void Lock(uint32_t lLockFlags);

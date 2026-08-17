@@ -7,6 +7,7 @@
 
 #include <Glacier/Fysix/SRigidBodyVelocity.h>
 #include <Glacier/Fysix/SExplosionInfo.h>
+#include <Glacier/Fysix/ZFastBoxColi.h>
 #include <Glacier/Fysix/SHitInfo.h>
 
 namespace Glacier
@@ -19,21 +20,6 @@ namespace Glacier
         virtual void Init();
     };
     RE_VERIFY_SIZE(ParticleSystem, 0x4);
-
-    struct ZFastBoxColi
-    {
-        REFTAB* m_pFaceList;
-        bool m_bBoxSet;
-        ZVector3 m_vCen;
-        ZMat3x3 m_m;
-        ZVector3 m_vSize;
-        float m_fExtraSpace;
-        int32_t m_lGeomConMask;
-        bool m_bExtendedMode;
-        bool m_bIgnoreMovingObjects;
-        uint32_t m_lNrTrisInAll;
-    };
-    RE_VERIFY_SIZE(ZFastBoxColi, 0x54);
 
     struct Particle
     {

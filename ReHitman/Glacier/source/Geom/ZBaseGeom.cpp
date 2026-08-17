@@ -18,6 +18,7 @@
 #include <Glacier/System/ZSysInterface.h>
 #include <Glacier/Render/Entry/ZRenderEntry.h>
 #include <Glacier/Render/Draw/ZRenderDraw.h>
+#include <Glacier/Render/Prim/ZPrimControlBase.h>
 #include <Glacier/Render/ZRender.h>
 #include <cstring>
 
@@ -1572,12 +1573,11 @@ namespace Glacier
 
     void ZBaseGeom::CreateUniquePrim()
     {
-        // TODO: Uncomment when ZSysInterface, ZPrimControlBase (at least) will be reversed!
-        // if (Prim() && g_pSysInterface->m_fRealTime < 101 && g_pRenderDll->m_pPrimControl->IsPrimUnique(Prim()))
-        // {
-        //     uint32_t lClonedPrim = g_pRenderDll->m_pPrimControl->CopyPrim(Prim(), false);
-        //     SetPrim(lClonedPrim);
-        // }
+        if (Prim() && static_cast<int>(g_pSysInterface->m_fRealTime) <= 0x64 && ZPrimControlBase::Instance()->IsPrimUnique(Prim()))
+        {
+            uint32_t lClonedPrim = ZPrimControlBase::Instance()->CopyPrim(Prim(), 0);
+            SetPrim(lClonedPrim);
+        }
     }
 
     void ZBaseGeom::SetOwnerDraw(bool bOwnerDraw)
@@ -1857,12 +1857,11 @@ namespace Glacier
             const auto* pCen = Cen();
             const auto* pSize = Size();
 
-            // TODO: Uncomment when ZRender & ZPrimControlBase (at least) will be reversed
-            // if (g_pRenderDll->m_pPrimControl->CalcPrimCenSize(Prim(), Cen(), Size()))
-            // {
-            //     SetRadius(m_vSize.Length());
-            // } else
-            if (IsDerivedFrom<ZSTDOBJ>())
+            if (ZPrimControlBase::Instance()->CalcPrimCenSize(Prim(), m_vCen.Get(), m_vSize.Get(), true))
+            {
+                SetRadius(m_vSize.Length());
+            }
+            else if (IsDerivedFrom<ZSTDOBJ>())
             {
                 SetSize({ 50.f });
                 SetCen({ 0.f });
@@ -1997,13 +1996,9 @@ namespace Glacier
         return false;
     }
 
-    bool ZBaseGeom::CalcPrimCenSizeAlongMat(ZVector3& vCen, ZVector3& vSize, const ZMat3x3& mMat) const
+    bool ZBaseGeom::CalcPrimCenSizeAlongMat(ZVector3& vCen, ZVector3& vSize, ZMat3x3& mMat) const
     {
-        // TODO: Uncomment next lines when ZRender & ZPrimControlBase will be reversed
-        // return g_pRenderDll->m_pPrimControl->CalcPrimCenSizeAlongMat(Prim(), vCen, vSize, mMat, false);
-
-        // Remove this line
-        return false;
+        return ZPrimControlBase::Instance()->CalcPrimCenSizeAlongMat(Prim(), vCen.Get(), vSize.Get(), mMat.Get(), false);
     }
 
     void ZBaseGeom::LightNotifyPotentialDetachment(bool bIncrease)

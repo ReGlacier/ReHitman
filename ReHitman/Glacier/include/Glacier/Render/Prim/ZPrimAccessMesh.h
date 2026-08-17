@@ -15,7 +15,7 @@ namespace Glacier
         
         virtual ZPrimAccessMesh* CreateEditable(uint32_t lNumTriangles, uint32_t lNumVertices) = 0;
         virtual ZPrimAccessMesh* Clone();
-        virtual bool IsEditable();
+        virtual bool IsEditable() const;
         virtual void GetPositions(uint32_t lStartVertex, uint32_t lNumVertices, float* pfPosition) = 0;
         virtual void SetPositions(uint32_t lStartVertex, uint32_t lNumVertices, const float* pfPosition) = 0;
         virtual void GetNormals(uint32_t lStartVertex, uint32_t lNumVertices, float* pfNormal) = 0;
@@ -34,5 +34,9 @@ namespace Glacier
 
         // methods
         uint32_t GetNumTriangles() const;
+        uint32_t GetNumVertices() const;
+        uint16_t* GetIndices() const;
+        uint16_t* GetIndicesReadWrite();
+        const uint32_t* GetVertices() const;
     };
 }

@@ -1,7 +1,7 @@
 #include <Glacier/IK/ZLNKOBJ.h>
 #include <Glacier/Render/ZBoneModifyBase.h>
 #include <Glacier/Render/ZRenderBaseDll.h>
-#include <Glacier/Render/ZPrimControlBase.h>
+#include <Glacier/Render/Prim/ZPrimControlBase.h>
 
 
 namespace Glacier
@@ -13,8 +13,7 @@ namespace Glacier
 
     const ZBone* ZLNKOBJ::GetGlobalPrimBones() const
     {
-        // TODO: Finish this place after ZPrimControlBase will be reversed
-        // return g_pRenderDll->m_pPrimControl->GetGlobalPrimBones(Prim());
-        return nullptr;
+        // it's ok due ZBone is POD type contains only 'float' entries.
+        return reinterpret_cast<const ZBone*>(ZPrimControlBase::Instance()->GetGlobalPrimBones(Prim()));
     }
 }

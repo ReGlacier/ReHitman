@@ -11,9 +11,12 @@
 
 namespace Glacier
 {
+    static constexpr int MAX_NUM_FREEPRIM = 256;
+
     using PrimHandleToPointerTable_t = void*[40960];
     using SpotMapArray_t = ZTextureD3D[2];
     using ShadowColorMapArray_t = ZTextureD3D[4];
+    using SPrimToFreeList_t = uint32_t[MAX_NUM_FREEPRIM];
 
     STATIC_GLOBAL_CLASS_INSTANCE(PrimHandleToPointerTable_t, g_apPrimHandleToPointerTable);
     STATIC_GLOBAL_CLASS_INSTANCE(uint32_t, g_lPrimHandleToPointerCount);
@@ -47,6 +50,11 @@ namespace Glacier
     STATIC_GLOBAL_CLASS_INSTANCE(uint32_t, g_dwMipFilter);
     STATIC_GLOBAL_CLASS_INSTANCE(uint32_t, g_lMaxAnisotropy);
     STATIC_GLOBAL_CLASS_INSTANCE(TIMETYPE, g_ttLastVideoEndTime);
+    STATIC_GLOBAL_CLASS_INSTANCE(int32_t, g_iCurrentDynamicPrimBuffersCount);
+    STATIC_GLOBAL_CLASS_INSTANCE(uint32_t, g_lPrimHandleToPointerFreeBack);
+    STATIC_GLOBAL_CLASS_INSTANCE(uint32_t, g_lPrimToFreeCount);
+    STATIC_GLOBAL_CLASS_INSTANCE(SPrimToFreeList_t, g_lPrimToFreeList);
+    STATIC_GLOBAL_CLASS_INSTANCE(SHandleTableEntry*, g_pPrimHandleTable);
 
     extern ZRenderMaterialBinderParser::SMapper g_TranslatorMapper[68];
 }

@@ -1,7 +1,7 @@
 #include <Glacier/Render/Entry/ZRenderEntrySpriteD3D.h>
 #include <Glacier/Render/Prim/SPrimHeader.h>
 #include <Glacier/Render/Prim/EPrimType.h>
-#include <Glacier/Render/ZPrimHandle.h>
+#include <Glacier/Render/Prim/ZPrimHandle.h>
 #include <Glacier/ZUniMemory.h>
 
 
