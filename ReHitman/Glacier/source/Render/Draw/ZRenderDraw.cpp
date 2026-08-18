@@ -12,6 +12,7 @@
 #include <Glacier/IK/ZLNKOBJ.h>
 #include <Glacier/ZPrimControlWintel.h>
 #include <Glacier/System/ZSysMem.h>
+#include <Glacier/ZUniMemory.h>
 #include <cstring>
 
 
@@ -66,7 +67,7 @@ namespace Glacier
             {
                 pBaseGeom->m_lDrawId = 0;
             }
-            delete pEntry;
+            ZUniMemory::Delete(pEntry);
         }
 
         m_lRenderEntriesCount = 0;
@@ -74,13 +75,13 @@ namespace Glacier
 
         for (uint32_t i = 0; i < m_lToBeDeletedCount; ++i)
         {
-            delete m_apToBeDeleted[i];
+            ZUniMemory::Delete(m_apToBeDeleted[i]);
         }
         m_lToBeDeletedCount = 0;
 
         for (auto& kv : m_RenderObjects)
         {
-            delete kv.second;
+            ZUniMemory::Delete(kv.second);
         }
         m_RenderObjects.clear();
 
@@ -369,7 +370,7 @@ namespace Glacier
             WaitRenderDone();
             for (uint32_t i = 0; i < m_lToBeDeletedCount; ++i)
             {
-                delete m_apToBeDeleted[i];
+                ZUniMemory::Delete(m_apToBeDeleted[i]);
             }
             m_lToBeDeletedCount = 0;
         }
@@ -411,7 +412,7 @@ namespace Glacier
                 --m_lRenderEntriesCount;
                 m_apRenderEntries[i] = m_apRenderEntries[m_lRenderEntriesCount];
 
-                delete pEntry;
+                ZUniMemory::Delete(pEntry);
             }
         }
 
@@ -420,7 +421,7 @@ namespace Glacier
         {
             for (uint32_t j = 0; j < m_lToBeDeletedCount; ++j)
             {
-                delete m_apToBeDeleted[j];
+                ZUniMemory::Delete(m_apToBeDeleted[j]);
             }
             m_lToBeDeletedCount = 0;
         }
@@ -435,7 +436,7 @@ namespace Glacier
             }
             else
             {
-                delete pObject;
+                ZUniMemory::Delete(pObject);
                 auto itNext = it;
                 ++itNext;
                 m_RenderObjects.erase(it);

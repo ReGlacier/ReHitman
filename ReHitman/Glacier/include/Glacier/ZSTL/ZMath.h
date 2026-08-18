@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Glacier/GlacierFWD.h>
+#include <Glacier/ZUniAssert.h>
 #include <Glacier/ZSTL/ZMemory.h>
 #include <algorithm>
 #include <cmath>
@@ -103,6 +104,21 @@ namespace Glacier
             y += v.y;
             z += v.z;
             return *this;
+        }
+
+        Vector3 operator*(float fScalar) const
+        {
+            return Vector3(x * fScalar, y * fScalar, z * fScalar);
+        }
+
+        Vector3 operator+(const Vector3& other) const
+        {
+            return Vector3(x + other.x, y + other.y, z + other.z);
+        }
+
+        friend Vector3 operator*(float fScalar, const Vector3& v)
+        {
+            return v * fScalar;
         }
 
         float* Get() { return &x; }
@@ -660,6 +676,22 @@ namespace Glacier
     }
 
     /**
+     * @brief Compares two 3-component vectors for exact equality (PS2: vcmp).
+     */
+    inline bool vcmp(const float* a, const float* b)
+    {
+        return a[0] == b[0] && a[1] == b[1] && a[2] == b[2];
+    }
+
+    /**
+     * @brief Copies 3x3 matrix (PS2: mcpy).
+     */
+    inline void mcpy(float* dst, const float* src)
+    {
+        memcpy(dst, src, sizeof(float) * 9);
+    }
+
+    /**
      * @brief Builds rotation matrix from unit axis and angle (Rodrigues' formula, PS2: mrotaxis2).
      *        Uses the Glacier transposed storage (rows at [6],[3],[0]).
      */
@@ -716,6 +748,199 @@ namespace Glacier
     {
         vsub(pOut, pIn, mat.p0.Get());
         vmtmul(pOut, mat.m0.Get());
+    }
+
+    /**
+     * @brief Inverts a 3x3 system (adjugate / determinant).
+     * @return false when the matrix is (near-)singular, true otherwise.
+     */
+    inline bool Invert3x3System(float* inv, const float* m)
+    {
+        const float det = m[7] * m[5] * m[0]
+            - m[3] * m[8] * m[1]
+            - m[6] * m[4] * m[2]
+            + m[8] * m[4] * m[0]
+            + m[3] * m[7] * m[2]
+            + m[6] * m[5] * m[1];
+
+        if (std::fabs(det) < 0.000001f)
+        {
+            return false;
+        }
+
+        const float fInvDet = 1.0f / det;
+
+        inv[0] = (m[4] * m[8] - m[5] * m[7]) * fInvDet;
+        inv[1] = (m[7] * m[2] - m[8] * m[1]) * fInvDet;
+        inv[2] = (m[5] * m[1] - m[4] * m[2]) * fInvDet;
+        inv[3] = (m[5] * m[6] - m[8] * m[3]) * fInvDet;
+        inv[4] = (m[8] * m[0] - m[6] * m[2]) * fInvDet;
+        inv[5] = (m[3] * m[2] - m[5] * m[0]) * fInvDet;
+        inv[6] = (m[3] * m[7] - m[4] * m[6]) * fInvDet;
+        inv[7] = (m[1] * m[6] - m[0] * m[7]) * fInvDet;
+        inv[8] = (m[4] * m[0] - m[3] * m[1]) * fInvDet;
+
+        return true;
+    }
+
+    /**
+     * @brief Computes the normalized face normal of a triangle (PS2: CalcNormal).
+     *        Falls back to the +X axis for degenerate triangles.
+     */
+    inline void CalcNormal(float* pOutNormal, const float* pVert0, const float* pVert1, const float* pVert2)
+    {
+        float vEdge0[3];
+        float vEdge1[3];
+
+        vsub(vEdge0, pVert1, pVert0);
+        vsub(vEdge1, pVert2, pVert0);
+        vcross(pOutNormal, vEdge1, vEdge0);
+
+        if (vnorm(pOutNormal) < 0.99998999f)
+        {
+            vset(pOutNormal, 1.0f, 0.0f, 0.0f);
+        }
+    }
+
+    /**
+     * @brief Tests whether the plane (pNormal, fDist) intersects the AABB of half-extents pSize
+     *        centered at the origin (PS2: PlaneBoxOverlap).
+     */
+    inline bool PlaneBoxOverlap(const float* pNormal, float fDist, const float* pSize)
+    {
+        float vMin[3];
+        float vMax[3];
+
+        for (int i = 0; i < 3; ++i)
+        {
+            if (pNormal[i] <= 0.0f)
+            {
+                vMin[i] = pSize[i];
+                vMax[i] = -pSize[i];
+            }
+            else
+            {
+                vMin[i] = -pSize[i];
+                vMax[i] = pSize[i];
+            }
+        }
+
+        return (vdot(pNormal, vMin) + fDist) <= 0.0f && (vdot(pNormal, vMax) + fDist) >= 0.0f;
+    }
+
+    /**
+     * @brief Separating-axis test between an origin-centered AABB (half-extents pSize)
+     *        and a triangle already expressed in box space (PS2/XBOX: TriangleAABBOverlap core).
+     */
+    inline bool TriangleAABBOverlap(const float* pSize, const float* pVert0, const float* pVert1, const float* pVert2)
+    {
+        float vEdge0[3];
+        float vEdge1[3];
+        float vEdge2[3];
+
+        vsub(vEdge0, pVert1, pVert0);
+        vsub(vEdge1, pVert2, pVert1);
+        vsub(vEdge2, pVert0, pVert2);
+
+        // 9 cross-product axes (box axes x triangle edges)
+        const float* pEdges[3] = { vEdge0, vEdge1, vEdge2 };
+        const float* pOtherVerts[3][2] =
+        {
+            { pVert0, pVert2 },
+            { pVert0, pVert1 },
+            { pVert1, pVert2 },
+        };
+
+        for (int iEdge = 0; iEdge < 3; ++iEdge)
+        {
+            const float* pEdge = pEdges[iEdge];
+            const float fAbsX = std::fabs(pEdge[0]);
+            const float fAbsY = std::fabs(pEdge[1]);
+            const float fAbsZ = std::fabs(pEdge[2]);
+            const float* pA = pOtherVerts[iEdge][0];
+            const float* pB = pOtherVerts[iEdge][1];
+
+            // axis (1, 0, 0) x edge
+            {
+                const float fP0 = pEdge[2] * pA[1] - pEdge[1] * pA[2];
+                const float fP1 = pEdge[2] * pB[1] - pEdge[1] * pB[2];
+                const float fMin = (std::min)(fP0, fP1);
+                const float fMax = (std::max)(fP0, fP1);
+                const float fRad = fAbsZ * pSize[1] + fAbsY * pSize[2];
+
+                if (fMin > fRad || fMax < -fRad)
+                {
+                    return false;
+                }
+            }
+
+            // axis (0, 1, 0) x edge
+            {
+                const float fP0 = -pEdge[2] * pA[0] + pEdge[0] * pA[2];
+                const float fP1 = -pEdge[2] * pB[0] + pEdge[0] * pB[2];
+                const float fMin = (std::min)(fP0, fP1);
+                const float fMax = (std::max)(fP0, fP1);
+                const float fRad = fAbsZ * pSize[0] + fAbsX * pSize[2];
+
+                if (fMin > fRad || fMax < -fRad)
+                {
+                    return false;
+                }
+            }
+
+            // axis (0, 0, 1) x edge
+            {
+                const float fP0 = pEdge[1] * pA[0] - pEdge[0] * pA[1];
+                const float fP1 = pEdge[1] * pB[0] - pEdge[0] * pB[1];
+                const float fMin = (std::min)(fP0, fP1);
+                const float fMax = (std::max)(fP0, fP1);
+                const float fRad = fAbsY * pSize[0] + fAbsX * pSize[1];
+
+                if (fMin > fRad || fMax < -fRad)
+                {
+                    return false;
+                }
+            }
+        }
+
+        // 3 box face axes
+        for (int iAxis = 0; iAxis < 3; ++iAxis)
+        {
+            const float fMin = (std::min)((std::min)(pVert0[iAxis], pVert1[iAxis]), pVert2[iAxis]);
+            const float fMax = (std::max)((std::max)(pVert0[iAxis], pVert1[iAxis]), pVert2[iAxis]);
+
+            if (fMin > pSize[iAxis] || fMax < -pSize[iAxis])
+            {
+                return false;
+            }
+        }
+
+        // triangle plane axis
+        float vNormal[3];
+        vcross(vNormal, vEdge0, vEdge1);
+
+        return PlaneBoxOverlap(vNormal, -vdot(vNormal, pVert0), pSize);
+    }
+
+    /**
+     * @brief OBB wrapper: transforms the triangle into box space (centered at pCenter,
+     *        rotated by pMat) and runs the AABB test (PS2/XBOX: TriangleAABBOverlap with mat).
+     */
+    inline bool TriangleAABBOverlap(const float* pCenter, const float* pSize, const float* pMat,
+        const float* pVert0, const float* pVert1, const float* pVert2)
+    {
+        float v0[3];
+        float v1[3];
+        float v2[3];
+
+        vsub(v0, pVert0, pCenter);
+        vsub(v1, pVert1, pCenter);
+        vsub(v2, pVert2, pCenter);
+        vmtmul(v0, pMat);
+        vmtmul(v1, pMat);
+        vmtmul(v2, pMat);
+
+        return TriangleAABBOverlap(pSize, v0, v1, v2);
     }
 #   pragma endregion
 }

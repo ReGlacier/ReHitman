@@ -9,10 +9,14 @@
 #include <cstdint>
 
 
+namespace Glacier
+{
+    class REFTAB;
+}
+
 namespace Glacier::Fysix
 {
     //fwds
-    class REFTAB;
     class ZConstraintBody;
     class ZConstraintGroup;
     class ZConstraintSystem;
@@ -90,11 +94,29 @@ namespace Glacier::Fysix
 
     struct SLoadSave
     {
-        float ref_point[3];
-        uint16_t used_pars;
-        SLoadSavePar* pars;
-        uint16_t own_cons;
-        SLoadSaveCon* cons;
+        // methods
+        SLoadSave() = default;
+        ~SLoadSave()
+        {
+            if (pars)
+            {
+                ZUniMemory::Free(pars);
+                pars = nullptr;
+            }
+
+            if (cons)
+            {
+                ZUniMemory::Free(cons);
+                cons = nullptr;
+            }
+        }
+
+        // members
+        float ref_point[3] { 0.f };
+        uint16_t used_pars { 0 };
+        SLoadSavePar* pars { nullptr };
+        uint16_t own_cons { 0 };
+        SLoadSaveCon* cons { nullptr };
     };
 
     template <typename T>
@@ -205,22 +227,22 @@ namespace Glacier::Fysix
         bool IsLocked(uint16_t par);
         int GetParticleMass(float& mass, uint16_t par);        
         int GetParticleRadius(float& radius, uint16_t par);
-        void Linkage(const ZConstraintBody* body, uint16_t srcLinkPar, uint16_t bodyLinkPar);
-        int SetReferencePosition(const float (*p0)[3]);
+        ZConstraintBody* Linkage(const ZConstraintBody* body, uint16_t srcLinkPar, uint16_t bodyLinkPar);
+        int SetReferencePosition(const float (&p0)[3]);
         int LockParticle(uint16_t par);
         int ReleaseParticle(uint16_t par);
         int ReleaseAllParticles();
         float KineticEnergy();
         int GetParticlePos(float(&pos)[3], uint16_t par);
         int GetParticlePos(float(&pos)[3], uint16_t par, float fraction);
-        int MoveParticle(uint16_t par, const float(*displacement)[3], bool moveFixed, bool resetVelocity);
+        int MoveParticle(uint16_t par, const float(&displacement)[3], bool moveFixed, bool resetVelocity);
         void HandleCollision(const REFTAB* faces, bool penetrations, bool collisions);
-        void Simulate(SSimResult& result, const float(*p0)[3], const REFTAB* faces);
+        void Simulate(SSimResult& result, const float(&p0)[3], const REFTAB* faces);
         void Stabilize(bool integrate, uint16_t iterations);
         float AverageStrain(uint16_t& id);
         void FractureInfo(uint16_t& id, float(&vel)[3]);
         int GetParticleVel(float(&vel)[3], uint16_t par);
-        SParticle* GetParticle(uint16_t par);
+        SParticle* GetParticle(uint16_t par) const;
 
         // members
         ZConstraintSystem* m_pOwner;
@@ -241,11 +263,55 @@ namespace Glacier::Fysix
         virtual ~ZConstraintGroup();
 
         // methods
+        /**
+         * @brief Gets the starting constraint index pointer for this group.
+         * @param body The constraint body to get indices for.
+         * @return Pointer to the first constraint index for this group.
+         */
+        SConstraintIndex* ConsIndexStart(const ZConstraintBody& body);
+
+        /**
+         * @brief Solves distance constraints using a non-linear stiffness model with aberration culling.
+         * @param lCount Number of constraints to solve.
+         * @param body The constraint body containing the particles.
+         * @param prop Array of constraint properties (rest length squared, weighted inverse mass).
+         * @param idx Array of constraint indices (particle pairs).
+         */
         void NormalSolver(const uint32_t lCount, const ZConstraintBody& body, const SConstraintProps& prop, const SConstraintIndex& idx);
+
+        /**
+         * @brief Solves distance constraints using a fast linear projection (PBD) with rest length computed via rsqrt.
+         * @param lCount Number of constraints to solve.
+         * @param body The constraint body containing the particles.
+         * @param prop Array of constraint properties (rest length squared, weighted inverse mass).
+         * @param idx Array of constraint indices (particle pairs).
+         */
         void QuickSolver(uint32_t lCount, const ZConstraintBody& body, const SConstraintProps& prop, const SConstraintIndex& idx);
+
+        /**
+         * @brief Solves linkage constraints between two separate bodies.
+         * @param con The linkage constraint data.
+         */
         void LinkSolver(const SLinkage& con);
-        void HandleFracture(const ZConstraintBody& body, uint16_t& id, float(&velocity)[3]);
-        void Strain(const ZConstraintBody& body, uint16_t& amount, uint16_t& strainPar);
+
+        /**
+         * @brief Checks for fractured constraints and detaches particles if strain exceeds limits.
+         * @param body The constraint body to check.
+         * @param id Output: index of the fractured particle.
+         * @param velocity Output: velocity of the fractured particle.
+         * @return True if a fracture occurred, false otherwise.
+         */
+        bool HandleFracture(ZConstraintBody& body, uint16_t& id, float(&velocity)[3]);
+
+        /**
+         * @brief Computes the average strain (deformation) across all constraints in the group.
+         * @param body The constraint body to evaluate.
+         * @param strain Output: accumulated strain value.
+         * @param amount Output: number of constraints evaluated.
+         * @param strainPar Output: index of the particle with maximum strain.
+         * @return True if strain was computed, false otherwise.
+         */
+        bool Strain(const ZConstraintBody& body, float& strain, uint16_t& amount, uint16_t& strainPar);
 
         // members
         ZConstraintSystem* m_pOwner;
@@ -266,6 +332,14 @@ namespace Glacier::Fysix
     class ZConstraintSystem
     {
     public:
+        // constants
+        static constexpr float sm_INFINITE = 1000000.0f;
+        static constexpr float sm_TIMESTEP = 0.039999999f;
+        static constexpr float sm_STRENGTH = 1.0f;
+        static constexpr float sm_DISABLED = 0.0f;
+        static constexpr float sm_ABERRATION = 0.0f;
+        static constexpr float sm_STRAIN = 0.0f;
+
         // vtbl
         virtual ~ZConstraintSystem();
 
@@ -273,7 +347,7 @@ namespace Glacier::Fysix
         ZConstraintSystem();
 
         void Clear();
-        void Init(const PP_& pp);
+        bool Init(const PP_& pp);
         int InitGroups();
         int InitConstraints();
         bool InitManifold(uint16_t type);

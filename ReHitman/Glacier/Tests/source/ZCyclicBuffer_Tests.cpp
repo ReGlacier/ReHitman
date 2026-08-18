@@ -169,47 +169,40 @@ TEST(ZCyclicBuffer, WrapAroundKeepsDataIntact)
 {
     ZCyclicBuffer buffer(64);
 
-    // Fill, evict and force the write cursor to wrap multiple times.
-    for (int i = 0; i < 16; ++i)
+    // 16-byte payloads give a 20-byte record stride, so a 64 byte buffer holds
+    // exactly 3 records before the write cursor has to wrap (3 * 20 + 4 header).
+    // Pushing 12 of them forces several real wrap-arounds with evictions. Unlike
+    // the old 8-byte-payload case, the live window never degenerates into the
+    // original Get() quirk where a record pinned at offset 0 becomes unreadable,
+    // so every live record must read back intact and deterministic.
+    const int iPushes = 12;
+    for (int i = 0; i < iPushes; ++i)
     {
-        char szRecord[8];
+        char szRecord[16];
         std::memset(szRecord, 'A' + (i % 26), sizeof(szRecord) - 1);
         szRecord[sizeof(szRecord) - 1] = '\0';
         PushString(buffer, szRecord);
     }
 
     const int iCount = buffer.Count();
-    ASSERT_GT(iCount, 0);
+    ASSERT_EQ(iCount, 3); // 64 bytes hold at most 3 records of 20 byte stride
     EXPECT_EQ(buffer.Last(), buffer.First() + iCount - 1);
 
-    // Every readable record in the live window must belong to the iCount newest
-    // pushes; slots clobbered by a wrap sentinel do not hold valid strings.
-    int iReadable = 0;
+    // The live window must be exactly the iCount newest pushes (J, K, L), each
+    // fully intact: every byte of the payload carries the record's fill letter.
     for (int i = 0; i < iCount; ++i)
     {
         const char* pszRecord = GetString(buffer, buffer.First() + i);
-        if (!pszRecord || pszRecord[0] < 'A' || pszRecord[0] > 'P')
-            continue;
+        ASSERT_NE(pszRecord, nullptr);
 
-        EXPECT_GE(pszRecord[0], static_cast<char>('A' + 16 - iCount));
-        ++iReadable;
+        const char cExpected = static_cast<char>('A' + ((buffer.First() + i) % 26));
+        for (int iByte = 0; iByte < 15; ++iByte)
+            EXPECT_EQ(pszRecord[iByte], cExpected);
+        EXPECT_EQ(pszRecord[15], '\0');
     }
 
-    EXPECT_GE(iReadable, iCount - 1);
-
-    // The newest push is still alive somewhere in the buffer, even when the record
-    // currently pinned at offset 0 hides it from Get() (original quirk).
-    bool bNewestAlive = false;
-    for (int iOffset = 0; iOffset < 64; iOffset += 4)
-    {
-        if (std::memcmp(buffer.m_pBuffer + iOffset, "PPPPPPP", 8) == 0)
-        {
-            bNewestAlive = true;
-            break;
-        }
-    }
-
-    EXPECT_TRUE(bNewestAlive);
+    // Both addressing modes agree on the newest record.
+    EXPECT_STREQ(GetString(buffer, -1), GetString(buffer, buffer.Last()));
 }
 
 TEST(ZCyclicBuffer, DrainingEverythingResetsIndices)

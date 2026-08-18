@@ -5,6 +5,7 @@
 #include <Glacier/ZSTL/ZOffsetAlloc.h>
 #include <G1ConfigurationService.h>
 #include <Glacier/EventBase/ZBaseConRout.h>
+#include <Glacier/Debug/ZMemReadOut.h>
 #include <Glacier/ZUniAssert.h>
 #include <Glacier/ZUniMemory.h>
 #include <malloc.h>
@@ -90,7 +91,13 @@ namespace Glacier
                     else
                     {
                         // The constructor consumes m_DirectRef and registers this event in the requested ref slot.
-                        std::ignore = new ZEventBase();
+                        auto* ptr = new ZEventBase();
+
+                        if (ZMemReadOut::Exists())
+                        {
+                            ZMemReadOut::Instance().OverrideMemColors((char*)ptr, sizeof(ZEventBase), EVENTBASE_MEM_COLOR);
+                        }
+                        else std::ignore = ptr;
                     }
                 }
             }
@@ -191,6 +198,16 @@ namespace Glacier
         // Don't call constructor here! It will be called from outside
         pEvent->m_lEventAllocSize = lAlignedSize >> 2;
         ++m_lNrAllocatedEvents;
+
+        if (ZMemReadOut::Exists())
+        {
+            ZMemReadOut::Instance()
+                .OverrideMemColors(
+                    (char*)pEvent, 
+                    (lAlignedSize + 15) & 0xFFFFFFF0u, 
+                    EVENTBASE_MEM_COLOR
+                );
+        }
         return pEvent;
     }
 
@@ -227,6 +244,12 @@ namespace Glacier
         size_t offset = (char *)pEvent - this->m_pEventRam;
         
         m_pEventAlloc->Free(offset, (lAlignedSize + 15) & 0xFFFFFFF0);
+
+        if (ZMemReadOut::Exists())
+        {
+            ZMemReadOut::Instance().OverrideMemColors((char*)pEvent, lAlignedSize + 15 & 0xFFFFFFF0u, 0x20A0FFu);
+        }
+
         m_lAllocatedEventsRam -= lAlignedSize;
         --m_lNrAllocatedEvents;
     }

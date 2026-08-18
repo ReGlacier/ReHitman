@@ -6,6 +6,7 @@
 #include <Glacier/Geom/ZGEOM.h>
 #include <Glacier/Serializer/ISerializerStream.h>
 #include <Glacier/Serializer/IOutputSerializerStream.h>
+#include <Glacier/Debug/ZMemReadOut.h>
 #include <Glacier/ZSTL/ZOffsetAlloc.h>
 #include <Glacier/ZUniAssert.h>
 #include <cstring>
@@ -178,12 +179,24 @@ namespace Glacier
 
 	ZBaseGeom* ZGeomBuffer::AllocBaseGeom()
 	{
-		return m_BaseGeomMemoryManager->Alloc();
+		auto* pBaseGeom = m_BaseGeomMemoryManager->Alloc();
+		if (pBaseGeom && ZMemReadOut::Exists())
+		{
+			ZMemReadOut::Instance().OverrideMemColors((char*)pBaseGeom, sizeof(ZBaseGeom), GEOMBASE_MEM_COLOR);
+		}
+
+		return pBaseGeom;
 	}
 
 	ZBaseGeom* ZGeomBuffer::AllocBaseGeomDirect(ZREF ref)
 	{
-		return m_BaseGeomMemoryManager->AllocDirect(ref);
+		auto* pBaseGeom = m_BaseGeomMemoryManager->AllocDirect(ref);
+		if (pBaseGeom && ZMemReadOut::Exists())
+		{
+			ZMemReadOut::Instance().OverrideMemColors((char*)pBaseGeom, sizeof(ZBaseGeom), GEOMBASE_MEM_COLOR);
+		}
+
+		return pBaseGeom;
 	}
 
 	ZGEOM* ZGeomBuffer::AllocExtraGeom(uint32_t lExtraGeomSize)
@@ -272,6 +285,12 @@ namespace Glacier
 		const uint32_t lGeomAllocSizeAligned = (pGeom->GetOldClassInfo()->m_lSize + 3) & ~3u;
 
 		m_pExtraGeomElems->Remove(pGeom, lGeomAllocSizeAligned);
+
+		if (ZMemReadOut::Exists())
+		{
+			// Idk about color constant, need investigate
+			ZMemReadOut::Instance().OverrideMemColors((char*)pGeom, lGeomAllocSizeAligned, 0x7F0000u);
+		}
 	}
 
 	void ZGeomBuffer::FreeRoomList(ZBaseGeomRoomList* pRoomList)

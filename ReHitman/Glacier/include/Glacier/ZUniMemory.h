@@ -26,6 +26,18 @@ struct ZUniMemory
     }
 
     template <typename T>
+    static T* NewArray(size_t count)
+    {
+        void** ptr = (void**)Allocate(sizeof(T) * count);
+        for (int i = 0; i < count; ++i)
+        {
+            new (ptr[i]) T();
+        }
+
+        return reinterpret_cast<T*>(ptr);
+    }
+
+    template <typename T>
     static void Delete(T* ptr)
     {
         if (!ptr) return;
@@ -33,6 +45,21 @@ struct ZUniMemory
         if constexpr (std::is_destructible_v<T>) 
         {
             ptr->~T(); 
+        }
+
+        Free(ptr);
+    }
+
+    template <typename T>
+    static void DeleteArray(T* ptr, size_t count)
+    {
+        if (!ptr || !count) return;
+
+        T* p = ptr;
+        for (int i = 0; i < count; ++i)
+        {
+            p->~T();
+            p++;
         }
 
         Free(ptr);

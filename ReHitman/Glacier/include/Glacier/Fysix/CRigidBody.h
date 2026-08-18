@@ -5,6 +5,7 @@
 #include <Glacier/ZSTL/REFTAB.h>
 #include <Glacier/ReGlacier.h>
 
+#include <Glacier/Fysix/ConstrainedParticleSystem.h>
 #include <Glacier/Fysix/SRigidBodyVelocity.h>
 #include <Glacier/Fysix/SExplosionInfo.h>
 #include <Glacier/Fysix/ZFastBoxColi.h>
@@ -13,55 +14,6 @@
 namespace Glacier
 {
     struct ZCollisionBox;
-
-    struct ParticleSystem
-    {
-        virtual ~ParticleSystem();
-        virtual void Init();
-    };
-    RE_VERIFY_SIZE(ParticleSystem, 0x4);
-
-    struct Particle
-    {
-        ZVector3 ok_x;
-        ZVector3 x;
-        ZVector3 oldx;
-        ZVector3 v;
-        float mass;
-    };
-    RE_VERIFY_SIZE(Particle, 0x34);
-
-    struct ParticleConstraint
-    {
-        struct Particle* m_pPar1;
-        struct Particle* m_pPar2;
-        float m_fDist;
-    };
-    RE_VERIFY_SIZE(ParticleConstraint, 0xC);
-
-    // TODO: Move to separated file
-    struct ConstrainedParticleSystem : public ParticleSystem
-    {
-        virtual void Init() override;
-        virtual ~ConstrainedParticleSystem() override;
-        virtual void InitOkX();
-
-        struct Particle* m_pParticles;                          // +0x04
-        struct ParticleConstraint* m_pConstraints;              // +0x08
-        struct ParticleConstraint* m_pSpecialConstraints;       // +0x0c
-        int m_iNumParticles;                             // +0x10
-        int m_iNumConstraints;                           // +0x14
-        int m_iNumSpecialConstraints;                    // +0x18
-        bool m_bFollow;                                  // +0x1c
-        float m_fPrevTimeStep;                           // +0x20
-        float m_fDamping;                                // +0x24
-        struct ZFastBoxColi* m_pFastBox;
-        bool m_bInWater;
-        bool m_bReallyInWater;
-        bool m_bReallyInWaterOld;
-        const ZLNKOBJ* m_pLnkObj;
-    };
-    RE_VERIFY_SIZE(ConstrainedParticleSystem, 0x34);
 
     struct SVertexRep
     {
@@ -96,7 +48,7 @@ namespace Glacier
         //data (total size is 0xF4, ZEventBase size is 0x30)
         uint16_t m_id;
         RE_ADD_PADDING(2);
-        ConstrainedParticleSystem m_Particles;
+        ConstrainedParticleSystem m_Particles { 3, 5 };
         ZVector3 m_Centroid;
         ZVector3 m_LocalCentroid;
         ZMat3x3 m_QMat;

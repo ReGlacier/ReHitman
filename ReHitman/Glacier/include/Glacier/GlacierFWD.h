@@ -95,5 +95,3 @@ namespace Glacier
     class ZRX86AllocIf;
     struct SBoneDefinition;
 }
-
-#define ZASSERT(cond) assert((cond));

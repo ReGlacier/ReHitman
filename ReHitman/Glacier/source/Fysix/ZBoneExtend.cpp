@@ -4,19 +4,19 @@
 #include <Glacier/IK/ZLNKOBJ.h>
 #include <Glacier/Animation/Model.h>
 #include <Glacier/System/ZSysInterface.h>
+#include <Glacier/Debug/ZDebugFloat.h>
+#include <Glacier/Debug/ZDebugInt.h>
 #include <Glacier/ZUniMemory.h>
 #include <cmath>
 
 
 namespace Glacier
 {
+    static ZDebugInt g_BXPar { "BXPar", "Bone Extend Test Hit Particle (0:first, -1:last)", -1000000, 1000000, 1, nullptr };
+    static ZDebugFloat g_fBXHit { "BXHit", "Bone Extend Test Hit Strength", -10.f, 10.f, 1.0f, nullptr, 3.0f };
+
     namespace
     {
-        // TODO: Register "BXPar" debug var (ZDebugIntRef: "Bone Extend Test Hit Particle (0:first, -1:last)", min -1000000, max 1000000, step 1)
-        int32_t g_iBXPar = -1;
-        // TODO: Register "BXHit" debug var (ZDebugFloatRef: "Bone Extend Test Hit Strength")
-        float g_fBXHit = 1.0f;
-
         void RandomUnitVector(float* vec)
         {
             float fLength;
@@ -457,13 +457,13 @@ namespace Glacier
         auto* pBody = m_kConSys.GetBody(body);
 
         uint16_t wMapper;
-        if (g_iBXPar == -1 || m_wMappings - 1 < g_iBXPar)
+        if (g_BXPar == -1 || m_wMappings - 1 < g_BXPar)
         {
             wMapper = m_wMappings - 1;
         }
         else
         {
-            wMapper = static_cast<uint16_t>(g_iBXPar);
+            wMapper = static_cast<uint16_t>(g_BXPar);
         }
 
         const auto* pMapper = static_cast<const SBoneMapper*>(m_pMapper) + wMapper;
@@ -480,7 +480,7 @@ namespace Glacier
         vnorm(vVel);
         vscalar(vVel, g_fBXHit);
 
-        pBody->MoveParticle(pMapper->m_wPar, reinterpret_cast<const float(*)[3]>(vVel), false, false);
+        pBody->MoveParticle(pMapper->m_wPar, vVel, false, false);
         WakeUp(body);
         return true;
     }
@@ -498,7 +498,7 @@ namespace Glacier
         float vDisplacement[3];
         vscalar(vDisplacement, dir.Get(), fMass);
 
-        pBody->MoveParticle(wPar, reinterpret_cast<const float(*)[3]>(vDisplacement), false, false);
+        pBody->MoveParticle(wPar, reinterpret_cast<const float(&)[3]>(vDisplacement), false, false);
         WakeUp(body);
         return true;
     }
@@ -510,7 +510,7 @@ namespace Glacier
 
         for (uint16_t i = 0; i < m_wMappings; ++i, ++pMapper)
         {
-            pBody->MoveParticle(pMapper->m_wPar, reinterpret_cast<const float(*)[3]>(vel.Get()), false, false);
+            pBody->MoveParticle(pMapper->m_wPar, *reinterpret_cast<const float(*)[3]>(vel.Get()), false, false);
         }
 
         WakeUp(body);
@@ -536,7 +536,7 @@ namespace Glacier
         pBody->GetParticlePos(*reinterpret_cast<float(*)[3]>(vParPos), wPar);
         vsub(vDisplacement, pos.Get(), vParPos);
 
-        pBody->MoveParticle(wPar, reinterpret_cast<const float(*)[3]>(vDisplacement), true, true);
+        pBody->MoveParticle(wPar, vDisplacement, true, true);
         WakeUp(body);
 
         par = wPar;
@@ -563,7 +563,7 @@ namespace Glacier
         pBody->GetParticlePos(*reinterpret_cast<float(*)[3]>(vParPos), par);
         vsub(vDisplacement, pos.Get(), vParPos);
 
-        pBody->MoveParticle(par, reinterpret_cast<const float(*)[3]>(vDisplacement), true, true);
+        pBody->MoveParticle(par, vDisplacement, true, true);
         WakeUp(body);
         return true;
     }
@@ -717,18 +717,77 @@ namespace Glacier
             return false;
         }
 
-        // TODO: Finish this place after CapsuleSphereCollision will be reversed
-        // Expected logic from PS2 (0x39BBE0):
-        // - pick dominant axis of size: x when size.x > size.y && size.x > size.z, z when size.z >= size.y, y otherwise
-        // - capsule radius = (size[(axis + 1) % 3] + size[(axis + 2) % 3]) * 0.5f
-        // - capsule endpoints = vGeomCen +/- unitAxis * halfLength
-        // - for each mapper particle (skip locked, skip radius < 0):
-        //     if (CapsuleSphereCollision(vDisp, vCapsA, vCapsB, &fRadius, vParPos, &fParRadius))
-        //     {
-        //         pBody->MoveParticle(pMapper->m_wPar, &vDisp, false, false);
-        //         bHit = true;
-        //     }
+        // Pick dominant axis of size
+        int axis;
+        if (size.x > size.y && size.x > size.z)
+            axis = 0;
+        else if (size.z >= size.y)
+            axis = 2;
+        else
+            axis = 1;
 
-        return false;
+        // Compute capsule radius from the two non-dominant axes
+        const float sizeArr[3] = { size.x, size.y, size.z };
+        const float fRadius = (sizeArr[(axis + 1) % 3] + sizeArr[(axis + 2) % 3]) * 0.5f;
+
+        // Compute capsule endpoints
+        ZVector3 vCapsA = vGeomCen;
+        ZVector3 vCapsB = vGeomCen;
+        const float fHalfLength = sizeArr[axis] * 0.5f;
+
+        switch (axis)
+        {
+        case 0:
+            vCapsA.x -= fHalfLength;
+            vCapsB.x += fHalfLength;
+            break;
+        case 1:
+            vCapsA.y -= fHalfLength;
+            vCapsB.y += fHalfLength;
+            break;
+        case 2:
+            vCapsA.z -= fHalfLength;
+            vCapsB.z += fHalfLength;
+            break;
+        }
+
+        // Iterate over mapper particles
+        bool bHit = false;
+        Fysix::ZConstraintBody* pBody = m_kConSys.GetBody(body);
+
+        if (!pBody)
+            return false;
+
+        const uint16_t mapperCount = m_wMappings;
+        const SBoneMapper* pMapper = static_cast<const SBoneMapper*>(m_pMapper);
+
+        for (uint16_t i = 0; i < mapperCount; ++i, ++pMapper)
+        {
+            const uint16_t parIdx = pMapper->m_wPar;
+
+            if (pBody->IsLocked(parIdx))
+                continue;
+
+            float fParRadius;
+            pBody->GetParticleRadius(fParRadius, parIdx);
+
+            if (fParRadius < 0.0f)
+                continue;
+
+            float vParPos[3];
+            pBody->GetParticlePos(vParPos, parIdx);
+
+            ZVector3 vDisp;
+            float fDispLen;
+
+            if (ZCommonAlgorithms::CapsuleSphereCollision(vDisp, fDispLen, vCapsA, vCapsB, fRadius,
+                                                          *reinterpret_cast<const ZVector3*>(vParPos), fParRadius))
+            {
+                pBody->MoveParticle(parIdx, reinterpret_cast<const float(&)[3]>(vDisp), false, false);
+                bHit = true;
+            }
+        }
+
+        return bHit;
     }
 }

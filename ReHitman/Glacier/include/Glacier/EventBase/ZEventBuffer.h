@@ -34,12 +34,12 @@ namespace Glacier
         void FreeRef(ZREF ref);
 
         // members
-        ZFixedSizeMemoryManager<ZEventBase*>* m_EventRefs;
-        char* m_pEventRam;
-		uint32_t m_lEventRamSize;
-		ZOffsetAlloc* m_pEventAlloc;
-        uint32_t m_lAllocatedEventsRam;
-        uint32_t m_lNrAllocatedEvents;
+        ZFixedSizeMemoryManager<ZEventBase*>* m_EventRefs; // +0x4
+        char* m_pEventRam; // +0x8
+		uint32_t m_lEventRamSize; // +0xC
+		ZOffsetAlloc* m_pEventAlloc; // +0x10
+        uint32_t m_lAllocatedEventsRam; // +0x14
+        uint32_t m_lNrAllocatedEvents; // +0x18
     };
     RE_VERIFY_SIZE(ZEventBuffer, 0x1C); // verified
 }

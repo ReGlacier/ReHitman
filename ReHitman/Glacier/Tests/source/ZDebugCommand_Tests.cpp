@@ -1,5 +1,7 @@
 #include <Glacier/Debug/ZDebugCommand.h>
 #include <Glacier/Debug/ZDebugIntRef.h>
+#include <Glacier/Debug/ZDebugFloat.h>
+#include <Glacier/Debug/ZDebugFloatRef.h>
 #include <Glacier/Debug/ZDebugVarRef.h>
 
 #include <gtest/gtest.h>
@@ -12,6 +14,8 @@ namespace
 {
     static_assert(sizeof(ZDebugCommand) == 0x24);
     static_assert(sizeof(ZDebugIntRef) == 0x34);
+    static_assert(sizeof(ZDebugFloatRef) == 0x34);
+    static_assert(sizeof(ZDebugFloat) == 0x38);
 
     class ZTestCommand : public ZDebugCommand
     {
@@ -175,4 +179,79 @@ TEST(ZDebugVarRef, AssignmentOperatorWritesThroughReference)
 
     EXPECT_EQ(iValue, 55);
     EXPECT_EQ(static_cast<int32_t>(var), 55);
+}
+
+TEST(ZDebugFloatRef, RegistersItselfAndReportsFloatType)
+{
+    float fValue = 0.0f;
+
+    {
+        ZDebugFloatRef var(fValue, "rehitman_test_float", "test float", -1000.0f, 1000.0f, 0.5f, nullptr);
+
+        EXPECT_EQ(FindCommand("rehitman_test_float"), &var);
+        EXPECT_EQ(var.GetType(), ECLASS_FLOAT);
+    }
+
+    EXPECT_EQ(FindCommand("rehitman_test_float"), nullptr);
+}
+
+TEST(ZDebugFloatRef, IncDecClampToMinMax)
+{
+    float fValue = 0.0f;
+    ZDebugFloatRef var(fValue, "rehitman_test_fclamp", "clamp", -2.0f, 2.0f, 1.0f, nullptr);
+
+    var.Inc();
+    var.Inc();
+    var.Inc();
+    EXPECT_FLOAT_EQ(fValue, 2.0f); // clamped at max
+
+    var.Dec();
+    var.Dec();
+    var.Dec();
+    var.Dec();
+    var.Dec();
+    EXPECT_FLOAT_EQ(fValue, -2.0f); // clamped at min
+}
+
+TEST(ZDebugFloatRef, ExecuteWithArgumentAssignsValue)
+{
+    float fValue = 5.0f;
+    ZDebugFloatRef var(fValue, "rehitman_test_fexec", "exec", -1000.0f, 1000.0f, 1.0f, nullptr);
+
+    const char* apszArgs[] = { "rehitman_test_fexec", "42.5" };
+    var.Execute(2, apszArgs);
+
+    EXPECT_FLOAT_EQ(fValue, 42.5f);
+}
+
+TEST(ZDebugFloatRef, ExecuteWithoutArgumentOnlyPrints)
+{
+    float fValue = 7.0f;
+    ZDebugFloatRef var(fValue, "rehitman_test_fprint", "print", -1000.0f, 1000.0f, 1.0f, nullptr);
+
+    const char* apszArgs[] = { "rehitman_test_fprint" };
+    var.Execute(1, apszArgs);
+
+    EXPECT_FLOAT_EQ(fValue, 7.0f);
+}
+
+TEST(ZDebugFloatRef, CalcValueFormatsIntoInlineBuffer)
+{
+    float fValue = -1.5f;
+    ZDebugFloatRef var(fValue, "rehitman_test_fcalc", "calc", -1000.0f, 1000.0f, 1.0f, nullptr);
+
+    var.CalcValue();
+
+    EXPECT_STREQ(var.GetValue(), "-1.500000");
+}
+
+TEST(ZDebugFloat, OwnsInternalValue)
+{
+    ZDebugFloat var("rehitman_test_fown", "own", -1000.0f, 1000.0f, 1.0f, nullptr, 3.25f);
+
+    EXPECT_FLOAT_EQ(var.m_fValue, 3.25f);
+    EXPECT_FLOAT_EQ(static_cast<float>(var), 3.25f);
+
+    var.Inc();
+    EXPECT_FLOAT_EQ(var.m_fValue, 4.25f);
 }

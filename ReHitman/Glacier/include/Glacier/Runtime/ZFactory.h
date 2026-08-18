@@ -4,6 +4,7 @@
 #include <Glacier/NotCopyable.h>
 #include <Glacier/Runtime/ZGEOMCLASSINFO.h>
 #include <Glacier/Runtime/ZROUTCLASSINFO.h>
+#include <Glacier/ZUniAssert.h>
 #include <type_traits>
 #include <cstdint>
 #include <cstring>

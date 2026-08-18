@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Glacier/GlacierFWD.h>
+#include <Glacier/ZUniAssert.h>
 #include <cstdint>
 
 

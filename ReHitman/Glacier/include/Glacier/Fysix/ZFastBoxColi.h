@@ -3,12 +3,16 @@
 #include <Glacier/ReGlacier.h>
 #include <Glacier/ZSTL/ZMath.h>
 #include <Glacier/GlacierFWD.h>
+#include <Glacier/ZSTL/REFTAB.h>
 
 
 namespace Glacier
 {
     struct ZFastBoxColi
     {
+        // constants
+        static constexpr uint32_t kMaxStripsInsideBox = 204800; // stack buffer size for GetStripsInsideBox (XBOX: 0x32000)
+
         // methods
         ZFastBoxColi(float fExtraSpace, int lGeomConMask);
         ~ZFastBoxColi();
@@ -34,6 +38,20 @@ namespace Glacier
         bool m_bExtendedMode;
         bool m_bIgnoreMovingObjects;
         uint32_t m_lNrTrisInAll;
+
+    private:
+        struct SFace // binary layout of one m_pFaceList element (0x7C bytes)
+        {
+            ZREF m_GeomRef;            // +0x00
+            ZVector3 m_vNormal;        // +0x04
+            float m_aInvSys[9];        // +0x10
+            ZVector3 m_vVert0;         // +0x34
+            ZVector3 m_vVert1;         // +0x40 (extended mode)
+            ZVector3 m_vVert2;         // +0x4C (extended mode)
+            ZVector3 m_vEdgeNormal0;   // +0x58 (extended mode)
+            ZVector3 m_vEdgeNormal1;   // +0x64 (extended mode)
+            ZVector3 m_vEdgeNormal2;   // +0x70 (extended mode)
+        };
     };
     RE_VERIFY_SIZE(ZFastBoxColi, 0x54);
 }

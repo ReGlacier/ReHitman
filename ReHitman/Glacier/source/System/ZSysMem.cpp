@@ -1,8 +1,23 @@
 #include <Glacier/System/ZSysMem.h>
+#include <Glacier/Debug/ZMemReadOut.h>
 
 
 namespace Glacier
 {
+    namespace
+    {
+        static uint32_t g_iMemColor = 0;
+
+        uint32_t ZDebugSetMemColor(uint32_t lColor)
+        {
+            auto lOldMemColor = g_iMemColor;
+            g_iMemColor = lColor;
+            return lOldMemColor;
+        }
+    }
+
+    // Methods here
+
     template<>
     ISysMem* ZComponentSingleton<ISysMem, ZGlobalComponentBase>::m_pInstance = reinterpret_cast<ISysMem*>(0x008208C8); // GoG version
 
@@ -22,7 +37,11 @@ namespace Glacier
 
     uint32_t SetMemColor(uint32_t lNewColor)
     {
-        // TODO: Finish me
-        return lNewColor;
+        auto& pMemReadOut = ZMemReadOut::Instance();
+
+        auto lOldColor = pMemReadOut.SetAllocColor(lNewColor);
+        ZDebugSetMemColor(lNewColor);
+        
+        return lOldColor;
     }
 }

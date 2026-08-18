@@ -1,4 +1,5 @@
 #include <Glacier/ZSTL/ZPoolAllocRefTab.h>
+#include <Glacier/ZUniAssert.h>
 
 
 namespace Glacier

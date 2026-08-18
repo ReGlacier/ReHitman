@@ -1,6 +1,7 @@
 #include <Glacier/Filesystem/IOFSPhysicalAccess_t.h>
 #include <Glacier/Filesystem/ZSysFile.h>
 #include <Glacier/ZUniMemory.h>
+#include <Glacier/ZUniAssert.h>
 #include <cstdio>
 #include <cstring>
 

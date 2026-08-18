@@ -78,5 +78,75 @@ namespace Glacier
                                  float fMaxT);
 
         static int CapsuleSphereCollision(ZVector3& vDir, float& fLen, const ZVector3& vp0, const ZVector3& cp1, const float& cr, const ZVector3& sc, const float& sr);
+
+        /**
+         * @brief Adjusts two particle positions to satisfy a distance constraint using rigid body projection.
+         * @details Computes the delta between particles, normalizes it, and distributes the correction
+         *          based on inverse masses. If particles are too close (< 1e-6), applies a small random
+         *          perturbation to avoid division by zero.
+         *
+         * @param x1   Position of the first particle (in/out).
+         * @param x2   Position of the second particle (in/out).
+         * @param m1   Inverse mass of the first particle.
+         * @param m2   Inverse mass of the second particle.
+         * @param dist Target rest distance between the particles.
+         */
+        static void AdjustPart2rigid(float* x1, float* x2, float m1, float m2, float dist);
+
+        /**
+         * @brief Solves a 3x3 linear system using Cramer's rule.
+         * @param base2   3x3 matrix as array of 9 floats (column-major).
+         * @param target2_global Right-hand side vector (3 floats).
+         * @param lincomb Output solution vector (3 floats).
+         * @return true if the system has a unique solution, false if determinant is near zero.
+         */
+        static bool Solve3x3System(const float* base2, const float* target2_global, float* lincomb);
+
+        /**
+         * @brief Computes the distance from a point to a line segment and the closest point direction.
+         * @param a1      Point to test.
+         * @param b1      Line segment start.
+         * @param b2      Line segment end.
+         * @param t       Output parameter for closest point on segment [0, 1].
+         * @param fMinDist Minimum distance threshold (input/output).
+         * @param fDist   Output actual distance.
+         * @param vDir    Output normalized direction from closest point to a1.
+         * @return true if distance is within fMinDist, false otherwise.
+         */
+        static bool DistPointLineVar2(const float* a1, const float* b1, const float* b2,
+                                      float* t, float* fMinDist, float* fDist, float* vDir);
+
+        /**
+         * @brief Generates a random unit vector using the system random seed.
+         * @param v Output vector (3 floats).
+         */
+        static void RandomUnitVector(float* v);
+
+        /**
+         * @brief Tests intersection between a line segment and a triangle.
+         * @param coli_x   Output intersection point.
+         * @param orig     Line segment origin.
+         * @param dir      Line segment direction.
+         * @param vert0    Triangle vertex 0.
+         * @param inv      Inverse matrix for barycentric coordinates.
+         * @param t        Output intersection parameter.
+         * @param bBothSides If true, tests both sides of the triangle.
+         * @return true if intersection occurs within [0, 1], false otherwise.
+         */
+        static bool IntersectTriangleAndLine3(float* coli_x, const float* orig, const float* dir,
+                                              const float* vert0, const float* inv, float* t, bool bBothSides);
+
+        /**
+         * @brief Tests intersection between a sphere and a triangle.
+         * @param triverts    Triangle vertices (3 x 3 floats).
+         * @param spherepos   Sphere center position.
+         * @param fRadius     Sphere radius.
+         * @param vDir0       Output direction from sphere to triangle.
+         * @param fScaledDist Output scaled distance.
+         * @param a6          Output penetration depth.
+         * @return true if intersection occurs, false otherwise.
+         */
+        static bool IntersectTriangleAndSphere(const float (*triverts)[3], const float (*spherepos)[3],
+                                               float fRadius, float (*vDir0)[3], float* fScaledDist, float* a6);
     };
 }

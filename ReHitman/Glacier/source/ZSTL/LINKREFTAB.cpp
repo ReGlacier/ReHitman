@@ -1,4 +1,6 @@
 #include <Glacier/ZSTL/LINKREFTAB.h>
+#include <Glacier/ZUniAssert.h>
+
 
 namespace Glacier
 {

@@ -52,7 +52,7 @@ namespace Glacier
             }
 
             m_pSleepingThreads.Remove();
-            delete pFirst;
+            delete pFirst; // Because ZScheduledEvent has custom new/delete operators
         }
 
         ZScheduledUpdate::s_pScheduler = nullptr;
@@ -113,7 +113,7 @@ namespace Glacier
             {
                 if (lSec == -0x800)
                 {
-                    delete pSchedEvent;
+                    delete pSchedEvent; // Because ZScheduledEvent has custom new/delete operators
                 }
             }
             else
@@ -257,7 +257,7 @@ namespace Glacier
                 }
                 else if (nextRun == -0x800)
                 {
-                    delete pScheduledEvent;
+                    delete pScheduledEvent; // Because ZScheduledEvent has custom new/delete operators
                 }
             }
             else if (pScheduledEvent->m_lPriority != currentPriority)

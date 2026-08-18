@@ -6,22 +6,12 @@
 #include <Glacier/ZSTL/EAllocType.h>
 #include <Glacier/Component/ZComponentSingleton.h>
 #include <Glacier/Component/ZGlobalComponentBase.h>
+#include <Glacier/System/ZSysmemDebugHandler.h>
 
 
 namespace Glacier
 {
     struct ZAllocatorBase;
-
-    struct ZSysmemDebugHandler : public ZGlobalComponentBase
-    {
-        virtual void PreAllocChange(unsigned int*);
-        virtual void PostAllocChange(char**, unsigned int*);
-        virtual void PreFreeChange(char**);
-        virtual void PostAlloc(char*, unsigned int, char*, char*);
-        virtual void PreFree(char*);
-        virtual void PreShrinkChange(char**, unsigned int*);
-        virtual void Reset();
-    };
 
     class ISysMem : public ZComponentSingleton<ISysMem, ZGlobalComponentBase>
     {

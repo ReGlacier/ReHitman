@@ -1,6 +1,7 @@
 #include <Glacier/EventBase/ZScheduledEventList.h>
 #include <Glacier/EventBase/ZScheduledUpdate.h>
 #include <Glacier/EventBase/ZScheduledEvent.h>
+#include <Glacier/ZUniAssert.h>
 
 
 namespace Glacier

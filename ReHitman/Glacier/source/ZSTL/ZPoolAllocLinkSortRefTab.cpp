@@ -1,7 +1,9 @@
 #include <Glacier/ZSTL/ZPoolAllocLinkSortRefTab.h>
+#include <Glacier/ZUniAssert.h>
 
 #include <cstring>
 #include <new>
+
 
 namespace Glacier
 {

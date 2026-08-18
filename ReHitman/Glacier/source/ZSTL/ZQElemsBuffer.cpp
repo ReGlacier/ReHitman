@@ -1,5 +1,6 @@
 #include <Glacier/ZSTL/ZQElemsBuffer.h>
 #include <Glacier/ZSTL/ZOffsetAlloc.h>
+#include <Glacier/Debug/ZMemReadOut.h>
 #include <Glacier/ZUniAssert.h>
 #include <Glacier/ZUniMemory.h>
 
@@ -13,6 +14,8 @@ namespace Glacier
 
         void* pOffset = m_pOffsetAlloc->Alloc(lSize, bLargeUseHigh);
         ZASSERT(pOffset != reinterpret_cast<void*>(-1));
+
+        // TODO: Need finish part from PC 00462840
 
         return pOffset;
     }

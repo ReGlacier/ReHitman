@@ -19,8 +19,10 @@ namespace Glacier
     {
         bool active;
         bool visible;
+        RE_ADD_PADDING(2);
         float syncFrame;
         uint16_t sleepFrame;
+        RE_ADD_PADDING(2);
     };
 
     class ZDynamicsExtend
@@ -37,7 +39,7 @@ namespace Glacier
 
         // vtbl
         virtual ~ZDynamicsExtend();
-        virtual bool Create(const Fysix::PP_* ZDynamicsExtend, const SGenericMapper* mpr, uint16_t mappings);
+        virtual bool Create(const Fysix::PP_* pp, const SGenericMapper* mpr, uint16_t mappings);
         virtual bool Init(uint16_t body, const ZGEOM* geom);
         virtual bool Move(uint16_t body, ZGEOM* geom, const float& dt);
         virtual bool Update(uint16_t body, ZGEOM* geom) = 0;
