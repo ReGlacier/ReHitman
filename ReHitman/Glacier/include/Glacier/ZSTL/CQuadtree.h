@@ -66,28 +66,35 @@ namespace Glacier
 
 	struct SOctreeChk
 	{
-		float fResT;
-		bool(*pChkFunc)(unsigned int, SOctreeChk*);
-		void* pUserData;
+		// methods
+		SOctreeChk() = default;
+		// members
+		float fResT = 1.0f;
+		bool(*pChkFunc)(unsigned int, SOctreeChk*) = nullptr;
+		void* pUserData = nullptr;
 	};
 	RE_VERIFY_SIZE(SOctreeChk, 0xC);
 
 	struct SRecurseInfoCompiled : public SOctreeChk
 	{
-		void *pxBasePtrNodes;
-		void *pxBasePtrObjects;
-		int iMinX;
-		int iMinY;
-		int iMinZ;
-		int iMaxX;
-		int iMaxY;
-		int iMaxZ;
-		int iDepth;
-		float *pA;
-		float *pB;
-		ZVector3 vDir;
-		ZVector3 vInvDir;
-		int vPos[3];
+		// methods
+		SRecurseInfoCompiled() = default;
+
+		// members
+		void *pxBasePtrNodes = nullptr;
+		void *pxBasePtrObjects = nullptr;
+		int iMinX = 0;
+		int iMinY = 0;
+		int iMinZ = 0;
+		int iMaxX = 0;
+		int iMaxY = 0;
+		int iMaxZ = 0;
+		int iDepth = 0;
+		float *pA = nullptr;
+		float *pB = nullptr;
+		ZVector3 vDir{};
+		ZVector3 vInvDir{};
+		int vPos[3]{0,0,0};
 	};
 	RE_VERIFY_SIZE(SRecurseInfoCompiled, 0x5C);
 

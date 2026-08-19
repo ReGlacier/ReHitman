@@ -20,7 +20,7 @@ namespace Glacier
         virtual void GetPrimTriangles(REFTAB* ppTris, uint32_t lPrim) = 0;
         virtual int ShouldUseBoundForLightCheck(uint32_t lPrim);
         virtual uint8_t GetPrimPackType(uint32_t lPrim);
-        virtual const void* GetPrimData(uint32_t lPrim);
+        virtual const void* GetPrimData(uint32_t lPrim) const;
         virtual uint32_t GetPrimOffset(const void* ptr);
         virtual bool CheckInPrimBuffer(const void* ptr);
         virtual bool IsPrimUnique(uint32_t lPrim);
@@ -112,6 +112,12 @@ namespace Glacier
 
         // methods
         static ZPrimControlBase* Instance();
+
+        template <typename T>
+        static T* GetPrimitive(uint32_t lPrim)
+        {
+            return reinterpret_cast<T*>(ZPrimControlBase::Instance()->GetPrimData(lPrim));
+        }
 
         ZPrimControlBase(bool bUnusedSmth);
         SSpriteArray* AllocSpriteArrays(uint32_t lNrSpriteArrays);

@@ -7,7 +7,7 @@
 #include <Glacier/Geom/ZBaseGeom.h>
 #include <Glacier/ZSTL/CQuadtree.h>
 #include <Glacier/ZSTL/ZOctree.h>
-#include <Glacier/Fysix/eGlobalTreeType.h>
+#include <Glacier/Physics/eGlobalTreeType.h>
 
 namespace Glacier
 {
@@ -15,6 +15,7 @@ namespace Glacier
     struct ZGEOMCLASSINFO;
     class COLI;
     class CHUNK;
+    class ZOctree;
 
     struct SChildTreeGroups
     {
@@ -45,10 +46,10 @@ namespace Glacier
         virtual void DetachTreeGroupChilds(ZBaseGeom *);
         virtual void MakeStaticContainer(bool);
         virtual void MakeDynamicContainer(bool);
-        virtual bool IsStaticContainer();
-        virtual bool IsDynamicContainer();
-        virtual bool IsPrivate();
-        virtual CQuadtree* GetDynamicTreePtr();
+        virtual bool IsStaticContainer() const;
+        virtual bool IsDynamicContainer() const;
+        virtual bool IsPrivate() const;
+        virtual CQuadtree* GetDynamicTreePtr() const;
         virtual CQuadtreeObj* AddDynamicGeom(ZBaseGeom *);
         virtual void MoveDynamicGeom(ZBaseGeom *);
         virtual bool RemoveDynamicGeom(ZBaseGeom *);
@@ -59,8 +60,8 @@ namespace Glacier
         virtual void FreeDynamicTrees();
         virtual void RemoveGlobalBound(eGlobalTreeType,ZBaseGeom *,COctreeObj *);
         virtual void MoveGlobalBound(eGlobalTreeType,ZBaseGeom *,COctreeObj *,float *,float *);
-        virtual void* GetGlobalTreePtr(eGlobalTreeType);
-        virtual void* GetStaticGeomsInBound(ZBaseGeom **a2, ZBaseGeom **a3, eGlobalTreeType treeType, Glacier::ZMat3x3* mat, Glacier::ZVector3* a6, Glacier::ZVector3* a7, int rmc, char a9);
+        virtual ZOctree* GetGlobalTreePtr(eGlobalTreeType);
+        virtual uint32_t GetStaticGeomsInBound(ZBaseGeom** pGeomList, ZBaseGeom** pGeomListEnd, eGlobalTreeType eGTT, const float* mMat, const float* vCen, const float* vSize, uint32_t lGeomConMask, bool bExact);
         virtual void SetDynamicContainer(bool const&);
         virtual void SetStaticContainer(bool const&);
 

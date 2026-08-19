@@ -1,5 +1,5 @@
 #include <Glacier/IK/ZLNKOBJ.h>
-#include <Glacier/Render/ZBoneModifyBase.h>
+#include <Glacier/IK/ZBoneModifyBase.h>
 #include <Glacier/Render/ZRenderBaseDll.h>
 #include <Glacier/Render/Prim/ZPrimControlBase.h>
 

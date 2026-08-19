@@ -13,6 +13,9 @@ namespace Glacier
     class ZRenderMaterialBuffer : public ZBufferReader
     {
     public:
+        // static
+        STATIC_CLASS_VAR(ZRenderMaterialBuffer, ZRenderMaterialBuffer*, g_pMaterialBufferInstance);
+        
         // vtbl
         ~ZRenderMaterialBuffer() override;
         virtual ZRenderMaterialInstance* GetMaterialInstance(uint32_t lMaterialId) = 0;

@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include <Tests/EngineFixture.h>
-#include <Glacier/Fysix/ZCommonAlgorithms.h>
+#include <Glacier/Physics/ZCommonAlgorithms.h>
 #include <cmath>
 
 using namespace Glacier;
@@ -363,4 +363,345 @@ TEST(ZCommonAlgorithms, CapsuleSphereCollision_Miss)
     float fLen;
 
     EXPECT_FALSE(ZCommonAlgorithms::CapsuleSphereCollision(vDir, fLen, cp0, cp1, cr, sc, sr));
+}
+
+// -----------------------------------------------------------------------------
+// CheckCutInside
+// -----------------------------------------------------------------------------
+
+TEST(ZCommonAlgorithms, CheckCutInside_PointInside)
+{
+    // Triangle in the XY plane (dominant normal axis = Z), vertices stored contiguously
+    const float tri[9] = {
+        0.0f, 0.0f, 0.0f,
+        1.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f
+    };
+    const float normal[3] = { 0.0f, 0.0f, 1.0f };
+    const float point[3] = { 0.25f, 0.25f, 0.0f };
+
+    EXPECT_TRUE(ZCommonAlgorithms::CheckCutInside(tri, normal, point));
+}
+
+TEST(ZCommonAlgorithms, CheckCutInside_PointOutside)
+{
+    const float tri[9] = {
+        0.0f, 0.0f, 0.0f,
+        1.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f
+    };
+    const float normal[3] = { 0.0f, 0.0f, 1.0f };
+    const float point[3] = { 0.75f, 0.75f, 0.0f }; // beyond the hypotenuse
+
+    EXPECT_FALSE(ZCommonAlgorithms::CheckCutInside(tri, normal, point));
+}
+
+TEST(ZCommonAlgorithms, CheckCutInside_PointOnVertex)
+{
+    const float tri[9] = {
+        0.0f, 0.0f, 0.0f,
+        1.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f
+    };
+    const float normal[3] = { 0.0f, 0.0f, 1.0f };
+    const float point[3] = { 0.0f, 0.0f, 0.0f };
+
+    EXPECT_TRUE(ZCommonAlgorithms::CheckCutInside(tri, normal, point));
+}
+
+TEST(ZCommonAlgorithms, CheckCutInside_PointOnEdge)
+{
+    const float tri[9] = {
+        0.0f, 0.0f, 0.0f,
+        1.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f
+    };
+    const float normal[3] = { 0.0f, 0.0f, 1.0f };
+    const float point[3] = { 0.5f, 0.0f, 0.0f }; // midpoint of edge V0-V1
+
+    EXPECT_TRUE(ZCommonAlgorithms::CheckCutInside(tri, normal, point));
+}
+
+TEST(ZCommonAlgorithms, CheckCutInside_OppositeWinding)
+{
+    // Same triangle, reversed winding (normal flipped) - result must not change
+    const float tri[9] = {
+        0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f,
+        1.0f, 0.0f, 0.0f
+    };
+    const float normal[3] = { 0.0f, 0.0f, -1.0f };
+    const float inside[3] = { 0.25f, 0.25f, 0.0f };
+    const float outside[3] = { 0.75f, 0.75f, 0.0f };
+
+    EXPECT_TRUE(ZCommonAlgorithms::CheckCutInside(tri, normal, inside));
+    EXPECT_FALSE(ZCommonAlgorithms::CheckCutInside(tri, normal, outside));
+}
+
+TEST(ZCommonAlgorithms, CheckCutInside_DominantAxisX)
+{
+    // Triangle in the YZ plane (dominant normal axis = X)
+    const float tri[9] = {
+        0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 1.0f
+    };
+    const float normal[3] = { 1.0f, 0.0f, 0.0f };
+    const float inside[3] = { 0.0f, 0.25f, 0.25f };
+    const float outside[3] = { 0.0f, 0.75f, 0.75f };
+
+    EXPECT_TRUE(ZCommonAlgorithms::CheckCutInside(tri, normal, inside));
+    EXPECT_FALSE(ZCommonAlgorithms::CheckCutInside(tri, normal, outside));
+}
+
+TEST(ZCommonAlgorithms, CheckCutInside_DominantAxisY)
+{
+    // Triangle in the XZ plane (dominant normal axis = Y)
+    const float tri[9] = {
+        0.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f,
+        1.0f, 0.0f, 0.0f
+    };
+    const float normal[3] = { 0.0f, 1.0f, 0.0f };
+    const float inside[3] = { 0.25f, 0.0f, 0.25f };
+    const float outside[3] = { 0.75f, 0.0f, 0.75f };
+
+    EXPECT_TRUE(ZCommonAlgorithms::CheckCutInside(tri, normal, inside));
+    EXPECT_FALSE(ZCommonAlgorithms::CheckCutInside(tri, normal, outside));
+}
+
+// -----------------------------------------------------------------------------
+// LnSphColl (segment vs unit sphere centered at the origin)
+// -----------------------------------------------------------------------------
+
+TEST(ZCommonAlgorithms, LnSphColl_StartInsideSphere)
+{
+    float p1[3] = { 0.5f, 0.0f, 0.0f };
+    float p2[3] = { 5.0f, 0.0f, 0.0f };
+
+    EXPECT_TRUE(ZCommonAlgorithms::LnSphColl(p1, p2));
+}
+
+TEST(ZCommonAlgorithms, LnSphColl_SegmentThroughSphere)
+{
+    float p1[3] = { -2.0f, 0.0f, 0.0f };
+    float p2[3] = { 2.0f, 0.0f, 0.0f };
+
+    EXPECT_TRUE(ZCommonAlgorithms::LnSphColl(p1, p2));
+}
+
+TEST(ZCommonAlgorithms, LnSphColl_ClosestPointWithinSegment)
+{
+    // Both endpoints outside, closest point of the line (origin) inside the segment
+    float p1[3] = { 2.0f, 0.5f, 0.0f };
+    float p2[3] = { -2.0f, 0.5f, 0.0f };
+
+    EXPECT_TRUE(ZCommonAlgorithms::LnSphColl(p1, p2));
+}
+
+TEST(ZCommonAlgorithms, LnSphColl_EndInsideSphereIsMissFromThisSide)
+{
+    // Asymmetry of the original algorithm: only Pos1 and the line projection are
+    // tested; Pos2 inside the sphere is NOT detected by this call. PolySphColl()
+    // covers that case through the LnSphColl() call of the adjacent edge, where
+    // this vertex is the start point.
+    float p1[3] = { 2.0f, 0.0f, 0.0f };
+    float p2[3] = { 0.5f, 0.0f, 0.0f };
+
+    EXPECT_FALSE(ZCommonAlgorithms::LnSphColl(p1, p2));
+
+    // ...but from the other direction the same segment hits (Pos1 inside).
+    float q1[3] = { 0.5f, 0.0f, 0.0f };
+    float q2[3] = { 2.0f, 0.0f, 0.0f };
+
+    EXPECT_TRUE(ZCommonAlgorithms::LnSphColl(q1, q2));
+}
+
+TEST(ZCommonAlgorithms, LnSphColl_MissClosestBeyondEnd)
+{
+    // Closest point of the infinite line is the origin, but it lies past Pos2
+    float p1[3] = { 2.0f, 0.0f, 0.0f };
+    float p2[3] = { 3.0f, 0.0f, 0.0f };
+
+    EXPECT_FALSE(ZCommonAlgorithms::LnSphColl(p1, p2));
+}
+
+TEST(ZCommonAlgorithms, LnSphColl_MissBehindStart)
+{
+    // Sphere lies behind the segment start
+    float p1[3] = { 2.0f, 0.2f, 0.0f };
+    float p2[3] = { 3.0f, 0.2f, 0.0f };
+
+    EXPECT_FALSE(ZCommonAlgorithms::LnSphColl(p1, p2));
+}
+
+TEST(ZCommonAlgorithms, LnSphColl_TangentMiss)
+{
+    // Passing by the sphere at distance > 1
+    float p1[3] = { -2.0f, 1.5f, 0.0f };
+    float p2[3] = { 2.0f, 1.5f, 0.0f };
+
+    EXPECT_FALSE(ZCommonAlgorithms::LnSphColl(p1, p2));
+}
+
+TEST(ZCommonAlgorithms, LnSphColl_GrazingHit)
+{
+    // Passing by the sphere at distance 0.9 (< 1) - must hit
+    float p1[3] = { -2.0f, 0.9f, 0.0f };
+    float p2[3] = { 2.0f, 0.9f, 0.0f };
+
+    EXPECT_TRUE(ZCommonAlgorithms::LnSphColl(p1, p2));
+}
+
+// -----------------------------------------------------------------------------
+// PolySphColl (triangle vs sphere; identity matrix = unit sphere at SphPos)
+// -----------------------------------------------------------------------------
+
+TEST(ZCommonAlgorithms, PolySphColl_FaceHit)
+{
+    // Unit sphere (identity matrix) at the origin, triangle directly above it
+    const float sphPos[3] = { 0.0f, 0.0f, 0.0f };
+    const float sphMat[9] = {
+        1.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 1.0f
+    };
+    const float v1[3] = { -1.0f, -1.0f, 0.5f };
+    const float v2[3] = { 1.0f, -1.0f, 0.5f };
+    const float v3[3] = { 0.0f, 1.0f, 0.5f };
+
+    EXPECT_TRUE(ZCommonAlgorithms::PolySphColl(sphPos, sphMat, v1, v2, v3));
+}
+
+TEST(ZCommonAlgorithms, PolySphColl_EdgeHit)
+{
+    // Sphere touches the triangle edge (V1-V2 runs along X at distance 0.9)
+    const float sphPos[3] = { 0.0f, 0.0f, 0.0f };
+    const float sphMat[9] = {
+        1.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 1.0f
+    };
+    const float v1[3] = { -1.0f, 0.9f, 0.0f };
+    const float v2[3] = { 1.0f, 0.9f, 0.0f };
+    const float v3[3] = { 0.0f, 3.0f, 0.0f };
+
+    EXPECT_TRUE(ZCommonAlgorithms::PolySphColl(sphPos, sphMat, v1, v2, v3));
+}
+
+TEST(ZCommonAlgorithms, PolySphColl_VertexInsideSphere)
+{
+    // One triangle vertex lies inside the unit sphere
+    const float sphPos[3] = { 0.0f, 0.0f, 0.0f };
+    const float sphMat[9] = {
+        1.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 1.0f
+    };
+    const float v1[3] = { 0.0f, 0.0f, 0.5f };
+    const float v2[3] = { 5.0f, 0.0f, 5.0f };
+    const float v3[3] = { 0.0f, 5.0f, 5.0f };
+
+    EXPECT_TRUE(ZCommonAlgorithms::PolySphColl(sphPos, sphMat, v1, v2, v3));
+}
+
+TEST(ZCommonAlgorithms, PolySphColl_MissFarAway)
+{
+    const float sphPos[3] = { 0.0f, 0.0f, 0.0f };
+    const float sphMat[9] = {
+        1.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 1.0f
+    };
+    const float v1[3] = { 9.0f, 9.0f, 10.0f };
+    const float v2[3] = { 11.0f, 9.0f, 10.0f };
+    const float v3[3] = { 10.0f, 11.0f, 10.0f };
+
+    EXPECT_FALSE(ZCommonAlgorithms::PolySphColl(sphPos, sphMat, v1, v2, v3));
+}
+
+TEST(ZCommonAlgorithms, PolySphColl_MissOutsideEdge)
+{
+    // Plane is within range (z = 0.5) but the projected center lands outside the triangle
+    const float sphPos[3] = { 0.0f, 0.0f, 0.0f };
+    const float sphMat[9] = {
+        1.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 1.0f
+    };
+    const float v1[3] = { 2.0f, 2.0f, 0.5f };
+    const float v2[3] = { 3.0f, 2.0f, 0.5f };
+    const float v3[3] = { 2.5f, 3.0f, 0.5f };
+
+    EXPECT_FALSE(ZCommonAlgorithms::PolySphColl(sphPos, sphMat, v1, v2, v3));
+}
+
+TEST(ZCommonAlgorithms, PolySphColl_MissBeyondPlane)
+{
+    // Triangle plane is further than the unit radius
+    const float sphPos[3] = { 0.0f, 0.0f, 0.0f };
+    const float sphMat[9] = {
+        1.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 1.0f
+    };
+    const float v1[3] = { -1.0f, -1.0f, 1.5f };
+    const float v2[3] = { 1.0f, -1.0f, 1.5f };
+    const float v3[3] = { 0.0f, 1.0f, 1.5f };
+
+    EXPECT_FALSE(ZCommonAlgorithms::PolySphColl(sphPos, sphMat, v1, v2, v3));
+}
+
+TEST(ZCommonAlgorithms, PolySphColl_DegenerateTriangle)
+{
+    // Zero-area triangle must be rejected even with a vertex inside the sphere
+    const float sphPos[3] = { 0.0f, 0.0f, 0.0f };
+    const float sphMat[9] = {
+        1.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 1.0f
+    };
+    const float v1[3] = { 0.0f, 0.0f, 0.0f };
+    const float v2[3] = { 0.0f, 0.0f, 0.0f };
+    const float v3[3] = { 0.0f, 0.0f, 0.0f };
+
+    EXPECT_FALSE(ZCommonAlgorithms::PolySphColl(sphPos, sphMat, v1, v2, v3));
+}
+
+TEST(ZCommonAlgorithms, PolySphColl_ScaledSphere)
+{
+    // Sphere of radius 2 at the origin: inverse basis rows divided by dimensions (2,2,2).
+    // A triangle at distance 1.5 must hit (1.5 < 2), even though it would miss a unit sphere.
+    const float sphPos[3] = { 0.0f, 0.0f, 0.0f };
+    const float sphMat[9] = {
+        0.5f, 0.0f, 0.0f,
+        0.0f, 0.5f, 0.0f,
+        0.0f, 0.0f, 0.5f
+    };
+    const float v1[3] = { -2.0f, -2.0f, 1.5f };
+    const float v2[3] = { 2.0f, -2.0f, 1.5f };
+    const float v3[3] = { 0.0f, 2.0f, 1.5f };
+
+    EXPECT_TRUE(ZCommonAlgorithms::PolySphColl(sphPos, sphMat, v1, v2, v3));
+}
+
+TEST(ZCommonAlgorithms, PolySphColl_OffsetSphere)
+{
+    // Sphere centered at (0, 0, 5), triangle right under it
+    const float sphPos[3] = { 0.0f, 0.0f, 5.0f };
+    const float sphMat[9] = {
+        1.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 1.0f
+    };
+    const float v1[3] = { -1.0f, -1.0f, 4.5f };
+    const float v2[3] = { 1.0f, -1.0f, 4.5f };
+    const float v3[3] = { 0.0f, 1.0f, 4.5f };
+
+    EXPECT_TRUE(ZCommonAlgorithms::PolySphColl(sphPos, sphMat, v1, v2, v3));
+
+    // Same triangle, sphere moved away
+    const float sphPosFar[3] = { 0.0f, 0.0f, 10.0f };
+
+    EXPECT_FALSE(ZCommonAlgorithms::PolySphColl(sphPosFar, sphMat, v1, v2, v3));
 }

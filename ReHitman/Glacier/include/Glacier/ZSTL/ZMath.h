@@ -39,6 +39,16 @@ namespace Glacier
             return x == with.x && y == with.y && z == with.z;
         }
 
+        operator const float*() const
+        {
+            return &x;
+        }
+
+        operator float*()
+        {
+            return &x;
+        }
+
         Vector3& operator=(const float* p)
         {
             x = p[0];
@@ -183,36 +193,45 @@ namespace Glacier
             return *this;
         }
 
+        Matrix3x3 TransposedAntidiagonal() const
+        {
+            return {
+                data[8], data[5], data[2],
+                data[7], data[4], data[1],
+                data[6], data[3], data[0]
+            };
+        }
+
         bool operator==(const Matrix3x3& with) const {
             return std::equal(std::begin(data), std::end(data), std::begin(with.data), std::end(with.data));
         }
 
         const float* Get() const { return &data[0]; }
         float* Get() { return &data[0]; }
+
+        operator float*() { return &data[0]; }
+        operator const float*() const { return &data[0]; }
         
         Matrix3x3& operator*=(const Matrix3x3& mat)
         {
-            const float zX = data[0];
-            const float zY = data[1];
-            const float zZ = data[2];
-            const float yX = data[3];
-            const float yY = data[4];
-            const float yZ = data[5];
-            const float xX = data[6];
-            const float xY = data[7];
-            const float xZ = data[8];
+            const float zX = data[0], zY = data[1], zZ = data[2];
+            const float yX = data[3], yY = data[4], yZ = data[5];
+            const float xX = data[6], xY = data[7], xZ = data[8];
 
-            data[6] = xX * mat.data[6] + xY * mat.data[7] + xZ * mat.data[8];
-            data[7] = xX * mat.data[3] + xY * mat.data[4] + xZ * mat.data[5];
-            data[8] = xX * mat.data[0] + xY * mat.data[1] + xZ * mat.data[2];
+            // X Axis
+            data[6] = xX * mat.data[6] + xY * mat.data[3] + xZ * mat.data[0];
+            data[7] = xX * mat.data[7] + xY * mat.data[4] + xZ * mat.data[1];
+            data[8] = xX * mat.data[8] + xY * mat.data[5] + xZ * mat.data[2];
 
-            data[3] = yX * mat.data[6] + yY * mat.data[7] + yZ * mat.data[8];
-            data[4] = yX * mat.data[3] + yY * mat.data[4] + yZ * mat.data[5];
-            data[5] = yX * mat.data[0] + yY * mat.data[1] + yZ * mat.data[2];
+            // Y Axis
+            data[3] = yX * mat.data[6] + yY * mat.data[3] + yZ * mat.data[0];
+            data[4] = yX * mat.data[7] + yY * mat.data[4] + yZ * mat.data[1];
+            data[5] = yX * mat.data[8] + yY * mat.data[5] + yZ * mat.data[2];
 
-            data[0] = zX * mat.data[6] + zY * mat.data[7] + zZ * mat.data[8];
-            data[1] = zX * mat.data[3] + zY * mat.data[4] + zZ * mat.data[5];
-            data[2] = zX * mat.data[0] + zY * mat.data[1] + zZ * mat.data[2];
+            // Z Axis
+            data[0] = zX * mat.data[6] + zY * mat.data[3] + zZ * mat.data[0];
+            data[1] = zX * mat.data[7] + zY * mat.data[4] + zZ * mat.data[1];
+            data[2] = zX * mat.data[8] + zY * mat.data[5] + zZ * mat.data[2];
 
             return *this;
         }
@@ -982,8 +1001,6 @@ vabs(float *,float const *)	.text	820EAD18	00000028	00000000	00000001	R	.	.	.	.	
 vabs(float *)	.text	820EACF0	00000028	00000000	00000001	R	.	.	.	.	.	.	T	.	.
 toupper	.text	8241DB40	00000018	00000000	00000001	R	.	.	.	.	.	.	T	.	.
 tolower	.text	8241ED38	00000018	00000000	00000001	R	.	.	.	.	.	.	T	.	.
-tmat(float *,float const *)	.text	820EA5F0	0000004C	00000000	00000001	R	.	.	.	.	.	.	T	.	.
-terminate(void)	.text	82426F58	00000058	00000060		.	.	.	.	.	.	.	T	.	.
 tanh	.text	8265AD20	00000100	00000070		R	.	.	.	.	.	.	T	.	.
 tan	.text	8241CB30	000000D4	00000010		R	.	.	.	.	.	.	T	.	.
 */

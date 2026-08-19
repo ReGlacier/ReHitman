@@ -120,8 +120,8 @@
 #include <Glacier/ZSTL/ZRefAlloc.h>
 #include <Glacier/Geom/ZSHAPE.h>
 #include <Glacier/Runtime/ZFactory.h>
-#include <Glacier/Fysix/ZCollisionBase.h>
-#include <Glacier/Fysix/ZCollisionWintel.h>
+#include <Glacier/Physics/ZCollisionBase.h>
+#include <Glacier/Physics/ZCollisionWintel.h>
 // Vehicles
 #include <Glacier/Vehicle/PPart.h>
 #include <Glacier/Vehicle/ZLinkBase.h>

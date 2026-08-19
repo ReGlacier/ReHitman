@@ -4,7 +4,7 @@
 #include <Glacier/CBaseEvent.h>
 #include <Glacier/CProjectileActivate.h>
 #include <Glacier/Geom/ZGEOM.h>
-#include <Glacier/Fysix/COLI.h>
+#include <Glacier/Physics/COLI.h>
 
 
 namespace Glacier

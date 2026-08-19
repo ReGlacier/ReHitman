@@ -3,7 +3,7 @@
 #include <Glacier/ReGlacier.h>
 #include <Glacier/ZSTL/ZMath.h>
 #include <Glacier/GlacierFWD.h>
-#include <Glacier/Fysix/SHitInfo.h>
+#include <Glacier/Physics/SHitInfo.h>
 #include <BloodMoney/Game/ZHM3Damage.h>
 
 

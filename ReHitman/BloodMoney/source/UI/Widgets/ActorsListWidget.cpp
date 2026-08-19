@@ -23,7 +23,7 @@
 #include <Glacier/ZActorCommunication.h>
 #include <Glacier/ScriptEngine/ZScriptC.h>
 
-#include <Glacier/Fysix/CRigidBody.h>
+#include <Glacier/Physics/CRigidBody.h>
 #include <Glacier/Geom/ZROOM.h>
 #include <HF/HackingFramework.hpp>
 #include <imgui.h>

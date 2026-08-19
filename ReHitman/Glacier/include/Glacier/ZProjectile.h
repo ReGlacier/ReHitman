@@ -2,7 +2,7 @@
 
 #include <Glacier/EventBase/ZBaseConRout.h>
 #include <Glacier/ZProjectileBase.h>
-#include <Glacier/Fysix/COLI.h>
+#include <Glacier/Physics/COLI.h>
 #include <Glacier/ZSTL/ZMath.h>
 #include <Glacier/ReGlacier.h>
 #include <Glacier/CProjectileActivate.h>

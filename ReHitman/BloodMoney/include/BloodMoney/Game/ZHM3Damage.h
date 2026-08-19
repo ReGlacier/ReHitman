@@ -1,8 +1,8 @@
 #pragma once
 
 #include <Glacier/ReGlacier.h>
-#include <Glacier/Fysix/SHitInfo.h>
-#include <Glacier/Fysix/COLI.h>
+#include <Glacier/Physics/SHitInfo.h>
+#include <Glacier/Physics/COLI.h>
 
 
 namespace Hitman::BloodMoney

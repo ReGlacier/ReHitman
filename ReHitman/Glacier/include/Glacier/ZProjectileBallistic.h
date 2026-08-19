@@ -4,7 +4,7 @@
 #include <Glacier/ZProjectileBase.h>
 #include <Glacier/CProjectileActivate.h>
 #include <Glacier/ZProjectileBase.h>
-#include <Glacier/Fysix/COLI.h>
+#include <Glacier/Physics/COLI.h>
 
 namespace Glacier {
     class ZProjectileBallistic : public ZProjectileBase {

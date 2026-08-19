@@ -7,12 +7,12 @@
 
 namespace Glacier
 {
-    struct ZHandle
+    struct ZPrimHandleBase
     {
         uint32_t m_lHandleValue { 0u };
     };
 
-    struct ZPrimHandle : public ZHandle
+    struct ZPrimHandle : public ZPrimHandleBase
     {
         template <typename T>
         T const* Get() const

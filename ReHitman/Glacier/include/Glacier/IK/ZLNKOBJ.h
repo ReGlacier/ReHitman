@@ -263,7 +263,7 @@ namespace Glacier
         virtual void CheckBoxCollision(float const*,float const*,float const*);
         virtual void Use2Skeletons(void);
         virtual void LocalStateIK(void);
-        virtual void GetDefaultBones(ZBone*, unsigned int);
+        virtual void GetDefaultBones(ZBone *pBones, uint32_t lFirstBoneNum) const;
         virtual void SetDefaultBones(ZBone const*,SBoneDefinition const*);
         virtual void GetAnimDeltaBones(Animation::Header *);
         virtual void GetBoneMatPos(Glacier::ZMat3x3*,Glacier::ZVector3*, unsigned int);
@@ -277,9 +277,9 @@ namespace Glacier
         virtual void GetFocusMatPos(float *,float *);
         virtual void DisplayAllBones(bool);
         virtual void GetRootFocusMatPos(float *,float *);
-        virtual void GetBoneNrFromId(unsigned short );
+        virtual uint16_t GetBoneNrFromId(uint8_t lBoneId) const;
         virtual void GetBoneFromPoint(float const*);
-        virtual int GetBoneNrFromName(char const*);
+        virtual uint16_t GetBoneNrFromName(char const* pszName) const;
         virtual const char* GetBoneName(int);
         virtual void GetOrigLocalBones(void);
         virtual void* GetBoneDefinitions(void);

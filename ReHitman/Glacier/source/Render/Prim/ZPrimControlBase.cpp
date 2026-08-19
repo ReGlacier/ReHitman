@@ -44,7 +44,7 @@ namespace Glacier
         return reinterpret_cast<const SPrimHeader*>(pData)->lPackType;
     }
     
-    const void* ZPrimControlBase::GetPrimData(uint32_t lPrim)
+    const void* ZPrimControlBase::GetPrimData(uint32_t lPrim) const
     {
         if (!lPrim)
         {

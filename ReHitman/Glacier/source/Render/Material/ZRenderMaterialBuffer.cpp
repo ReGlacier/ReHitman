@@ -11,4 +11,6 @@ namespace Glacier
         , m_lNumTransparentMaterials(0)
     {
     }
+
+    STATIC_CLASS_VAR_IMPL(ZRenderMaterialBuffer, ZRenderMaterialBuffer*, g_pMaterialBufferInstance, 0x008EBF18, nullptr);
 }

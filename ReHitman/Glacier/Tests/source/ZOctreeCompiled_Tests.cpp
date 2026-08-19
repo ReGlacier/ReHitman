@@ -1,4 +1,4 @@
-#include <Glacier/Fysix/ZOctreeCompiled.h>
+#include <Glacier/Physics/ZOctreeCompiled.h>
 #include <Glacier/ZSTL/CObjectInfo.h>
 #include <Glacier/ZSTL/CQuadtree.h>
 #include <gtest/gtest.h>

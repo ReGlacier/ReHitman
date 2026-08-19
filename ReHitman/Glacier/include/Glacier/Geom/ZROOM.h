@@ -68,7 +68,7 @@ namespace Glacier
         virtual ZROOM* CalcBestRoom(unsigned int, float const*, float const*, float const*);
         virtual bool AddDynamicGeomToRoom(ZBaseGeom*);
         virtual void RemoveDynamicGeomFromRoom(ZBaseGeom*);
-        virtual void SetRoomControl(unsigned int, unsigned int);
+        virtual void SetRoomControl(uint32_t lAdd, uint32_t lRemove);
         virtual unsigned int RoomControl();
         virtual ZBaseGeom** GetDynamicLightsInRoom(ZBaseGeom**, ZBaseGeom**);
         virtual ZBaseGeom** GetStaticPrimDrawGeomsListsRecur(ZBaseGeom**, ZBaseGeom**);

@@ -9,7 +9,7 @@
 #include <Glacier/Geom/ExGeomData.h>
 #include <Glacier/Geom/GeomControlMasks.h>
 #include <Glacier/Geom/ZBaseGeomRoomList.h>
-#include <Glacier/Fysix/eGlobalTreeType.h>
+#include <Glacier/Physics/eGlobalTreeType.h>
 #include <Glacier/ZSTL/MYSTR.h>
 #include <cstdint>
 #include <cstddef>

@@ -5,7 +5,7 @@
 #include <Glacier/ZSTL/ZMath.h>
 #include <Glacier/ZSTL/MYSTR.h>
 #include <Glacier/ZSTL/ZOldTypeInfo.h>
-#include <Glacier/Fysix/eGlobalTreeType.h>
+#include <Glacier/Physics/eGlobalTreeType.h>
 #include <Glacier/Geom/ZBaseGeom.h>
 #include <Glacier/Serializer/ZSerializable.h>
 #include <Glacier/Runtime/ZGEOMCLASSINFO.h>
@@ -255,6 +255,7 @@ namespace Glacier
         void SetGeomControl(uint16_t lBitsAdd, uint16_t lBitsRem);
         void SetControl(uint32_t lBitsAdd, uint32_t lBitsRem);
         void GetWorldPosition(ZVector3& vPosition);
+        void GetLocalMatPos(ZMat3x3& mMat, ZVector3& vPos);
 
         // RTTI custom methods
 #       pragma region " --- RTTI generated stuff --- "
@@ -299,6 +300,28 @@ namespace Glacier
     RE_VERIFY_OFFSET(ZGEOM, m_lGeomControl, 0xC);
     RE_VERIFY_OFFSET(ZGEOM, m_eStatus, 0xE);
     RE_VERIFY_OFFSET(ZGEOM, m_fieldE, 0xF);
+
+
+    template <typename T>
+    const T* geom_cast(const ZGEOM* pGeom)
+    {
+        if (pGeom && pGeom->IsDerivedFrom<T>())
+        {
+            return reinterpret_cast<const T*>(pGeom);
+        }
+        return nullptr;
+    }
+
+    template <typename T> T* geom_cast(ZGEOM* pGeom)
+    {
+        return const_cast<T*>(geom_cast<T>(static_cast<const ZGEOM*>(pGeom)));
+    }
+
+    template <typename T>
+    T* ref_cast(ZREF rRef)
+    {
+        return geom_cast<T>(ZGEOM::RefToPtr(rRef));
+    }
 }
 
 // Macro from IOI assert stuff

@@ -1717,6 +1717,10 @@ namespace Glacier
         GetRootPoint(vPosition);
     }
 
+    void ZGEOM::GetLocalMatPos(ZMat3x3& mMat, ZVector3& vPos)
+    {
+        BaseGeom()->GetLocalMatPos(mMat, vPos);
+    }
 
     STATIC_CLASS_VAR_IMPL(ZGEOM, ZFactory<ZGEOM>, m_Factory, 0x00972930, ZFactory<ZGEOM>{});
     STATIC_CLASS_VAR_IMPL(ZGEOM, const char*, FactoryName, 0x00769CF4, "ZGEOM");

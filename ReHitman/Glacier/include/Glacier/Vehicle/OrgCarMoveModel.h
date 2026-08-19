@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Glacier/ReGlacier.h>
-#include <Glacier/Fysix/COLI.h>
+#include <Glacier/Physics/COLI.h>
 #include <Glacier/ZSTL/ZMath.h>
 #include <Glacier/Vehicle/BaseMoveModel.h>
 #include <Glacier/Vehicle/ZCarMoveModelIF.h>

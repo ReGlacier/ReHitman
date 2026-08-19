@@ -1,4 +1,4 @@
-#include <Glacier/Fysix/ZCommonAlgorithms.h>
+#include <Glacier/Physics/ZCommonAlgorithms.h>
 #include <Glacier/ZSTL/CQuadtree.h>
 #include <Glacier/ZSTL/CMemPool.h>
 #include <Glacier/ZUniAssert.h>
