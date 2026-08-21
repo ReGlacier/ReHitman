@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Glacier/IK/ZLNKOBJ.h"
 #include <Glacier/ReGlacier.h>
 #include <Glacier/ZSTL/ZMath.h>
 #include <Glacier/ZSTL/TIMETYPE.h>
@@ -10,7 +11,7 @@
 
 namespace Glacier
 {
-    enum eBoneID : uint8_t 
+    enum eBoneID : uint8_t
     {
         NA = 0,
         GROUND = 1,
@@ -57,6 +58,10 @@ namespace Glacier
         // types
         struct ParticleProperty
         {
+            // methods
+            ParticleProperty();
+
+            // members
             int timeout;
             bool fixed;
             RE_ADD_PADDING(3);
@@ -67,14 +72,33 @@ namespace Glacier
         virtual ~CRagdoll2();
 
         // methods
+        CRagdoll2(bool bRagdoll);
         void LoadSave(ISerializerStream& stream, bool bSaving);
+        void Setup(ZLNKOBJ* pLnkObj);
+        void Hit(const float*, const float*, float);
         void InitIndices();
+        void CreateParticles();
         uint16_t GetBoneIndex(eBoneID eBone) const;
         void PrimChanged(uint32_t lPrim);
         bool IsRagdoll() const;
         bool IsMoving() const;
         bool IsActive() const;
         uint16_t GetBoneIndex(eBoneID eBone);
+        void EnableTimeOut(bool bEnable);
+        void Activate(const ZBone* pBones, bool bActivate);
+        void Deactivate();
+        void SetDamping(float fDamping);
+        void GetLocalPelvis(ZVector3& vDir, ZVector3& vPos);
+        void ComputeParticlePositionsSub(const ZBone* pBones, bool bCalcVelocity);
+        bool GetLinkMatPos_global(uint16_t lBoneIndex, ZMat3x3& mMat, ZVector3& vPos, ZVector3* vCenter, ZVector3* vSize, const ZBone* pBones);
+        void End();
+        bool Move(ZMat3x3& mMat, ZVector3& vPos, float fDt);
+        void CalcGroundOffset(ZMat3x3& mMat, ZVector3& vPos);
+        void HandleCalcMatsMsg(ZBone* pBone, bool bConvertToQuat, int nNumBones);
+        void SetLinkMatPosByIx(int lIndex, const ZMat3x3& mMat, const ZVector3& vPos, ZBone* pBones);
+        void LinkMats(int lBoneIndex, ZBone* pBones);
+        void CopyBone(int lDstBoneIdx, int lSrcBoneIdx, ZBone* pBones);
+        const ZLNKOBJ* LnkObj() const;
 
         // members
         ParticleProperty m_aParticleProperty[MAX_PARTICLE_PROPS_NR];

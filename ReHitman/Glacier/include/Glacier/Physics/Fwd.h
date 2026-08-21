@@ -6,7 +6,6 @@ namespace Glacier
     struct COLI;
     class CRagdoll2;
     class CRigidBody;
-    enum eGlobalTreeType;
     struct SExplosionInfo;
     struct SLineImpact;
     struct SExtendedImpactInfo;
@@ -23,7 +22,7 @@ namespace Glacier
     struct ZOctreeCompiled;
     struct ZRawStrip;
     class ZVertexExtend;
-    struct ConstrainedParticleSystem;
+    class ConstrainedParticleSystem;
 }
 
 namespace Glacier::Fysix

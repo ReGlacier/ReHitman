@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Glacier/GlacierFWD.h>
+#include <Glacier/ZSTL/ZMath.h>
 
 
 namespace Glacier
@@ -209,13 +210,8 @@ namespace Glacier
     };
     using eWeaponType = _eWeaponType;
 
-    struct _v3
-    {
-        float x;
-        float y;
-        float z;
-    };
-    using v3 = _v3;
+    using _v3 = ZVector3; // Just for SI naming compatibility
+    using v3 = _v3; // Just for SI naming compatibility
 
     struct _sCover
     {
@@ -244,7 +240,7 @@ namespace Glacier
     using anim = uint16_t;
     using STATEREF = const void**;
 
-    enum _eMoveSet 
+    enum _eMoveSet
     {
         eMoveSet_NORMAL = 0,
         eMoveSet_SLOW = 1,

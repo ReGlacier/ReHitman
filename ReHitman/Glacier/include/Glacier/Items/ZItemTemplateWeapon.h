@@ -4,7 +4,7 @@
 #include <Glacier/Items/ZItemTemplate.h>
 #include <Glacier/Items/EWeaponOperation.h>
 #include <Glacier/ZSTL/ZBitfield.h>
-#include <Glacier/ZSDOwner.h>
+#include <Glacier/Audio/ZSDOwner.h>
 
 namespace Glacier
 {

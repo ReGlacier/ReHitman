@@ -2,12 +2,24 @@
 #include <Glacier/Render/ZRenderBaseDll.h>
 #include <Glacier/Render/Globals.h>
 #include <Glacier/Render/Prim/SHandleTableEntry.h>
+#include <Glacier/Render/Prim/SPrimObjectHeader.h>
+#include <Glacier/Render/Prim/SPrimLightEnvironment.h>
+#include <Glacier/Render/Prim/SPrimLightSpotSquare.h>
+#include <Glacier/Render/Prim/SPrimHeaderStrip.h>
+#include <Glacier/Render/Prim/SPrimLightSpot.h>
+#include <Glacier/Render/Prim/SPrimLightOmni.h>
+#include <Glacier/Render/Prim/SPrimLight.h>
 #include <Glacier/Render/Prim/ZPrimHandle.h>
 #include <Glacier/Render/Prim/SPrimObject.h>
 #include <Glacier/Render/Prim/SPrimHeader.h>
+#include <Glacier/Render/Prim/SPrimStrips.h>
 #include <Glacier/Render/Prim/SPrimMesh.h>
+#include <Glacier/Render/Prim/ELightType.h>
 #include <Glacier/Render/Prim/EPrimType.h>
 #include <Glacier/Render/Prim/SPrims.h>
+#include <Glacier/Render/Sprite/SSpriteArrayElementUV.h>
+#include <Glacier/Render/Sprite/SSpriteArray.h>
+#include <Glacier/Render/Draw/IDraw.h>
 #include <Glacier/ZUniAssert.h>
 #include <cstdio>
 #include <cstring>
@@ -43,7 +55,7 @@ namespace Glacier
 
         return reinterpret_cast<const SPrimHeader*>(pData)->lPackType;
     }
-    
+
     const void* ZPrimControlBase::GetPrimData(uint32_t lPrim) const
     {
         if (!lPrim)
@@ -70,9 +82,11 @@ namespace Glacier
     {
         return lPrim >= g_lPrimHandleToPointerCount;
     }
-    
+
     bool ZPrimControlBase::CheckPointInsidePrim(uint32_t lPrim, const ZVector3& vPoint, float fThreshold)
     {
+        if (!lPrim)
+            return false;
         // TODO: Finish me
         return false;
     }
@@ -211,10 +225,13 @@ namespace Glacier
 
         if (pHeader->lType == EPrimType::PTOBJECTHEADER)
         {
-            // TODO: Finish me
-            return 0;
+            const auto* pObjectHeader = reinterpret_cast<const SPrimObjectHeader*>(pHeader);
+            if (lSubPrimNumber >= pObjectHeader->lNumObjects)
+                return 0;
+
+            return reinterpret_cast<const uint32_t*>(GetPrimData(pObjectHeader->lObjectTable))[lSubPrimNumber];
         }
-        
+
         // Otherwise
         uint32_t lCounter = lSubPrimNumber;
         uint32_t lNextPrim = lPrim;
@@ -236,9 +253,18 @@ namespace Glacier
     uint32_t ZPrimControlBase::GetSubPrims(uint32_t lPrim, uint32_t* pSubPrims, uint32_t lMaxSubPrims)
     {
         uint32_t lTotalCount = 0;
-        
+        uint32_t lCurrentPrim = lPrim;
 
-        // TODO: Finish me
+        for (; lCurrentPrim; ++lTotalCount)
+        {
+            if (lTotalCount >= lMaxSubPrims)
+                break;
+
+            const auto* pCurrentPrim = GetPrimitive<const SPrims>(lCurrentPrim);
+            pSubPrims[lTotalCount] = lCurrentPrim;
+            lCurrentPrim = pCurrentPrim->lNextPrim;
+        }
+
         return lTotalCount;
     }
 
@@ -255,20 +281,66 @@ namespace Glacier
 
     bool ZPrimControlBase::ExtraDataSupport()
     {
-        // TODO: Finish me
-        return false;
+        return true;
     }
 
     bool ZPrimControlBase::IsVariantAvailable(uint32_t lPrim, uint32_t lVariantId)
     {
-        // TODO: Finish me
-        return false;
+        ZPrimHandle hPrim { lPrim };
+        if (!hPrim)
+            return false;
+
+        const SPrims* pPrim = hPrim;
+        if (pPrim->lType != EPrimType::PTOBJECTHEADER)
+            return false;
+
+        const SPrimObjectHeader* pObjectHeader = hPrim;
+        if (!pObjectHeader->lNumObjects)
+            return false;
+
+        ZPrimHandle hObjectTable { pObjectHeader->lObjectTable };
+        const uint32_t* pObjectTable = hObjectTable;
+
+        uint32_t lCurrentVariation = 0u;
+
+        for (; lCurrentVariation < pObjectHeader->lNumObjects; ++lCurrentVariation)
+        {
+            const uint32_t lObject = pObjectTable[lCurrentVariation];
+            ZPrimHandle hObject { lObject };
+            const SPrimObject* pObject = hObject;
+
+            if (pObject->lVariantId == lVariantId)
+                break;
+        }
+
+        return true;
     }
 
     uint32_t ZPrimControlBase::GetNumVariants(uint32_t lPrim)
     {
-        // TODO: Finish me
-        return 0u;
+        ZPrimHandle hPrim { lPrim };
+        if (!hPrim)
+            return false;
+
+        const SPrims* pPrims = hPrim;
+        if (pPrims->lType != EPrimType::PTOBJECTHEADER)
+            return 0u;
+
+        const SPrimObjectHeader* pObjectHeader = hPrim;
+        ZPrimHandle hObjectTable { pObjectHeader->lObjectTable };
+        const uint32_t* pObjectTable = hObjectTable;
+        uint32_t lMaxVariationId = 0u;
+
+        for (uint32_t i = 0; i < pObjectHeader->lNumObjects; ++i)
+        {
+            const uint32_t lObject = pObjectTable[i];
+            ZPrimHandle hObject { lObject };
+            const SPrimObject* pObject = hObject;
+
+            lMaxVariationId = std::max(lMaxVariationId, static_cast<uint32_t>(pObject->lVariantId));
+        }
+
+        return lMaxVariationId;
     }
 
     uint32_t ZPrimControlBase::CreateUserLight(uint32_t lType)
@@ -430,36 +502,32 @@ namespace Glacier
 
     uint32_t ZPrimControlBase::GetSizeOfLightOmni() const
     {
-        // TODO: Finish me
-        return 0u;
+        return sizeof(SPrimLightOmni);
     }
 
     uint32_t ZPrimControlBase::GetSizeOfLightSpot() const
     {
-        // TODO: Finish me
-        return 0u;
+        return sizeof(SPrimLightSpot);
     }
 
     uint32_t ZPrimControlBase::GetSizeOfLightSpotSquare() const
     {
-        // TODO: Finish me
-        return 0u;
+        return sizeof(SPrimLightSpotSquare);
     }
 
     uint32_t ZPrimControlBase::GetSizeOfLightEnvironment() const
     {
-        // TODO: Finish me
-        return 0u;
+        return sizeof(SPrimLightEnvironment);
     }
 
     void ZPrimControlBase::ColorIUTOU(uint32_t* pDst, const uint32_t* pSrc)
     {
-        // TODO: Finish me
+        *pDst = *pSrc;
     }
 
     void ZPrimControlBase::ColorUTOIU(uint32_t* pDst, const uint32_t* pSrc)
     {
-        // TODO: Finish me
+        *pDst = *pSrc;
     }
 
     void ZPrimControlBase::ColorFVTOIU(uint32_t* pDst, const float* pSrc)
@@ -479,8 +547,49 @@ namespace Glacier
 
     float ZPrimControlBase::GetLightIntensity(const uint32_t lPrim, const float fDistance)
     {
-        // TODO: Finish me
-        return 0.f;
+        const SPrimLight* pLight = GetPrimitive<const SPrimLight>(lPrim);
+        ZASSERT(pLight->lType == EPrimType::PTLIGHT);
+        float fMultiplier = 1.0f;
+
+        switch (pLight->lLightType)
+        {
+            case ELightType::LTSPOT: // 0
+            case ELightType::LTOMNI: // 1
+            case ELightType::LTSPOTSQUARE: // 2
+            {
+                const auto* pOmni = reinterpret_cast<const SPrimLightOmni*>(pLight);
+                float fMultiplier2 = (pOmni->fFarRange - fDistance) * pOmni->fInverseFarMinusNear;
+                if (fMultiplier2 >= 0.0f)
+                {
+                    fMultiplier2 = std::min(1.0f, fMultiplier2);
+                    fMultiplier = fMultiplier2 * pOmni->fMultiplier;
+                }
+                else
+                {
+                    fMultiplier = 0.0f * pOmni->fMultiplier; // Yep, same in PC build lol
+                }
+            }
+            break;
+            case ELightType::LTENVIRONMENT:
+            case ELightType::LTDIRECTIONAL:
+            {
+                fMultiplier = pLight->fMultiplier;
+            }
+            break;
+            default:
+            {
+                // Impossible case: all lLightType are processed before
+                fMultiplier = fDistance;
+            }
+            break;
+        }
+
+        const uint32_t lDiffuseColor = pLight->lDiffuseColor;
+        const uint32_t lColorSum = (lDiffuseColor & 0xFFu)
+                                 + ((lDiffuseColor >> 8) & 0xFFu)
+                                 + ((lDiffuseColor >> 16) & 0xFFu);
+
+        return fMultiplier * static_cast<float>(lColorSum);
     }
 
     uint32_t ZPrimControlBase::CombinePrimVariants(const uint32_t* aOriginalPrims, uint32_t lOriginalPrimsCount, const SPrimVariant* aVariants, uint32_t lVariantCount)
@@ -543,7 +652,40 @@ namespace Glacier
 
     void ZPrimControlBase::UpdateStripBounds(uint32_t lPrim)
     {
-        // TODO: Finish me
+        if (!lPrim)
+            return;
+
+        ZPrimHandle hPrim { lPrim };
+
+        const SPrims* pPrim = hPrim;
+        ZASSERT(pPrim->lType==PTSTRIP || pPrim->lType==PTSTRIPBONES || pPrim->lType==PTDOT3STRIP); // original assert
+
+        const SPrimStrips* pStripPrim = hPrim;
+        ZASSERT(pStripPrim->lTempHeader != 0); // original assert
+
+        auto* pRootHeader = GetPrimitive<SPrimHeaderStrip>(pStripPrim->lTempHeader);
+
+        for (uint32_t i = 0; i; i = pPrim->lNextPrim)
+        {
+            ZPrimHandle hChild { i };
+            const SPrims* pChild = hChild;
+
+            if (!(pPrim->lType==PTSTRIP || pPrim->lType==PTSTRIPBONES || pPrim->lType==PTDOT3STRIP))
+            {
+                continue;
+            }
+
+            const SPrimStrips* pChildStrips = hChild;
+            if (!pChildStrips->lTempHeader)
+            {
+                continue;
+            }
+
+            ZPrimHandle hChildStrips { pChildStrips->lTempHeader };
+            const SPrimHeaderStrip* pChildStripHeader = hChildStrips;
+            vmin(pRootHeader->vMax, pChildStripHeader->vMax);
+            vmax(pRootHeader->vMin, pChildStripHeader->vMin);
+        }
     }
 
     ZPrimControlBase* ZPrimControlBase::Instance()
@@ -555,34 +697,52 @@ namespace Glacier
 
     SSpriteArray* ZPrimControlBase::AllocSpriteArrays(uint32_t lNrSpriteArrays)
     {
-        // TODO: Finish me
-        return nullptr;
+        const uint32_t lMemSize = sizeof(SSpriteArray) * lNrSpriteArrays;
+        auto* pSprites = reinterpret_cast<SSpriteArray*>(AllocSprites(lMemSize));
+        memset(pSprites, 0, lMemSize);
+
+        return pSprites;
     }
 
     SSpriteArrayElementUV* ZPrimControlBase::AllocSpriteArrayUV(uint32_t lNrSprites)
     {
-        // TODO: Finish me
-        return nullptr;
+        return reinterpret_cast<SSpriteArrayElementUV*>(AllocSprites(sizeof(SSpriteArrayElementUV) * lNrSprites));
     }
 
     uint32_t* ZPrimControlBase::AllocPrimList(uint32_t lNrPrims)
     {
-        // TODO: Finish me
-        return nullptr;
+        return reinterpret_cast<uint32_t*>(AllocSprites(sizeof(uint32_t) * lNrPrims));
     }
 
     void ZPrimControlBase::FreeSpriteArrays(SSpriteArray* pSpriteArrays, uint32_t lNrSpriteArrays)
     {
-        // TODO: Finish me
+        if (!lNrSpriteArrays)
+            return;
+
+        IDraw::Instance()->FreeSprites(pSpriteArrays, sizeof(SSpriteArray) * lNrSpriteArrays);
     }
 
     void ZPrimControlBase::FreePrimList(uint32_t* pPrimList, uint32_t lNrPrims)
     {
-        // TODO: Finish me
+        if (!lNrPrims)
+            return;
+
+        IDraw::Instance()->FreeSprites(pPrimList, sizeof(uint32_t) * lNrPrims);
     }
 
     void ZPrimControlBase::FreeSpriteArrayUV(SSpriteArrayElementUV *pSpriteArray, uint32_t lNrSprites)
     {
-        // TODO: Finish me
+        if (!lNrSprites)
+            return;
+
+        IDraw::Instance()->FreeSprites(pSpriteArray, sizeof(SSpriteArrayElementUV) * lNrSprites);
+    }
+
+    void* ZPrimControlBase::AllocSprites(uint32_t lSize)
+    {
+        if (!lSize)
+            return nullptr;
+
+        return IDraw::Instance()->AllocSprites(lSize);
     }
 }

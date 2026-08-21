@@ -16,8 +16,8 @@ namespace Glacier
     {
     public:
         // methods
-        ZDebugInt(const char* pszName, const char* pszDescription,
-                  int32_t minValue, int32_t maxValue, int32_t step, const char* pszPath);
+        ZDebugInt(const char* pszName, const char* pszDescription, int32_t minValue, int32_t maxValue, int32_t step, const char* pszPath);
+        ZDebugInt(const char* pszName, const char* pszDescription, int32_t value, int32_t minValue, int32_t maxValue, int32_t step, const char* pszPath);
 
         // members
         int32_t m_iValue;

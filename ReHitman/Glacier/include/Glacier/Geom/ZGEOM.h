@@ -15,6 +15,10 @@
 #include <Glacier/RTP/Base.h>
 #include <Glacier/ZUniMemory.h>
 
+#ifdef REHITMAN_WITH_DEBUG_DRAW
+#   include <Glacier/Render/Debug/Fwd.h>
+#endif
+
 namespace Glacier
 {
     // fwds
@@ -29,7 +33,7 @@ namespace Glacier
     /**
      * @brief Reversed from cRTP::Properties container
      */
-    enum EBoundingBox 
+    enum EBoundingBox
     {
         BOUNDING_Static = 0,
         BOUNDING_Dynamic = 1,
@@ -142,6 +146,9 @@ namespace Glacier
         virtual bool RequestCustomDraw();
         virtual bool HasOwnerDraw() const;
         virtual void OwnerDraw(ZBaseGeom *,uint,ZDrawBuffer *,ZCAMERA *,float const*,float const*,void const*);
+#       ifdef REHITMAN_WITH_DEBUG_DRAW
+        virtual void DrawDebugObjects(ZDrawDebugRender* pRender) {}
+#       endif
         virtual void CorrectOwnerDrawMatrix(ZMat3x3& mMat, ZVector3& vPos, ZBaseGeom *pOwnerBaseGeom, uint32_t lBoneId);
         virtual void CorrectOwnerDrawPartMatrix(ZMat4x4*,ZBaseGeom*);
         virtual bool WantDrawBufferControl() const;
@@ -210,7 +217,7 @@ namespace Glacier
         virtual ZLNKOBJ* GetAttachedTo() const;
         virtual bool IsLinkBaseObj() const;
         virtual void OnCameraEnter();
-       
+
         // methods
         ZGEOM(const char* pName, ZBaseGeom* pBaseGeom);
         bool IsInitialized() const;
@@ -254,8 +261,19 @@ namespace Glacier
         uint16_t GeomControl() const;
         void SetGeomControl(uint16_t lBitsAdd, uint16_t lBitsRem);
         void SetControl(uint32_t lBitsAdd, uint32_t lBitsRem);
-        void GetWorldPosition(ZVector3& vPosition);
-        void GetLocalMatPos(ZMat3x3& mMat, ZVector3& vPos);
+        void GetWorldPosition(ZVector3& vPosition) const;
+        void GetLocalMatPos(ZMat3x3& mMat, ZVector3& vPos) const;
+        void GetSize(ZVector3& vSize);
+        void SetSize(const ZVector3& vSize);
+        void SetRadius(float fRadius);
+        void GetRootVect(ZVector3& vect);
+        float GetDistanceToObject(const ZGEOM* pTarget) const;
+        float GetDistanceToPos(const ZVector3& vPos) const;
+        float GetAngleToDir(const ZVector3& vDir) const;
+        float GetAngleToObject(ZREF rObject) const;
+        float GetAngleToObject(const ZGEOM* pGeom) const;
+        float GetAngleToGeomDir(ZREF rGeom) const;
+        float GetAngleToGeomDir(const ZGEOM* pGeom) const;
 
         // RTTI custom methods
 #       pragma region " --- RTTI generated stuff --- "

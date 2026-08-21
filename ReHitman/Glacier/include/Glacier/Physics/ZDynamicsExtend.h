@@ -35,7 +35,7 @@ namespace Glacier
 
         static constexpr uint8_t m_wMaxFrames = 0xA;
         static constexpr float m_fSyncPhysics = 0.016666666;
-        
+
 
         // vtbl
         virtual ~ZDynamicsExtend();
@@ -54,6 +54,7 @@ namespace Glacier
 
         void WakeUp(uint16_t body);
         void Stabilize(uint16_t body, uint16_t iterations);
+        bool Awake(uint16_t body) const;
 
         // members
         SGenericMapper* m_pMapper;

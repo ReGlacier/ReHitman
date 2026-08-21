@@ -1,6 +1,14 @@
+#include "Glacier/Physics/Fysix/Fysix.h"
+#include "Glacier/ZSTL/ZMath.h"
 #include <Glacier/Physics/Fysix/ConstrainedParticleSystem.h>
+#include <Glacier/Physics/Fysix/ZWaterBoxManager.h>
+#include <Glacier/Physics/Fysix/ZWaterBox.h>
 #include <Glacier/Physics/ZCommonAlgorithms.h>
+#include <Glacier/Physics/SFastBoxColiTri.h>
+#include <Glacier/Physics/SCapsuleColiInfo.h>
 #include <Glacier/Physics/ZFastBoxColi.h>
+#include <Glacier/Geom/ZSTDOBJ.h>
+#include <Glacier/IK/ZLNKOBJ.h>
 #include <Glacier/Serializer/ISerializerStream.h>
 #include <Glacier/Debug/ZDebugInt.h>
 #include <Glacier/System/ZSysInterface.h>
@@ -8,389 +16,637 @@
 #include <Glacier/ZUniMemory.h>
 
 #include <xmmintrin.h>
+#include <numbers>
+#include <cmath>
 
 
 namespace Glacier
 {
-    void ZCommonAlgorithms::AdjustPart2rigid(float* x1, float* x2, float m1, float m2, float dist)
+    namespace
     {
-        // Load positions as SSE vectors (x, y, z, unused)
-        __m128 v1 = _mm_loadu_ps(x1);
-        __m128 v2 = _mm_loadu_ps(x2);
-        __m128 delta = _mm_sub_ps(v2, v1);
-
-        // Compute squared length
-        __m128 deltaSq = _mm_mul_ps(delta, delta);
-        float lenSqr = _mm_cvtss_f32(deltaSq)
-                     + _mm_cvtss_f32(_mm_shuffle_ps(deltaSq, deltaSq, _MM_SHUFFLE(1, 1, 1, 1)))
-                     + _mm_cvtss_f32(_mm_shuffle_ps(deltaSq, deltaSq, _MM_SHUFFLE(2, 2, 2, 2)));
-
-        float len = sqrtf(lenSqr);
-
-        // Avoid division by zero with random perturbation using g_pSysInterface->m_fTimeMultiplier_override as seed
-        while (len < 0.000001f)
+        void MakeBaseTransformation(ZVector3 (&vBasis)[3], float& fOutProjScaleX, float& fOutProjScaleY, float fLeftAngleDeg, float fRightAngleDeg, float fBottonAngleDeg, float fTopAngleDeg)
         {
-            // Original uses g_pSysInterface->m_fTimeMultiplier_override as a pseudo-random seed
-            uint32_t seed = *reinterpret_cast<uint32_t*>(&g_pSysInterface->m_fTimeMultiplier_override);
-            seed = 69069 * seed + 1;
-            g_pSysInterface->m_fTimeMultiplier_override = *reinterpret_cast<float*>(&seed);
+            constexpr float DEG_TO_RAD_HALF = std::numbers::pi_v<float> / 360.0f; //0.0087266462f;
 
-            const float rx = (static_cast<float>((seed >> 8) & 0x7FFF) - 16384.0f) * 0.000061035156f;
+            const float fCenterYawRad   = (fLeftAngleDeg + fRightAngleDeg) * DEG_TO_RAD_HALF;
+            const float fCenterPitchRad = (fBottonAngleDeg + fTopAngleDeg) * DEG_TO_RAD_HALF;
+            const float fHalfFovXRad    = (fRightAngleDeg - fLeftAngleDeg) * DEG_TO_RAD_HALF;
+            const float fHalfFovYRad    = (fTopAngleDeg - fBottonAngleDeg) * DEG_TO_RAD_HALF;
 
-            seed = 69069 * seed + 1;
-            g_pSysInterface->m_fTimeMultiplier_override = *reinterpret_cast<float*>(&seed);
-            const float ry = (static_cast<float>((seed >> 8) & 0x7FFF) - 16384.0f) * 0.000061035156f;
+            ZVector3& vForward = vBasis[0];
+            ZVector3& vUp      = vBasis[1];
+            ZVector3& vRight   = vBasis[2];
 
-            seed = 69069 * seed + 1;
-            g_pSysInterface->m_fTimeMultiplier_override = *reinterpret_cast<float*>(&seed);
-            const float rz = (static_cast<float>((seed >> 8) & 0x7FFF) - 16384.0f) * 0.000061035156f;
+            // Calc forward vector
+            vForward.x = std::sinf(fCenterYawRad);
+            vForward.z = std::cosf(fCenterYawRad);
+            vForward.y = std::tanf(fCenterPitchRad) * vForward.z;
+            vnorm(vForward);
 
-            delta = _mm_set_ps(0.0f, rz, ry, rx);
-            deltaSq = _mm_mul_ps(delta, delta);
-            lenSqr = _mm_cvtss_f32(deltaSq)
-                   + _mm_cvtss_f32(_mm_shuffle_ps(deltaSq, deltaSq, _MM_SHUFFLE(1, 1, 1, 1)))
-                   + _mm_cvtss_f32(_mm_shuffle_ps(deltaSq, deltaSq, _MM_SHUFFLE(2, 2, 2, 2)));
-            len = sqrtf(lenSqr);
+            // Calc right vector
+            vRight.x = vForward.z;
+            vRight.y = 0.0f;
+            vRight.z = -vForward.x;
+            vnorm(vRight);
+
+            // Calc up vector
+            vcross(vUp, vForward, vRight);
+            vnorm(vUp);
+
+            // Calc scale projection xy
+            fOutProjScaleX = 1.f / std::tanf(fHalfFovXRad);
+            fOutProjScaleY = 1.f / std::tanf(fHalfFovYRad);
         }
 
-        const float invLen = 1.0f / len;
-        const float invMassSum = 1.0f / (m1 + m2);
-        const float correction = (len - dist) * m2 * invMassSum;
-
-        // Normalize delta
-        const __m128 invLenVec = _mm_set1_ps(invLen);
-        const __m128 normal = _mm_mul_ps(delta, invLenVec);
-
-        // Compute correction vector
-        const __m128 correctionVec = _mm_mul_ps(normal, _mm_set1_ps(correction));
-
-        // Update x1: x1 += correction
-        v1 = _mm_add_ps(v1, correctionVec);
-        _mm_storeu_ps(x1, v1);
-
-        // Update x2: x2 = normal * dist + x1 (which is now updated)
-        const __m128 distVec = _mm_mul_ps(normal, _mm_set1_ps(dist));
-        v2 = _mm_add_ps(v1, distVec);
-        _mm_storeu_ps(x2, v2);
-    }
-
-    bool ZCommonAlgorithms::Solve3x3System(const float* base2, const float* target2_global, float* lincomb)
-    {
-        // Compute determinant using Cramer's rule
-        const float det =
-            base2[0] * base2[4] * base2[8] +
-            base2[1] * base2[5] * base2[6] +
-            base2[2] * base2[3] * base2[7] -
-            base2[2] * base2[4] * base2[6] -
-            base2[1] * base2[3] * base2[8] -
-            base2[0] * base2[5] * base2[7];
-
-        if (fabsf(det) < 0.000001f)
-            return false;
-
-        const float invDet = 1.0f / det;
-
-        // Compute solution using Cramer's rule
-        lincomb[0] = (target2_global[0] * base2[4] * base2[8] +
-                      base2[1] * base2[5] * target2_global[2] +
-                      base2[2] * target2_global[1] * base2[7] -
-                      base2[2] * base2[4] * target2_global[2] -
-                      base2[1] * target2_global[1] * base2[8] -
-                      target2_global[0] * base2[5] * base2[7]) * invDet;
-
-        lincomb[1] = (base2[0] * target2_global[1] * base2[8] +
-                      target2_global[0] * base2[5] * base2[6] +
-                      base2[2] * base2[3] * target2_global[2] -
-                      base2[2] * target2_global[1] * base2[6] -
-                      target2_global[0] * base2[3] * base2[8] -
-                      base2[0] * base2[5] * target2_global[2]) * invDet;
-
-        lincomb[2] = (base2[0] * base2[4] * target2_global[2] +
-                      base2[1] * target2_global[1] * base2[6] +
-                      target2_global[0] * base2[3] * base2[7] -
-                      target2_global[0] * base2[4] * base2[6] -
-                      base2[1] * base2[3] * target2_global[2] -
-                      base2[0] * target2_global[1] * base2[7]) * invDet;
-
-        return true;
-    }
-
-    bool ZCommonAlgorithms::DistPointLineVar2(const float* a1, const float* b1, const float* b2,
-                                              float* t, float* fMinDist, float* fDist, float* vDir)
-    {
-        // Compute line direction
-        const float dx = b2[0] - b1[0];
-        const float dy = b2[1] - b1[1];
-        const float dz = b2[2] - b1[2];
-
-        const float lineLenSqr = dx * dx + dy * dy + dz * dz;
-
-        // Compute vector from b1 to a1
-        const float ax = a1[0] - b1[0];
-        const float ay = a1[1] - b1[1];
-        const float az = a1[2] - b1[2];
-
-        // Project a1 onto line
-        float dot = ax * dx + ay * dy + az * dz;
-        *t = dot;
-
-        if (dot >= 0.0f)
+        inline void MakeRandomVector(ZVector3& v)
         {
-            if (dot <= lineLenSqr)
-            {
-                // Closest point is on segment
-                *t = dot / lineLenSqr;
-                const float closestX = b1[0] + dx * (*t);
-                const float closestY = b1[1] + dy * (*t);
-                const float closestZ = b1[2] + dz * (*t);
+            v = {
+                g_pSysInterface->FRand(nullptr, 0),
+                g_pSysInterface->FRand(nullptr, 0),
+                g_pSysInterface->FRand(nullptr, 0),
+            };
+        }
 
-                vDir[0] = a1[0] - closestX;
-                vDir[1] = a1[1] - closestY;
-                vDir[2] = a1[2] - closestZ;
+        void AdjustPart2(ZVector3& vPos1, ZVector3& vPos2, float fTargetDist, float fMass1, float fMass2)
+        {
+            ZVector3 vDelta;
+            vsub(vDelta, vPos2, vPos1);
+
+            float fDist = vlen(vDelta);
+
+            // Find solution without division by zero
+            while (fDist < 0.000001f)
+            {
+                vDelta.x = g_pSysInterface->FRand(nullptr, 0);
+                vDelta.y = g_pSysInterface->FRand(nullptr, 0);
+                vDelta.z = g_pSysInterface->FRand(nullptr, 0);
+                fDist = vlen(vDelta);
             }
-            else
+
+            // Normalize dir vector
+            ZVector3 vDir;
+            vscalar(vDir, vDelta, 1.0f / fDist);
+
+            const float fInvTotalMass = 1.0f / (fMass1 + fMass2);
+            const float fDeltaDist    = fDist - fTargetDist; // Deform error compute
+
+            const float fShift1 =  (fInvTotalMass * fMass2) * fDeltaDist * 0.6f;
+            const float fShift2 = -(fInvTotalMass * fMass1) * fDeltaDist * 0.6f;
+
+            vaddscalar(vPos1, vPos1, vDir, fShift1);
+            vaddscalar(vPos2, vPos2, vDir, fShift2);
+        }
+
+        void AdjustSpecialConstraint(ZVector3& vPos1, ZVector3& vPos2, float fTargetDist, float fMass1, float fMass2)
+        {
+            ZVector3 vDelta;
+            vsub(vDelta, vPos2, vPos1);
+
+            float fDist = vlen(vDelta);
+
+            if ((fTargetDist <= 0.0f || fDist <= fTargetDist) && (fTargetDist >= 0.0f || fDist >= -fTargetDist))
             {
-                // Closest point is b2
-                *t = 1.0f;
-                vDir[0] = a1[0] - b2[0];
-                vDir[1] = a1[1] - b2[1];
-                vDir[2] = a1[2] - b2[2];
-            }
-        }
-        else
-        {
-            // Closest point is b1
-            *t = 0.0f;
-            vDir[0] = ax;
-            vDir[1] = ay;
-            vDir[2] = az;
-        }
-
-        const float distSqr = vDir[0] * vDir[0] + vDir[1] * vDir[1] + vDir[2] * vDir[2];
-
-        if (distSqr > (*fMinDist) * (*fMinDist))
-            return false;
-
-        const float dist = sqrtf(distSqr);
-        *fDist = dist;
-
-        if (dist <= 0.000001f)
-        {
-            RandomUnitVector(vDir);
-        }
-        else
-        {
-            const float invDist = 1.0f / dist;
-            vDir[0] *= invDist;
-            vDir[1] *= invDist;
-            vDir[2] *= invDist;
-        }
-
-        return true;
-    }
-
-    void ZCommonAlgorithms::RandomUnitVector(float* v)
-    {
-        float len;
-        do
-        {
-            uint32_t seed = *reinterpret_cast<uint32_t*>(&g_pSysInterface->m_fTimeMultiplier_override);
-
-            seed = 69069 * seed + 1;
-            g_pSysInterface->m_fTimeMultiplier_override = *reinterpret_cast<float*>(&seed);
-            const float rx = static_cast<float>((seed >> 8) & 0x7FFF) * 0.000030517578f - 0.5f;
-
-            seed = 69069 * seed + 1;
-            g_pSysInterface->m_fTimeMultiplier_override = *reinterpret_cast<float*>(&seed);
-            const float ry = static_cast<float>((seed >> 8) & 0x7FFF) * 0.000030517578f - 0.5f;
-
-            seed = 69069 * seed + 1;
-            g_pSysInterface->m_fTimeMultiplier_override = *reinterpret_cast<float*>(&seed);
-            const float rz = static_cast<float>((seed >> 8) & 0x7FFF) * 0.000030517578f - 0.5f;
-
-            v[0] = rx;
-            v[1] = ry;
-            v[2] = rz;
-
-            len = sqrtf(rx * rx + ry * ry + rz * rz);
-        } while (len < 0.000001f);
-
-        const float invLen = 1.0f / len;
-        v[0] *= invLen;
-        v[1] *= invLen;
-        v[2] *= invLen;
-    }
-
-    bool ZCommonAlgorithms::IntersectTriangleAndLine3(float* coli_x, const float* orig, const float* dir,
-                                                      const float* vert0, const float* inv, float* t, bool bBothSides)
-    {
-        // Compute denominator
-        const float denom = dir[0] * inv[2] + dir[1] * inv[5] + dir[2] * inv[8];
-
-        if (!bBothSides && denom > 0.0f)
-            return false;
-
-        if (fabsf(denom) < 0.000001f)
-            return false;
-
-        // Compute vector from vert0 to orig
-        const float ox = orig[0] - vert0[0];
-        const float oy = orig[1] - vert0[1];
-        const float oz = orig[2] - vert0[2];
-
-        // Compute t
-        const float tVal = -(ox * inv[2] + oy * inv[5] + oz * inv[8]) / denom;
-        *t = tVal;
-
-        if (tVal <= 0.0f || tVal >= 1.0f)
-            return false;
-
-        // Compute intersection point
-        const float px = ox + dir[0] * tVal;
-        const float py = oy + dir[1] * tVal;
-        const float pz = oz + dir[2] * tVal;
-
-        // Compute barycentric coordinates
-        const float u = px * inv[0] + py * inv[3] + pz * inv[6];
-        const float v = px * inv[1] + py * inv[4] + pz * inv[7];
-
-        if (u < 0.0f || u > 1.0f || v < 0.0f || (u + v) > 1.0f)
-            return false;
-
-        // Compute collision point
-        coli_x[0] = vert0[0] + px;
-        coli_x[1] = vert0[1] + py;
-        coli_x[2] = vert0[2] + pz;
-
-        return true;
-    }
-
-    bool ZCommonAlgorithms::IntersectTriangleAndSphere(const float (*triverts)[3], const float (*spherepos)[3],
-                                                       float fRadius, float (*vDir0)[3], float* fScaledDist, float* a6)
-    {
-        // Compute triangle edges
-        const float edge1[3] = {
-            triverts[1][0] - triverts[0][0],
-            triverts[1][1] - triverts[0][1],
-            triverts[1][2] - triverts[0][2]
-        };
-        const float edge2[3] = {
-            triverts[2][0] - triverts[0][0],
-            triverts[2][1] - triverts[0][1],
-            triverts[2][2] - triverts[0][2]
-        };
-
-        // Compute triangle normal (cross product)
-        float normal[3] = {
-            edge1[1] * edge2[2] - edge1[2] * edge2[1],
-            edge1[2] * edge2[0] - edge1[0] * edge2[2],
-            edge1[0] * edge2[1] - edge1[1] * edge2[0]
-        };
-
-        const float normalLen = sqrtf(normal[0] * normal[0] + normal[1] * normal[1] + normal[2] * normal[2]);
-        if (normalLen < 0.000001f)
-            return false;
-
-        const float invNormalLen = 1.0f / normalLen;
-        normal[0] *= invNormalLen;
-        normal[1] *= invNormalLen;
-        normal[2] *= invNormalLen;
-
-        // Build 3x3 system matrix (columns: edge1, edge2, normal)
-        const float matrix[9] = {
-            edge1[0], edge1[1], edge1[2],
-            edge2[0], edge2[1], edge2[2],
-            normal[0], normal[1], normal[2]
-        };
-
-        // Vector from triangle vertex 0 to sphere center
-        const float target[3] = {
-            (*spherepos)[0] - triverts[0][0],
-            (*spherepos)[1] - triverts[0][1],
-            (*spherepos)[2] - triverts[0][2]
-        };
-
-        float solution[3];
-        bool hit = false;
-
-        if (Solve3x3System(matrix, target, solution))
-        {
-            const float u = solution[0];
-            const float v = solution[1];
-            const float w = solution[2];
-
-            if (u >= 0.0f && u < 1.0f && v >= 0.0f && (u + v) >= 0.0f && (u + v) < 1.0f)
-            {
-                if (w >= 0.0f && w <= fRadius)
+                if (fTargetDist < 0.0f)
                 {
-                    // Sphere is above triangle
-                    hit = true;
-                    *a6 = fRadius - w;
-                    fScaledDist[0] = -normal[0];
-                    fScaledDist[1] = -normal[1];
-                    fScaledDist[2] = -normal[2];
+                    fTargetDist = -fTargetDist;
                 }
-                else if (w < 0.0f && w >= -fRadius)
+
+                // Find solution without division by zero
+                while (fDist < 0.000001f)
                 {
-                    // Sphere is below triangle
-                    hit = true;
-                    *a6 = w + fRadius;
-                    fScaledDist[0] = normal[0];
-                    fScaledDist[1] = normal[1];
-                    fScaledDist[2] = normal[2];
+                    vDelta.x = g_pSysInterface->FRand(nullptr, 0);
+                    vDelta.y = g_pSysInterface->FRand(nullptr, 0);
+                    vDelta.z = g_pSysInterface->FRand(nullptr, 0);
+                    fDist = vlen(vDelta);
+                }
+
+                const float fFactor = ((fDist - fTargetDist) * 0.85f) / ((fMass1 + fMass2) * fDist);
+                const float fShift1 =  fFactor * fMass2 * 0.6f;
+                const float fShift2 = -fFactor * fMass1 * 0.6f;
+
+                // Move towards vDelta
+                vaddscalar(vPos1, vPos1, vDelta, fShift1);
+                vaddscalar(vPos2, vPos2, vDelta, fShift2);
+            }
+        }
+
+        void ZeroOutPoints2(ZVector3& vPos1, ZVector3& vPos2, float fMass1, float fMass2, const ZVector3& vNormal)
+        {
+            constexpr float CORRECTION_COFF = 0.75f; // 75%
+
+            ZVector3 vDelta;
+            vsub(vDelta, vPos2, vPos1);
+
+            const float fDot = vdot(vDelta, vNormal);
+
+            if (fDot <= 0.0f)
+            {
+                const float fMassSum = fMass1 + fMass2;
+                const float fShift1Base = fDot * fMass2 / fMassSum;
+
+                const float fShift1 = fShift1Base * CORRECTION_COFF;
+                const float fShift2 = (fShift1Base - fDot) * CORRECTION_COFF;
+
+                vaddscalar(vPos1, vPos1, vNormal, fShift1);
+                vaddscalar(vPos2, vPos2, vNormal, fShift2);
+            }
+        }
+
+        void AdjustPlane2(int iIdx1, int iIdx2, const ZVector3& vNormal, Particle* pParticles)
+        {
+            ZeroOutPoints2(
+                pParticles[iIdx1].x,
+                pParticles[iIdx2].x,
+                pParticles[iIdx1].mass,
+                pParticles[iIdx2].mass,
+                vNormal
+            );
+        }
+
+        void AdjustCone4(int iIdx0, int iIdx1, int iIdx2, int iIdx3, const ZMat3x3& mTransform, float fScaleX, float fScaleY, Particle* pParticles)
+        {
+            constexpr float ADJUST_COFF = 0.75f;
+
+            Particle& p0 = pParticles[iIdx0];
+            Particle& p1 = pParticles[iIdx1];
+            Particle& p2 = pParticles[iIdx2];
+            Particle& p3 = pParticles[iIdx3];
+
+            // Compute diff for target particle
+            ZVector3 vDiff;
+            vsub(vDiff, p3.x, p0.x);
+
+            // Convert local space to cone space
+            ZVector3 vLocal;
+            vmtmul(vLocal, vDiff, mTransform);
+
+            ZVector3 vScaled;
+            vScaled.x = vLocal.x * fScaleX;
+            vScaled.y = vLocal.y * fScaleY;
+            vScaled.z = 0.0f;
+
+            // Is particle outside of cone?
+            if (vLocal.z * vLocal.z < (vScaled.x * vScaled.x + vScaled.y * vScaled.y) || vLocal.z <= 0.0f)
+            {
+                ZVector3 vConeDir;
+                vnorm(vConeDir, vScaled);
+                vConeDir.z = 1.0f;
+                vConeDir.x /= fScaleX;
+                vConeDir.y /= fScaleY;
+
+                // Convert bounds point to world space
+                ZVector3 vConeTargetRel;
+                vmmul(vConeTargetRel, vConeDir, mTransform);
+
+                ZVector3 vConeTarget;
+                vadd(vConeTarget, vConeTargetRel, p0.x);
+
+                ZVector3 vP3Rel;
+                vsub(vP3Rel, p3.x, p0.x);
+
+                const float fLenSq = vdot(vConeTargetRel, vConeTargetRel);
+
+                if (fLenSq >= 0.00000001f)
+                {
+                    // Projection p3 to cone ray
+                    const float fProjFactor = vdot(vP3Rel, vConeTargetRel) / fLenSq;
+
+                    ZVector3 vProjected;
+                    vaddscalar(vProjected, p0.x, vConeTargetRel, fProjFactor);
+
+                    // Find correction error
+                    ZVector3 vErr;
+                    vsub(vErr, p3.x, vProjected);
+
+                    ZVector3 vErrDir;
+                    const float fErrLen = vnorm(vErrDir, vErr);
+
+                    // Need solve system 3x3 for find barycentric coords
+                    ZVector3 vRel1, vRel2, vCross12;
+                    vsub(vRel1, p1.x, p0.x);
+                    vsub(vRel2, p2.x, p0.x);
+                    vcross(vCross12, vRel1, vRel2);
+
+                    ZVector3 vProjRel;
+                    vsub(vProjRel, vProjected, p0.x);
+
+                    ZMat3x3 mBase
+                    {
+                        vRel1.x, vRel1.y, vRel1.z,
+                        vRel2.x, vRel2.y, vRel2.z,
+                        vCross12.x, vCross12.y, vCross12.z
+                    };
+
+                    ZVector3 vWeights;
+                    if (ZCommonAlgorithms::Solve3x3System(mBase.data, vProjRel, vWeights))
+                    {
+                        const float w0 = 1.0f - (vWeights.x + vWeights.y + vWeights.z);
+                        const float w1 = vWeights.x;
+                        const float w2 = vWeights.y;
+                        const float w3 = vWeights.z;
+
+                        ZMat3x3 mSolve;
+                        vsub(mSolve.ZAxis(), p0.x, vCross12);
+                        vsub(mSolve.YAxis(), p1.x, vCross12);
+                        vsub(mSolve.XAxis(), p2.x, vCross12);
+
+                        ZVector3 vImpulse;
+                        if (ZCommonAlgorithms::Solve3x3System(mSolve.data, vErrDir, vImpulse))
+                        {
+                            ZVector3 vJ0, vJ1, vJ2;
+
+                            // Compute impulse by particle mass
+                            const float fInvMass0 = 1.0f / p0.mass;
+                            const float fInvMass1 = 1.0f / p1.mass;
+                            const float fInvMass2 = 1.0f / p2.mass;
+                            const float fInvMass3 = 1.0f / p3.mass;
+
+                            vmuls(vJ0, vErrDir, w0 * fInvMass0);
+                            vaddscalar(vJ0, vJ0, mSolve.ZAxis(), w3 * fInvMass0);
+
+                            vmuls(vJ1, vErrDir, w1 * fInvMass1);
+                            vaddscalar(vJ1, vJ1, mSolve.YAxis(), w3 * fInvMass1);
+
+                            vmuls(vJ2, vErrDir, w2 * fInvMass2);
+                            vaddscalar(vJ2, vJ2, mSolve.XAxis(), w3 * fInvMass2);
+
+                            ZVector3 vSum;
+                            vmuls(vSum, vJ0, w0);
+                            vaddscalar(vSum, vSum, vJ1, w1);
+                            vaddscalar(vSum, vSum, vJ2, w2);
+                            vaddscalar(vSum, vSum, vCross12, w3);
+
+                            const float fDenom = vdot(vErrDir, vSum) + fInvMass3;
+
+                            if (fabsf(fDenom) >= 0.00012207031f)
+                            {
+                                const float fFactor = (fErrLen * ADJUST_COFF) / fDenom;
+
+                                // Apply offsets
+                                vaddscalar(p0.x, p0.x, vJ0, fFactor);
+                                vaddscalar(p1.x, p1.x, vJ1, fFactor);
+                                vaddscalar(p2.x, p2.x, vJ2, fFactor);
+                                vaddscalar(p3.x, p3.x, vErrDir, -(fFactor * fInvMass3));
+                            }
+                        }
+                    }
                 }
             }
         }
 
-        if (hit)
-            return true;
-
-        // Check edges
-        float minDist = fRadius;
-        float edgeDist;
-        float edgeT;
-        float edgeDir[3];
-
-        // Edge 0-1
-        if (DistPointLineVar2(&(*spherepos)[0], &triverts[0][0], &triverts[1][0], &edgeT, &minDist, &edgeDist, edgeDir))
+        void AdjustCone5(int iIdx0, int iIdx1, int iIdx2, int iIdx3, const ZMat3x3& mTransform, float fScale, float fScaleY, Particle* pParticles)
         {
-            hit = true;
-            *a6 = fRadius - edgeDist;
-            fScaledDist[0] = -edgeDir[0];
-            fScaledDist[1] = -edgeDir[1];
-            fScaledDist[2] = -edgeDir[2];
-            minDist = edgeDist;
+            constexpr float ADJUST_COFF = 0.75f;
+
+            Particle& p0 = pParticles[iIdx0];
+            Particle& p1 = pParticles[iIdx1];
+            Particle& p2 = pParticles[iIdx2];
+            Particle& p3 = pParticles[iIdx3];
+
+            // Compute diff in local space
+            ZVector3 vDiff;
+            vsub(vDiff, p3.x, p0.x);
+
+            ZVector3 vLocal;
+            vmtmul(vLocal, vDiff, mTransform);
+
+            const float fScaledX = vLocal.x * fScale;
+
+            // Is particle outside cone?
+            if ((fabsf(fScaledX) >= vLocal.z || vLocal.z <= 0.0f) && vLocal.z >= 0.0f)
+            {
+                ZVector3 vTargetLocal;
+                vTargetLocal.y = vLocal.y;
+
+                if (fScaledX < 0.0f)
+                {
+                    const float fDist = (-fScaledX - vLocal.z) / (fScale * fScale + 1.0f);
+                    if (fDist > 0.0f)
+                    {
+                        vTargetLocal.x = vLocal.x + fScale * fDist;
+                        vTargetLocal.z = vLocal.z + fDist;
+                    }
+                    else
+                    {
+                        vTargetLocal.x = (vLocal.x >= 0.0f) ? 0.000001f : -0.000001f;
+                        vTargetLocal.z = fScale * 0.000001f;
+                    }
+                }
+                else
+                {
+                    const float fDist = (fScaledX - vLocal.z) / (fScale * fScale + 1.0f);
+                    if (fDist > 0.0f)
+                    {
+                        vTargetLocal.x = vLocal.x - fScale * fDist;
+                        vTargetLocal.z = vLocal.z + fDist;
+                    }
+                    else
+                    {
+                        vTargetLocal.x = 0.000001f;
+                        vTargetLocal.z = fScale * 0.000001f;
+                    }
+                }
+
+                // Convert target point back to world space
+                ZVector3 vConeTarget;
+                vmmul(vConeTarget, vTargetLocal, mTransform);
+                vadd(vConeTarget, p0.x);
+
+                // Compute error vector
+                ZVector3 vErr;
+                vsub(vErr, p3.x, vConeTarget);
+
+                if (vdot(vErr, vErr) >= 1e-11f)
+                {
+                    ZVector3 vErrDir;
+                    const float fErrLen = vnorm(vErrDir, vErr);
+
+                    // Solve system 3x3 to find trangle weights
+                    ZVector3 vRel1, vRel2, vCross12;
+                    vsub(vRel1, p1.x, p0.x);
+                    vsub(vRel2, p2.x, p0.x);
+                    vcross(vCross12, vRel1, vRel2);
+
+                    ZVector3 vTargetRel;
+                    vsub(vTargetRel, vConeTarget, p0.x);
+
+                    ZMat3x3 mBase
+                    {
+                        vRel1.x, vRel1.y, vRel1.z,
+                        vRel2.x, vRel2.y, vRel2.z,
+                        vCross12.x, vCross12.y, vCross12.z
+                    };
+
+                    ZVector3 vWeights;
+                    if (ZCommonAlgorithms::Solve3x3System(mBase.data, vTargetRel, vWeights))
+                    {
+                        const float w0 = 1.0f - (vWeights.x + vWeights.y + vWeights.z);
+                        const float w1 = vWeights.x;
+                        const float w2 = vWeights.y;
+                        const float w3 = vWeights.z;
+
+                        ZMat3x3 mSolve;
+                        vsub(mSolve.ZAxis(), p0.x, vCross12);
+                        vsub(mSolve.YAxis(), p1.x, vCross12);
+                        vsub(mSolve.XAxis(), p2.x, vCross12);
+
+                        ZVector3 vImpulse;
+                        if (ZCommonAlgorithms::Solve3x3System(mSolve.data, vErrDir, vImpulse))
+                        {
+                            if (p0.mass != 0.0f && p1.mass != 0.0f && p2.mass != 0.0f)
+                            {
+                                const float fInvMass0 = 1.0f / p0.mass;
+                                const float fInvMass1 = 1.0f / p1.mass;
+                                const float fInvMass2 = 1.0f / p2.mass;
+
+                                ZVector3 vJ0, vJ1, vJ2;
+                                vmuls(vJ0, vErrDir, w0 * fInvMass0);
+                                vaddscalar(vJ0, vJ0, mSolve.ZAxis(), w3 * fInvMass0);
+
+                                vmuls(vJ1, vErrDir, w1 * fInvMass1);
+                                vaddscalar(vJ1, vJ1, mSolve.YAxis(), w3 * fInvMass1);
+
+                                vmuls(vJ2, vErrDir, w2 * fInvMass2);
+                                vaddscalar(vJ2, vJ2, mSolve.XAxis(), w3 * fInvMass2);
+
+                                ZVector3 vSum;
+                                vmuls(vSum, vJ0, w0);
+                                vaddscalar(vSum, vSum, vJ1, w1);
+                                vaddscalar(vSum, vSum, vJ2, w2);
+                                vaddscalar(vSum, vSum, vCross12, w3);
+
+                                if (p3.mass != 0.0f)
+                                {
+                                    const float fInvMass3 = 1.0f / p3.mass;
+                                    const float fDenom = vdot(vErrDir, vSum) + fInvMass3;
+
+                                    if (fabsf(fDenom) >= 0.000001f)
+                                    {
+                                        const float fFactor = (fErrLen * ADJUST_COFF) / fDenom;
+
+                                        vaddscalar(p0.x, p0.x, vJ0, fFactor);
+                                        vaddscalar(p1.x, p1.x, vJ1, fFactor);
+                                        vaddscalar(p2.x, p2.x, vJ2, fFactor);
+                                        vaddscalar(p3.x, p3.x, vErrDir, -(fFactor * fInvMass3));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
 
-        // Edge 0-2
-        if (DistPointLineVar2(&(*spherepos)[0], &triverts[0][0], &triverts[2][0], &edgeT, &minDist, &edgeDist, edgeDir))
+        void AdjustCone6(int iIdx0, int iIdx1, int iIdx2, int iIdx3, const ZMat3x3& mTransform, float fScaleX, float fScaleY, Particle* pParticles)
         {
-            hit = true;
-            *a6 = fRadius - edgeDist;
-            fScaledDist[0] = -edgeDir[0];
-            fScaledDist[1] = -edgeDir[1];
-            fScaledDist[2] = -edgeDir[2];
-            minDist = edgeDist;
-        }
+            Particle& p0 = pParticles[iIdx0];
+            Particle& p1 = pParticles[iIdx1];
+            Particle& p2 = pParticles[iIdx2];
+            Particle& p3 = pParticles[iIdx3];
 
-        // Edge 1-2
-        if (DistPointLineVar2(&(*spherepos)[0], &triverts[1][0], &triverts[2][0], &edgeT, &minDist, &edgeDist, edgeDir))
-        {
-            hit = true;
-            *a6 = fRadius - edgeDist;
-            fScaledDist[0] = -edgeDir[0];
-            fScaledDist[1] = -edgeDir[1];
-            fScaledDist[2] = -edgeDir[2];
-        }
+            ZVector3 vDiff;
+            vsub(vDiff, p3.x, p0.x);
 
-        return hit;
+            ZVector3 vLocal;
+            vmtmul(vLocal, vDiff, mTransform);
+
+            const float fScaledY = vLocal.y * fScaleY;
+
+            // Check out of cone
+            if ((fabsf(fScaledY) >= vLocal.z || vLocal.z <= 0.0f) && vLocal.z >= 0.0f)
+            {
+                ZVector3 vTargetLocal;
+                vTargetLocal.x = vLocal.x; // Fox Y-axis
+
+                if (fScaledY < 0.0f)
+                {
+                    const float fDist = (-fScaledY - vLocal.z) / (fScaleY * fScaleY + 1.0f);
+                    if (fDist > 0.0f)
+                    {
+                        vTargetLocal.y = vLocal.y + fScaleY * fDist;
+                        vTargetLocal.z = vLocal.z + fDist;
+                    }
+                    else
+                    {
+                        vTargetLocal.y = (vLocal.y < 0.0f) ? -0.000001f : 0.000001f;
+                        vTargetLocal.z = fScaleY * 0.000001f;
+                    }
+                }
+                else
+                {
+                    const float fDist = (fScaledY - vLocal.z) / (fScaleY * fScaleY + 1.0f);
+                    if (fDist > 0.0f)
+                    {
+                        vTargetLocal.y = vLocal.y - fScaleY * fDist;
+                        vTargetLocal.z = vLocal.z + fDist;
+                    }
+                    else
+                    {
+                        vTargetLocal.y = (vLocal.y < 0.0f) ? -0.000001f : 0.000001f;
+                        vTargetLocal.z = fScaleY * 0.000001f;
+                    }
+                }
+
+                // Convert cone space to world space
+                ZVector3 vConeTarget;
+                vmmul(vConeTarget, vTargetLocal, mTransform);
+                vadd(vConeTarget, p0.x);
+
+                // Find error correction
+                ZVector3 vErr;
+                vsub(vErr, p3.x, vConeTarget);
+
+                if (vdot(vErr, vErr) >= 1e-11f)
+                {
+                    ZVector3 vErrDir;
+                    const float fErrLen = vnorm(vErrDir, vErr);
+
+                    // Solve system 3x3 to find weights
+                    ZVector3 vRel1, vRel2, vCross12;
+                    vsub(vRel1, p1.x, p0.x);
+                    vsub(vRel2, p2.x, p0.x);
+                    vcross(vCross12, vRel1, vRel2);
+
+                    ZVector3 vTargetRel;
+                    vsub(vTargetRel, vConeTarget, p0.x);
+
+                    ZMat3x3 mBase {
+                        vRel1.x, vRel1.y, vRel1.z,
+                        vRel2.x, vRel2.y, vRel2.z,
+                        vCross12.x, vCross12.y, vCross12.z
+                    };
+
+                    ZVector3 vWeights;
+                    if (ZCommonAlgorithms::Solve3x3System(mBase, vTargetRel, vWeights))
+                    {
+                        const float w1 = vWeights.x;
+                        const float w2 = vWeights.y;
+                        const float w3 = vWeights.z;
+                        const float w0 = 1.0f - (w1 + w2 + w3);
+
+                        ZMat3x3 mSolve;
+                        vsub(mSolve.ZAxis(), p0.x, vCross12);
+                        vsub(mSolve.YAxis(), p1.x, vCross12);
+                        vsub(mSolve.XAxis(), p2.x, vCross12);
+
+                        ZVector3 vImpulse;
+                        if (ZCommonAlgorithms::Solve3x3System(mSolve, vErrDir, vImpulse))
+                        {
+                            if (p0.mass != 0.0f && p1.mass != 0.0f && p2.mass != 0.0f)
+                            {
+                                const float fInvMass0 = 1.0f / p0.mass;
+                                const float fInvMass1 = 1.0f / p1.mass;
+                                const float fInvMass2 = 1.0f / p2.mass;
+
+                                ZVector3 vJ0, vJ1, vJ2;
+                                vmuls(vJ0, vErrDir, w0 * fInvMass0);
+                                vaddscalar(vJ0, vJ0, mSolve.ZAxis(), w3 * fInvMass0);
+
+                                vmuls(vJ1, vErrDir, w1 * fInvMass1);
+                                vaddscalar(vJ1, vJ1, mSolve.YAxis(), w3 * fInvMass1);
+
+                                vmuls(vJ2, vErrDir, w2 * fInvMass2);
+                                vaddscalar(vJ2, vJ2, mSolve.XAxis(), w3 * fInvMass2);
+
+                                ZVector3 vSum;
+                                vmuls(vSum, vJ0, w0);
+                                vaddscalar(vSum, vSum, vJ1, w1);
+                                vaddscalar(vSum, vSum, vJ2, w2);
+                                vaddscalar(vSum, vSum, vCross12, w3);
+
+                                if (p3.mass != 0.0f)
+                                {
+                                    const float fInvMass3 = 1.0f / p3.mass;
+                                    const float fDenom = vdot(vErrDir, vSum) + fInvMass3;
+
+                                    if (fabsf(fDenom) >= 0.000001f)
+                                    {
+                                        const float fFactor = (fErrLen * 0.75f) / fDenom;
+
+                                        vaddscalar(p0.x, p0.x, vJ0, fFactor);
+                                        vaddscalar(p1.x, p1.x, vJ1, fFactor);
+                                        vaddscalar(p2.x, p2.x, vJ2, fFactor);
+                                        vaddscalar(p3.x, p3.x, vErrDir, -(fFactor * fInvMass3));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
-}
 
+    static ZDebugInt g_lGravity("gravity", "Gravity force in particle dynamics", 1500, -1000000, 1000000, 1, nullptr); // PC at 0x007FE568
 
-namespace Glacier
-{
-    static ZDebugInt g_lGravity("gravity", "Gravity force in particle dynamics", -1000000, 1000000, 1, nullptr);
+    // Constants
+    //
+    static constexpr int BASIS_SIZE = 8;
+    static constexpr int PARTICLES_NR = 16;
+    static constexpr int CONSTRAINTS_NR = 24;
+
+    // Types
+    //
+    using BaseTransformBasisVector = ZVector3[BASIS_SIZE][3];
+    using BasisProjVector = float[BASIS_SIZE];
+
+    // Globals
+    //
+    STATIC_GLOBAL_CLASS_INSTANCE(bool, bTransformsInited);
+    STATIC_GLOBAL_CLASS_INSTANCE_IMPL(bool, bTransformsInited, 0x009A33CC, false);
+
+    STATIC_GLOBAL_CLASS_INSTANCE(BaseTransformBasisVector, g_aBaseTransformBasis);
+    STATIC_GLOBAL_CLASS_INSTANCE(BasisProjVector, g_aBaseProjScaleX);
+    STATIC_GLOBAL_CLASS_INSTANCE(BasisProjVector, g_aBaseProjScaleY);
+
+    STATIC_GLOBAL_CLASS_INSTANCE_IMPL(BasisProjVector, g_aBaseProjScaleX, 0x009A3288, {});
+    STATIC_GLOBAL_CLASS_INSTANCE_IMPL(BasisProjVector, g_aBaseProjScaleY, 0x009A3268, {});
+    STATIC_GLOBAL_CLASS_INSTANCE_IMPL(BaseTransformBasisVector, g_aBaseTransformBasis, 0x009A32A8, {});
+
+    STATIC_GLOBAL_ARRAY(int, 15, g_lSausageA, 0x00781B14, { 5, 5, 5, 6, 6, 8, 9, 12, 13, 2, 3, 4, 7, 2, 3 });
+    STATIC_GLOBAL_ARRAY(int, 15, g_lSausageB, 0x00781B50, { 6, 8, 2, 9, 3, 12, 13, 14, 15, 4, 7, 10, 11, 1, 1 });
+    STATIC_GLOBAL_ARRAY(float, 15, g_lSausageRadius, 0x00781B8C, { 13.0f, 13.0f, 10.0f, 13.0f, 10.0f, 10.0f, 10.0f, 10.0f, 10.0f, 5.0f, 5.0f, 4.0f, 4.0f, 10.0f, 10.0f });
+
+    Particle::Particle()
+    {
+        MakeRandomVector(x);
+        ok_x = x;
+        oldx = x;
+        v = { 0.f };
+        mass = 1.0f;
+    }
+
+    void Particle::Init(const ZVector3& vPos, const ZVector3& vVel, float fMass)
+    {
+        x = vPos;
+        oldx = vPos;
+        v = vVel;
+        mass = fMass;
+    }
+
+    ParticleConstraint::ParticleConstraint()
+    {
+        m_pPar1 = nullptr;
+        m_pPar2 = nullptr;
+        m_fDist = 0.0f;
+    }
+
+    void ParticleConstraint::Init(Particle* pPar1, Particle* pPar2)
+    {
+        m_pPar1 = pPar1;
+        m_pPar2 = pPar2;
+        ComputeDistance();
+    }
+
+    void ParticleConstraint::ComputeDistance()
+    {
+        if (m_pPar1 && m_pPar2)
+        {
+            ZVector3 vDiff;
+            vsub(vDiff, m_pPar1->x, m_pPar2->x);
+            m_fDist = vlen(vDiff);
+        }
+    }
 
     ConstrainedParticleSystem::ConstrainedParticleSystem(int iType, int nMaxNumPartices)
     {
@@ -429,6 +685,11 @@ namespace Glacier
         {
             ZASSERT(false);
         }
+    }
+
+    ConstrainedParticleSystem::ConstrainedParticleSystem()
+    {
+        DefaultConstruct();
     }
 
     ConstrainedParticleSystem::~ConstrainedParticleSystem()
@@ -520,9 +781,29 @@ namespace Glacier
         m_iNumConstraints = n;
     }
 
-    void ConstrainedParticleSystem::SetParticleOldPos(int i, ZVector3& oldpos)
+    void ConstrainedParticleSystem::SetParticleOldPos(int i, const ZVector3& oldpos)
     {
         m_pParticles[i].oldx = oldpos;
+    }
+
+    void ConstrainedParticleSystem::GetParticleOldPos(int lIndex, ZVector3& vPos)
+    {
+        vPos = m_pParticles[lIndex].oldx;
+    }
+
+    void ConstrainedParticleSystem::SetParticlePos(int lIndex, const ZVector3& vPos)
+    {
+        m_pParticles[lIndex].x = vPos;
+    }
+
+    void ConstrainedParticleSystem::GetParticleOKPos(int lIndex, ZVector3& vPos)
+    {
+        vPos = m_pParticles[lIndex].ok_x;
+    }
+
+    void ConstrainedParticleSystem::SetParticleOKPos(int lIndex, const ZVector3& vPos)
+    {
+        m_pParticles[lIndex].ok_x = vPos;
     }
 
     void ConstrainedParticleSystem::GetParticlePos(int i, ZVector3& pos)
@@ -619,6 +900,38 @@ namespace Glacier
             par.oldx.x -= dx * impulse;
             par.oldx.y -= dy * impulse;
             par.oldx.z -= dz * impulse;
+        }
+    }
+
+    void ConstrainedParticleSystem::BlowDirBomb(const ZVector3& pos, float fForce, const ZVector3& dir)
+    {
+        if (fForce < 0.001f)
+            return;
+
+        ZVector3 vDir(dir);
+
+        const float fDirLen = vlen(vDir);
+        if (fDirLen < 0.000001f)
+        {
+            BlowBomb(pos, fForce);
+            return;
+        }
+
+        vscalar(vDir, 1.0f / fDirLen);
+
+        float fTotalWeight = 0.0f;
+        for (int i = 0; i < m_iNumParticles; ++i)
+        {
+            const Particle& par = m_pParticles[i];
+            fTotalWeight += 1.0f / (vdist(par.x, pos) + 1.0f);
+        }
+
+        for (int i = 0; i < m_iNumParticles; ++i)
+        {
+            Particle& par = m_pParticles[i];
+
+            const float fDist = vdist(par.x, pos);
+            vaddscalar(par.v, par.v, vDir, fForce * (fDist / fTotalWeight));
         }
     }
 
@@ -742,4 +1055,834 @@ namespace Glacier
             }
         }
     }
+
+    void ConstrainedParticleSystem::DefaultConstruct()
+    {
+        m_fPrevTimeStep = -1.0f;
+        m_fDamping = 0.0099999998f;
+        m_bReallyInWater = false;
+        m_bReallyInWaterOld = false;
+        m_bInWater = false;
+
+        ConstrainedParticleSystem::m_pWaterBoxManager = ZWaterBoxManager::m_pInstance;
+
+        m_pFastBox = nullptr;
+        m_pParticles = nullptr;
+        m_pConstraints = nullptr;
+        m_pSpecialConstraints = nullptr;
+        m_bFollow = true;
+        m_iNumParticles = PARTICLES_NR;
+        m_iNumConstraints = 24;
+        m_iNumSpecialConstraints = 18;
+
+        m_pParticles = ZUniMemory::NewArray<Particle>(m_iNumParticles);
+        m_pConstraints = ZUniMemory::NewArray<ParticleConstraint>(m_iNumConstraints);
+        m_pSpecialConstraints = ZUniMemory::NewArray<ParticleConstraint>(m_iNumSpecialConstraints);
+
+        // Initialize base transforms
+        if (!bTransformsInited)
+        {
+            bTransformsInited = true;
+
+            struct STransformAnglePreset
+            {
+                float fLeft { 0.0f };
+                float fRight { 0.0f };
+                float fBottom { 0.0f };
+                float fTop { 0.0f };
+            };
+
+            static constexpr STransformAnglePreset aPresets[BASIS_SIZE] = {
+                { -15.0f,  65.0f, -30.0f, 10.0f },
+                { -15.0f,  65.0f, -10.0f, 30.0f },
+                {-165.0f,  -5.0f, -20.0f,  2.0f },
+                {-165.0f,  -5.0f,  -2.0f, 20.0f },
+                { -90.0f,  90.0f, -80.0f, 40.0f },
+                { -90.0f,  90.0f, -40.0f, 80.0f },
+                {   0.0f, 100.0f, -90.0f, 10.0f },
+                {   0.0f, 100.0f, -90.0f, 10.0f },
+            };
+
+            for (int i = 0; i < BASIS_SIZE; ++i)
+            {
+                const auto& sPreset = aPresets[i];
+                MakeBaseTransformation(g_aBaseTransformBasis[i], g_aBaseProjScaleX[i], g_aBaseProjScaleY[i], sPreset.fLeft, sPreset.fRight, sPreset.fBottom, sPreset.fTop);
+            }
+        }
+
+        // Fill particles
+        {
+            struct SParticleInitData
+            {
+                ZVector3 pos;
+                float    mass;
+            };
+
+            static const SParticleInitData aParticlesData[PARTICLES_NR] = {
+                { {   0.0f, 260.0f,   0.0f }, 1.0f },
+                { {   0.0f, 230.0f,   0.0f }, 1.0f },
+                { { -50.0f, 210.0f,   0.0f }, 2.0f },
+                { {  50.0f, 210.0f,   0.0f }, 2.0f },
+                { { -50.0f, 150.0f,   0.0f }, 1.0f },
+                { { -20.0f, 150.0f,   0.0f }, 2.0f },
+                { {  20.0f, 150.0f,   0.0f }, 2.0f },
+                { {  50.0f, 150.0f,   0.0f }, 1.0f },
+                { { -30.0f, 120.0f,   0.0f }, 2.0f },
+                { {  30.0f, 120.0f,   0.0f }, 2.0f },
+                { { -50.0f,  90.0f,   0.0f }, 1.0f },
+                { {  50.0f,  90.0f,   0.0f }, 1.0f },
+                { { -30.0f,  60.0f,   0.0f }, 1.0f },
+                { {  30.0f,  60.0f,   0.0f }, 1.0f },
+                { { -30.0f,   0.0f,   0.0f }, 1.0f },
+                { {  30.0f,   0.0f,   0.0f }, 1.0f }
+            };
+
+            static const ZVector3 v0 { 0.0f };
+
+            for (size_t i = 0; i < PARTICLES_NR; ++i)
+            {
+                m_pParticles[i].Init(aParticlesData[i].pos, v0, aParticlesData[i].mass);
+            }
+
+            SetNumParticles(PARTICLES_NR, true);
+        }
+
+        // Fill constraints
+        {
+            static constexpr Fysix::SConstraintIndex aConstraints[CONSTRAINTS_NR] =
+            {
+                { 0,  1 }, { 1,  2 }, { 1,  3 }, { 2,  5 },
+                { 3,  6 }, { 1,  5 }, { 1,  6 }, { 2,  6 },
+                { 3,  5 }, { 5,  6 }, { 2,  4 }, { 3,  7 },
+                { 4, 10 }, { 7, 11 }, { 5,  8 }, { 6,  9 },
+                { 5,  9 }, { 6,  8 }, { 8,  9 }, { 8, 12 },
+                { 9, 13 }, { 12, 14 }, { 13, 15 }, { 2,  3 }
+            };
+
+            for (size_t i = 0; i < CONSTRAINTS_NR; ++i)
+            {
+                const auto& sPair = aConstraints[i];
+                m_pConstraints[i].Init(&m_pParticles[sPair.ix1], &m_pParticles[sPair.ix2]);
+            }
+
+            SetNumConstraints(CONSTRAINTS_NR);
+        }
+
+        InitOkX();
+
+        // Reset lnkobj
+        m_pLnkObj = nullptr;
+    }
+
+    void ConstrainedParticleSystem::ZeroOut(int iIterations)
+    {
+        if (iIterations <= 0)
+            return;
+
+        for (int it = 0; it < iIterations; ++it)
+        {
+            // Ragdoll:
+            if (m_bFollow)
+            {
+                ZMat3x3 mTransform, mBasis;
+
+                // Spine
+                ZVector3 vMid89 = (m_pParticles[8].x + m_pParticles[9].x) * 0.5f;
+                ZVector3 vSpineDir = vMid89 - m_pParticles[5].x - m_pParticles[6].x;
+                vnorm(vSpineDir);
+
+                // Pelvis
+                ZVector3 vPelvisDir = m_pParticles[9].x - m_pParticles[8].x;
+                vnorm(vPelvisDir);
+
+                ZVector3 vSpineCross;
+                vcross(vSpineCross, vPelvisDir, vSpineDir);
+                vnorm(vSpineCross);
+
+                // Fill bassis matrix
+                mBasis.SetRow(0, vSpineDir);
+                mBasis.SetRow(1, vPelvisDir);
+                mBasis.SetRow(2, vSpineCross);
+
+                // Left thigh / Leg 1
+                mmmul(mTransform.data, g_aBaseTransformBasis[0][0], mBasis.data);
+                AdjustPlane2(8, 12, mTransform.data, m_pParticles);
+                AdjustCone4(8, 5, 9, 12, mTransform, g_aBaseProjScaleX[0], g_aBaseProjScaleY[0], m_pParticles);
+
+                // Right thigh / Leg 2
+                mmmul(mTransform.data, g_aBaseTransformBasis[1][0], mBasis.data);
+                AdjustPlane2(9, 13, mTransform.data, m_pParticles);
+                AdjustCone4(9, 6, 8, 13, mTransform, g_aBaseProjScaleX[1], g_aBaseProjScaleY[1], m_pParticles);
+
+                // --- Left shin ---
+                ZMat3x3 mLimb;
+                ZVector3 vLegL = m_pParticles[12].x - m_pParticles[8].x;
+                vnorm(vLegL);
+                mLimb.SetRow(0, vLegL);
+
+                ZVector3 vLegLCross;
+                vcross(vLegLCross, vPelvisDir, vLegL);
+                vnorm(vLegLCross);
+                mLimb.SetRow(2, vLegLCross);
+
+                ZVector3 vLegLUp;
+                vcross(vLegLUp, vLegL, vLegLCross);
+                mLimb.SetRow(1, vLegLUp);
+
+                mmmul(mTransform.data, g_aBaseTransformBasis[2][0], mLimb.data);
+                AdjustCone5(12, 8, 9, 14, mTransform, g_aBaseProjScaleX[2], g_aBaseProjScaleY[2], m_pParticles);
+                AdjustCone6(12, 8, 9, 14, mTransform, g_aBaseProjScaleX[2], g_aBaseProjScaleY[2], m_pParticles);
+
+                // Right leg
+                ZVector3 vLegR = m_pParticles[13].x - m_pParticles[9].x;
+                vnorm(vLegR);
+                mLimb.SetRow(0, vLegR);
+
+                ZVector3 vLegRCross;
+                vcross(vLegRCross, vPelvisDir, vLegR);
+                vnorm(vLegRCross);
+                mLimb.SetRow(2, vLegRCross);
+
+                ZVector3 vLegRUp;
+                vcross(vLegRUp, vLegR, vLegRCross);
+                mLimb.SetRow(1, vLegRUp);
+
+                mmmul(mTransform.data, g_aBaseTransformBasis[3][0], mLimb.data);
+                AdjustCone5(13, 9, 8, 15, mTransform, g_aBaseProjScaleX[3], g_aBaseProjScaleY[3], m_pParticles);
+                AdjustCone6(13, 9, 8, 15, mTransform, g_aBaseProjScaleX[3], g_aBaseProjScaleY[3], m_pParticles);
+
+                // Hand / chest
+                ZVector3 vShoulderDir = m_pParticles[3].x - m_pParticles[2].x;
+                vnorm(vShoulderDir);
+                mLimb.SetRow(0, vShoulderDir);
+
+                ZVector3 vChestMid = (m_pParticles[2].x + m_pParticles[3].x) * 0.5f;
+                ZVector3 vChestUp = vChestMid - m_pParticles[5].x - m_pParticles[6].x;
+                vnorm(vChestUp);
+
+                ZVector3 vChestCross;
+                vcross(vChestCross, vChestUp, vShoulderDir);
+                mLimb.SetRow(2, vChestCross);
+
+                ZVector3 vChestForward;
+                vcross(vChestForward, vShoulderDir, vChestCross);
+                mLimb.SetRow(1, vChestForward);
+
+                mmmul(mTransform.data, g_aBaseTransformBasis[4][0], mLimb.data);
+                AdjustPlane2(3, 7, mTransform.data, m_pParticles);
+                AdjustCone4(3, 6, 1, 7, mTransform, g_aBaseProjScaleX[4], g_aBaseProjScaleY[4], m_pParticles);
+
+                // Left arm
+                ZVector3 vArmL = m_pParticles[7].x - m_pParticles[3].x;
+                vnorm(vArmL);
+                mLimb.SetRow(0, vArmL);
+
+                ZVector3 vArmLCross;
+                vcross(vArmLCross, vPelvisDir, vArmL);
+                vnorm(vArmLCross);
+                mLimb.SetRow(2, vArmLCross);
+
+                ZVector3 vArmLUp;
+                vcross(vArmLUp, vArmL, vArmLCross);
+                mLimb.SetRow(1, vArmLUp);
+
+                mmmul(mTransform.data, g_aBaseTransformBasis[5][0], mLimb.data);
+                AdjustCone6(7, 3, 6, 11, mTransform, g_aBaseProjScaleX[5], g_aBaseProjScaleY[5], m_pParticles);
+
+                // Correct volume/rot for l-hand
+                for (int subIter = 0; subIter < 4; ++subIter)
+                {
+                    EnforceCrossDotConstraint(3, 7, 6, 11);
+                    EnforceCrossDotConstraint(3, 6, 1, 11);
+                }
+
+                // Symmetric correction for R-arm
+                ZMat3x3 mLimbReflect;
+                vmuls((float*)&mLimbReflect.data[0], (const float*)&mLimb.data[0], -1.0f);
+                vmuls((float*)&mLimbReflect.data[3], (const float*)&mLimb.data[3], -1.0f);
+                mLimbReflect.data[6] = mLimb.data[6];
+                mLimbReflect.data[7] = mLimb.data[7];
+                mLimbReflect.data[8] = mLimb.data[8];
+
+                mmmul(mTransform.data, g_aBaseTransformBasis[6][0], mLimbReflect.data);
+                AdjustPlane2(2, 4, mTransform.data, m_pParticles);
+                AdjustCone4(2, 5, 1, 4, mTransform, g_aBaseProjScaleX[6], g_aBaseProjScaleY[6], m_pParticles);
+
+                // --- Right forearm ---
+                ZVector3 vArmR = m_pParticles[4].x - m_pParticles[2].x;
+                vnorm(vArmR);
+                mLimb.SetRow(0, vArmR);
+
+                ZVector3 vArmRCross;
+                vcross(vArmRCross, vPelvisDir, vArmR);
+                vnorm(vArmRCross);
+                mLimb.SetRow(2, vArmRCross);
+
+                ZVector3 vArmRUp;
+                vcross(vArmRUp, vArmR, vArmRCross);
+                mLimb.SetRow(1, vArmRUp);
+
+                mmmul(mTransform.data, g_aBaseTransformBasis[7][0], mLimb.data);
+                AdjustCone6(4, 2, 5, 10, mTransform, g_aBaseProjScaleX[7], g_aBaseProjScaleY[7], m_pParticles);
+
+                // Correct volume/rot for r-hand
+                for (int subIter = 0; subIter < 4; ++subIter)
+                {
+                    EnforceCrossDotConstraint(2, 5, 4, 10);
+                    EnforceCrossDotConstraint(2, 1, 5, 10);
+                }
+
+                // --- Prevent knees and feet intersection ---
+                const ZVector3& vPelvisAxis = *(const ZVector3*)&mBasis.data[3]; // Y-axis of pelvis
+
+                // Knees (12 and 13)
+                ZVector3 vKneeDiff = m_pParticles[13].x - m_pParticles[12].x;
+                float fKneeDist = vdot(vPelvisAxis, vKneeDiff);
+                if (fKneeDist < 10.0f)
+                {
+                    float fHalfDist = fKneeDist * 0.5f;
+                    float fPushL = (fHalfDist - 5.0f) * 0.1f;
+                    float fPushR = (5.0f - fHalfDist) * 0.1f;
+
+                    vaddscalar(m_pParticles[12].x, m_pParticles[12].x, vPelvisAxis, fPushL);
+                    vaddscalar(m_pParticles[13].x, m_pParticles[13].x, vPelvisAxis, fPushR);
+                }
+
+                // Feet (14 and 15)
+                ZVector3 vFeetDiff = m_pParticles[15].x - m_pParticles[14].x;
+                float fFeetDist = vdot(vPelvisAxis, vFeetDiff);
+                if (fFeetDist < 10.0f)
+                {
+                    float fHalfDist = fFeetDist * 0.5f;
+                    float fPushL = (fHalfDist - 5.0f) * 0.1f;
+                    float fPushR = (5.0f - fHalfDist) * 0.1f;
+
+                    vaddscalar(m_pParticles[14].x, m_pParticles[14].x, vPelvisAxis, fPushL);
+                    vaddscalar(m_pParticles[15].x, m_pParticles[15].x, vPelvisAxis, fPushR);
+                }
+            }
+
+            // 2. Standard distance constraint relaxation (springs/rods)
+            for (int subIter = 0; subIter < 4; ++subIter)
+            {
+                // Special constraints
+                for (int i = 0; i < m_iNumSpecialConstraints; ++i)
+                {
+                    ParticleConstraint& sc = m_pSpecialConstraints[i];
+                    AdjustSpecialConstraint(
+                        sc.m_pPar1->x,
+                        sc.m_pPar2->x,
+                        sc.m_fDist,
+                        sc.m_pPar1->mass,
+                        sc.m_pPar2->mass
+                    );
+                }
+
+                // Base distance constraints
+                for (int j = 0; j < m_iNumConstraints; ++j)
+                {
+                    ParticleConstraint& c = m_pConstraints[j];
+                    AdjustPart2(
+                        c.m_pPar1->x,
+                        c.m_pPar2->x,
+                        c.m_fDist,
+                        c.m_pPar1->mass,
+                        c.m_pPar2->mass
+                    );
+                }
+            }
+        }
+    }
+
+    void ConstrainedParticleSystem::FindFaces()
+    {
+        ZVector3 vMin { 10000000.0f, 10000000.0f, 10000000.0f };
+        ZVector3 vMax { -10000000.0f, -10000000.0f, -10000000.0f };
+
+        for (int i = 0; i < m_iNumParticles; ++i)
+        {
+            Particle* p = &m_pParticles[i];
+            vmin(vMin, p->ok_x);
+            vmax(vMax, p->ok_x);
+            vmin(vMin, p->x);
+            vmax(vMax, p->x);
+        }
+
+        vMin.x -= 15.0f;
+        vMin.y -= 15.0f;
+        vMin.z -= 15.0f;
+        vMax.x += 15.0f;
+        vMax.y += 15.0f;
+        vMax.z += 15.0f;
+
+        ZVector3 vCen;
+        vadd(vCen, vMin, vMax);
+        vscalar(vCen, 0.5f);
+
+        ZVector3 vSize;
+        vsub(vSize, vMax, vMin);
+        vscalar(vSize, 0.5f);
+
+        if (m_pFastBox)
+        {
+            ZMat3x3 mIdentity;
+            mIdentity.Reset();
+
+            float fElevDtY = 0.0f;
+            if (m_pLnkObj && m_pLnkObj->IsInElevator())
+            {
+                fElevDtY = m_pLnkObj->GetElevatorDeltaY();
+            }
+
+            m_pFastBox->SetBox(vCen, mIdentity, vSize, std::fabs(fElevDtY) > 0.050000001f);
+        }
+        else
+        {
+            ZMat3x3 mIdentity;
+            mIdentity.Reset();
+
+            m_pFastBox = ZUniMemory::New<ZFastBoxColi>(10.0f, 32);
+            m_pFastBox->m_bExtendedMode = true;
+            m_pFastBox->SetBox(vCen, mIdentity, vSize, true);
+        }
+
+        if (m_pWaterBoxManager)
+        {
+            m_bReallyInWaterOld = m_bReallyInWater;
+            m_bInWater = false;
+            m_bReallyInWater = false;
+
+            const uint32_t lWaterBoxes = m_pWaterBoxManager->Count();
+            for (uint32_t i = 0; i < lWaterBoxes; ++i)
+            {
+                ZWaterBox* pWaterBox = (*m_pWaterBoxManager)[i];
+                ZBaseGeom* pBaseGeom = pWaterBox->BaseGeom();
+
+                ZASSERT(pBaseGeom->IsDerivedFrom<ZSTDOBJ>());
+
+                ZVector3 vWaterCen;
+                pBaseGeom->GetCen(vWaterCen);
+                pBaseGeom->GetRootPoint(vWaterCen);
+
+                ZVector3 vWaterSize;
+                pBaseGeom->GetSize(vWaterSize);
+
+                ZVector3 vWaterMin;
+                vsub(vWaterMin, vWaterCen, vWaterSize);
+
+                ZVector3 vWaterMax;
+                vadd(vWaterMax, vWaterCen, vWaterSize);
+
+                bool abOverlap[3] = {};
+                for (int k = 0; k < 3; ++k)
+                {
+                    abOverlap[k] = vWaterMin[k] <= vMax[k] && vMin[k] <= vWaterMax[k];
+                }
+
+                if (abOverlap[0] && abOverlap[1] && abOverlap[2])
+                {
+                    m_bInWater = true;
+                    return;
+                }
+            }
+        }
+    }
+
+    void ConstrainedParticleSystem::ResetVelocities()
+    {
+        for (int i = 0; i < m_iNumParticles; ++i)
+        {
+            Particle* p = &m_pParticles[i];
+            p->v = {};
+            p->oldx = p->x;
+        }
+    }
+
+    void ConstrainedParticleSystem::SetNumParticles(int32_t lNrParticles, bool a2)
+    {
+        if (m_iNumParticles < lNrParticles && a2)
+        {
+            ZERROR("ConstrainedParticleSystem::SetNumParticles(..): Number of particles too high");
+        }
+
+        m_iNumParticles = lNrParticles;
+    }
+
+    void ConstrainedParticleSystem::EnforceCrossDotConstraint(int iIdx0, int iIdx1, int iIdx2, int iIdx3)
+    {
+        Particle& p0 = m_pParticles[iIdx0];
+        Particle& p1 = m_pParticles[iIdx1];
+        Particle& p2 = m_pParticles[iIdx2];
+        Particle& p3 = m_pParticles[iIdx3];
+
+        ZVector3 v1, v2, v3;
+        vsub(v1, p1.x, p0.x);
+        vsub(v2, p2.x, p0.x);
+        vsub(v3, p3.x, p0.x);
+
+        // grads of weight changes
+        ZVector3 vGrad3, vGrad1, vGrad2;
+        vcross(vGrad3, v1, v2); // vnorm for face (0, 1, 2) -> grad(p3)
+        vcross(vGrad1, v2, v3); // vnorm for face (0, 2, 3) -> grad(p1)
+        vcross(vGrad2, v3, v1); // vnorm for face (0, 3, 1) -> grad(p2)
+
+        // Find den (squared grad mag)
+        ZVector3 vTemp1, vTemp2;
+        vcross(vTemp1, v1, vGrad2);
+        vcross(vTemp2, vGrad1, v2);
+
+        float fDenom = 0.0f;
+        fDenom += vdot(vTemp1, v3);    // |vGrad2|^2
+        fDenom += vdot(vTemp2, v3);    // |vGrad1|^2
+        fDenom += vdot(vGrad3, vGrad3);// |vGrad3|^2
+
+        // Volume restrictions
+        const float fVolumeErr = -vdot(vGrad3, v3);
+
+        // volume is negative
+        if (fVolumeErr < 0.0f)
+        {
+            if (fabsf(fDenom) > 0.00001f)
+            {
+                const float fFactor = (fVolumeErr * 0.35f) / fDenom;
+
+                // Find accumulated impulse for p0 (for save center of mass by sum(vGrad) == 0)
+                ZVector3 vGrad0Sum;
+                vmuls(vGrad0Sum, vGrad1, fFactor);
+                vaddscalar(vGrad0Sum, vGrad0Sum, vGrad2, fFactor);
+                vaddscalar(vGrad0Sum, vGrad0Sum, vGrad3, fFactor);
+
+                // Correct edges
+                vaddscalar(p1.x, p1.x, vGrad1, fFactor);
+                vaddscalar(p2.x, p2.x, vGrad2, fFactor);
+                vaddscalar(p3.x, p3.x, vGrad3, fFactor);
+                vsub(p0.x, p0.x, vGrad0Sum);
+            }
+        }
+    }
+
+    void ConstrainedParticleSystem::GetVelocity(int lIndex, ZVector3& vVelocity) const
+    {
+        vVelocity = m_pParticles[lIndex].v;
+    }
+
+    void ConstrainedParticleSystem::HandleCollision(SRagdollCollisionInfo& sCollisionInfo)
+    {
+        REFTAB* pFaceList = m_pFastBox->m_pFaceList;
+
+        auto handleParticleCollision = [&](Particle* pParticle)
+        {
+            if (!pFaceList)
+                return;
+
+            RefRun run;
+            pFaceList->RunInitNxtRef(&run);
+
+            for (uint32_t* pRef = pFaceList->RunNxtRefPtr(&run);
+                 pRef;
+                 pRef = pFaceList->RunNxtRefPtr(&run))
+            {
+                const SFastBoxColiTri* pTri = reinterpret_cast<const SFastBoxColiTri*>(pRef);
+
+                ZVector3 vDir;
+                vsub(vDir, pParticle->x, pParticle->ok_x);
+
+                ZVector3 vHit;
+                float t;
+
+                if (ZCommonAlgorithms::IntersectTriangleAndLine3(
+                        vHit.Get(), pParticle->ok_x.Get(), vDir.Get(),
+                        pTri->m_avVerts[0].Get(), pTri->m_mTri.Get(), &t, false))
+                {
+                    pParticle->x = vHit;
+
+                    ZVector3 vNewCenter;
+                    ZVector3 vNewVel;
+
+                    ZCommonAlgorithms::ProjectSphereOutFromPlane(
+                        vNewCenter.Get(), pParticle->x.Get(), vNewVel.Get(),
+                        pParticle->v.Get(), pTri->m_vTriNorm.Get(), 15.0f);
+
+                    pParticle->x = vNewCenter;
+                    pParticle->v = vNewVel;
+                }
+            }
+        };
+
+        handleParticleCollision(&m_pParticles[5]);
+
+        if (m_bFollow)
+        {
+            CollideLineBetweenParticles3(sCollisionInfo);
+        }
+
+        handleParticleCollision(&m_pParticles[5]);
+    }
+
+    void ConstrainedParticleSystem::CollideLineBetweenParticles3(SRagdollCollisionInfo& sCollisionInfo)
+    {
+        REFTAB* pFaceList = m_pFastBox->m_pFaceList;
+        if (!pFaceList)
+            return;
+
+        RefRun run;
+        pFaceList->RunInitNxtRef(&run);
+
+        for (uint32_t* pRef = pFaceList->RunNxtRefPtr(&run);
+             pRef;
+             pRef = pFaceList->RunNxtRefPtr(&run))
+        {
+            const SFastBoxColiTri* pTri = reinterpret_cast<const SFastBoxColiTri*>(pRef);
+
+            Particle* pPar1 = &m_pParticles[1];
+            Particle* pPar5 = &m_pParticles[5];
+
+            // Build an extended capsule so particle 1 lies at the 2/3 point of the segment.
+            ZVector3 vPos = pPar1->x;
+            ZVector3 vDiff;
+            vsub(vDiff, vPos, pPar5->x);
+            vaddscalar(vPos, vPos, vDiff, 0.5f);
+
+            ZVector3 vVel = pPar1->v;
+            vsub(vDiff, vVel, pPar5->v);
+            vaddscalar(vVel, vVel, vDiff, 0.5f);
+
+            for (int i = 0; i < 2; ++i)
+            {
+                SCapsuleColiInfo result;
+
+                if (!ZCommonAlgorithms::CollideCapsuleAndTriangle(
+                        reinterpret_cast<const float(&)[3]>(pPar5->x),
+                        reinterpret_cast<const float(&)[3]>(vPos),
+                        6.0f, pTri, result)
+                    || result.fScaledDist * result.fScaledDist <= 0.000001f)
+                {
+                    break;
+                }
+
+                if (result.t0 == 1.0f)
+                {
+                    ZCommonAlgorithms::PullTriangleCyl2(pPar5->x.Get(), vPos.Get(), pPar5->v.Get(), vVel.Get(), result);
+
+                    vaddscalar(vDiff, pPar5->x, vPos, 2.0f);
+                    vscalar(pPar1->x, vDiff, 0.33333334f);
+                    vaddscalar(vDiff, pPar5->v, vVel, 2.0f);
+                    vscalar(pPar1->v, vDiff, 0.33333334f);
+
+                    sCollisionInfo.sPartColi[1].bCollision = true;
+                    sCollisionInfo.sPartColi[1].rGeom = pTri->m_rGeom;
+                }
+            }
+
+            for (int k = 0; k < 15; ++k)
+            {
+                Particle* pA = &m_pParticles[g_lSausageA[k]];
+                Particle* pB = &m_pParticles[g_lSausageB[k]];
+
+                int j = 0;
+                for (; j < 2; ++j)
+                {
+                    SCapsuleColiInfo result;
+
+                    if (!ZCommonAlgorithms::CollideCapsuleAndTriangle(
+                            reinterpret_cast<const float(&)[3]>(pA->x),
+                            reinterpret_cast<const float(&)[3]>(pB->x),
+                            g_lSausageRadius[k], pTri, result)
+                        || result.fScaledDist * result.fScaledDist <= 0.000001f)
+                    {
+                        break;
+                    }
+
+                    ZCommonAlgorithms::PullTriangleCyl2(pA->x.Get(), pB->x.Get(), pA->v.Get(), pB->v.Get(), result);
+
+                    if (result.fScaledDist > 6.0f)
+                    {
+                        pA->v = {};
+                        pB->v = {};
+                    }
+                }
+
+                if (j)
+                {
+                    int partIndex = -1;
+                    switch (k)
+                    {
+                        case 0:  partIndex = 0; break;
+                        case 7:  partIndex = 5; break;
+                        case 8:  partIndex = 4; break;
+                        case 11: partIndex = 3; break;
+                        case 12: partIndex = 2; break;
+                        default: break;
+                    }
+
+                    if (partIndex >= 0)
+                    {
+                        sCollisionInfo.sPartColi[partIndex].bCollision = true;
+                        sCollisionInfo.sPartColi[partIndex].rGeom = pTri->m_rGeom;
+                    }
+                }
+            }
+        }
+    }
+
+    float ConstrainedParticleSystem::MoveRagdoll(SRagdollCollisionInfo& sCollisionInfo, float fTimeDt, bool bHasFixedParts)
+    {
+        m_fPrevTimeStep = fTimeDt;
+
+        const int nSubSteps = bHasFixedParts ? 3 : 4;
+        const float fSubSteps = static_cast<float>(nSubSteps);
+        const float fTimeMul = fTimeDt * 50.0f;
+
+        for (int i = 0; i < m_iNumParticles; ++i)
+        {
+            Particle& par = m_pParticles[i];
+            vaddscalar(par.oldx, par.x, par.v, -fTimeMul / fSubSteps);
+        }
+
+        const float fDamping = powf(1.0f - m_fDamping, fTimeMul / fSubSteps);
+        const float fGravity = static_cast<float>(g_lGravity.m_iValue);
+        const float fGravityStep = (fTimeDt * fTimeDt + fTimeDt * fTimeDt) / (fSubSteps * fSubSteps) * fGravity * 0.66666698f;
+
+        for (int iSubStep = 0; iSubStep < nSubSteps; ++iSubStep)
+        {
+            ZeroOut(3);
+
+            if (m_bInWater)
+            {
+                m_bReallyInWater = false;
+
+                for (int i = 0; i < m_iNumParticles; ++i)
+                {
+                    Particle& par = m_pParticles[i];
+                    const ZVector3 vSavedX = par.x;
+
+                    if (par.mass < 10000.0f)
+                    {
+                        ZWaterBox* pFoundBox = nullptr;
+                        float fSurfaceY = 0.0f;
+
+                        if (m_pWaterBoxManager)
+                        {
+                            const uint32_t lWaterBoxes = m_pWaterBoxManager->Count();
+                            for (uint32_t k = 0; k < lWaterBoxes; ++k)
+                            {
+                                ZWaterBox* pWaterBox = (*m_pWaterBoxManager)[k];
+
+                                ZVector3 vRoot;
+                                pWaterBox->GetCen(vRoot);
+                                pWaterBox->GetRootPoint(vRoot);
+
+                                ZVector3 vSize;
+                                pWaterBox->GetSize(vSize);
+
+                                ZVector3 vMin;
+                                vsub(vMin, vRoot, vSize);
+
+                                ZVector3 vMax;
+                                vadd(vMax, vRoot, vSize);
+
+                                const int iWaveTicks = static_cast<int>((par.x.x + par.x.z) * 20.48f);
+                                const float fWavePhase = static_cast<float>(g_pSysInterface->FrameTime.secs + iWaveTicks);
+                                const float fWave = sinf(fWavePhase * TIMETYPE::kInvTPS) * 7.0f + 3.0f;
+                                fSurfaceY = vMax.y - fWave;
+
+                                if (par.x.x >= vMin.x && par.x.x <= vMax.x
+                                    && par.x.y >= vMin.y && par.x.y <= fSurfaceY + 25.0f
+                                    && par.x.z >= vMin.z && par.x.z <= vMax.z)
+                                {
+                                    pFoundBox = pWaterBox;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (pFoundBox)
+                        {
+                            m_bReallyInWater = true;
+                            sCollisionInfo.bInWater = true;
+                            sCollisionInfo.rWaterBox = pFoundBox->GetRef();
+
+                            ZVector3 vDelta;
+                            vsub(vDelta, par.x, par.oldx);
+                            vscalar(par.v, vDelta, 0.9f);
+                            vadd(par.x, par.v);
+
+                            float fSurfaceFactor = (par.x.y - fSurfaceY) / 25.0f;
+                            if (fSurfaceFactor < -0.5f)
+                                fSurfaceFactor = -0.5f;
+                            else if (fSurfaceFactor > 1.0f)
+                                fSurfaceFactor = 1.0f;
+
+                            ZVector3 vCurrent(pFoundBox->m_vCurrent[0], pFoundBox->m_vCurrent[1], pFoundBox->m_vCurrent[2]);
+                            if (vlen2(vCurrent) > 0.0f)
+                            {
+                                pFoundBox->GetRootVect(vCurrent);
+                                vaddscalar(par.x, par.x, vCurrent, fTimeDt / fSubSteps);
+                            }
+                            else
+                            {
+                                par.x.y -= fSurfaceFactor * fGravityStep;
+                            }
+                        }
+                        else
+                        {
+                            ZVector3 vDelta;
+                            vsub(vDelta, par.x, par.oldx);
+                            vscalar(par.v, vDelta, fDamping);
+                            vadd(par.x, par.v);
+                            par.x.y -= fGravityStep;
+                        }
+                    }
+
+                    par.oldx = vSavedX;
+                }
+            }
+            else
+            {
+                for (int i = 0; i < m_iNumParticles; ++i)
+                {
+                    Particle& par = m_pParticles[i];
+
+                    ZVector3 vDelta;
+                    vsub(vDelta, par.x, par.oldx);
+                    par.oldx = par.x;
+
+                    if (par.mass < 10000.0f)
+                    {
+                        vaddscalar(par.x, par.x, vDelta, fDamping);
+                        par.x.y -= fGravityStep;
+                    }
+                }
+            }
+
+            for (int i = 0; i < m_iNumParticles; ++i)
+            {
+                Particle& par = m_pParticles[i];
+                vsub(par.v, par.x, par.oldx);
+            }
+
+            FindFaces();
+            HandleCollision(sCollisionInfo);
+
+            for (int i = 0; i < m_iNumParticles; ++i)
+            {
+                Particle& par = m_pParticles[i];
+                vsub(par.oldx, par.x, par.v);
+                par.ok_x = par.x;
+            }
+        }
+
+        ZVector3 vSum(0.0f, 0.0f, 0.0f);
+        for (int i = 0; i < m_iNumParticles; ++i)
+        {
+            Particle& par = m_pParticles[i];
+            vsub(par.v, par.x, par.oldx);
+            vscalar(par.v, fSubSteps / fTimeMul);
+            vadd(vSum, par.v);
+        }
+
+        return vlen(vSum) / fTimeDt;
+    }
+
+    STATIC_CLASS_VAR_IMPL(ConstrainedParticleSystem, ZWaterBoxManager*, m_pWaterBoxManager, 0x009A33D0, nullptr);
 }

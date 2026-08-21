@@ -4,7 +4,7 @@
 #include <Glacier/ReGlacier.h>
 #include <Glacier/ZCTRLIKLNKOBJ.h>
 #include <Glacier/IK/ZIKHAND.h>
-#include <Glacier/ZSDOwner.h>
+#include <Glacier/Audio/ZSDOwner.h>
 #include <Glacier/ZSTL/ZMath.h>
 #include <Glacier/Items/ITEMSTATE.h>
 #include <Glacier/Animation/ZBlendBone.h>
@@ -35,7 +35,7 @@ namespace Glacier
     {
     public:
         // types
-        enum EFootSide : int 
+        enum EFootSide : int
         {
             eRIGHT = 0,
             LEFT = 1,
@@ -167,7 +167,7 @@ namespace Glacier
         REFTAB* m_pNearItems;
         union {
             uint8_t m_Mask1;
-            struct 
+            struct
             {
                 bool m_bDialog : 1;
                 bool m_bAimDisabled : 1;

@@ -116,7 +116,15 @@ namespace Glacier
         template <typename T>
         static T* GetPrimitive(uint32_t lPrim)
         {
-            return reinterpret_cast<T*>(ZPrimControlBase::Instance()->GetPrimData(lPrim));
+            if constexpr (std::is_const_v<T>)
+            {
+                return reinterpret_cast<T*>(ZPrimControlBase::Instance()->GetPrimData(lPrim));
+            }
+            else
+            {
+                // remove const cv
+                return const_cast<T*>(reinterpret_cast<const T*>(ZPrimControlBase::Instance()->GetPrimData(lPrim)));
+            }
         }
 
         ZPrimControlBase(bool bUnusedSmth);
@@ -126,5 +134,6 @@ namespace Glacier
         void FreeSpriteArrays(SSpriteArray* pSpriteArrays, uint32_t lNrSpriteArrays);
         void FreePrimList(uint32_t* pPrimList, uint32_t lNrPrims);
         void FreeSpriteArrayUV(SSpriteArrayElementUV *pSpriteArray, uint32_t lNrSprites);
+        void* AllocSprites(uint32_t lSize);
     };
 }

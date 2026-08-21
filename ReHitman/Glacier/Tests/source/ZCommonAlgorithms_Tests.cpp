@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 #include <Tests/EngineFixture.h>
 #include <Glacier/Physics/ZCommonAlgorithms.h>
+#include <Glacier/Physics/SFastBoxColiTri.h>
+#include <Glacier/Physics/SCapsuleColiInfo.h>
 #include <cmath>
 
 using namespace Glacier;
@@ -70,6 +72,24 @@ TEST(ZCommonAlgorithms, Solve3x3System_KnownSolution)
     EXPECT_TRUE(FloatNear(solution[0], 1.0f));
     EXPECT_TRUE(FloatNear(solution[1], 2.0f));
     EXPECT_TRUE(FloatNear(solution[2], 3.0f));
+}
+
+TEST(ZCommonAlgorithms, Solve3x3System_ColumnMajorBasis)
+{
+    // Non-symmetric matrix: columns are the basis vectors (1,0,0), (1,1,0), (0,0,1).
+    // target = 2*col0 + 3*col1 + 4*col2, so the solution must be (2, 3, 4).
+    const float matrix[9] = {
+        1.0f, 0.0f, 0.0f,
+        1.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 1.0f
+    };
+    const float target[3] = { 5.0f, 3.0f, 4.0f };
+    float solution[3];
+
+    EXPECT_TRUE(ZCommonAlgorithms::Solve3x3System(matrix, target, solution));
+    EXPECT_TRUE(FloatNear(solution[0], 2.0f));
+    EXPECT_TRUE(FloatNear(solution[1], 3.0f));
+    EXPECT_TRUE(FloatNear(solution[2], 4.0f));
 }
 
 TEST(ZCommonAlgorithms, DistPointLineVar2_PointOnLine)
@@ -704,4 +724,238 @@ TEST(ZCommonAlgorithms, PolySphColl_OffsetSphere)
     const float sphPosFar[3] = { 0.0f, 0.0f, 10.0f };
 
     EXPECT_FALSE(ZCommonAlgorithms::PolySphColl(sphPosFar, sphMat, v1, v2, v3));
+}
+
+// -----------------------------------------------------------------------------
+// DistPointLineVar (reference overload; point vs segment, rejects projection outside)
+// -----------------------------------------------------------------------------
+
+TEST(ZCommonAlgorithms, DistPointLineVar_ProjectedInside)
+{
+    const float point[3] = { 1.0f, 1.0f, 0.0f };
+    const float lineStart[3] = { 0.0f, 0.0f, 0.0f };
+    const float lineEnd[3] = { 2.0f, 0.0f, 0.0f };
+    const float expectedDir[3] = { 0.0f, -1.0f, 0.0f };
+    float s, minDist = 10.0f, dist;
+    float dir[3];
+
+    EXPECT_TRUE(ZCommonAlgorithms::DistPointLineVar(point, lineStart, lineEnd, s, minDist, dist, dir));
+    EXPECT_TRUE(FloatNear(s, 0.5f));
+    EXPECT_TRUE(FloatNear(dist, 1.0f));
+    EXPECT_TRUE(Vec3Near(dir, expectedDir));
+}
+
+TEST(ZCommonAlgorithms, DistPointLineVar_BeforeStart)
+{
+    const float point[3] = { -1.0f, 0.0f, 0.0f };
+    const float lineStart[3] = { 0.0f, 0.0f, 0.0f };
+    const float lineEnd[3] = { 2.0f, 0.0f, 0.0f };
+    float s, minDist = 10.0f, dist;
+    float dir[3];
+
+    EXPECT_FALSE(ZCommonAlgorithms::DistPointLineVar(point, lineStart, lineEnd, s, minDist, dist, dir));
+}
+
+TEST(ZCommonAlgorithms, DistPointLineVar_AfterEnd)
+{
+    const float point[3] = { 3.0f, 0.0f, 0.0f };
+    const float lineStart[3] = { 0.0f, 0.0f, 0.0f };
+    const float lineEnd[3] = { 2.0f, 0.0f, 0.0f };
+    float s, minDist = 10.0f, dist;
+    float dir[3];
+
+    EXPECT_FALSE(ZCommonAlgorithms::DistPointLineVar(point, lineStart, lineEnd, s, minDist, dist, dir));
+}
+
+TEST(ZCommonAlgorithms, DistPointLineVar_TooFar)
+{
+    const float point[3] = { 1.0f, 100.0f, 0.0f };
+    const float lineStart[3] = { 0.0f, 0.0f, 0.0f };
+    const float lineEnd[3] = { 2.0f, 0.0f, 0.0f };
+    float s, minDist = 10.0f, dist;
+    float dir[3];
+
+    EXPECT_FALSE(ZCommonAlgorithms::DistPointLineVar(point, lineStart, lineEnd, s, minDist, dist, dir));
+}
+
+// -----------------------------------------------------------------------------
+// DistPointLineVar2 (reference overload; clamps projection to the segment)
+// -----------------------------------------------------------------------------
+
+TEST(ZCommonAlgorithms, DistPointLineVar2Ref_ProjectedInside)
+{
+    const float point[3] = { 1.0f, 1.0f, 0.0f };
+    const float lineStart[3] = { 0.0f, 0.0f, 0.0f };
+    const float lineEnd[3] = { 2.0f, 0.0f, 0.0f };
+    const float expectedDir[3] = { 0.0f, 1.0f, 0.0f };
+    float t, minDist = 10.0f, dist;
+    float dir[3];
+
+    EXPECT_TRUE(ZCommonAlgorithms::DistPointLineVar2(point, lineStart, lineEnd, t, minDist, dist, dir));
+    EXPECT_TRUE(FloatNear(t, 0.5f));
+    EXPECT_TRUE(FloatNear(dist, 1.0f));
+    EXPECT_TRUE(Vec3Near(dir, expectedDir));
+}
+
+TEST(ZCommonAlgorithms, DistPointLineVar2Ref_BeforeStart)
+{
+    const float point[3] = { -1.0f, 0.0f, 0.0f };
+    const float lineStart[3] = { 0.0f, 0.0f, 0.0f };
+    const float lineEnd[3] = { 2.0f, 0.0f, 0.0f };
+    float t, minDist = 10.0f, dist;
+    float dir[3];
+
+    EXPECT_TRUE(ZCommonAlgorithms::DistPointLineVar2(point, lineStart, lineEnd, t, minDist, dist, dir));
+    EXPECT_TRUE(FloatNear(t, 0.0f));
+    EXPECT_TRUE(FloatNear(dist, 1.0f));
+}
+
+TEST(ZCommonAlgorithms, DistPointLineVar2Ref_AfterEnd)
+{
+    const float point[3] = { 3.0f, 0.0f, 0.0f };
+    const float lineStart[3] = { 0.0f, 0.0f, 0.0f };
+    const float lineEnd[3] = { 2.0f, 0.0f, 0.0f };
+    float t, minDist = 10.0f, dist;
+    float dir[3];
+
+    EXPECT_TRUE(ZCommonAlgorithms::DistPointLineVar2(point, lineStart, lineEnd, t, minDist, dist, dir));
+    EXPECT_TRUE(FloatNear(t, 1.0f));
+    EXPECT_TRUE(FloatNear(dist, 1.0f));
+}
+
+// -----------------------------------------------------------------------------
+// DistLineLineVar (two segments)
+// -----------------------------------------------------------------------------
+
+TEST(ZCommonAlgorithms, DistLineLineVar_SkewInterior)
+{
+    // Line A along X, line B along Z offset by 1 in Y. Closest points are the two midpoints.
+    const float a1[3] = { -1.0f, 0.0f, 0.0f };
+    const float a2[3] = { 1.0f, 0.0f, 0.0f };
+    const float b1[3] = { 0.0f, 1.0f, -1.0f };
+    const float b2[3] = { 0.0f, 1.0f, 1.0f };
+    const float expectedDir[3] = { 0.0f, -1.0f, 0.0f };
+    float s, t, minDist = 10.0f, dist;
+    float dir[3];
+
+    EXPECT_TRUE(ZCommonAlgorithms::DistLineLineVar(a1, a2, b1, b2, s, t, minDist, dist, dir));
+    EXPECT_TRUE(FloatNear(s, 0.5f));
+    EXPECT_TRUE(FloatNear(t, 0.5f));
+    EXPECT_TRUE(FloatNear(dist, 1.0f));
+    EXPECT_TRUE(Vec3Near(dir, expectedDir));
+}
+
+TEST(ZCommonAlgorithms, DistLineLineVar_TooFar)
+{
+    const float a1[3] = { -1.0f, 0.0f, 0.0f };
+    const float a2[3] = { 1.0f, 0.0f, 0.0f };
+    const float b1[3] = { 0.0f, 1.0f, -1.0f };
+    const float b2[3] = { 0.0f, 1.0f, 1.0f };
+    float s, t, minDist = 0.5f, dist;
+    float dir[3];
+
+    EXPECT_FALSE(ZCommonAlgorithms::DistLineLineVar(a1, a2, b1, b2, s, t, minDist, dist, dir));
+}
+
+// -----------------------------------------------------------------------------
+// CollideCapsuleAndTriangle
+// -----------------------------------------------------------------------------
+
+namespace
+{
+    // Builds an SFastBoxColiTri from three vertices, replicating ZFastBoxColi::AddFace.
+    SFastBoxColiTri MakeFastBoxTri(const float* v0, const float* v1, const float* v2)
+    {
+        SFastBoxColiTri tri = {};
+
+        float e01[3];
+        float e02[3];
+        vsub(e01, v1, v0);
+        vsub(e02, v2, v0);
+
+        vcross(tri.m_vTriNorm.Get(), e02, e01);
+        vnorm(tri.m_vTriNorm.Get());
+
+        tri.m_avVerts[0] = v0;
+        tri.m_avVerts[1] = v1;
+        tri.m_avVerts[2] = v2;
+
+        float p1[3];
+        float p2[3];
+        float p0[3];
+        vcross(p1, tri.m_vTriNorm.Get(), e01);
+        vcross(p2, e02, tri.m_vTriNorm.Get());
+        vadd(p0, p1, p2);
+        vscalar(p0, -1.0f);
+
+        vnorm(p0);
+        vnorm(p1);
+        vnorm(p2);
+
+        tri.m_avEdgePerps[0] = p0;
+        tri.m_avEdgePerps[1] = p1;
+        tri.m_avEdgePerps[2] = p2;
+
+        return tri;
+    }
+}
+
+TEST(ZCommonAlgorithms, CollideCapsuleAndTriangle_InteriorHit)
+{
+    // Triangle in the XY plane.
+    const float v0[3] = { 0.0f, 0.0f, 0.0f };
+    const float v1[3] = { 2.0f, 0.0f, 0.0f };
+    const float v2[3] = { 0.0f, 2.0f, 0.0f };
+    const SFastBoxColiTri tri = MakeFastBoxTri(v0, v1, v2);
+
+    // Capsule crossing the triangle interior.
+    const float cap0[3] = { 0.4f, 0.4f, 1.0f };
+    const float cap1[3] = { 0.4f, 0.4f, -1.0f };
+    const float radius = 0.25f;
+
+    SCapsuleColiInfo result;
+    const float expectedDir[3] = { 0.0f, 0.0f, -1.0f };
+
+    EXPECT_TRUE(ZCommonAlgorithms::CollideCapsuleAndTriangle(cap0, cap1, radius, &tri, result));
+    EXPECT_TRUE(FloatNear(result.t0, 1.0f));
+    EXPECT_TRUE(FloatNear(result.fScaledDist, 1.25f));
+    EXPECT_TRUE(Vec3Near(result.vDir.Get(), expectedDir));
+}
+
+TEST(ZCommonAlgorithms, CollideCapsuleAndTriangle_FaceHit)
+{
+    const float v0[3] = { 0.0f, 0.0f, 0.0f };
+    const float v1[3] = { 2.0f, 0.0f, 0.0f };
+    const float v2[3] = { 0.0f, 2.0f, 0.0f };
+    const SFastBoxColiTri tri = MakeFastBoxTri(v0, v1, v2);
+
+    // Capsule hovering just above the triangle within the radius.
+    const float cap0[3] = { 0.4f, 0.4f, 2.0f };
+    const float cap1[3] = { 0.4f, 0.4f, 0.1f };
+    const float radius = 0.5f;
+
+    SCapsuleColiInfo result;
+    const float expectedDir[3] = { 0.0f, 0.0f, -1.0f };
+
+    EXPECT_TRUE(ZCommonAlgorithms::CollideCapsuleAndTriangle(cap0, cap1, radius, &tri, result));
+    EXPECT_TRUE(FloatNear(result.t0, 1.0f));
+    EXPECT_TRUE(FloatNear(result.fScaledDist, 0.4f));
+    EXPECT_TRUE(Vec3Near(result.vDir.Get(), expectedDir));
+}
+
+TEST(ZCommonAlgorithms, CollideCapsuleAndTriangle_Miss)
+{
+    const float v0[3] = { 0.0f, 0.0f, 0.0f };
+    const float v1[3] = { 2.0f, 0.0f, 0.0f };
+    const float v2[3] = { 0.0f, 2.0f, 0.0f };
+    const SFastBoxColiTri tri = MakeFastBoxTri(v0, v1, v2);
+
+    // Capsule far away from the triangle.
+    const float cap0[3] = { 5.0f, 5.0f, 1.0f };
+    const float cap1[3] = { 5.0f, 5.0f, -1.0f };
+    const float radius = 0.25f;
+
+    SCapsuleColiInfo result;
+
+    EXPECT_FALSE(ZCommonAlgorithms::CollideCapsuleAndTriangle(cap0, cap1, radius, &tri, result));
 }

@@ -38,6 +38,18 @@ namespace Glacier
         return m_MessageID != 0;
     }
 
+    bool ZMessageResolver::operator==(ZMSGID lMsg) const
+    {
+        ZASSERT(m_MessageID);
+        return m_MessageID == lMsg;
+    }
+
+    bool ZMessageResolver::operator!=(ZMSGID lMsg) const
+    {
+        ZASSERT(m_MessageID);
+        return m_MessageID != lMsg;
+    }
+
     void ZMessageResolver::ResolveAll()
     {
         GetResolvers().ResolveAll();

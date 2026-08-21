@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Glacier/ReGlacier.h>
+#include <Glacier/ZUniMemory.h>
 #include <Glacier/ZSTL/ZMath.h>
 #include <Glacier/ZSTL/TIMETYPE.h>
 #include <Glacier/ZSTL/ZStackArray.h>
@@ -21,6 +22,9 @@ namespace Glacier
     class ZBoneModifyBase
     {
     public:
+        // constants
+        static constexpr int MAXNRBONESPERPRIM = 0x100;
+
         // types
         struct ZAttachGeom
         {
@@ -31,16 +35,19 @@ namespace Glacier
         };
 
         // methods
+        ~ZBoneModifyBase();
+        ZBoneModifyBase(uint16_t lNrBones);
         bool IsRagdollActive() const;
         bool IsRagdollMoving() const;
         uint8_t DecalLookup() const;
-        bool HideBone(ZBaseGeom* pBaseGeom, bool, bool);
+        bool HideBone(ZBaseGeom* pBaseGeom, uint8_t lBoneIndex, bool bHide);
         const ZBone* GetBones(const ZLNKOBJ* pLnkObj) const;
         void GetIKBone(const ZBone* pBones, const float* pConvBones, uint32_t lBoneIndex, ZMat3x3& mMat, ZVector3& vPos);
         void GetBoneMatPos(ZMat3x3& mMat, ZVector3& vPos, uint32_t lBoneIdx, const ZLNKOBJ* pLnkObj);
         bool GetIKBoneMatPos(ZMat3x3& mMat, ZVector3& vPos, uint8_t lIndex, const ZLNKOBJ* pLnkObj, ZBone* pBone);
         void PrimChanged(uint32_t lPrim);
-        
+        void ForceRagdollDeactivation(ZLNKOBJ* pLnkObj);
+        bool Update(ZLNKOBJ* pLnkObj, ZMat3x3& mMat, ZVector3& vPos);
         const SRagdollCollisionInfo* GetCollisionInfo() const;
 
         // members
@@ -68,10 +75,11 @@ namespace Glacier
         uint16_t m_wBody;
         ZStackArray<4, uint32_t> m_ConnectedPhysics;
     };
-
+    RE_VERIFY_SIZE(ZBoneModifyBase, 0x328); // Verified PC alloc at ZRenderBaseDll::CreateBoneModifier
     RE_VERIFY_OFFSET(ZBoneModifyBase, m_lDecalLookup, 0x12);
     RE_VERIFY_OFFSET(ZBoneModifyBase, m_pRagdoll, 0x308); // Verified ZBoneModifyBase::IsRagdollMoving
 
+    STATIC_GLOBAL_CLASS_INSTANCE(int32_t, lDecalLookup);
 
     using ZBoneModifyBase_CB = void(*)(void*, uint32_t, void*);
     using ZBoneModifyBase_GCB = void(*)(ZBone*, uint32_t, ZLNKOBJ*);

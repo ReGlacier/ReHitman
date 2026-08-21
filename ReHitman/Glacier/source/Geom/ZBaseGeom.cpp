@@ -10,6 +10,7 @@
 #include <Glacier/Geom/ZSNDOBJ.h>
 #include <Glacier/Geom/ZGROUP.h>
 #include <Glacier/Geom/ZLIGHT.h>
+#include <Glacier/IK/ZLNKOBJ.h>
 #include <Glacier/Geom/ZROOM.h>
 #include <Glacier/Geom/ZTreeGroup.h>
 #include <Glacier/Serializer/ISerializerStream.h>
@@ -180,7 +181,7 @@ namespace Glacier
         uint32_t lListID = m_uListID;
         uint32_t lPotentialLightListChange = m_lPotentialLightListChange;
         uint32_t lFreezeLightList = m_bFreezeLightList;
-        
+
         if (bSaving)
         {
             auto* pListUser = g_pEngineData->GetListUser();
@@ -212,7 +213,7 @@ namespace Glacier
         return m_Name ? m_Name : "<NONAME>";
     }
 
-    bool ZBaseGeom::DoInit() 
+    bool ZBaseGeom::DoInit()
     {
         return !m_pExtraGeom || m_pExtraGeom->DoInit();
     }
@@ -262,7 +263,7 @@ namespace Glacier
         return nullptr;
     }
 
-    void ZBaseGeom::SetName(const char* name) 
+    void ZBaseGeom::SetName(const char* name)
     {
         g_pEngineData->DeleteCheck((void*)m_Name);
 
@@ -284,7 +285,7 @@ namespace Glacier
 
         if (Prim() && DrawId() && !IsDerivedFrom<ZLIGHT>())
         {
-            g_pSysInterface->WindowFirst->ChangePrim(this, primId);            
+            g_pSysInterface->WindowFirst->ChangePrim(this, primId);
         }
 
         if (lOldPrim != m_lPrim)
@@ -513,7 +514,7 @@ namespace Glacier
         parent->GetRootVect(mat.YAxis());
         parent->GetRootVect(mat.ZAxis());
     }
-    
+
     void ZBaseGeom::GetLocalMat(ZMat3x3& mat)
     {
         ZMat3x3 mLocalMat;
@@ -1025,7 +1026,7 @@ namespace Glacier
 
         return eGlobalTreeType::GT_StdObjs;
     }
-    
+
     void ZBaseGeom::FreeRoomList()
     {
         if (auto* pRoomList = GetRoomList())
@@ -1060,7 +1061,7 @@ namespace Glacier
         pRoom->RemoveDynamicGeomFromRoom(this);
         DetachFromRoomsDrawLists(pRoom);
     }
-    
+
     void ZBaseGeom::AddToRoomList(ZROOM* pRoom)
     {
         if ((Control() & (ZCOWNERDRAW|0xC00u)) == 0) // TODO: Find mask
@@ -1234,7 +1235,7 @@ namespace Glacier
                         ZASSERT((Control() & (ZCOWNERDRAW | ZCINVISIBLE | ZCHIDDEN | ZCINACTIVE)) == 0);
                         *pDrawList = ZGeomBuffer::Instance().RemoveGeoms(*pDrawList, this, this);
                     }
-                    
+
                     g_pSysInterface->WindowFirst->UpdateBaseGeom(this);
                 }
             }
@@ -1278,7 +1279,7 @@ namespace Glacier
             }
         }
     }
-    
+
     void ZBaseGeom::DetachFromDynamicContainer(ZGROUP* pOldParent)
     {
         if (m_pDynId && !m_lControl)
@@ -1376,7 +1377,7 @@ namespace Glacier
 
     bool ZBaseGeom::ChkEvents() const
     {
-        if (!m_pExtraGeom) 
+        if (!m_pExtraGeom)
             return false;
 
         if (!m_pExtraGeom->m_pExData)
@@ -1455,7 +1456,7 @@ namespace Glacier
     {
         m_vCen = Source->m_vCen;
         m_lControl |= ZCBOUNDSDIRTY;
-        
+
         SetSizeSimple(Source->m_vSize);
 
         m_fRadius = Source->m_fRadius;
@@ -1497,7 +1498,7 @@ namespace Glacier
     void ZBaseGeom::SetDynamicParentPtr(const ZBaseGeom* pParent)
     {
         ZASSERT(Control() & ZCHASDYNAMICPARENT);
-        
+
         m_iDynamicParentNr = pParent ? static_cast<uint16_t>(pParent - ZGeomBuffer::Instance().BaseGeomBufferPtr() + 1) : 0;
     }
 
@@ -1713,7 +1714,7 @@ namespace Glacier
             vmmul(pVect, pBaseGeom->Mat());
         }
     }
-    
+
     void ZBaseGeom::Zvmmul(ZVector3& v) const
     {
         vmmul(v.Get(), Mat());
@@ -1749,15 +1750,13 @@ namespace Glacier
 
     void ZBaseGeom::AutoAssignToRooms()
     {
-        // TODO: Finish after ZCollisionBase/ZROOM room-query helpers are reversed.
-        
-        // ZASSERT(Control() & ZCROOMASSIGN);
+        ZASSERT(Control() & ZCROOMASSIGN);
 
-        // if (Control() & (ZCOWNERDRAW | ZCINACTIVE | ZCHIDDEN))
-        // {
-        //     FreeRoomList();
-        //     return;
-        // }
+        if (Control() & (ZCOWNERDRAW | ZCINACTIVE | ZCHIDDEN))
+        {
+            FreeRoomList();
+            return;
+        }
 
         // ZMat3x3 mMat;
         // mMat.Reset();
@@ -1992,7 +1991,7 @@ namespace Glacier
                 return true;
             }
         }
-        
+
         return false;
     }
 
@@ -2044,4 +2043,5 @@ namespace Glacier
     template bool ZBaseGeom::IsDerivedFrom<ZSNDOBJ>() const;
     template bool ZBaseGeom::IsDerivedFrom<ZGROUP>() const;
     template bool ZBaseGeom::IsDerivedFrom<ZLIGHT>() const;
+    template bool ZBaseGeom::IsDerivedFrom<ZLNKOBJ>() const;
 }

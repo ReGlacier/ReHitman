@@ -152,6 +152,11 @@ namespace Glacier
         pBody->Stabilize(false, iterations);
     }
 
+    bool ZDynamicsExtend::Awake(uint16_t body) const
+    {
+        return m_pProps[body].active;
+    }
+
     STATIC_CLASS_VAR_IMPL(ZDynamicsExtend, float, m_fMaxSteps, 0x009A37B0, 0.084999986f);
     STATIC_CLASS_VAR_IMPL(ZDynamicsExtend, ZMessageResolver, m_msgCollision, 0x009A3798, ZMessageResolver { "Collision" });
     STATIC_CLASS_VAR_IMPL(ZDynamicsExtend, ZMessageResolver, m_msgFracture, 0x009A37A4, ZMessageResolver { "Fracture" });

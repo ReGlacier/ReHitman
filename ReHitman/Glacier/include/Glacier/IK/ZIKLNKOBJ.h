@@ -5,15 +5,14 @@
 #include <Glacier/GlacierFWD.h>
 #include <Glacier/ZActionDispatcher.h>
 #include <Glacier/ZSTL/ZMath.h>
+#include <Glacier/IK/IK.h>
+
 
 namespace Glacier
 {
     class ZIKLNKOBJ : public ZLNKOBJ
     {
     public:
-        // types
-        using IKCallBack_t = void(ZIKLNKOBJ::*)();
-
         struct SIKBoneCollision
         {
             uint8_t cBodyPart;
@@ -39,15 +38,15 @@ namespace Glacier
         virtual void GetIKBonePos(int,ZVector3*);
         virtual void SetHeadTarget(const ZVector3*,float);
         virtual void ResetHeadTarget();
-        virtual unsigned int HeadBoneIndex();
-        virtual unsigned int NeckBoneIndex();
-        virtual unsigned int PelvisBoneIndex();
-        virtual unsigned int LHandBoneIndex();
-        virtual unsigned int RHandBoneIndex();
-        virtual unsigned int LToeBoneIndex();
-        virtual unsigned int RToeBoneIndex();
-        virtual void IKCallBackToId(IKCallBack_t callback);
-        virtual IKCallBack_t IKCallBackFromId(int);
+        virtual uint32_t HeadBoneIndex();
+        virtual uint32_t NeckBoneIndex();
+        virtual uint32_t PelvisBoneIndex();
+        virtual uint32_t LHandBoneIndex();
+        virtual uint32_t RHandBoneIndex();
+        virtual uint32_t LToeBoneIndex();
+        virtual uint32_t RToeBoneIndex();
+        virtual int32_t IKCallBackToId(IKCallBack_t* callback);
+        virtual ZIKCallbacks* IKCallBackFromId(int);
         virtual void SetFacingTarget(unsigned int, float, IKCallBack_t callback);
         virtual void RemoveFacingTarget(float, IKCallBack_t callback);
         virtual void DisableFacing();

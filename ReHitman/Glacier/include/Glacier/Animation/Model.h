@@ -20,7 +20,7 @@ namespace Glacier::Animation
     struct Manager;
     class ZLNKOBJ;
 
-    struct ZAngelBone 
+    struct ZAngelBone
     {
         // members
         ZQuat m_Quat {};
@@ -28,16 +28,16 @@ namespace Glacier::Animation
     };
     RE_VERIFY_SIZE(ZAngelBone, 0x1C);
 
-    struct ScaleInfo 
+    struct ScaleInfo
     {
         float m_ArmScale{ 1.f };
         float m_HipScale{ 1.f };
     };
     RE_VERIFY_SIZE(ScaleInfo, 0x8);
 
-    union ZAnimHistory 
+    union ZAnimHistory
     {
-        struct 
+        struct
         {
             uint16_t m_Mask;
             uint16_t m_Id : 15;
@@ -106,4 +106,6 @@ namespace Glacier::Animation
         ZBlendBone*        m_BlendBones;
     };
     RE_VERIFY_SIZE(Model, 0x2A4); // Verified
+
+    RE_VERIFY_OFFSET(Model, m_Valid, 0xDB); // Verified by ZBoneModifyBase::ForceRagdollDeactivation
 }

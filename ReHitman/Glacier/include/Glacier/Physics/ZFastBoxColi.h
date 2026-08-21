@@ -54,5 +54,5 @@ namespace Glacier
             ZVector3 m_vEdgeNormal2;   // +0x70 (extended mode)
         };
     };
-    RE_VERIFY_SIZE(ZFastBoxColi, 0x54);
+    RE_VERIFY_SIZE(ZFastBoxColi, 0x54); // Verified PC alloc at ConstrainedParticleSystem::FindFaces
 }

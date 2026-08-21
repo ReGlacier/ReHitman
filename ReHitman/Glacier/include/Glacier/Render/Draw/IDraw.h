@@ -40,9 +40,9 @@ namespace Glacier
         virtual void InitAllocation() = 0;
         virtual int GetLargestFreeBlock() = 0;
         virtual void* Alloc(int lSize, const char* pFile, uint32_t lLine) = 0;
-        virtual void Free(void* pMem, int) = 0;
+        virtual void Free(void* pMem, int lMemSize) = 0;
         virtual void* AllocSprites(int lSize) = 0;
-        virtual void FreeSprites(void* pMem, int) = 0;
+        virtual void FreeSprites(void* pMem, int lMemSize) = 0;
         virtual IView* CreateView(ZRender* pRender, uint32_t lViewId, ZDrawSurface::TARGET lTarget) = 0;
         virtual IView* FindView(uint32_t lViewId) = 0;
         virtual IView* GetViewByIndex(int32_t lViewIndex) = 0;
@@ -60,9 +60,9 @@ namespace Glacier
             const float* vDirection,
             uint32_t lArrayIndex,
             uint32_t lSourcePrim,
-            float fRadiusX, float fRadiusY, 
-            const float* fExtraTextureSize, 
-            bool bStoreUV, 
+            float fRadiusX, float fRadiusY,
+            const float* fExtraTextureSize,
+            bool bStoreUV,
             float fRotation) = 0;
         virtual void AddBoneMark(ZBaseGeom* AddBoneMark, const float* vPosition, const float* vDirection, float fRadius, uint32_t lBoneId, uint32_t lSourcePrim) = 0;
         virtual void RemoveMark(uint32_t lHandle) = 0;

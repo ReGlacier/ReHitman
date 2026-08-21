@@ -4,7 +4,7 @@
 #include <Glacier/ZSTL/ZMath.h>
 #include <Glacier/GlacierFWD.h>
 #include <Glacier/Geom/ZSTDOBJ.h>
-#include <Glacier/ZSDOwner.h>
+#include <Glacier/Audio/ZSDOwner.h>
 
 namespace Hitman::BloodMoney
 {
@@ -105,7 +105,7 @@ namespace Hitman::BloodMoney
         char field_A2;
         char field_A3;
         int m_fieldA4;
-        
+
 #pragma region "Info & Health bars"
         // ******** Info & Health ********
         Glacier::ZVector3 m_pInfoPos;

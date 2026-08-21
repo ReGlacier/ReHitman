@@ -1,4 +1,7 @@
 #include <SI/SI_Silevelcontrol.h>
+#include <Glacier/Physics/Fysix/ZWaterBoxManager.h>
+#include <Glacier/Physics/Fysix/ZWaterBox.h>
+
 
 namespace Glacier
 {
@@ -500,8 +503,11 @@ namespace Glacier
 
     bool Silevelcontrol__Isactorinwaterbox(ZREF rActor)
     {
-        // TODO: Finish me
-        return false;
+        auto* pGeom = ref_cast<ZGEOM>(rActor);
+        if (!pGeom)
+            return false;
+
+        return ZWaterBoxManager::Instance()[pGeom] != nullptr;
     }
 
     void Silevelcontrol__Remove_Existing_Eventcam()

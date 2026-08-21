@@ -250,6 +250,11 @@ namespace Glacier
         }
     }
 
+    void ZCollisionBox::CalcImpactNormal(ZActiveImpactPrim* pActiveImpact, const float* pfSpherePos, const float* pfSphereRadius) const
+    {
+        // TODO: Finish me
+    }
+
     void ZCollisionBox::CalcOutFromImpact(float* pfSpeed, const ZSphereImpact* pSphereImpact, uint32_t uiImpactNr) const
     {
         const ZActiveImpactPrim* pImpact = &pSphereImpact->m_ActiveImpacts[uiImpactNr];

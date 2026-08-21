@@ -13,7 +13,7 @@ namespace Glacier
 {
     struct SExtendedImpactInfo;
     struct ZGEOMCLASSINFO;
-    class COLI;
+    struct COLI;
     class CHUNK;
     class ZOctree;
 

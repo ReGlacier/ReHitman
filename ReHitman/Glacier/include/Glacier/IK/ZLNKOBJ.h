@@ -121,7 +121,7 @@ namespace Glacier
         };
     };
     RE_VERIFY_SIZE(ActBoneMotion2, 0x4);
-    
+
     struct SFlagOffsetPair
     {
         // methods
@@ -160,7 +160,7 @@ namespace Glacier
     {
         // methods
         ZAnimVariation();
-        
+
         void SetData(const char* pData);
         int32_t GetNumVariations() const;
         uint32_t GetAnimOffset(uint32_t lId, float fRand) const;
@@ -189,7 +189,7 @@ namespace Glacier
         bool GetAnimVariation(ZAnimVariation& variation, ZAnimVariationHandle& handle);
         void FindAnimListStart();
         const char* GetBuffer() const;
-         
+
         // members
         const char* m_pBuffer{ nullptr };
         int* m_AnimList{ nullptr };
@@ -229,6 +229,18 @@ namespace Glacier
     class ZLNKOBJ : public ZSTDOBJ
     {
     public:
+        // constants
+        static constexpr uint32_t m_TypeId = 0x200006u;
+        // types
+
+        // static
+#       pragma region " --- Static members --- "
+        STATIC_CLASS_VAR(ZLNKOBJ, const char*, FactoryName);
+        STATIC_CLASS_VAR(ZLNKOBJ, RTP::ZPropertyInfo, Info);
+        STATIC_CLASS_VAR(ZLNKOBJ, ZGEOMCLASSINFO*, m_OldClassInfo);
+        DECLARE_ID_AND_MASK(ZLNKOBJ);
+#       pragma endregion
+
         // types
         struct SAnimSound
         {
@@ -238,6 +250,37 @@ namespace Glacier
         RE_VERIFY_SIZE(SAnimSound, 0x8);
 
         // vtbl
+        ~ZLNKOBJ() override;
+
+        // ZSerializable
+        bool PostLoad(ISerializerStream& stream) override;
+        void LoadSave(ISerializerStream& stream, bool bSaving) override;
+
+        // RTP::cBase
+        const RTP::ZPropertyInfo& GetProperties() const override;
+
+        // ZGEOM
+        uint32_t GetObjectId() const override;
+        void GetObjectIdAndMask(uint32_t& id, uint32_t& mask) const override;
+        ZGEOMCLASSINFO* GetOldClassInfo() const override;
+        void CalcCenSize() override;
+        int AnimCallBackToId(ActiveAnimCB pCallback) override;
+        ActiveAnimCB AnimCallBackFromId(int) override;
+        bool WantViewPrimHideUnhideRequest() const override;
+        bool WantViewPrimHide(uint8_t lLODControl) const override;
+        bool WantViewPrimHideMirrors(uint8_t lLODControl) const override;
+        uint8_t GetLODMaskOverride() const override;
+        void ClassInit() override;
+        void ClassFrameUpdate() override;
+        void Invisible() override;
+        void PushState() override;
+        // PopState?
+        void CopyData(const ZGEOM* Source) override;
+        bool IsAttached() const override;
+        void SetAttachedTo(ZLNKOBJ* pAttachedTo) override;
+        ZLNKOBJ* GetAttachedTo() const override;
+
+        // ZLNKOBJ
         virtual void InitObjMatBone();
         virtual void CloseObjMatBone();
         virtual void* GetAnim(const char*);
@@ -282,7 +325,7 @@ namespace Glacier
         virtual uint16_t GetBoneNrFromName(char const* pszName) const;
         virtual const char* GetBoneName(int);
         virtual void GetOrigLocalBones(void);
-        virtual void* GetBoneDefinitions(void);
+        virtual const SBoneDefinition* GetBoneDefinitions() const;
         virtual void CopyGeometryFrom(ZGEOM *);
         virtual void CopyGeometryFrom(unsigned int);
         virtual void CopyPoseFrom(ZLNKOBJ*);
@@ -308,16 +351,25 @@ namespace Glacier
         virtual void UpdateAnimationsAndGroundLink(float);
         virtual void UpdatePoseAnimation();
         virtual void StartAnim(Animation::ActiveAnimation*, int);
-        virtual bool IsInElevator();
-        virtual float GetElevatorDeltaY();
+        virtual bool IsInElevator() const;
+        virtual float GetElevatorDeltaY() const;
         virtual bool WantBloodOnHit();
-        virtual void LoadSaveAnimations(ZPackedInput*, bool);
+        virtual void LoadSaveAnimations(ISerializerStream& stream, bool bSaving);
 
         // methods
+        ZLNKOBJ(const char* psName, ZBaseGeom* pBaseGeom);
         ZBoneModifyBase* GetBoneModifier() { return m_pBoneModify; }
         const ZBoneModifyBase* GetBoneModifier() const { return m_pBoneModify; }
         const ZBone* GetBones() const;
         const ZBone* GetGlobalPrimBones() const;
+        const char* LoadAnimVariationsBuffer(const char* pszFileName);
+        Animation::Model* Model();
+        const Animation::Model* Model() const;
+
+#       pragma region " --- RTTI Methods --- "
+        void GetAnimCollectionProperty(ZRTString& anim_collection_name);
+        void SetAnimCollectionProperty(const ZRTString& anim_collection_name);
+#       pragma endregion
 
         // members
         ZPoseAnim* m_pPoseAnim;

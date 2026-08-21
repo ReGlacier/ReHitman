@@ -1,5 +1,10 @@
 #include <Glacier/Geom/ZSTDOBJ.h>
 #include <Glacier/Geom/GeomControlMasks.h>
+#include <Glacier/Render/Prim/ZPrimControlBase.h>
+#include <Glacier/Physics/SExtendedImpactInfo.h>
+#include <Glacier/Physics/ZCollisionBase.h>
+#include <Glacier/Physics/COLI.h>
+#include <Glacier/RTP/VirtualTables.h>
 #include <Glacier/Runtime/Macro.h>
 
 
@@ -84,20 +89,31 @@ namespace Glacier
 
     bool ZSTDOBJ::ChkLineColi(COLI* pColi, bool bWantInvisible)
     {
-        // TODO: Finish after ZCollisionBase reversed
+        std::ignore = bWantInvisible; // unused
+
+        SExtendedImpactInfo sImpactInfo {};
+        ZVector3 vLP = pColi->lp, vLN = pColi->ln;
+
+        if (ZCollisionBase::GetCollisionInterface()->CalcLineCollision(&sImpactInfo, Prim(), vLP, vLN, pColi->m_bBothSides, 0xFFFFFFFFu))
+        {
+            pColi->ColiRef = sImpactInfo.pBaseGeom->GetRef();
+            pColi->t = sImpactInfo.fPercent;
+            pColi->cp = sImpactInfo.vPosition;
+            pColi->m_HitCache = sImpactInfo.m_HitCache;
+            return true;
+        }
+
         return false;
     }
 
     bool ZSTDOBJ::CheckPointInside(ZVector3& pPoint, float fDotDist)
     {
-        // TODO: Finish after ZRenderBaseDll reversed
-        return false;
+        return ZPrimControlBase::Instance()->CheckPointInsidePrim(Prim(), pPoint, fDotDist);
     }
 
     bool ZSTDOBJ::CheckBoxInside(const ZMat3x3& mMat, const ZVector3& vPos, const float* s0)
     {
-         // TODO: Finish after ZRenderBaseDll reversed
-        return false;
+        return ZPrimControlBase::Instance()->CheckBoxInsidePrim(Prim(), mMat, vPos, s0);
     }
 
     uint32_t ZSTDOBJ::GetClassId()
@@ -105,8 +121,38 @@ namespace Glacier
         return ZSTDOBJ::m_Id;
     }
 
-    STATIC_CLASS_VAR_IMPL(ZSTDOBJ, RTP::ZPropertyInfo, Info, 0x0097B694, {});
+    void ZSTDOBJ::SetInvisible(const bool&)
+    {
+        // Do nothing
+    }
+
+    void ZSTDOBJ::GetInvisible(bool&)
+    {
+        // Do nothing
+    }
+
+#   pragma region " --- RTTI --- "
+    namespace cProperties
+    {
+        struct RTP::ZVirtualProperty<bool> NamespaceItem_1286 {
+            .m_Node = {
+                .m_Next = nullptr,
+                .m_Name = "Invisible",
+                .m_Filter = 3
+            },
+            .m_VirtualTable = VirtualTable_VP__1,
+            .m_Get = &ZSTDOBJ::GetInvisible,
+            .m_Set = &ZSTDOBJ::SetInvisible
+        };
+    }
+
+    STATIC_CLASS_VAR_IMPL(ZSTDOBJ, RTP::ZPropertyInfo, Info, 0x0097B694, (RTP::ZPropertyInfo {
+        .First = cProperties::NamespaceItem_1286,
+        .Super = &ZGEOM::Info,
+        .Name = ZSTDOBJ::FactoryName
+    }));
     STATIC_CLASS_VAR_IMPL(ZSTDOBJ, const char*, FactoryName, 0x00769070, "ZSTDOBJ");
     DECLARE_ID_AND_MASK_IMPL(ZSTDOBJ, 0x0097B694, 0x0097B698);
     REGISTER_GLACIER_GEOM_CLASS(ZSTDOBJ, ZGEOM, 0x200002u, 0x0097B6E8);
+#   pragma endregion
 }

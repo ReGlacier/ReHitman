@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Glacier/ReGlacier.h>
-#include <Glacier/ZSDOwner.h>
+#include <Glacier/Audio/ZSDOwner.h>
 #include <Glacier/GlacierFWD.h>
 #include <Glacier/ZSTL/ZMath.h>
 #include <Glacier/Vehicle/ZLinkBase.h>

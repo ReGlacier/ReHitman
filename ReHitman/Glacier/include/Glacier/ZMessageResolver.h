@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Glacier/ReGlacier.h>
+#include <Glacier/GlacierFWD.h>
 #include <Glacier/ZSTL/ZSList.h>
 #include <cstdint>
 
@@ -19,6 +20,9 @@ namespace Glacier
         operator uint32_t() const;
         operator uint16_t() const;
         operator bool() const;
+
+        bool operator==(ZMSGID lMsg) const;
+        bool operator!=(ZMSGID lMsg) const;
 
         static void ResolveAll();
         static void ClearAll();

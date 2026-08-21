@@ -2,33 +2,16 @@
 
 #include <Glacier/ReGlacier.h>
 #include <Glacier/ZSTL/ZMath.h>
+#include <Glacier/IK/ZTARGET.h>
+
 
 namespace Glacier
 {
+    // fwds
     class ZItem;
     class ZItemTemplate;
     class ZIKLNKOBJ;
     class ZLNKOBJ;
-
-    struct ZTARGET
-    {
-        // FIXME: Fix vtbl method
-        virtual ~ZTARGET();
-
-        uint8_t m_pad0[4]; // PADDING
-        bool m_bEnabled;
-        uint8_t m_pad1[3]; // PADDING
-        ZMat3x3 m_mTarget;
-        ZVector3 m_vTarget;
-        float m_fTime;
-        float m_fStartTime;
-        uint32_t m_rGeom;
-        int m_lBoneId;
-        ZLNKOBJ* m_pLnkObj;
-        void(*m_Callback[4])(ZLNKOBJ*);
-    };
-    RE_VERIFY_SIZE(ZTARGET, 0x60);
-    RE_VERIFY_OFFSET(ZTARGET, m_bEnabled, 0x8); // See ZTARGET::ZTARGET for details (PC at 0x0050CA30)
 
     struct SHandInfo
     {

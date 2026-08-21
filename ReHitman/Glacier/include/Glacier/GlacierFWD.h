@@ -16,7 +16,7 @@ namespace Glacier
     enum ZWM_MESSAGE;
 
     struct RefRun;
-    
+
     /// FWD
     struct ISerializerStream;
     struct IInputSerializerStream;
@@ -25,9 +25,9 @@ namespace Glacier
     class ZPackedInput;
     class ZScene;
     class ZLIST;
-    class COLI;
+    struct COLI;
     class CCom;
-    class ZBone;
+    struct ZBone;
     class ZCameraSpace;
     class ZDrawBuffer;
     class ZItemState;
@@ -53,7 +53,7 @@ namespace Glacier
     class ZAnimationInfo;
     class AnimationManager;
     class ResourceCollection;
-    class ZAnimVariationHandle;
+    struct ZAnimVariationHandle;
     class ZLnkAction;
     class ZIKHAND;
     class ZItemContainer;

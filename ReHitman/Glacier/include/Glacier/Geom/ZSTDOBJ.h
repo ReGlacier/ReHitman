@@ -7,11 +7,10 @@
 namespace Glacier
 {
     class ZSTDOBJ : public ZGEOM
-    { // no changes, same size, same vftable size (maybe something overridden)
+    {
     public:
         // constants
         static constexpr uint32_t m_TypeId = 0x200002u;
-        // types
 
         // static
 #       pragma region " --- Static members --- "
@@ -22,10 +21,9 @@ namespace Glacier
 #       pragma endregion
 
         // vtbl
-        // methods
-        ZSTDOBJ(const char* psName, ZBaseGeom* pBaseGeom);
         ~ZSTDOBJ() override;
 
+        // ZSerializable
         // RTP::cBase
         const RTP::ZPropertyInfo& GetProperties() const override;
 
@@ -43,7 +41,12 @@ namespace Glacier
         bool CheckPointInside(ZVector3& pPoint, float fDotDist) override;
         bool CheckBoxInside(const ZMat3x3& mMat, const ZVector3& vPos, const float* s0) override;
 
-        static uint32_t GetClassId();        
+        // ZSTDOBJ
+
+        // methods
+        ZSTDOBJ(const char* psName, ZBaseGeom* pBaseGeom);
+
+        static uint32_t GetClassId();
 
 #       pragma region " --- RTTI Methods --- "
         void SetInvisible(const bool&);

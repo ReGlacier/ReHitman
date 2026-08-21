@@ -43,7 +43,7 @@ namespace Glacier
         };
 
         enum GeneralGameMode_e : int32_t
-        { 
+        {
             SINGLE_PLAYER = 0, ///< Single Player mode
 
             // In MiniNinjas added more possible values
@@ -152,6 +152,7 @@ namespace Glacier
         void Reset_TimeMultiplier_Lock();
         void SetRunMode(ERunModes eRunMode);
         void NormalizePath(MYSTR* pStr) const;
+        float GetTimeMultiplier() const;
 
         // members
         alignas(8) bool m_bDebugActive; // It's really weird, but it is

@@ -2,4 +2,7 @@ cmake-build*
 build*/*
 .idea
 .vscode
+.cache
+.zed
 **/__pycache__/
+compile_commands.json

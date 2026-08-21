@@ -29,18 +29,18 @@ namespace Glacier
 
             while (1)
             {
-                if (*w == '*') 
+                if (*w == '*')
                 {
                     const char* next_chunk = w + 1;
                     const char* next_star = strchr(next_chunk, '*');
                     w = next_star;
 
-                    if (!next_star) 
+                    if (!next_star)
                     {
                         size_t str_len = strlen(s);
                         size_t chunk_len = strlen(next_chunk);
-                        
-                        if (str_len >= chunk_len) 
+
+                        if (str_len >= chunk_len)
                         {
                             return stricmp(&s[str_len - chunk_len], next_chunk) == 0;
                         }
@@ -55,18 +55,18 @@ namespace Glacier
                     if (max_search_pos < 0) return false;
 
                     int checked = 0;
-                    while (memicmp(next_chunk, s, chunk_len) != 0) 
+                    while (memicmp(next_chunk, s, chunk_len) != 0)
                     {
                         checked++;
                         s++;
                         if (checked == max_search_pos + 1) return false;
                     }
                 }
-                else 
+                else
                 {
                     const char* next_star = strchr(w, '*');
-                    
-                    if (!next_star) 
+
+                    if (!next_star)
                     {
                         return stricmp(w, s) == 0;
                     }
@@ -387,7 +387,7 @@ namespace Glacier
     {
         BaseGeom()->MakeActive();
     }
-    
+
     eGlobalTreeType ZGEOM::GetBoundTreeType() const
     {
         return eGlobalTreeType::GT_None;
@@ -425,7 +425,7 @@ namespace Glacier
             m_pExData->_lControl &= ~ZCEXWANTCAMERAMSG;
         }
     }
-    
+
     void ZGEOM::CreateExData()
     {
         if (!m_pExData)
@@ -453,7 +453,7 @@ namespace Glacier
             m_pExData = nullptr;
         }
     }
-    
+
     void ZGEOM::CopyExData(const ZGEOM* Source)
     {
         FreeExData();
@@ -526,7 +526,7 @@ namespace Glacier
     {
         BaseGeom()->SetPos(vPos.Get());
     }
-    
+
     void ZGEOM::SetMatPos(const Glacier::ZMat3x3& mat, const Glacier::Vector3& pos)
     {
         BaseGeom()->SetMatPos(mat.Get(), pos.Get());
@@ -536,7 +536,7 @@ namespace Glacier
     {
         BaseGeom()->SetRootPos(pos.Get());
     }
-    
+
     void ZGEOM::SetRootTM(const ZMat3x3& RTMat, const ZVector3& RTPos)
     {
         BaseGeom()->SetRootTM(RTMat, RTPos);
@@ -556,7 +556,7 @@ namespace Glacier
             m_lGeomControl &= ~DisplayFlag;
         }
     }
-    
+
     void ZGEOM::Select(bool OnOff)
     {
         constexpr uint16_t DisplayFlag = 0x1;
@@ -629,7 +629,7 @@ namespace Glacier
             m_pExData->_lControl &= ~ZCEXMOVINGOBJ;
         }
     }
-    
+
     bool ZGEOM::RequestCustomDraw()
     {
         return (m_lGeomControl & 0x20u) != 0;
@@ -676,17 +676,17 @@ namespace Glacier
     {
         return false;
     }
-    
+
     bool ZGEOM::WantViewPrimHideMirrors(uint8_t lLODControl) const
     {
         return false;
     }
-    
+
     bool ZGEOM::WantViewUseAllLOD() const
     {
         return false;
     }
-    
+
     uint8_t ZGEOM::GetLODMaskOverride() const
     {
         return 0u;
@@ -762,7 +762,7 @@ namespace Glacier
 
         return nullptr;
     }
-    
+
     void* ZGEOM::GetEventData(const char* pEventName) const
     {
         return FindEvent(pEventName);
@@ -782,7 +782,7 @@ namespace Glacier
 
         return pEvent;
     }
-    
+
     void ZGEOM::AttachEvent(ZEventBase& event)
     {
         event.AttachToGeom(this);
@@ -875,7 +875,7 @@ namespace Glacier
             printf("WARNING: Unable to disable class-call when class-call was not set up on %s\n", sName.String);
         }
     }
-    
+
     void ZGEOM::SetClassTimerInterval(float fInterval)
     {
         ZEventBase* pTimerEvent = nullptr;
@@ -943,8 +943,8 @@ namespace Glacier
             {
                 auto* pEvent = ZEventBase::RefToPtr(rEvent);
                 if (
-                    pEvent && 
-                    !pEvent->m_ClassCall && 
+                    pEvent &&
+                    !pEvent->m_ClassCall &&
                     ((pEvent->m_lRoutCases & Type) != 0 || Type == 0x20u) &&
                     !pEvent->IsPendingForRemoval() && pEvent->IsWorking()
                 )
@@ -1026,11 +1026,11 @@ namespace Glacier
                 if (pEvent)
                 {
                     pEvent->Delete();
-                }                
+                }
             }
         }
     }
-    
+
     void ZGEOM::FreeEvent(char const* pEventName)
     {
         auto* pEvent = FindEvent(pEventName);
@@ -1098,7 +1098,7 @@ namespace Glacier
             FreeEvents();
         }
     }
-    
+
     void ZGEOM::RegisterInstance(uint32_t lInstanceCount)
     {}
 
@@ -1154,26 +1154,26 @@ namespace Glacier
 
         return true;
     }
-    
+
     bool ZGEOM::CheckBoxInside(const ZMat3x3& mMat, const ZVector3& vPos, const float* s0)
     {
         return false;
     }
-    
+
     float ZGEOM::GetPointInsideDistance(const ZVector3& vPos)
     {
         return 9.9999997e37f; // lol
     }
 
-    void ZGEOM::Visible() 
+    void ZGEOM::Visible()
     {}
 
-    void ZGEOM::Invisible() 
+    void ZGEOM::Invisible()
     {}
-    
-    void ZGEOM::PushState() 
+
+    void ZGEOM::PushState()
     {}
-    
+
     bool ZGEOM::DuplicateData(ZGEOM* pFromGeom)
     {
         const ZGEOMCLASSINFO* pSelfInfo = GetOldClassInfo();
@@ -1187,7 +1187,7 @@ namespace Glacier
         else
         {
             // Some warning
-            printf("Cant duplicate %s::%s -> %s::%s different base classes\n", 
+            printf("Cant duplicate %s::%s -> %s::%s different base classes\n",
                 // me
                 pSelfInfo->ClassInfoName(),
                 Name(),
@@ -1233,7 +1233,7 @@ namespace Glacier
                 pNewGeom->SetMatPos(*pMat, *pPos);
             }
 
-            // Possible leak of pNewGeom if DoInit failed!!! NEED BUGFIX 
+            // Possible leak of pNewGeom if DoInit failed!!! NEED BUGFIX
             return pNewGeom->DoInit() ? pNewGeom : nullptr;
         }
 
@@ -1273,7 +1273,7 @@ namespace Glacier
         {
             return DuplicateInit(DestGroup, mMat, vPos, DupName, Recursive);
         }
-        
+
         auto* pGeom = DuplicateToResource(DestGroup, lGeomResourceId, DupName, Recursive);
         if (!pGeom) return nullptr;
 
@@ -1282,7 +1282,7 @@ namespace Glacier
             pGeom->SetMatPos(*mMat, *vPos);
         }
 
-        // Possible leak of pNewGeom if DoInit failed!!! NEED BUGFIX 
+        // Possible leak of pNewGeom if DoInit failed!!! NEED BUGFIX
         return pGeom->DoInit() ? pGeom : nullptr;
     }
 
@@ -1300,12 +1300,12 @@ namespace Glacier
     {
         // Nothing here
     }
-    
+
     void ZGEOM::CheckAction(int,void *)
     {
-        // Nothing here   
+        // Nothing here
     }
-    
+
     void ZGEOM::CheckAction(char *,void *)
     {
         // Nothing here
@@ -1315,7 +1315,7 @@ namespace Glacier
     {
         // Nothing here
     }
-    
+
     int ZGEOM::GetActionID(const char* psActionName)
     {
         return -1;
@@ -1345,12 +1345,12 @@ namespace Glacier
     {
         return nullptr;
     }
-    
+
     bool ZGEOM::IsLinkBaseObj() const
     {
         return false;
     }
-    
+
     void ZGEOM::OnCameraEnter()
     {
         // Do nothing here
@@ -1371,7 +1371,7 @@ namespace Glacier
         // Original code looks like shit, this not better
         return m_eStatus == STATUS_OK;
     }
-    
+
     void ZGEOM::GetRootTM(ZMat3x3& mat, ZVector3& pos) const
     {
         m_baseGeom->GetRootTM(mat, pos);
@@ -1382,12 +1382,12 @@ namespace Glacier
         m_baseGeom->GetMatPos(mat, pos);
     }
 
-    void ZGEOM::GetRootPoint(Glacier::ZVector3& pos) const 
+    void ZGEOM::GetRootPoint(Glacier::ZVector3& pos) const
     {
         m_baseGeom->GetRootPoint(pos);
     }
 
-    void ZGEOM::GetCen(Glacier::ZVector3& pos) const 
+    void ZGEOM::GetCen(Glacier::ZVector3& pos) const
     {
         m_baseGeom->GetCen(pos);
     }
@@ -1540,7 +1540,7 @@ namespace Glacier
     {
         return BaseGeom()->GetTreeGroup();
     }
-    
+
     ZTreeGroup* ZGEOM::GetDynamicTreeGroup() const
     {
         return BaseGeom()->GetDynamicTreeGroup();
@@ -1662,7 +1662,7 @@ namespace Glacier
 
     void ZGEOM::SetMatSimple(const ZMat3x3& mMat)
     {
-        BaseGeom()->SetMatSimple(mMat.Get());   
+        BaseGeom()->SetMatSimple(mMat.Get());
     }
 
     void ZGEOM::SetPosSimple(const ZVector3& vPos)
@@ -1712,14 +1712,161 @@ namespace Glacier
         BaseGeom()->SetControl(lBitsAdd, lBitsRem);
     }
 
-    void ZGEOM::GetWorldPosition(ZVector3& vPosition)
+    void ZGEOM::GetWorldPosition(ZVector3& vPosition) const
     {
         GetRootPoint(vPosition);
     }
 
-    void ZGEOM::GetLocalMatPos(ZMat3x3& mMat, ZVector3& vPos)
+    void ZGEOM::GetLocalMatPos(ZMat3x3& mMat, ZVector3& vPos) const
     {
         BaseGeom()->GetLocalMatPos(mMat, vPos);
+    }
+
+    void ZGEOM::GetSize(ZVector3& vSize)
+    {
+        BaseGeom()->GetSize(vSize);
+    }
+
+    void ZGEOM::SetSize(const ZVector3& vSize)
+    {
+        BaseGeom()->SetSize(vSize);
+    }
+
+    void ZGEOM::SetRadius(float fRadius)
+    {
+        BaseGeom()->SetRadius(fRadius);
+    }
+
+    void ZGEOM::GetRootVect(ZVector3& vect)
+    {
+        BaseGeom()->GetRootVect(vect);
+    }
+
+    float ZGEOM::GetDistanceToObject(const ZGEOM* pTarget) const
+    {
+        ZASSERT(pTarget);
+
+        const ZVector3 vTargetCenter = pTarget->Cen();
+        ZVector3 vTargetRP = vTargetCenter;
+
+        pTarget->GetRootPoint(vTargetRP);
+        GetLocalPoint(vTargetRP);
+
+        return vdist(vTargetRP, Cen());
+    }
+
+    float ZGEOM::GetDistanceToPos(const ZVector3& vPos) const
+    {
+        ZVector3 vLP = vPos;
+        BaseGeom()->GetLocalPoint(vLP);
+        return vdist(vLP, BaseGeom()->Cen());
+    }
+
+    float ZGEOM::GetAngleToDir(const ZVector3& vDir) const
+    {
+        ZMat3x3 mMat;
+        ZVector3 vPos;
+        GetRootTM(mMat, vPos);
+
+        const float fDot = vdot(mMat.ZAxis(), vDir);
+
+        float fAngle;
+        if (fDot > 1.0f)
+            fAngle = 0.0f;
+        else if (fDot >= -1.0f)
+            fAngle = std::acos(fDot);
+        else
+            fAngle = 3.1415927f;
+
+        ZVector3 vCross;
+        vcross(vCross, vDir, mMat.ZAxis());
+
+        const float fSign = (vCross.y > 0.0f) ? -1.0f : 1.0f;
+        return fAngle * fSign * 57.295776f;
+    }
+
+    float ZGEOM::GetAngleToObject(ZREF rObject) const
+    {
+        return GetAngleToObject(ZGEOM::RefToPtr(rObject));
+    }
+
+    float ZGEOM::GetAngleToObject(const ZGEOM* pGeom) const
+    {
+        if (!pGeom)
+            return 0.0f;
+
+        ZVector3 vThisPos = Cen();
+        GetRootPoint(vThisPos);
+
+        ZVector3 vTo = pGeom->Cen();
+        pGeom->GetRootPoint(vTo);
+
+        vsub(vTo, vThisPos);
+        vTo.y = 0.0f;
+        vnorm(vTo);
+
+        ZMat3x3 mMat;
+        ZVector3 vPos;
+        GetRootTM(mMat, vPos);
+
+        ZVector3 vForward = mMat.ZAxis();
+        vneg(vForward);
+
+        const float fSign = (vdot(vTo, mMat.XAxis()) > 0.0f) ? -1.0f : 1.0f;
+        const float fDot = vdot(vTo, vForward);
+
+        float fAngle;
+        if (fDot > 1.0f)
+            fAngle = 0.0f;
+        else if (fDot >= -1.0f)
+            fAngle = std::acos(fDot);
+        else
+            fAngle = 3.1415927f;
+
+        return fAngle * fSign * 57.295776f;
+    }
+
+    float ZGEOM::GetAngleToGeomDir(ZREF rGeom) const
+    {
+        return GetAngleToGeomDir(ZGEOM::RefToPtr(rGeom));
+    }
+
+    float ZGEOM::GetAngleToGeomDir(const ZGEOM* pGeom) const
+    {
+        if (!pGeom)
+            return 0.0f;
+
+        ZVector3 vSelf, vTarget;
+        ZMat3x3 mSelf, mTarget;
+
+        GetRootTM(mSelf, vSelf);
+        pGeom->GetRootTM(mTarget, vTarget);
+
+        const ZVector3 vForward(0.0f, 0.0f, -1.0f);
+
+        ZVector3 vSelfDir, vTargetDir;
+        vmmul(vSelfDir, vForward, mSelf);
+        vmmul(vTargetDir, vForward, mTarget);
+
+        vnorm(vSelfDir);
+        vnorm(vTargetDir);
+
+        const float fDot = vdot(vSelfDir, vTargetDir);
+
+        float fAngle;
+        if (fDot > 1.0f)
+            fAngle = 0.0f;
+        else if (fDot < -1.0f)
+            fAngle = 3.1415927f;
+        else
+            fAngle = std::acos(fDot);
+
+        ZVector3 vCross;
+        vcross(vCross, vSelfDir, vTargetDir);
+        if (vCross.y < 0.0f)
+            fAngle = -fAngle;
+
+        return fAngle * 57.295776f;
     }
 
     STATIC_CLASS_VAR_IMPL(ZGEOM, ZFactory<ZGEOM>, m_Factory, 0x00972930, ZFactory<ZGEOM>{});
@@ -1734,27 +1881,27 @@ namespace Glacier
     namespace cProperties
     {
         static ZEnumEntry NamespaceItem_3409_BOUNDING_Static
-        { 
-            .m_Prev = nullptr, 
-            .m_Value = static_cast<int>(EBoundingBox::BOUNDING_Static), 
-            .m_Name = "BOUNDING_Dynamic" 
+        {
+            .m_Prev = nullptr,
+            .m_Value = static_cast<int>(EBoundingBox::BOUNDING_Static),
+            .m_Name = "BOUNDING_Dynamic"
         };
 
-        static ZEnumEntry NamespaceItem_3409_BOUNDING_Dynamic 
+        static ZEnumEntry NamespaceItem_3409_BOUNDING_Dynamic
         {
             .m_Prev = &NamespaceItem_3409_BOUNDING_Static,
             .m_Value = static_cast<int>(EBoundingBox::BOUNDING_Dynamic),
             .m_Name = "BOUNDING_Dynamic"
         };
 
-        static ZEnumEntry NamespaceItem_3409_BOUNDING_DynamicAutoAssign 
+        static ZEnumEntry NamespaceItem_3409_BOUNDING_DynamicAutoAssign
         {
             .m_Prev = &NamespaceItem_3409_BOUNDING_Dynamic,
             .m_Value = static_cast<int>(EBoundingBox::BOUNDING_DynamicAutoAssign),
             .m_Name = "BOUNDING_DynamicAutoAssign"
         };
 
-        static ZEnumInfo NamespaceItem_3409 
+        static ZEnumInfo NamespaceItem_3409
         {
             .m_Last = &NamespaceItem_3409_BOUNDING_DynamicAutoAssign,
             .m_Name = "EBoundingBox",
@@ -1805,7 +1952,7 @@ namespace Glacier
             .m_Set = &ZGEOM::SetMatrix
         };
 
-        static RTP::ZVirtualEnumProperty<EBoundingBox> NamespaceItem_3413 
+        static RTP::ZVirtualEnumProperty<EBoundingBox> NamespaceItem_3413
         {
             .m_Node {
                 .m_Next = NamespaceItem_3414,

@@ -78,7 +78,7 @@ namespace Glacier
 
         };
 
-        
+
         int StrCompareNoCase(const char* lhs, const char* rhs)
         {
             ZASSERT(lhs != nullptr);
@@ -138,7 +138,7 @@ namespace Glacier
 
         return g_lIniFileSize;
     }
-    
+
     ZSysInterface::ZSysInterface(int hInstance)
     {
         m_fRealTime = TIMETYPE(0);
@@ -174,12 +174,12 @@ namespace Glacier
         m_bRefsLocked = true;
 
     }
-    
+
     void ZSysInterface::UnlockRefs()
     {
         m_bRefsLocked = false;
     }
-    
+
     void ZSysInterface::CloseDown()
     {
         m_bQuit = true;
@@ -564,7 +564,7 @@ namespace Glacier
 
         return result;
     }
-    
+
     void ZSysInterface::SetCmdLine(const char* psCmdLine)
     {
         m_sCmdLine = MYSTR(psCmdLine);
@@ -603,7 +603,7 @@ namespace Glacier
         // Do nothing
         return false;
     }
-    
+
     ZSysInterface* ZSysInterface::BeforeFormat()
     {
         // What?
@@ -622,7 +622,7 @@ namespace Glacier
 
         return vsprintf(buf, format, args);
     }
-    
+
     MYSTR ZSysInterface::GetSuggestedUserPath() const
     {
         // Lol wat?
@@ -652,7 +652,7 @@ namespace Glacier
     {
         return (static_cast<float>(Rand(pSourceFile, lLineNr)) - 16384.0f) / 16384.0f;
     }
-    
+
     void ZSysInterface::FollowRealtime(bool bFollowRealTime)
     {
         m_bFollowRealTime = bFollowRealTime;
@@ -964,6 +964,11 @@ namespace Glacier
         {
             (*pStr) += MYSTR("\\");
         }
+    }
+
+    float ZSysInterface::GetTimeMultiplier() const
+    {
+        return m_fTimeMultiplier;
     }
 
     // Statics

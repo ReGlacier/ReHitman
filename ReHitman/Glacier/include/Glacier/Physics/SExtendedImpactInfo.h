@@ -10,15 +10,27 @@
 namespace Glacier
 {
     struct SLineImpact
-	{		
-		float fPercent;
-		ZVector3 vPosition;
-		ZBaseGeom *pBaseGeom;
+	{
+	    // methods
+		SLineImpact() = default;
+
+	    // members
+		float fPercent = 1.f;
+		ZVector3 vPosition {};
+		ZBaseGeom *pBaseGeom { nullptr };
 	};
     RE_VERIFY_SIZE(SLineImpact, 0x14);
 
 	struct SExtendedImpactInfo : SLineImpact
 	{
+	    // methods
+		SExtendedImpactInfo() : SLineImpact()
+		{
+		    m_HitCache.___u0.lId = 0ull;
+			m_iColiMaterialDescId = 0;
+		}
+
+	    // members
         ZVector3 vP1;
         ZVector3 vP2;
         ZVector3 vP3;

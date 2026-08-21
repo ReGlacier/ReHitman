@@ -9,13 +9,54 @@ namespace Glacier
     class ZBoxPrimitive : public ZSTDOBJ
     {
     public:
-        //vftable
-        virtual void CalcPositionInBox(ZVector3*);
-        virtual bool GetClosestPosDirInBox(ZVector3* outPos, float fUnk, ZVector3* outDir, ZVector3* pInPos);
-        virtual void SetScale(float x, float y, float z);
-        virtual Glacier::ZVector3* GetScale(ZVector3* outScale);
+        // constants
+        static constexpr uint32_t m_TypeId = 0x200006u;
+        // types
 
-        //data (total size is 0x1C, original size is ox10)
+        // static
+#       pragma region " --- Static members --- "
+        STATIC_CLASS_VAR(ZBoxPrimitive, const char*, FactoryName);
+        STATIC_CLASS_VAR(ZBoxPrimitive, RTP::ZPropertyInfo, Info);
+        STATIC_CLASS_VAR(ZBoxPrimitive, ZGEOMCLASSINFO*, m_OldClassInfo);
+        DECLARE_ID_AND_MASK(ZBoxPrimitive);
+#       pragma endregion
+
+        // vtbl
+        ~ZBoxPrimitive() override;
+
+        // ZSerializable
+        bool PostLoad(ISerializerStream& stream) override;
+
+        // RTP::cBase
+        const RTP::ZPropertyInfo& GetProperties() const override;
+
+        // ZGEOM
+        uint32_t GetObjectId() const override;
+        void GetObjectIdAndMask(uint32_t& id, uint32_t& mask) const override;
+        ZGEOMCLASSINFO* GetOldClassInfo() const override;
+        void CalcCenSize() override;
+        bool CheckPointInside(ZVector3& pPoint, float fDotDist) override;
+        bool CheckBoxInside(const ZMat3x3& mMat, const ZVector3& vPos, const float* s0) override;
+        void CopyData(const ZGEOM* Source) override;
+
+        // ZBoxPrimitive
+        virtual void CalcPositionInBox(ZVector3& pos);
+        virtual bool GetClosestPosDirInBox(const ZVector3& vTarget, float edgeDist, ZVector3& pos, ZVector3& dir);
+        virtual void SetScale(float x, float y, float z);
+        virtual void GetScale(ZVector3& vScale);
+
+        // methods
+        ZBoxPrimitive(const char* psName, ZBaseGeom* pBaseGeom);
+
+        // RTTI methods
+        void GetScaleX(float& fScaleX);
+        void SetScaleX(const float& fScaleX);
+        void GetScaleY(float& fScaleY);
+        void SetScaleY(const float& fScaleY);
+        void GetScaleZ(float& fScaleZ);
+        void SetScaleZ(const float& fScaleZ);
+
+        // members
         Glacier::ZVector3 m_vScale;
     };
     RE_VERIFY_SIZE(ZBoxPrimitive, 0x1C); // Verified

@@ -6,7 +6,7 @@
 #include <Glacier/ZSTL/REFTAB32.h>
 #include <Glacier/Geom/ZBoxPrimitive.h>
 #include <Glacier/CBaseEvent.h>
-#include <Glacier/ZSDOwner.h>
+#include <Glacier/Audio/ZSDOwner.h>
 #include <Glacier/ZSTL/ZHash.h>
 
 #include <BloodMoney/Game/Items/EHM3ItemType.h>
@@ -118,7 +118,7 @@ namespace Hitman::BloodMoney
          *  M13         - 0x668
          *
          *  So, total size of class is 0x5E0, ZEventBase size is 0x30
-         * 
+         *
          * 21.06.26: Updated base size to 0x5D8 because base class data found in PS2 build.
          */
         float m_fHitmanDiedAt; //+0x30

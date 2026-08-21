@@ -22,23 +22,23 @@ namespace Glacier
         // methods
         ZWaterBoxManager();
 
-        // TODO: Finish me after ZWaterBox reversed
-// public: bool Exists(const ZWaterBox*);
-// public: bool Exists(unsigned int);
-// public: bool Add(ZWaterBox*);
-// public: bool Add(unsigned int);
-// public: void Remove(const ZWaterBox*);
-// public: void Remove(unsigned int);
-// public: uint32 Count();
-// public: ZWaterBox* operator[](unsigned int);
-// public: const ZWaterBox* operator[](unsigned int);
-// public: ZWaterBox* operator[](ZGEOM*);
-// public: const ZWaterBox* operator[](ZGEOM*);
-// private: ZWaterBox* Find(ZGEOM*);
-// private: ZWaterBox* Find(unsigned int);
+        uint32_t Count() const;
+        bool Exists(const ZWaterBox* pWaterBox) const;
+        bool Exists(ZREF rWaterBox) const;
+        ZWaterBox* Find(ZGEOM* pGeom) const;
+        ZWaterBox* Find(uint32_t lIndex) const;
+        bool Add(ZWaterBox* pWaterBox);
+        bool Add(ZREF rWaterBox);
+        void Remove(const ZWaterBox* pWaterBox);
+        void Remove(ZREF rWaterBox);
+
+        ZWaterBox* operator[](uint32_t lIndex);
+        ZWaterBox* operator[](ZGEOM* pGeom);
+        const ZWaterBox* operator[](uint32_t lIndex) const;
+        const ZWaterBox* operator[](ZGEOM* pGeom) const;
 
         // members
-        REFTAB32 m_WaterBoxList;
+        mutable REFTAB32 m_WaterBoxList;
     };
     RE_VERIFY_SIZE(ZWaterBoxManager, 0xBC); // Verified PC allocation
 }

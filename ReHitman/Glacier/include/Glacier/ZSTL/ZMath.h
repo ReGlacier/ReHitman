@@ -202,6 +202,15 @@ namespace Glacier
             };
         }
 
+        Matrix3x3& SetRow(int lRow, const Vector3& vRow)
+        {
+            const int idx = lRow * 3;
+            data[idx]     = vRow.x;
+            data[idx + 1] = vRow.y;
+            data[idx + 2] = vRow.z;
+            return *this;
+        }
+
         bool operator==(const Matrix3x3& with) const {
             return std::equal(std::begin(data), std::end(data), std::begin(with.data), std::end(with.data));
         }
@@ -211,7 +220,7 @@ namespace Glacier
 
         operator float*() { return &data[0]; }
         operator const float*() const { return &data[0]; }
-        
+
         Matrix3x3& operator*=(const Matrix3x3& mat)
         {
             const float zX = data[0], zY = data[1], zZ = data[2];
@@ -251,6 +260,18 @@ namespace Glacier
             data[8] = 0.0f;
 
             return *this;
+        }
+
+        Vector3& Row(int lRow)
+        {
+            assert(lRow >= 0 && lRow < 3);
+            return *reinterpret_cast<Vector3*>(data + lRow * 3);
+        }
+
+        const Vector3& Row(int lRow) const
+        {
+            assert(lRow >= 0 && lRow < 3);
+            return *reinterpret_cast<const Vector3*>(data + lRow * 3);
         }
 
         Vector3& XAxis()
@@ -711,6 +732,31 @@ namespace Glacier
     }
 
     /**
+     * @brief Builds a rotation matrix from a unit axis and an angle in degrees
+     *        (Rodrigues' formula, PC: 0x435B40).
+     *        Unlike mrotaxis2, takes the angle in degrees and computes sin/cos itself,
+     *        and the axis is passed as three separate floats instead of a pointer.
+     *        Result uses the Glacier transposed storage (rows at [6], [3], [0]).
+     */
+    inline void mrotaxis(float* pMat, float fDeg, float fAxisX, float fAxisY, float fAxisZ)
+    {
+        const float fAngle = fDeg * 0.017453292f; // deg -> rad
+        const float fSin = std::sin(fAngle);
+        const float fCos = std::cos(fAngle);
+        const float fOmCos = 1.0f - fCos;
+
+        pMat[6] = fAxisX * fAxisX * fOmCos + fCos;
+        pMat[7] = fAxisX * fAxisY * fOmCos - fAxisZ * fSin;
+        pMat[8] = fAxisX * fAxisZ * fOmCos + fAxisY * fSin;
+        pMat[3] = fAxisY * fAxisX * fOmCos + fAxisZ * fSin;
+        pMat[4] = fAxisY * fAxisY * fOmCos + fCos;
+        pMat[5] = fAxisY * fAxisZ * fOmCos - fAxisX * fSin;
+        pMat[0] = fAxisZ * fAxisX * fOmCos - fAxisY * fSin;
+        pMat[1] = fAxisZ * fAxisY * fOmCos + fAxisX * fSin;
+        pMat[2] = fAxisZ * fAxisZ * fOmCos + fCos;
+    }
+
+    /**
      * @brief Builds rotation matrix from unit axis and angle (Rodrigues' formula, PS2: mrotaxis2).
      *        Uses the Glacier transposed storage (rows at [6],[3],[0]).
      */
@@ -746,6 +792,86 @@ namespace Glacier
     inline void mmmul(float* mat, const float* b)
     {
         mmmul(mat, mat, b);
+    }
+
+    /**
+     * @brief Reset matrix to identity (PC: mreset).
+     */
+    inline void mreset(float* mat)
+    {
+        mat[7] = 0.0f;
+        mat[8] = 0.0f;
+        mat[6] = 1.0f;
+        mat[3] = 0.0f;
+        mat[4] = 1.0f;
+        mat[5] = 0.0f;
+        mat[0] = 0.0f;
+        mat[1] = 0.0f;
+        mat[2] = 1.0f;
+    }
+
+    /**
+     * @brief Transpose matrix (PC: tmat).
+     */
+    inline void tmat(float* out, const float* in)
+    {
+        ZASSERT(out != in);
+
+        out[6] = in[6];
+        out[3] = in[7];
+        out[0] = in[8];
+        out[7] = in[3];
+        out[4] = in[4];
+        out[1] = in[5];
+        out[8] = in[0];
+        out[5] = in[1];
+        out[2] = in[2];
+    }
+
+    /**
+     * @brief Convert matrix to quaternion (PC: mattoquat).
+     */
+    inline void mattoquat(float* pQuat, const float* pMat)
+    {
+        const float m00 = pMat[6];
+        const float m01 = pMat[7];
+        const float m02 = pMat[8];
+        const float m10 = pMat[3];
+        const float m11 = pMat[4];
+        const float m12 = pMat[5];
+        const float m20 = pMat[0];
+        const float m21 = pMat[1];
+        const float m22 = pMat[2];
+
+        const float trace = m00 + m11 + m22;
+        if (trace > 0.0f)
+        {
+            const float s = std::sqrt(trace + 1.0f);
+            pQuat[3] = 0.5f * s;
+            const float invS = 0.5f / s;
+            pQuat[0] = (m12 - m21) * invS;
+            pQuat[1] = (m20 - m02) * invS;
+            pQuat[2] = (m01 - m10) * invS;
+        }
+        else
+        {
+            int i = 0;
+            if (m11 > m00)
+                i = 1;
+            if (m22 > (i == 0 ? m00 : m11))
+                i = 2;
+
+            const int j = (i + 1) % 3;
+            const int k = (i + 2) % 3;
+
+            const float* m[3] = { &pMat[6], &pMat[3], &pMat[0] };
+            const float s = std::sqrt(m[i][i] - (m[j][j] + m[k][k]) + 1.0f);
+            pQuat[i] = 0.5f * s;
+            const float invS = 0.5f / s;
+            pQuat[3] = (m[j][k] - m[k][j]) * invS;
+            pQuat[j] = (m[i][j] + m[j][i]) * invS;
+            pQuat[k] = (m[i][k] + m[k][i]) * invS;
+        }
     }
 
     /**
@@ -960,6 +1086,214 @@ namespace Glacier
         vmtmul(v2, pMat);
 
         return TriangleAABBOverlap(pSize, v0, v1, v2);
+    }
+
+    inline void vneg(float* v)
+    {
+        v[0] = -v[0];
+        v[1] = -v[1];
+        v[2] = -v[2];
+    }
+
+    inline void vmuls(float* vOut, const float* pV1, const float fScalar)
+    {
+        vOut[0] = fScalar * pV1[0];
+        vOut[1] = fScalar * pV1[1];
+        vOut[2] = fScalar * pV1[2];
+    }
+
+    /**
+     * @brief Angular pull: rotates the unit vector pFrom toward the unit vector pTo
+     *        by at most fMaxAngle radians (PC: vangpul, 0x436EB0).
+     *        The result length is lerped between |pFrom| and |pTo|.
+     * @return true when the angular distance fits in fMaxAngle (result == pTo), false otherwise.
+     */
+    inline bool vangpul(float* pOut, const float* pFrom, const float* pTo, float fMaxAngle)
+    {
+        float vFrom[3];
+        float vTo[3];
+
+        const float fFromLen = vnorm(vFrom, pFrom);
+        const float fToLen = vnorm(vTo, pTo);
+
+        float fDot = vTo[0] * vFrom[0] + vTo[1] * vFrom[1] + vTo[2] * vFrom[2];
+        float fAngle;
+
+        if (fDot > 1.0f)
+        {
+            fAngle = 0.0f;
+        }
+        else if (fDot < -1.0f)
+        {
+            fAngle = 3.1415927f;
+        }
+        else
+        {
+            fAngle = std::acos(fDot);
+        }
+
+        if (fAngle <= fMaxAngle)
+        {
+            pOut[0] = pTo[0];
+            pOut[1] = pTo[1];
+            pOut[2] = pTo[2];
+            return true;
+        }
+
+        // Perpendicular component: pPerp = pTo_normalized - vFrom * dot
+        float vPerp[3] =
+        {
+            vTo[0] - vFrom[0] * fDot,
+            vTo[1] - vFrom[1] * fDot,
+            vTo[2] - vFrom[2] * fDot
+        };
+
+        if (vnorm(vPerp) < 0.00012207031f)
+        {
+            // Fallback axis perpendicular to pTo
+            float vAxis[3] = { 0.0f, 1.0f, 0.0f };
+            vcross(vPerp, vAxis, pTo);
+            vnorm(vPerp);
+        }
+
+        const float fSin = -std::sin(fMaxAngle);
+        const float fCos = std::cos(fMaxAngle);
+
+        pOut[0] = vFrom[0] * fCos + vPerp[0] * fSin;
+        pOut[1] = vFrom[1] * fCos + vPerp[1] * fSin;
+        pOut[2] = vFrom[2] * fCos + vPerp[2] * fSin;
+
+        float fScale = 0.0f;
+        if (fAngle > 0.00012207031f)
+        {
+            fScale = fMaxAngle / fAngle;
+        }
+
+        const float fLen = fScale * (fToLen - fFromLen) + fFromLen;
+        pOut[0] *= fLen;
+        pOut[1] *= fLen;
+        pOut[2] *= fLen;
+
+        return false;
+    }
+
+    /**
+     * @brief Builds a full 3x3 rotation matrix from a direction vector and an up vector
+     *        (PC: createmat, 0x437550).
+     *        The first row (Z-axis in Glacier storage) is the normalized direction.
+     *        When pvUp is null, a suitable fallback axis is chosen.
+     */
+    inline void createmat(float* pMat, const float* pvDir, const float* pvUp)
+    {
+        // Z-axis (forward): normalize direction, fallback to (0, 0, 1)
+        if (!pvDir || vnorm(&pMat[0], pvDir) < 0.00012207031f)
+        {
+            pMat[0] = 0.0f;
+            pMat[1] = 0.0f;
+            pMat[2] = 1.0f;
+        }
+
+        float vDefaultUp[3] = { 0.0f, 1.0f, 0.0f };
+        const float* pUp = pvUp;
+
+        if (pUp)
+        {
+            // When the up vector is nearly parallel to the direction, fall back to Y axis
+            if (std::fabs(vdot(pUp, &pMat[0])) > 0.99987793f)
+            {
+                pMat[0] = 0.0f;
+                pMat[1] = 1.0f;
+                pMat[2] = 0.0f;
+            }
+        }
+        else
+        {
+            // No up vector: pick Y axis, or X axis when direction is nearly parallel to Y
+            if (std::fabs(pMat[1]) > 0.99987793f)
+            {
+                vDefaultUp[0] = 1.0f;
+                vDefaultUp[1] = 0.0f;
+                vDefaultUp[2] = 0.0f;
+            }
+            pUp = vDefaultUp;
+        }
+
+        // X-axis = up x forward, Y-axis = forward x X-axis
+        vcross(&pMat[6], pUp, &pMat[0]);
+        vnorm(&pMat[6]);
+        vcross(&pMat[3], &pMat[0], &pMat[6]);
+    }
+
+    /**
+     * @brief OBB vs OBB collision test (PC: 0x437640).
+     *        Boxes are described by a rotation matrix mMat, a center vPos and half-extents.
+     *        Separating axis theorem over 15 axes (6 face + 9 edge cross products).
+     */
+    inline bool rectBoxColi(const float* mMat1, const float* vPos1, const float* a, const float* mMat2, const float* vPos2, const float* b)
+    {
+        // Box 2 axes expressed in box 1 local space.
+        float mRel[9];
+        vmtmul(&mRel[6], &mMat2[6], mMat1); // X axis
+        vmtmul(&mRel[3], &mMat2[3], mMat1); // Y axis
+        vmtmul(&mRel[0], &mMat2[0], mMat1); // Z axis
+
+        // Box 2 center relative to box 1 center, in box 1 local space.
+        float vT[3];
+        vsub(vT, vPos2, vPos1);
+        vmtmul(vT, mMat1);
+
+        constexpr float kEps = 0.000001f;
+        float mAbs[9];
+        for (int i = 0; i < 9; ++i)
+        {
+            mAbs[i] = std::fabs(mRel[i]) + kEps;
+        }
+
+        const float R00 = mAbs[0], R01 = mAbs[1], R02 = mAbs[2];
+        const float R10 = mAbs[3], R11 = mAbs[4], R12 = mAbs[5];
+        const float R20 = mAbs[6], R21 = mAbs[7], R22 = mAbs[8];
+
+        const float tx = vT[0];
+        const float ty = vT[1];
+        const float tz = vT[2];
+
+        // Box 1 face axes
+        if (R20 * b[0] + R10 * b[1] + R00 * b[2] + a[0] < std::fabs(tx))
+            return false;
+
+        // Box 2 face axes
+        if (R20 * a[0] + R21 * a[1] + R22 * a[2] + b[0] < std::fabs(tx * mRel[6] + ty * mRel[7] + tz * mRel[8]))
+            return false;
+        if (R21 * b[0] + R11 * b[1] + R01 * b[2] + a[1] < std::fabs(ty))
+            return false;
+        if (R22 * b[0] + R12 * b[1] + R02 * b[2] + a[2] < std::fabs(tz))
+            return false;
+        if (R10 * a[0] + R11 * a[1] + R12 * a[2] + b[1] < std::fabs(tx * mRel[3] + ty * mRel[4] + tz * mRel[5]))
+            return false;
+        if (R00 * a[0] + R01 * a[1] + R02 * a[2] + b[2] < std::fabs(tx * mRel[0] + ty * mRel[1] + tz * mRel[2]))
+            return false;
+
+        // Edge cross-product axes
+        if (R22 * a[1] + R21 * a[2] + R00 * b[1] + R10 * b[2] < std::fabs(tz * mRel[7] - ty * mRel[8]))
+            return false;
+        if (R12 * a[1] + R11 * a[2] + R20 * b[2] + R00 * b[0] < std::fabs(tz * mRel[4] - ty * mRel[5]))
+            return false;
+        if (R02 * a[1] + R01 * a[2] + R20 * b[1] + R10 * b[0] < std::fabs(tz * mRel[1] - ty * mRel[2]))
+            return false;
+        if (R01 * b[1] + R11 * b[2] + R20 * a[2] + R22 * a[0] < std::fabs(tx * mRel[8] - tz * mRel[6]))
+            return false;
+        if (R21 * b[2] + R10 * a[2] + R12 * a[0] + R01 * b[0] < std::fabs(tx * mRel[5] - tz * mRel[3]))
+            return false;
+        if (R21 * b[1] + R00 * a[2] + R02 * a[0] + R11 * b[0] < std::fabs(tx * mRel[2] - tz * mRel[0]))
+            return false;
+        if (R02 * b[1] + R12 * b[2] + R20 * a[1] + R21 * a[0] < std::fabs(ty * mRel[6] - tx * mRel[7]))
+            return false;
+        if (R22 * b[2] + R10 * a[1] + R11 * a[0] + R02 * b[0] < std::fabs(ty * mRel[3] - tx * mRel[4]))
+            return false;
+        if (R22 * b[1] + R00 * a[1] + R01 * a[0] + R12 * b[0] < std::fabs(ty * mRel[0] - tx * mRel[1]))
+            return false;
+
+        return true;
     }
 #   pragma endregion
 }

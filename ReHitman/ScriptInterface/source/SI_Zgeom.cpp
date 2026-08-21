@@ -1,4 +1,5 @@
 #include <SI/SI_Zgeom.h>
+#include <Glacier/Geom/ZBoxPrimitive.h>
 #include <Glacier/Geom/ZGEOM.h>
 #include <Glacier/EventBase/ZEventBase.h>
 #include <cstdio>
@@ -6,7 +7,7 @@
 
 namespace Glacier
 {
-    namespace 
+    namespace
     {
         ZGEOM* GetGeom(ZREF rGeom)
         {
@@ -29,13 +30,23 @@ namespace Glacier
 
     v3 Zgeom__Getsize(ZREF rGeom)
     {
-        // TODO: Finish me
-        return {};
+        ZVector3 vSize{};
+
+        auto* pGeom = GetGeom(rGeom);
+        if (!pGeom)
+            return vSize;
+
+        pGeom->GetSize(vSize);
+        return vSize;
     }
 
     void Zgeom__Setposition(ZREF rGeom, float x, float y, float z)
     {
-        // TODO: Finish me
+        auto* pGeom = GetGeom(rGeom);
+        if (!pGeom)
+            return;
+
+        pGeom->SetWorldPosition({ x, y, z });
     }
 
     v3 Zgeom__Getposition(ZREF rGeom)
@@ -43,7 +54,7 @@ namespace Glacier
         auto* pGeom = GetGeom(rGeom);
         if (!pGeom)
             return v3 { 0.f, 0.f, 0.f };
-       
+
         Glacier::ZVector3 vWorldPos {};
         pGeom->GetWorldPosition(vWorldPos);
         return v3 { vWorldPos.x, vWorldPos.y, vWorldPos.z };
@@ -51,35 +62,76 @@ namespace Glacier
 
     void Zgeom__Getlocalpoint(ZREF rGeom, v3& point)
     {
-        // TODO: Finish me
+        auto* pGeom = GetGeom(rGeom);
+        if (!pGeom)
+            return;
+
+        pGeom->GetLocalPoint(point);
     }
 
     void Zgeom__Getposdir(ZREF rGeom, v3& position, v3& direction)
     {
-        // TODO: Finish me
+        auto* pGeom = GetGeom(rGeom);
+        if (!pGeom)
+        {
+            direction = { 0.0f, 0.0f, 1.0f };
+            position = { 0.0f, 0.0f, 0.0f };
+            return;
+        }
+
+        ZMat3x3 mMat;
+
+        pGeom->GetRootTM(mMat, position);
+        direction = mMat.Row(0);
     }
 
     void Zgeom__Setposdir(ZREF rGeom, v3& position, v3& direction)
     {
-        // TODO: Finish me
+        auto* pGeom = GetGeom(rGeom);
+        if (!pGeom) // || !pGeom->IsDerivedFrom<ZActor>()
+            return;
+
+        ZVector3 vUp { 0.0f, 1.0f, 0.0f };
+        ZMat3x3 mMat;
+        createmat(mMat, direction, vUp);
+
+        pGeom->SetRootTM(mMat, position);
     }
 
-    bool Zgeom__Getclosestposdirinbox(ZREF rBox, ZREF rGeom, ZREF rTarget, float radius, v3& position, v3& direction)
+    bool Zgeom__Getclosestposdirinbox(ZREF rBox, ZREF rGeom, ZREF rTarget, float edgeDist, v3& position, v3& direction)
     {
-        // TODO: Finish me
-        return false;
+        std::ignore = rBox; // unused
+
+        auto* pBox = ref_cast<ZBoxPrimitive>(rGeom);
+        auto* pTarget = GetGeom(rTarget);
+
+        if (!pTarget || !pBox || !pTarget->IsDerivedFrom<ZGEOM>())
+            return false;
+
+        ZVector3 vTarget, vLocalPoint;
+        pTarget->GetRootPoint(vTarget);
+        pBox->GetLocalPoint(vLocalPoint);
+
+        return pBox->GetClosestPosDirInBox(vTarget, edgeDist, position, direction);
     }
 
     float Zgeom__Getdistancetoobject(ZREF rGeom, ZREF rTarget)
     {
-        // TODO: Finish me
-        return 0.0f;
+        auto* pGeom = GetGeom(rGeom);
+        auto* pTarget = GetGeom(rTarget);
+        if (!pGeom || !pTarget)
+            return 0.0f;
+
+        return pGeom->GetDistanceToObject(pTarget);
     }
 
     float Zgeom__Getdistancetopos(ZREF rGeom, v3 position)
     {
-        // TODO: Finish me
-        return 0.0f;
+        auto* pGeom = GetGeom(rGeom);
+        if (!pGeom)
+            return 0.0f;
+
+        return pGeom->GetDistanceToPos(position);
     }
 
     bool Zgeom__Hascontroller(ZREF rGeom, const char* controllerName)
@@ -93,7 +145,7 @@ namespace Glacier
     ZREF Zgeom__Getcontroller(ZREF rGeom, const char* controllerName)
     {
         auto* pGeom = GetGeom(rGeom);
-        if (!pGeom) 
+        if (!pGeom)
             return 0;
 
         auto* pEvent = pGeom->FindEvent(controllerName);
@@ -105,41 +157,87 @@ namespace Glacier
 
     float Zgeom__Getangletoobject(ZREF rGeom, ZREF rTarget)
     {
-        // TODO: Finish me
-        return 0.0f;
+        auto* pGeom = GetGeom(rGeom);
+        if (!pGeom)
+            return 0;
+
+        return pGeom->GetAngleToObject(rTarget);
     }
 
     float Zgeom__Getangletodir(ZREF rGeom, v3 direction)
     {
-        // TODO: Finish me
-        return 0.0f;
+        auto* pGeom = GetGeom(rGeom);
+        if (!pGeom)
+            return 0.0f;
+
+        return pGeom->GetAngleToDir(direction);
     }
 
     float Zgeom__Getangletogeomdir(ZREF rGeom, ZREF rTarget)
     {
-        // TODO: Finish me
-        return 0.0f;
+        auto* pGeom = GetGeom(rGeom);
+        if (!pGeom)
+            return 0.0f;
+
+        return pGeom->GetAngleToGeomDir(rTarget);
     }
 
     void Zgeom__Copyobjectposdir(ZREF rGeom, ZREF rTarget)
     {
-        // TODO: Finish me
+        auto* pGeom = GetGeom(rGeom);
+        auto* pTarget = GetGeom(rTarget);
+        if (!pGeom || !pTarget)
+            return;
+
+        ZVector3 vPos;
+        ZMat3x3 mMat;
+
+        pTarget->GetRootTM(mMat, vPos);
+        pGeom->SetRootTM(mMat, vPos);
     }
 
     void Zgeom__Copyobjectpos(ZREF rGeom, ZREF rTarget)
     {
-        // TODO: Finish me
+        auto* pGeom = GetGeom(rGeom);
+        auto* pTarget = GetGeom(rTarget);
+        if (!pGeom || !pTarget)
+            return;
+
+        ZVector3 vTarget, vGeom;
+        ZMat3x3 mTarget, mGeom;
+
+        pTarget->GetRootTM(mTarget, vTarget);
+        pGeom->GetRootTM(mGeom, vGeom);
+
+        pGeom->SetRootTM(mGeom, vTarget);
     }
 
     void Zgeom__Copyobjectdir(ZREF rGeom, ZREF rTarget)
     {
-        // TODO: Finish me
+        auto* pGeom = GetGeom(rGeom);
+        auto* pTarget = GetGeom(rTarget);
+        if (!pGeom || !pTarget)
+            return;
+
+        ZVector3 vTarget, vGeom;
+        ZMat3x3 mTarget, mGeom;
+
+        pTarget->GetRootTM(mTarget, vTarget);
+        pGeom->GetRootTM(mGeom, vGeom);
+
+        pGeom->SetRootTM(mTarget, vGeom);
     }
 
     v3 Zgeom__Getobjectrelpos(ZREF rGeom, float x, float y, float z)
     {
-        // TODO: Finish me
-        return {};
+        ZVector3 vPos;
+        auto* pGeom = GetGeom(rGeom);
+        if (pGeom)
+        {
+            pGeom->GetRootPoint(vPos);
+        }
+
+        return vPos;
     }
 
     bool Zgeom__Checkworldpointinside(ZREF rGeom, v3 worldPosition)

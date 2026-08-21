@@ -5,32 +5,35 @@
 
 namespace Glacier
 {
+    // fwds
     struct SRecurseInfoCompiled;
-    
+    struct SFastBoxColiTri;
+    struct SCapsuleColiInfo;
+
     struct ZCommonAlgorithms
     {
         /**
          * @brief Performs a highly optimized 3D ray / line segment intersection test against an Axis-Aligned Bounding Box (AABB).
-         * 
-         * @details This function implements a variant of the classic slab-based ray-box intersection algorithm originally 
+         *
+         * @details This function implements a variant of the classic slab-based ray-box intersection algorithm originally
          * proposed by Kay and Kajiya [1] and further optimized for computing the entry parameter \f$t\f$ by Brian Smits [2].
-         * It determines whether a directed finite line segment (defined by a start point and a direction/end vector) 
+         * It determines whether a directed finite line segment (defined by a start point and a direction/end vector)
          * intersects the given AABB within the normalized time/distance interval \f$[0.0, 1.0]\f$.
-         * 
+         *
          * **Algorithmic Steps:**
          * 1. **Early-Out In-Box Test:** Instantly returns `true` with `pOutT = 0.0f` if the segment's starting point lies entirely inside the AABB.
          * 2. **Slab Intersection:** Computes the near intersection parameter \f$t\f$ for the $X$, $Y$, and $Z$ parallel slab planes.
          * 3. **Interval Consolidation:** Finds the maximum \f$t\f$ value (\f$t_{max}\f$), which represents the actual point of entry into the 3D volume.
          * 4. **Boundary Validation:** Validates the computed hit point against the other two orthogonal dimensions to ensure it lands on the actual box face.
          * 5. **Segment Range Check:** Returns `true` only if \f$t_{max}\f$ falls within the valid range of the finite segment \f$[0.0, 1.0]\f$.
-         * 
+         *
          * @note Original engine source location: `engine/zstdlib/extpolymath.cpp`.
          * @note Contains a diagnostic `ZASSERT` to enforce structurally valid bounding boxes (\f$min \le max\f$).
-         * 
+         *
          * **References:**
          * - [1] Kay, T. L., & Kajiya, J. T. (1986). *Ray tracing complex scenes*. In ACM SIGGRAPH Computer Graphics (Vol. 20, No. 4, pp. 269-278).
          * - [2] Smits, B. (1998). *Efficiency issues for ray tracing*. Journal of Graphics Tools, 3(2), 1-14.
-         * 
+         *
          * @param[in]  fMinX    Minimum X-coordinate boundary of the AABB.
          * @param[in]  fMinY    Minimum Y-coordinate boundary of the AABB.
          * @param[in]  fMinZ    Minimum Z-coordinate boundary of the AABB.
@@ -44,7 +47,7 @@ namespace Glacier
          * @param[in]  fLineVecY Y-component of the segment's direction/length vector (End.y - Start.y).
          * @param[in]  fLineVecZ Z-component of the segment's direction/length vector (End.z - Start.z).
          * @param[out] pOutT     Pointer to a float where the intersection parameter \f$t \in [0.0, 1.0]\f$ will be stored if a hit occurs.
-         * 
+         *
          * @return `true` if the line segment intersects the AABB; otherwise, `false`.
          */
         static bool LineVS_AABB(float fMinX, float fMinY, float fMinZ,
@@ -56,7 +59,7 @@ namespace Glacier
         /**
          * @brief Fast 2D line segment vs AABB intersection test on the XZ plane.
          * @details Used for rapid quadtree node pruning during ray casting.
-         * 
+         *
          * @param fMinX   Minimum X boundary of the 2D node.
          * @param fMinZ   Minimum Z boundary of the 2D node.
          * @param fMaxX   Maximum X boundary of the 2D node.
@@ -66,15 +69,15 @@ namespace Glacier
          * @return true if the 2D segment intersects the node bounds within t in [0.0, 1.0].
          */
         static bool Line2D_VS_AABB(
-            float fMinX, float fMinZ, 
-            float fMaxX, float fMaxZ, 
-            SRecurseInfoCompiled* pInfo, 
+            float fMinX, float fMinZ,
+            float fMaxX, float fMaxZ,
+            SRecurseInfoCompiled* pInfo,
             float* pOutT);
 
 
-        static bool LineVS_AAbox(const Vector3& vStart, const Vector3& vDir, const Vector3& vMin, 
-                                 const Vector3& vMax, 
-                                 float& fOutT, 
+        static bool LineVS_AAbox(const Vector3& vStart, const Vector3& vDir, const Vector3& vMin,
+                                 const Vector3& vMax,
+                                 float& fOutT,
                                  float fMaxT);
 
         static int CapsuleSphereCollision(ZVector3& vDir, float& fLen, const ZVector3& vp0, const ZVector3& cp1, const float& cr, const ZVector3& sc, const float& sr);
@@ -214,5 +217,149 @@ namespace Glacier
          * @return `true` if the point lies inside the triangle (edges inclusive); otherwise, `false`.
          */
         static bool CheckCutInside(const float *vertexptr, const float *pn, const float *cp);
+
+        /**
+         * @brief Projects a sphere center out of a half-space defined by a plane.
+         *
+         * @details Displaces the sphere center along @p vPushDir by @p fPenetrationDepth
+         *          to resolve a collision with the plane. Simultaneously produces a
+         *          correction direction in @p vDir: if @p vPushDir and @p vDesiredNormal
+         *          are in opposing hemispheres (dot product < 0), the correction is
+         *          zeroed out; otherwise it equals @p vDesiredNormal.
+         *
+         *          The resulting center is computed as:
+         *          \f[ \mathbf{c}_{\text{out}} = \mathbf{c}_{\text{in}} + \mathbf{n}_{\text{push}} \cdot d \f]
+         *
+         * @note Used in sphere–plane collision resolution (PolySphColl pipeline) to
+         *       push a penetrating sphere back along the contact normal and expose
+         *       the effective response direction for subsequent impulse calculation.
+         *
+         * @param[out] vCenResult          Displaced sphere center after projection (3 floats).
+         * @param[in]  vSrcCenter          Original sphere center (3 floats).
+         * @param[out] vDir                Effective correction direction: equals @p vDesiredNormal
+         *                                 if \f$\mathbf{n}_{\text{push}} \cdot \mathbf{n}_{\text{desired}} \geq 0\f$,
+         *                                 otherwise zero (3 floats).
+         * @param[in]  vDesiredNormal      Desired response normal; compared against @p vPushDir
+         *                                 to gate the correction (3 floats).
+         * @param[in]  vPushDir            Plane normal / push direction along which the center is
+         *                                 displaced (3 floats).
+         * @param[in]  fPenetrationDepth   Scalar displacement magnitude (typically
+         *                                 \f$r - \hat{\mathbf{n}}\cdot\mathbf{c}\f$ or equivalent).
+         */
+        static void ProjectSphereOutFromPlane(float* vCenResult, const float* vSrcCenter, float* vDir, const float* vDesiredNormal, const float* vPushDir, float fPenetrationDepth);
+
+        /**
+         * @brief Tests whether a capsule (swept-sphere segment) collides with a precompiled triangle (PC: 0x581E70).
+         *
+         * @details Clips the capsule segment against the triangle plane and its three edge
+         *          perpendicular planes, then resolves the closest feature (face, edge, or vertex)
+         *          and reports the contact in @p rResult.
+         *
+         * @param[in]  vCap0      Capsule segment start point (3 floats).
+         * @param[in]  vCap1      Capsule segment end point (3 floats).
+         * @param[in]  fRadius    Capsule radius.
+         * @param[in]  pTriangle  Precompiled triangle (SFastBoxColiTri).
+         * @param[out] rResult    Collision result: contact normal (vDir), segment parameter (t0), and scaled distance (fScaledDist).
+         *
+         * @return `true` if the capsule intersects the triangle; otherwise, `false`.
+         */
+        static bool CollideCapsuleAndTriangle(const float (&vCap0)[3], const float (&vCap1)[3], float fRadius, const SFastBoxColiTri* pTriangle, SCapsuleColiInfo& rResult);
+
+        /**
+         * @brief Computes the shortest distance between two line segments (PC: 0x5832A0).
+         *
+         * @details Solves for the closest-point pair on the two infinite lines, clamps the
+         *          parameters to the segments, and falls back to point-vs-segment tests when a
+         *          parameter lies outside [0, 1].
+         *
+         * @param[in]  a1       First segment start point (3 floats).
+         * @param[in]  a2       First segment end point (3 floats).
+         * @param[in]  b1       Second segment start point (3 floats).
+         * @param[in]  b2       Second segment end point (3 floats).
+         * @param[out] s        Parameter of the closest point on the first segment [0, 1].
+         * @param[out] t        Parameter of the closest point on the second segment [0, 1].
+         * @param[in]  fMinDist Minimum distance threshold.
+         * @param[out] fDist    Output distance between the closest points.
+         * @param[out] vDir     Output normalized direction from the closest point on the second segment toward the first.
+         *
+         * @return `true` if the distance is within fMinDist; otherwise, `false`.
+         */
+        static bool DistLineLineVar(
+            const float* const a1,
+            const float* const a2,
+            const float* const b1,
+            const float* const b2,
+            float& s,
+            float& t,
+            float& fMinDist,
+            float& fDist,
+            float* vDir);
+
+        /**
+         * @brief Computes the distance from a point to a line segment (PC: 0x582FF0).
+         *
+         * @details Rejects the query when the point's projection falls outside the segment
+         *          (before the start or beyond the end), unlike DistPointLineVar2 which clamps.
+         *
+         * @param[in]  b1       Point to test (3 floats).
+         * @param[in]  a1       Line segment start (3 floats).
+         * @param[in]  a2       Line segment end (3 floats).
+         * @param[out] s        Output parameter of the closest point on the segment [0, 1].
+         * @param[in]  fMinDist Minimum distance threshold.
+         * @param[out] fDist    Output distance to the segment.
+         * @param[out] vDir     Output normalized direction from the point toward the closest point on the segment.
+         *
+         * @return `true` if the projection is within the segment and the distance is within fMinDist; otherwise, `false`.
+         */
+        static bool DistPointLineVar(
+            const float* const b1,
+            const float* const a1,
+            const float* a2,
+            float& s,
+            float& fMinDist,
+            float& fDist,
+            float* vDir);
+
+        /**
+         * @brief Computes the distance from a point to a line segment, clamping the projection (PC: 0x583140).
+         *
+         * @details Clamps the closest point to the segment endpoints when the point's projection
+         *          lies outside [0, 1].
+         *
+         * @param[in]  a1       Point to test (3 floats).
+         * @param[in]  b1       Line segment start (3 floats).
+         * @param[in]  b2       Line segment end (3 floats).
+         * @param[out] t        Output parameter of the closest point on the segment [0, 1].
+         * @param[in]  fMinDist Minimum distance threshold.
+         * @param[out] fDist    Output distance to the segment.
+         * @param[out] vDir     Output normalized direction from the closest point on the segment toward the point.
+         *
+         * @return `true` if the distance is within fMinDist; otherwise, `false`.
+         */
+        static bool DistPointLineVar2(
+            const float* const a1,
+            const float* const b1,
+            const float* const b2,
+            float& t,
+            float& fMinDist,
+            float& fDist,
+            float* vDir
+        );
+
+        /**
+         * @brief Resolves a capsule-triangle collision by pulling the capsule endpoints out of the triangle (PC: 0x583540).
+         *
+         * @details Displaces the two capsule endpoints along the contact normal (weighted by the
+         *          segment parameter t0) so the weighted contact point stays fixed, then damps the
+         *          outgoing normal and tangential velocity of the endpoints. The contact normal in
+         *          @p sColiInfo is normalized in-place.
+         *
+         * @param[in,out] vCap0     Capsule segment start point (3 floats).
+         * @param[in,out] vCap1     Capsule segment end point (3 floats).
+         * @param[in,out] vVel0     Velocity of the segment start point (3 floats).
+         * @param[in,out] vVel1     Velocity of the segment end point (3 floats).
+         * @param[in,out] sColiInfo Collision result: contact normal (vDir), segment parameter (t0), and scaled distance (fScaledDist).
+         */
+        static void PullTriangleCyl2(float* vCap0, float* vCap1, float* vVel0, float* vVel1, SCapsuleColiInfo& sColiInfo);
     };
 }

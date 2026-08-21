@@ -5,6 +5,7 @@
 #include <Glacier/Glacier.h>
 #include <Glacier/ZSTL/zstring.h>
 #include <Glacier/ZSTL/ZArray.h>
+#include <Glacier/Physics/SBodyGMR.h>
 
 #include <BloodMoney/Game/LevelControls/ESecurityZone.h>
 #include <BloodMoney/Game/Actions/EHM3Action.h>
@@ -34,7 +35,7 @@ namespace Hitman::BloodMoney
         eHideSide = 3,
     };
 
-    struct SCombineItems 
+    struct SCombineItems
     {
         EHM3ItemType m_eItemType1;
         EHM3ItemType m_eItemType2;
@@ -42,7 +43,7 @@ namespace Hitman::BloodMoney
     };
     RE_VERIFY_SIZE(SCombineItems, 0xC);
 
-    struct SNearEnemy 
+    struct SNearEnemy
     {
         ZHM3Actor* m_pActor;
         float      m_fDistance;
@@ -52,7 +53,7 @@ namespace Hitman::BloodMoney
     };
     RE_VERIFY_SIZE(SNearEnemy, 0x10);
 
-    struct SDualWeapons 
+    struct SDualWeapons
     {
         ZHM3ItemTemplateWeapon* m_pTemplate;
         ZHM3ItemWeapon* m_pRight;
@@ -62,7 +63,7 @@ namespace Hitman::BloodMoney
     };
     RE_VERIFY_SIZE(SDualWeapons, 0x14);
 
-    struct SRailInfo 
+    struct SRailInfo
     {
         Glacier::ZGEOM* pRailGeom;
         Glacier::ZVector3 vP1;
@@ -95,12 +96,12 @@ namespace Hitman::BloodMoney
 		Glacier::ZGROUP* m_pWeaponsGroup;
 	};
 	RE_VERIFY_SIZE(ZHM3Inventory, 0xC);
-	
-	class ZHM3InputControl 
+
+	class ZHM3InputControl
 	{
     public:
         // types
-        struct MoveFlags 
+        struct MoveFlags
         {
             uint16_t m_bLeanLeft : 1;
             uint16_t m_bLeanRight : 1;
@@ -113,14 +114,14 @@ namespace Hitman::BloodMoney
             uint16_t m_bRun : 1;
         };
 
-        struct WeaponFlags 
+        struct WeaponFlags
         {
             uint8_t m_bFire : 1;
             uint8_t m_bFire2 : 1;
             uint8_t m_bReload : 1;
         };
 
-        struct CameraFlags 
+        struct CameraFlags
         {
             uint8_t m_bToggleCamera;
             uint8_t m_bCameraZoomIn;
@@ -150,13 +151,13 @@ namespace Hitman::BloodMoney
 	};
 	RE_VERIFY_SIZE(ZHM3InputControl, 0x1C);
 
-	class ZHM3MovementControl 
+	class ZHM3MovementControl
     {
     public:
         // vtbl
         virtual void LoadObject(Glacier::IInputSerializerStream& stream);
         virtual void SaveObject(Glacier::IOutputSerializerStream& stream);
-        
+
         // members
         bool m_bDisableMovement;
         RE_ADD_PADDING(3);
@@ -178,7 +179,7 @@ namespace Hitman::BloodMoney
     };
     RE_VERIFY_SIZE(ZHM3MovementControl, 0x48);
 
-    class ZHM3SegmentedLineColi 
+    class ZHM3SegmentedLineColi
     {
     public:
         Glacier::TIMETYPE m_fColiUpdateTime;
@@ -198,7 +199,7 @@ namespace Hitman::BloodMoney
     };
     RE_VERIFY_SIZE(ZHM3SegmentedLineColi, 0x4C);
 
-    class ZHM3WeaponsControl 
+    class ZHM3WeaponsControl
     {
     public:
         // vtbl
@@ -226,13 +227,13 @@ namespace Hitman::BloodMoney
             uint16_t m_bEnableWeaponUse : 1;
         };
 
-        struct DualActionFlags 
+        struct DualActionFlags
         {
             unsigned char m_bDualActionEnabled : 1;
             unsigned char m_bDualActionAutoEnabled : 1;
         };
 
-        struct WeaponInfo 
+        struct WeaponInfo
         {
             Glacier::ZLNKOBJ* m_pGround;
             Glacier::Animation::Header* m_pAnimReloadWeapon;
@@ -293,23 +294,12 @@ namespace Hitman::BloodMoney
     };
     RE_VERIFY_SIZE(SAccessoryGeom, 0x8);
 
-    struct SBodyGMR
-    {
-        Glacier::ZVector3 dir;
-        Glacier::ZVector3 target;
-        float radius;
-        bool grabbing;
-        uint16_t par;
-        float strained;
-    };
-    RE_VERIFY_SIZE(SBodyGMR, 0x24);
-
-	/*
+    /*
 		Inheritance tree:
-		ZHitman3: 
+		ZHitman3:
 			ZPlayer -> ZLNKWHANDS -> ZCTRLIKLNKOBJ -> ZIKLNKOBJ -> ZLNKOBJ -> ZSTDOBJ -> ZGEOM -> RTP::cBase -> ZSerializable -> ZSerializableBase
 			ZHM3InputControl
-			ZHM3MovementControl 
+			ZHM3MovementControl
 			ZHM3WeaponsControl
 			ZHM3Inventory
 			ZHM3ActionControl
@@ -652,7 +642,7 @@ namespace Hitman::BloodMoney
         int8_t m_DontAnimateAttachers;
         int8_t m_pad4AB;
         ZGEOM* m_pGrab;
-        SBodyGMR m_GrabData;
+        Glacier::SBodyGMR m_GrabData;
         int32_t m_BoneGrabIndex;
         ZHM3Actor* m_pEscort;
         bool m_bFireTargetCallBackWait;
