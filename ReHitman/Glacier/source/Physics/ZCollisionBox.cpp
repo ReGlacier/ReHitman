@@ -18,7 +18,6 @@ namespace Glacier
         m_pMemBuffer = nullptr;
         m_lMemBufferSize = 0;
         m_bLocked = false;
-        DebugInit();
     }
 
     void ZCollisionBox::SetMemBuffer(char* pBuffer, uint32_t uiSize)
@@ -419,9 +418,9 @@ namespace Glacier
         do
         {
             vset(pfOut,
-                 g_pSysInterface->FRand(const_cast<char*>(__FILE__), __LINE__) - 0.5f,
-                 g_pSysInterface->FRand(const_cast<char*>(__FILE__), __LINE__) - 0.5f,
-                 g_pSysInterface->FRand(const_cast<char*>(__FILE__), __LINE__) - 0.5f);
+                 g_pSysInterface->FRand(nullptr, 0) - 0.5f,
+                 g_pSysInterface->FRand(nullptr, 0) - 0.5f,
+                 g_pSysInterface->FRand(nullptr, 0) - 0.5f);
             fLength = vlen(pfOut);
         } while (fLength < 0.000001f);
 
@@ -509,10 +508,5 @@ namespace Glacier
     void ZCollisionBox::GetLocalVect(float* pfOut, const float* pfVect) const
     {
         vmtmul(pfOut, pfVect, m_mBoxMatrix.data);
-    }
-
-    void ZCollisionBox::DebugInit()
-    {
-        // TODO: Reset g_lTriangleHandleCount / g_lBoxHandleCount after collision debug globals will be reversed
     }
 }

@@ -361,5 +361,32 @@ namespace Glacier
          * @param[in,out] sColiInfo Collision result: contact normal (vDir), segment parameter (t0), and scaled distance (fScaledDist).
          */
         static void PullTriangleCyl2(float* vCap0, float* vCap1, float* vVel0, float* vVel1, SCapsuleColiInfo& sColiInfo);
+
+        /**
+         * @brief Computes the distance from a point to the surface of an axis-aligned box centered at the origin (PC: 0x00428A80).
+         *
+         * @details The box is defined by its half-extents @p s0 and is centered at the origin. The
+         *          function first derives the signed per-axis separation between the point and the box
+         *          boundary:
+         *          \f[
+         *              d_x = |p_x| - s_x, \qquad d_y = |p_y| - s_y, \qquad d_z = |p_z| - s_z,
+         *          \f]
+         *          where a negative component indicates that the point lies inside the box along that
+         *          axis. The returned value is the Euclidean length of the positive separations only,
+         *          i.e. \f$\sqrt{\max(d_x,0)^2 + \max(d_y,0)^2 + \max(d_z,0)^2}\f$, which is the exact
+         *          distance to the closest point on the box surface for any point outside the box. As an
+         *          intentional quirk inherited from the original engine, a point that is inside the box on
+         *          every axis is special-cased to return the (negative) Y separation @f$d_y\f$ rather than
+         *          zero.
+         *
+         * @note Original engine source location: `engine/zstdlib/extpolymath.cpp`.
+         *
+         * @param[in] p0 Point position (3 floats).
+         * @param[in] s0 Box half-extents (3 floats).
+         *
+         * @return The distance from the point to the box surface; if the point is fully inside the box,
+         *         the negative Y-axis penetration @f$d_y\f$.
+         */
+        static float DistanceBoxAndPoint(const float* p0, const float* s0);
     };
 }

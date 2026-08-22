@@ -250,6 +250,49 @@ TEST_F(REFTABTest, DestructorCleansUpMemory)
     SUCCEED(); 
 }
 
+TEST_F(REFTABTest, IteratorEraseRemovesAndRepositions)
+{
+    pReftab->Add(10);
+    pReftab->Add(0);
+    pReftab->Add(30);
+    pReftab->Add(40);
+
+    for (auto it = pReftab->As<uint32_t>().begin(); it != pReftab->As<uint32_t>().end();)
+    {
+        if (*it == 0)
+            it.Erase();
+        else
+            ++it;
+    }
+
+    EXPECT_EQ(pReftab->EleCount, 3);
+
+    std::vector<uint32_t> values;
+    for (auto value : *pReftab)
+        values.push_back(value);
+
+    ASSERT_EQ(values.size(), 3);
+    EXPECT_EQ(values[0], 10);
+    EXPECT_EQ(values[1], 40);
+    EXPECT_EQ(values[2], 30);
+}
+
+TEST_F(REFTABTest, IteratorEraseAllLeavesEmpty)
+{
+    pReftab->Add(0);
+    pReftab->Add(0);
+    pReftab->Add(0);
+
+    for (auto it = pReftab->As<uint32_t>().begin(); it != pReftab->As<uint32_t>().end();)
+    {
+        it.Erase();
+    }
+
+    EXPECT_EQ(pReftab->EleCount, 0);
+    EXPECT_EQ(pReftab->TabFirstPtr, nullptr);
+    EXPECT_EQ(pReftab->TabBlockPtr, nullptr);
+}
+
 TEST_F(REFTABTest, RangeBasedForLoop) 
 {
     REFTAB reftab{4,3};

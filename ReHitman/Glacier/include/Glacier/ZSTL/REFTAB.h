@@ -5,6 +5,7 @@
 #include <Glacier/Glacier.h>
 #include <Glacier/GlacierFWD.h>
 #include <Glacier/ReGlacier.h>
+#include <Glacier/ZUniAssert.h>
 
 namespace Glacier
 {
@@ -179,6 +180,25 @@ namespace Glacier
 
             Iterator& operator++() 
             {
+                Advance();
+                return *this;
+            }
+
+            /**
+             * @brief Erases the element the iterator currently points to.
+             *
+             * @details
+             * Mirrors the engine's `RunDelRef` semantics: the last element of the
+             * container is memcpy'd into the erased slot, so this method leaves the
+             * iterator positioned on the element that replaced the erased one (which
+             * is why the caller must NOT increment again after calling Erase).
+             *
+             * @return Reference to *this, advanced to the replacement element.
+             */
+            Iterator& Erase() 
+            {
+                ZASSERT(m_pCurrentPtr != nullptr);
+                m_pContainer->RunDelRef(&m_Run);
                 Advance();
                 return *this;
             }

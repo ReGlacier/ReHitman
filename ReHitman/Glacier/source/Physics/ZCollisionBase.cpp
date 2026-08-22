@@ -146,7 +146,7 @@ namespace Glacier
             {
                 return false;
             }
-            
+
             pData->fResT = pData->pImpact->fPercent;
             return true;
         }
@@ -165,13 +165,13 @@ namespace Glacier
             pMemBuffer->m_pBaseGeom = pData->pBaseGeom;
 
             char* pStripVerticesMemBuffer = pData->pCollisionBase->GetStripVerticesFromId(
-                pMemBuffer, 
-                pStripInfo, 
+                pMemBuffer,
+                pStripInfo,
                 pData->lColiMask,
                 pData->mBaseGeomToBox,
                 pData->vBaseGeomToBox,
                 pData->vBoxDimensions);
-            
+
             ZASSERT(pStripVerticesMemBuffer < pData->pMemBufferEnd);
             if (pStripVerticesMemBuffer == pData->pMemBuffer)
             {
@@ -381,7 +381,7 @@ namespace Glacier
         if (bCheckStatic)
         {
             ZROOM* aRooms[MAX_ROOMS_NR] { nullptr };
-            
+
             const uint32_t lRooms = GetRoomsLst(aRooms, &aRooms[256], m_pRoomColiTree, mMat, vCen, vSize);
             const uint32_t lRoomsCount = std::min(MAX_ROOMS_NR, lRooms);
             for (uint32_t i = 0; i < lRoomsCount; ++i)
@@ -409,7 +409,7 @@ namespace Glacier
 
         if (bCheckStatic)
         {
-            lCount = pTreeGroup->GetStaticGeomsInBound(pGeomList, pGeomListEnd, eGTT, mMat, vCen, vSize, GeomConMask, bExact);        
+            lCount = pTreeGroup->GetStaticGeomsInBound(pGeomList, pGeomListEnd, eGTT, mMat, vCen, vSize, GeomConMask, bExact);
         }
 
         if (bCheckDynamic)
@@ -488,7 +488,7 @@ namespace Glacier
         {
             return false;
         }
-        
+
         auto* pQuadtree = pTreeGroup->GetDynamicTreePtr();
         if (!pQuadtree)
         {
@@ -502,7 +502,7 @@ namespace Glacier
         sGetRT.pGeomListEnd = &m_GeomList[MAX_GEOMS_NR];
 
         ZVector3 vA {};
-        vmmul(vA, vP, vD);
+        vadd(vA, vP, vD);
 
         pQuadtree->CheckLinesegment(&sGetRT, vP, vA);
         bool bResult = false;
@@ -525,8 +525,28 @@ namespace Glacier
                 {
                     const ZLNKOBJ* pLnkObj = geom_cast<ZLNKOBJ>(pGeom);
 
-                    // pLnkObj->m_pBoneModify->                    
-                    // TODO: Finish me
+                    if (auto* pBoneModify = pLnkObj->GetBoneModifier())
+                    {
+                        ZMat3x3 mBone;
+                        ZVector3 vBone;
+
+                        pBoneModify->GetBoneMatPos(mBone, vBone, Impact->m_BoneId, pLnkObj);
+
+                        vsub(vBone, Impact->vPosition);
+
+                        createmat(mBone.data, vBone, nullptr);
+
+                        Impact->vP1 = Impact->vPosition;
+                        vadd(Impact->vP2, Impact->vPosition, &mBone.data[6]);
+                        vadd(Impact->vP3, Impact->vPosition, &mBone.data[6]);
+                        vadd(Impact->vP3, &mBone.data[3]);
+                    }
+                    else
+                    {
+                        Impact->vP1 = {};
+                        Impact->vP2 = { 1.f, 0.f, 0.f };
+                        Impact->vP3 = { 1.f, 1.f, 0.f };
+                    }
                 }
             }
         }

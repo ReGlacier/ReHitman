@@ -72,9 +72,6 @@ namespace Glacier
         void GetRootVect(float* pfOut, const float* pfVect) const;
         void GetLocalVect(float* pfOut, const float* pfVect) const;
 
-    protected:
-        void DebugInit();
-
     public:
         // members
         ZREF m_rContactGeom;

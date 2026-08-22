@@ -1053,4 +1053,41 @@ namespace Glacier
         vaddscalar(vVel0, vVel0, vTangentVel.Get(), -fW0 * fTanPush * fInvDenom);
         vaddscalar(vVel1, vVel1, vTangentVel.Get(), -fW1 * fTanPush * fInvDenom);
     }
+
+    float ZCommonAlgorithms::DistanceBoxAndPoint(const float* p0, const float* s0)
+    {
+        const float fDx = fabsf(p0[0]) - s0[0];
+        const float fDy = fabsf(p0[1]) - s0[1];
+        const float fDz = fabsf(p0[2]) - s0[2];
+
+        if (fDx >= 0.0f)
+        {
+            if (fDy >= 0.0f)
+            {
+                if (fDz >= 0.0f)
+                {
+                    return sqrtf(fDx * fDx + fDy * fDy + fDz * fDz);
+                }
+                return sqrtf(fDx * fDx + fDy * fDy);
+            }
+
+            if (fDz >= 0.0f)
+            {
+                return sqrtf(fDx * fDx + fDz * fDz);
+            }
+
+            return fDx;
+        }
+
+        if (fDz >= 0.0f)
+        {
+            if (fDy >= 0.0f)
+            {
+                return sqrtf(fDy * fDy + fDz * fDz);
+            }
+            return fDz;
+        }
+
+        return fDy;
+    }
 }

@@ -94,7 +94,7 @@ namespace Glacier
         return 1;
     }
 
-    void ZBoneModifyBase::GetIKBone(const ZBone* pBones, const float* pConvBones, uint32_t lBoneIndex, Matrix3x3& mMat, Vector3& vPos)
+    void ZBoneModifyBase::GetIKBone(const ZBone* pBones, const float* pConvBones, uint32_t lBoneIndex, Matrix3x3& mMat, Vector3& vPos) const
     {
         const auto& bone = pBones[lBoneIndex];
         const auto& mConvMat = reinterpret_cast<const Matrix3x3*>(pConvBones)[lBoneIndex];
@@ -124,7 +124,7 @@ namespace Glacier
         return m_pRagdoll ? &m_pRagdoll->m_ColiInfo : nullptr;
     }
 
-    void ZBoneModifyBase::GetBoneMatPos(ZMat3x3& mMat, ZVector3& vPos, uint32_t lBoneIdx, const ZLNKOBJ* pLnkObj)
+    void ZBoneModifyBase::GetBoneMatPos(ZMat3x3& mMat, ZVector3& vPos, uint32_t lBoneIdx, const ZLNKOBJ* pLnkObj) const
     {
         ZBone bone {};
 
@@ -136,7 +136,7 @@ namespace Glacier
         }
     }
 
-    bool ZBoneModifyBase::GetIKBoneMatPos(ZMat3x3& mMat, ZVector3& vPos, uint8_t lIndex, const ZLNKOBJ* pLnkObj, ZBone* pBone)
+    bool ZBoneModifyBase::GetIKBoneMatPos(ZMat3x3& mMat, ZVector3& vPos, uint8_t lIndex, const ZLNKOBJ* pLnkObj, ZBone* pBone) const
     {
         if (lIndex > m_lNumActiveBones)
         {

@@ -6,41 +6,46 @@
 #include <Glacier/ZSTL/ZMath.h>
 #include <Glacier/Geom/ZGROUP.h>
 #include <Glacier/Items/ITEMSTATE.h>
+#include <cstdint>
+
 
 namespace Glacier
 {
     class ZItem : public ZGROUP
     {
     public:
-        // vftable
+        // vtbl
         virtual void CreateFromTemplate();
         virtual void GetItemRootTM(float *,float *);
         virtual void GetMainItemRootTM(float *,float *);
         virtual void GetState();
         virtual void SetState(ITEMSTATE, CCom*);
-        virtual void Place(float const*, float const*);
-        virtual void SetMain(uint);
+        virtual void Place(const ZMat3x3& mMat, const ZVector3& vPos);
+        virtual void SetMain(uint32_t);
         virtual void GetMain();
-        virtual void GetMainMatPos(float *,float *,uint);
+        virtual void GetMainMatPos(float *,float *,uint32_t);
         virtual void SetItemTemplate(Glacier::ZREF itemTemplateRef);
         virtual ZItemTemplate* GetItemTemplate();
         virtual void VerifyItemTemplate(ZItemTemplate const*);
-        virtual void SetItemOwner(uint,ZGROUP *,bool,bool);
+        virtual void SetItemOwner(uint32_t,ZGROUP *,bool,bool);
         virtual void GetItemOwner();
-        virtual void GetAction(uint);
+        virtual void GetAction(uint32_t);
         virtual void* InitPickup();
         virtual void EnablePickup(bool);
         virtual void OnMoved();
         virtual void OnMoving();
         virtual void Delete();
-        virtual void Clear(uint);
+        virtual void Clear(uint32_t);
         virtual ZGEOM* GetMarkedGeom(char const*);
         virtual void AddActivate(ZItemState *,float);
-        virtual void AddDeactivate(uint, float);
+        virtual void AddDeactivate(uint32_t, float);
         virtual void UpdateActivate();
         virtual void UpdateDeactivate();
 
-        // data (total size is 0x84, ZGROUP size is 0x4C)
+        // methods
+        bool IsNew() const { return m_NewItem; }
+
+        // members
         ITEMSTATE m_lCurrentState;
         uint32_t m_rItemTemplate;
         bool m_bVisibleToNPCs;

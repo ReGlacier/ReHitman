@@ -3,13 +3,15 @@
 #include <Glacier/GlacierFWD.h>
 #include <Glacier/ReGlacier.h>
 #include <Glacier/Geom/ZGROUP.h>
+#include <Glacier/Items/ITEMSTATE.h>
+
 
 namespace Glacier
 {
     enum ITEMHANDS : uint32_t {
-        eIH_NONE = 0, 
+        IH_NONE = 0,
         IH_ONEHANDED = 1,
-        IH_TWOHANDED = 2, 
+        IH_TWOHANDED = 2,
         IH_FORCE32 = 2147483647u
     };
 
@@ -26,25 +28,25 @@ namespace Glacier
         static constexpr uint32_t kItemGroupId = 0x4954454D;
 
         // vftable
-        virtual ZItem* CreateItem(ZGROUP*, unsigned int, bool bOverrideVisibleForNPC, bool bVisibleForNPC);
+        virtual ZItem* CreateItem(ZGROUP* pGroup, unsigned int, bool bOverrideVisibleForNPC, bool bVisibleForNPC);
         virtual ZItem* CreateItemAndActuallyUseDestinationParameter(ZGROUP* group, unsigned int, bool isVisibleForNPC, bool);
-        virtual int GetItemClassId();
+        virtual uint32_t GetItemClassId() const;
         virtual void StateNotify(ZGEOM*, int);
-        virtual void SetStates(CCom*);
-        virtual void ModifyState(CCom*);
-        virtual void SetStateGeometry(ZItem*, ZGEOM*);
-        virtual REFTAB* GetAvailableStates();
-        virtual ITEMSTATE* GetStates();
-        virtual bool CheckStateExists(ITEMSTATE, const char* );
-        virtual void FindStateGeoms(REFTAB* reftab, ITEMSTATE, const char* stateName);
-        virtual void FindMainState(REFTAB* reftab);
-        virtual void GetItemHands();
+        virtual void SetStates(CCom* pCom);
+        virtual void ModifyState(CCom* pCom);
+        virtual void SetStateGeometry(ZItem* pItem, ZGEOM* pGeom);
+        virtual REFTAB* GetAvailableStates() const;
+        virtual REFTAB* GetStates() const;
+        virtual bool CheckStateExists(ITEMSTATE eState, const char* );
+        virtual void FindStateGeoms(REFTAB* pRefTab, ITEMSTATE eState, const char* pszStateName);
+        virtual void FindMainState(REFTAB* pRefTab);
+        virtual ITEMHANDS GetItemHands() const;
         virtual void SetItemHands(ITEMHANDS);
-        virtual int GetItemSize();
-        virtual ZGEOM* GetMainPos();
-        virtual ZGEOM* GetCenterPos();
-        virtual ZGEOM* GetCameraPos();
-        virtual void* GetMaterial();
+        virtual ITEMSIZE GetItemSize() const;
+        virtual ZGEOM* GetMainPos() const;
+        virtual ZGEOM* GetCenterPos() const;
+        virtual ZGEOM* GetCameraPos() const;
+        virtual uint32_t GetMaterial() const;
 
         // data (total size is 0x74, ZGROUP size is 0x4C)
         ITEMHANDS m_eItemHands;

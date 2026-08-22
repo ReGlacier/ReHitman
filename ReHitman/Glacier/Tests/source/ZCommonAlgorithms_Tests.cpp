@@ -959,3 +959,114 @@ TEST(ZCommonAlgorithms, CollideCapsuleAndTriangle_Miss)
 
     EXPECT_FALSE(ZCommonAlgorithms::CollideCapsuleAndTriangle(cap0, cap1, radius, &tri, result));
 }
+
+// -----------------------------------------------------------------------------
+// DistanceBoxAndPoint (point vs axis-aligned box centered at the origin)
+// -----------------------------------------------------------------------------
+
+TEST(ZCommonAlgorithms, DistanceBoxAndPoint_InsideBox)
+{
+    // Point inside the box on every axis returns the (negative) Y separation.
+    const float point[3] = { 0.5f, 0.5f, 0.5f };
+    const float halfExtents[3] = { 1.0f, 1.0f, 1.0f };
+
+    EXPECT_TRUE(FloatNear(ZCommonAlgorithms::DistanceBoxAndPoint(point, halfExtents), -0.5f));
+}
+
+TEST(ZCommonAlgorithms, DistanceBoxAndPoint_AtOrigin)
+{
+    const float point[3] = { 0.0f, 0.0f, 0.0f };
+    const float halfExtents[3] = { 1.0f, 1.0f, 1.0f };
+
+    EXPECT_TRUE(FloatNear(ZCommonAlgorithms::DistanceBoxAndPoint(point, halfExtents), -1.0f));
+}
+
+TEST(ZCommonAlgorithms, DistanceBoxAndPoint_OnPositiveXFace)
+{
+    // On the +X face: dx == 0, dy/dz negative -> returns 0.0f.
+    const float point[3] = { 1.0f, 0.0f, 0.0f };
+    const float halfExtents[3] = { 1.0f, 1.0f, 1.0f };
+
+    EXPECT_TRUE(FloatNear(ZCommonAlgorithms::DistanceBoxAndPoint(point, halfExtents), 0.0f));
+}
+
+TEST(ZCommonAlgorithms, DistanceBoxAndPoint_OutsideCorner)
+{
+    // Outside on all three axes -> sqrt(dx^2 + dy^2 + dz^2) = sqrt(3).
+    const float point[3] = { 2.0f, 2.0f, 2.0f };
+    const float halfExtents[3] = { 1.0f, 1.0f, 1.0f };
+
+    EXPECT_TRUE(FloatNear(ZCommonAlgorithms::DistanceBoxAndPoint(point, halfExtents), 1.7320508f));
+}
+
+TEST(ZCommonAlgorithms, DistanceBoxAndPoint_OutsideSingleAxis)
+{
+    // Outside only along X -> returns dx.
+    const float point[3] = { 3.0f, 0.0f, 0.0f };
+    const float halfExtents[3] = { 1.0f, 1.0f, 1.0f };
+
+    EXPECT_TRUE(FloatNear(ZCommonAlgorithms::DistanceBoxAndPoint(point, halfExtents), 2.0f));
+}
+
+TEST(ZCommonAlgorithms, DistanceBoxAndPoint_OutsideTwoAxesXY)
+{
+    // Outside along X and Y, inside along Z -> sqrt(dx^2 + dy^2).
+    const float point[3] = { 2.0f, 2.0f, 0.0f };
+    const float halfExtents[3] = { 1.0f, 1.0f, 1.0f };
+
+    EXPECT_TRUE(FloatNear(ZCommonAlgorithms::DistanceBoxAndPoint(point, halfExtents), 1.41421356f));
+}
+
+TEST(ZCommonAlgorithms, DistanceBoxAndPoint_OutsideTwoAxesXZ)
+{
+    // Outside along X and Z, inside along Y -> sqrt(dx^2 + dz^2).
+    const float point[3] = { 2.0f, 0.0f, 2.0f };
+    const float halfExtents[3] = { 1.0f, 1.0f, 1.0f };
+
+    EXPECT_TRUE(FloatNear(ZCommonAlgorithms::DistanceBoxAndPoint(point, halfExtents), 1.41421356f));
+}
+
+TEST(ZCommonAlgorithms, DistanceBoxAndPoint_OutsideTwoAxesYZ)
+{
+    // Outside along Y and Z, inside along X -> sqrt(dy^2 + dz^2).
+    const float point[3] = { 0.0f, 2.0f, 2.0f };
+    const float halfExtents[3] = { 1.0f, 1.0f, 1.0f };
+
+    EXPECT_TRUE(FloatNear(ZCommonAlgorithms::DistanceBoxAndPoint(point, halfExtents), 1.41421356f));
+}
+
+TEST(ZCommonAlgorithms, DistanceBoxAndPoint_OutsideYOnly)
+{
+    // Outside only along Y -> returns dy.
+    const float point[3] = { 0.0f, 2.0f, 0.0f };
+    const float halfExtents[3] = { 1.0f, 1.0f, 1.0f };
+
+    EXPECT_TRUE(FloatNear(ZCommonAlgorithms::DistanceBoxAndPoint(point, halfExtents), 1.0f));
+}
+
+TEST(ZCommonAlgorithms, DistanceBoxAndPoint_OutsideZOnly)
+{
+    // Outside only along Z -> returns dz.
+    const float point[3] = { 0.0f, 0.0f, 2.0f };
+    const float halfExtents[3] = { 1.0f, 1.0f, 1.0f };
+
+    EXPECT_TRUE(FloatNear(ZCommonAlgorithms::DistanceBoxAndPoint(point, halfExtents), 1.0f));
+}
+
+TEST(ZCommonAlgorithms, DistanceBoxAndPoint_NonSymmetricBox)
+{
+    // Non-uniform half-extents: each axis separation is exactly 1 -> sqrt(3).
+    const float point[3] = { 2.0f, 3.0f, 4.0f };
+    const float halfExtents[3] = { 1.0f, 2.0f, 3.0f };
+
+    EXPECT_TRUE(FloatNear(ZCommonAlgorithms::DistanceBoxAndPoint(point, halfExtents), 1.7320508f));
+}
+
+TEST(ZCommonAlgorithms, DistanceBoxAndPoint_NegativeCoordinates)
+{
+    // The box is symmetric about the origin; negative coordinates behave identically.
+    const float point[3] = { -2.0f, -2.0f, -2.0f };
+    const float halfExtents[3] = { 1.0f, 1.0f, 1.0f };
+
+    EXPECT_TRUE(FloatNear(ZCommonAlgorithms::DistanceBoxAndPoint(point, halfExtents), 1.7320508f));
+}

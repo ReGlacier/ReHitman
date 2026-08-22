@@ -140,6 +140,11 @@ namespace Glacier
                 DetachFromDynamicContainer(nullptr);
                 FreeRoomList();
             }
+
+            if (ZGROUP* pParentGroup = ParentGroup())
+            {
+                pParentGroup->DetachGeom(this, true);
+            }
         }
 
         if (Control() & ZCHASDYNAMICPARENT)
@@ -220,10 +225,16 @@ namespace Glacier
 
     ZGROUP* ZBaseGeom::ParentGroup() const
     {
-        ZASSERT(Parent()->GetGeom());
-        ZASSERT(Parent()->IsDerivedFrom<ZGROUP>());
+        ZBaseGeom* pParent = Parent();
+        if (pParent)
+        {
+            ZASSERT(pParent->GetGeom());
+            ZASSERT(pParent->IsDerivedFrom<ZGROUP>());
 
-        return reinterpret_cast<ZGROUP*>(Parent()->GetGeom());
+            return reinterpret_cast<ZGROUP*>(pParent->GetGeom());
+        }
+
+        return nullptr;
     }
 
     ZROOM* ZBaseGeom::GetOwnerRoom() const

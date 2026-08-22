@@ -3,6 +3,7 @@
 #include <Glacier/ReGlacier.h>
 #include <Glacier/ZSTL/ZMath.h>
 #include <Glacier/IK/ZTARGET.h>
+#include <Glacier/Items/ZItemTemplate.h>
 
 
 namespace Glacier
@@ -15,28 +16,39 @@ namespace Glacier
 
     struct SHandInfo
     {
-        uint32_t m_rItem;
-        bool m_bIKItemEnabled;
-        bool m_pad5[3];
+        // methods
+        SHandInfo();
+
+        void LoadSave(ISerializerStream& stream, bool bSaving);
+
+        // members
+        uint32_t m_rItem{ 0 };
+        bool m_bIKItemEnabled{ false };
+        RE_ADD_PADDING(3);
     };
     RE_VERIFY_SIZE(SHandInfo, 0x8);
 
     class ZIKHAND : public ZTARGET
     {
     public:
-        virtual void LoadSave(ZPackedInput*, bool);
-        virtual void AttachItem(ZIKLNKOBJ* owner, Glacier::ZREF itemID);
-        virtual void SlipItem(ZIKLNKOBJ* owner);
-        virtual ZItem* GetItem();
-        virtual ZItemTemplate* GetItemType();
+        // vtbl
+        void LoadSave(ZLNKOBJ* pLnkObj, ISerializerStream& stream, bool bSaving) override;
+        virtual void AttachItem(ZIKLNKOBJ* pLnkObj, ZREF rItem);
+        virtual void SlipItem(ZIKLNKOBJ* pLnkObj);
+        virtual ZItem* GetItem() const;
+        virtual ITEMHANDS GetItemType() const;
         virtual void Reset();
-        virtual void SetTarget(ZIKLNKOBJ* owner, const Matrix4x4* transform, const Vector3* point, float veliocity, void* callback);
+        virtual void SetTarget(ZIKLNKOBJ* pLnkObj, const ZMat3x3& mMat, const ZVector3& vPos, float fTime, ZIKCALLBACK CallBack);
+
+        // methods
+        ZIKHAND(uint32_t lBoneId);
+        void PlaceItem(ZIKLNKOBJ* pLnkObj, ZItem* _pItem);
 
         // data
         SHandInfo m_HandInfo;
         unsigned int m_lBoneId;
         Glacier::ZVector3 m_vItemOffset;
-        uint16_t m_msgInventorySetActive;
+        ZMSGID m_msgInventorySetActive;
         uint8_t m_pad2[6];
     };
     RE_VERIFY_SIZE(ZIKHAND, 0x80); // Verified for PC

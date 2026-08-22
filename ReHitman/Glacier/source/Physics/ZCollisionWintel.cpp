@@ -24,11 +24,11 @@ namespace Glacier
         // TODO: Finish me
         return false;
     }
-    
+
     bool ZCollisionWintel::CheckSphereCollision(uint32_t lPrim, uint8_t lColiMask, const float* vSpherePosition, const float* vSphereMatrix, const float* vSphereDimensions)
     {
         // TODO: Finish me
-        return false;        
+        return false;
     }
 
     void ZCollisionWintel::CreateSubStripId(STempStripsUniqueId* pDst, const STempStripsUniqueId* pSrc, const uint32_t lCount)
@@ -64,17 +64,17 @@ namespace Glacier
         // TODO: Finish me
         return false;
     }
-    
+
     void ZCollisionWintel::GetStripVerticesStrip(ZRawStrip* pRawStrips, const SPrimStripsWintel* pStrips, const STempStripsUniqueId* pId, const float* m0, float const* p0, float const* s0, bool bDirection, uint32_t lEntryNr, uint32_t lStripLength)
     {
         // TODO: Finish me
-    } 
+    }
 
     void ZCollisionWintel::GetStripVerticesObject(ZRawStrip* pRawStrips, SPrimObjectHeader* pPrimHeader, const STempStripsUniqueId* pId, const float* m0, const float* p0, const float* s0)
     {
-        // TODO: Finish me
+        ZASSERT(false); // Original assert
     }
-    
+
     void ZCollisionWintel::GetStripVerticesMesh(ZRawStrip* pRawStrips,uint32_t,ZPrimAccessMesh* pPrimAccess, const STempStripsUniqueId* pId, const float* m0, const float* p0, const float* s0)
     {
         // TODO: Finish me
