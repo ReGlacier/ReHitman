@@ -13,7 +13,7 @@
 #include <G1ConfigurationService.h>
 #include <cassert>
 
-namespace Glacier 
+namespace Glacier
 {
     void ISerializerStream::Exchange(const ZToken token, ZEventBase& data)
     {
@@ -23,7 +23,7 @@ namespace Glacier
         ExchangeFooter(propertyType);
     }
 
-    void* ZEventBase::operator new(std::size_t size) 
+    void* ZEventBase::operator new(std::size_t size)
     {
         auto* pEvent = ZEventBuffer::Instance().AllocEventRam(size);
         ZASSERT(pEvent);
@@ -31,10 +31,10 @@ namespace Glacier
         return pEvent;
     }
 
-    void ZEventBase::operator delete(void* ptr) noexcept 
+    void ZEventBase::operator delete(void* ptr) noexcept
     {
         printf("%s:%d Attempted manual delete!\n", __FILE__, __LINE__);
-        ZASSERT(false);
+        ZSAFE_ASSERT(false);
     }
 
     ZEventBase* ZEventBase::RefToPtr(ZREF rRef)
@@ -91,22 +91,22 @@ namespace Glacier
         return PRIORITY_Normal;
     }
 
-    void ZEventBase::Init() 
+    void ZEventBase::Init()
     {
         // Do nothing
     }
 
-    void ZEventBase::Init2() 
+    void ZEventBase::Init2()
     {
         // Do nothing
     }
 
-    void ZEventBase::PostInit() 
+    void ZEventBase::PostInit()
     {
         // Do nothing
     }
 
-    void ZEventBase::PostInit2() 
+    void ZEventBase::PostInit2()
     {
         // Do nothing
     }
@@ -122,12 +122,12 @@ namespace Glacier
         return nullptr;
     }
 
-    void ZEventBase::ExpandBounds(ZMat3x3& mMat, ZVector3& vCen, ZVector3& vSize, ZBaseGeom* pBaseGeom) 
+    void ZEventBase::ExpandBounds(ZMat3x3& mMat, ZVector3& vCen, ZVector3& vSize, ZBaseGeom* pBaseGeom)
     {
         // Do nothing
     }
 
-    void ZEventBase::PreSaveGame() 
+    void ZEventBase::PreSaveGame()
     {
         // Do nothing
     }
@@ -136,8 +136,8 @@ namespace Glacier
     {
         // Do nothing
     }
-    
-    void ZEventBase::CheckPointSave(ZCheckPointBuffer&) 
+
+    void ZEventBase::CheckPointSave(ZCheckPointBuffer&)
     {
         // Do nothing
     }
@@ -151,12 +151,12 @@ namespace Glacier
         // Do nothing
     }
 
-    void ZEventBase::TimeUpdate() 
+    void ZEventBase::TimeUpdate()
     {
         // Do nothing
     }
-    
-    void ZEventBase::FrameUpdate() 
+
+    void ZEventBase::FrameUpdate()
     {
         // Do nothing
     }
@@ -171,28 +171,28 @@ namespace Glacier
         return 0;
     }
 
-    void ZEventBase::End() 
+    void ZEventBase::End()
     {
         // Do nothing
     }
 
-    void ZEventBase::EditorCommand(ZMSGID command, ZDATA args) 
+    void ZEventBase::EditorCommand(ZMSGID command, ZDATA args)
     {
         // Do nothing, but original game contains weird print "INEDITOR"
         printf("engine/geomsbase/baseevent.h:247 | INEDITOR\n");
     }
 
-    void ZEventBase::Remove() 
+    void ZEventBase::Remove()
     {
         ChangeStatus(EStatus::STATUS_Remove, false);
     }
 
-    void ZEventBase::SchedUpdate() 
+    void ZEventBase::SchedUpdate()
     {
         // Do nothing
     }
 
-    void ZEventBase::ActivateFrameUpdate(bool run_when_pause) 
+    void ZEventBase::ActivateFrameUpdate(bool run_when_pause)
     {
         uint32_t iMask = m_lRoutCases | 0x100;
 
@@ -212,13 +212,13 @@ namespace Glacier
         ChangeEventActivity();
     }
 
-    void ZEventBase::DeactivateFrameUpdate() 
+    void ZEventBase::DeactivateFrameUpdate()
     {
         m_lRoutCases &= ~0x10;
         ChangeEventActivity();
     }
 
-    void ZEventBase::ChangeEventActivity() 
+    void ZEventBase::ChangeEventActivity()
     {
         uint32_t lRoutCases = m_lRoutCases;
 
@@ -262,7 +262,7 @@ namespace Glacier
         m_lEventLists = (m_lEventLists & ~0x1018u) | (lRoutCases & 0x1018u);
     }
 
-    void ZEventBase::ActivateTimeUpdate(float timer_interval) 
+    void ZEventBase::ActivateTimeUpdate(float timer_interval)
     {
         if (timer_interval > 0.0f)
         {
@@ -433,8 +433,8 @@ namespace Glacier
         else
         {
             MYSTR sGeomFullName = m_pBaseGeom->CalcTotalName(true);
-            printf("IMPORTANT: Trying to call event %s on geom %s when event has not been initialized yet or has been deleted.  Needs to be fixed!!!", 
-                EventName(), 
+            printf("IMPORTANT: Trying to call event %s on geom %s when event has not been initialized yet or has been deleted.  Needs to be fixed!!!",
+                EventName(),
                 sGeomFullName.String);
         }
 

@@ -323,7 +323,7 @@ namespace Glacier
         return m_uListID & 0xFFFFFFu;
     }
 
-    ZBaseGeom* ZBaseGeom::Next()
+    ZBaseGeom* ZBaseGeom::Next() const
     {
         return m_iNext ? ZGeomBuffer::Instance().BaseGeomBufferPtr() + m_iNext - 1 : nullptr;
     }
@@ -333,7 +333,7 @@ namespace Glacier
         m_iNext = next ? static_cast<uint16_t>(next - ZGeomBuffer::Instance().BaseGeomBufferPtr() + 1) : 0;
     }
 
-    ZBaseGeom* ZBaseGeom::GetPrev()
+    ZBaseGeom* ZBaseGeom::GetPrev() const
     {
         return m_iPrev ? ZGeomBuffer::Instance().BaseGeomBufferPtr() + m_iPrev - 1 : nullptr;
     }
@@ -1511,6 +1511,25 @@ namespace Glacier
         ZASSERT(Control() & ZCHASDYNAMICPARENT);
 
         m_iDynamicParentNr = pParent ? static_cast<uint16_t>(pParent - ZGeomBuffer::Instance().BaseGeomBufferPtr() + 1) : 0;
+    }
+
+void ZBaseGeom::RemoveDynamicParent()
+    {
+        if (Control() & ZCHASDYNAMICPARENT)
+        {
+            m_iRoomListNr = 0;
+            m_lControl &= ~ZCHASDYNAMICPARENT;
+        }
+
+        if (IsDerivedFrom<ZGROUP>())
+        {
+            auto* pGroup = static_cast<ZGROUP*>(GetGeom());
+
+            for (auto* pChild = pGroup->m_pGroupFirst; pChild; pChild = pChild->Next())
+            {
+                pChild->RemoveDynamicParent();
+            }
+        }
     }
 
     void ZBaseGeom::SetAutoRoomAssign(bool bAutoAssign)

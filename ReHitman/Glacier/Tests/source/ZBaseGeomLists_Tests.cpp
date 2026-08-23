@@ -43,6 +43,9 @@ namespace
 
         void TearDown() override
         {
+            for (auto* geom : Geoms)
+                geom->m_pParent = nullptr;
+
             for (auto it = Geoms.rbegin(); it != Geoms.rend(); ++it)
                 delete *it;
 

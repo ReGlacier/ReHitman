@@ -34,6 +34,80 @@ namespace Glacier
         static void* s_pRenderEntryFactoryList = nullptr; // PC: dword_8EC158
     }
 
+    ZRenderDraw::ZRenderEntryMap::ZRenderEntryMap()
+    {
+        // Reset entries data
+        m_Entries = {};
+
+        // Fill default entries
+        for (int i = ENTRIES_NR - 1; i != -1; --i)
+        {
+            m_Entries.GetEntry(i)->m_lIndentifier = i;
+        }
+
+        // Cleanup hash entries
+        memset(&m_HashToFirst, 0, sizeof(uint32_t*) * HASH_BUCKETS_NR);
+    }
+
+
+    bool ZRenderDraw::ZRenderEntryMap::Add(uint32_t lIdentifier, ZRenderEntry* pEntry)
+    {
+        if (m_Entries.Count() == ENTRIES_NR)
+            return false;
+
+        auto* pInserted = m_Entries.Add();
+        pInserted->m_lIndentifier = lIdentifier;
+        pInserted->m_pRenderEntry = pEntry;
+
+        const uint32_t lHash = HashOfIdentifier(lIdentifier);
+
+        pInserted->m_pNext = m_HashToFirst[lHash];
+        m_HashToFirst[lHash] = pInserted;
+
+        return true;
+    }
+
+    ZRenderEntry* ZRenderDraw::ZRenderEntryMap::GetAndRemove(uint32_t lIdentifier)
+    {
+        const uint32_t lHash = HashOfIdentifier(lIdentifier);
+
+        // LUT #0
+        auto* pEntry = m_HashToFirst[lHash];
+        if (!pEntry)
+            return nullptr;
+
+        // Fix collisions? Select bucket
+        ZRenderDraw::ZRenderEntryMap::ZEntry* pFound = nullptr;
+        while (pEntry->m_lIndentifier != lIdentifier)
+        {
+            pFound = pEntry;
+            pEntry = pEntry->m_pNext;
+            if (!pEntry)
+                return nullptr;
+        }
+
+        if (pFound)
+        {
+            pFound->m_pNext = pEntry->m_pNext;
+        }
+        else
+        {
+            m_HashToFirst[lHash] = pEntry->m_pNext;
+        }
+
+        // Push the slot back onto the entries free-list.
+        // PC 0x473EA0: reads m_lFirstFreeEntry, decrements m_lCount, chains the slot
+        // via its low word and stores its index as the new free-list head.
+        m_Entries.Remove(pEntry);
+
+        return pEntry->m_pRenderEntry;
+    }
+
+    uint32_t ZRenderDraw::ZRenderEntryMap::HashOfIdentifier(uint32_t lIdentifier)
+    {
+        return (lIdentifier >> 2u) & 0x3FCu;
+    }
+
     ZRenderDraw::ZRenderDraw()
         : ZRenderDrawBase()
         , m_DecalMarks()

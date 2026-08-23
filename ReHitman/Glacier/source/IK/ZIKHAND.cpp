@@ -35,12 +35,12 @@ namespace Glacier
         stream.ExchangeArray("m_vItemOffset", m_vItemOffset, 3);
     }
 
-    void ZIKHAND::AttachItem(ZIKLNKOBJ* pLnkObj, ZREF rItem)
+    ZREF ZIKHAND::AttachItem(ZIKLNKOBJ* pLnkObj, ZREF rItem)
     {
         if (rItem && rItem == m_HandInfo.m_rItem)
         {
             ZERROR("NOTIFY: ZIKHAND::AttachItem tried to attach same item twice!");
-            return;
+            return m_HandInfo.m_rItem;
         }
 
         auto* pItem = reinterpret_cast<ZItem*>(ZGEOM::RefToPtr(rItem));
@@ -57,11 +57,33 @@ namespace Glacier
             pItem->GetMainMatPos(mItemMat, vItemPos, m_lBoneId);
             pLnkObj->AttachBaseGeomToBone(pItem->BaseGeom(), m_lBoneId, mItemMat, vItemPos);
             pItem->BaseGeom()->SetOwnerDraw(true);
-            // TODO: Finish me
+        }
+        else
+        {
+            auto* pDetachItem = reinterpret_cast<ZItem*>(ZGEOM::RefToPtr(m_HandInfo.m_rItem));
+            if (pDetachItem)
+            {
+                pLnkObj->DetachBaseGeomFromBone(pDetachItem->BaseGeom(), m_lBoneId);
+                pDetachItem->BaseGeom()->SetOwnerDraw(false);
+                PlaceItem(pLnkObj, pDetachItem);
+                m_HandInfo.m_bIKItemEnabled = false;
+                rItem = 0;
+            }
+            else
+            {
+                ZASSERT(!m_HandInfo.m_bIKItemEnabled);
+                return 0;
+            }
         }
 
-        // TODO: Finish me
-        ZASSERT(!m_HandInfo.m_bIKItemEnabled);
+        if (rItem)
+            pLnkObj->ClassCommand(m_msgInventorySetActive, reinterpret_cast<void*>(rItem));
+        else
+            pLnkObj->ClassCommand(m_msgInventorySetActive, reinterpret_cast<void*>(2));
+
+        const ZREF oldRef = m_HandInfo.m_rItem;
+        m_HandInfo.m_rItem = rItem;
+        return oldRef;
     }
 
     void ZIKHAND::SlipItem(ZIKLNKOBJ* pLnkObj)

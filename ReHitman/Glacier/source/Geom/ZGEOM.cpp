@@ -83,6 +83,19 @@ namespace Glacier
         }
     }
 
+    void ISerializerStream::Exchange(const ZToken token, ZGEOM& data)
+    {
+        const EPropertyType propertyType = GetPropertyType(static_cast<ZSerializable&>(data));
+        ExchangeHeader(token, propertyType);
+        ExchangeData(&data);
+        ExchangeFooter(propertyType);
+    }
+
+    void ISerializerStream::Exchange(const char* psName, ZGEOM& data)
+    {
+        Exchange(GetToken(psName), data);
+    }
+
     const char* g_pGeomName = nullptr;
     ZBaseGeom* g_pBaseGeom = nullptr;
 
@@ -1945,7 +1958,7 @@ namespace Glacier
             .m_Node {
                 .m_Next = NamespaceItem_3515,
                 .m_Name = "Matrix",
-                .m_Filter = 1
+                .m_Filter = 5
             },
             .m_VirtualTable = VirtualTable_VP__28,
             .m_Get = &ZGEOM::GetMatrix,

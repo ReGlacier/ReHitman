@@ -4,7 +4,8 @@
 #include <Glacier/ReGlacier.h>
 
 namespace Glacier {
-    class ZLIGHT : public ZGEOM {
+    class ZLIGHT : public ZGEOM
+    {
     public:
         STATIC_CLASS_VAR(ZLIGHT, uint32_t, m_Id);
         STATIC_CLASS_VAR(ZLIGHT, uint32_t, m_Mask);

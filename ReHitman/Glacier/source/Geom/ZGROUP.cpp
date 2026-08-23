@@ -1,17 +1,92 @@
-#include <Glacier/Geom/ZGROUP.h>
-#include <Glacier/Geom/ZGEOM.h>
+#include <Glacier/Geom/ZGeomListTypeUtils.h>
 #include <Glacier/Geom/ZGeomBuffer.h>
+#include <Glacier/Geom/ZTreeGroup.h>
+#include <Glacier/Geom/ZBOUND.h>
+#include <Glacier/Geom/ZGROUP.h>
+#include <Glacier/Geom/ZROOM.h>
+#include <Glacier/Geom/ZGEOM.h>
+#include <Glacier/Geom/ZLIGHT.h>
+#include <Glacier/Serializer/ISerializerStream.h>
 #include <Glacier/Physics/ZCommonAlgorithms.h>
 #include <Glacier/ZSTL/REFTAB.h>
 #include <Glacier/System/ZSysInterface.h>
 #include <Glacier/ZEngineDataBase.h>
 #include <Glacier/RTP/VirtualTables.h>
 #include <Glacier/Runtime/Macro.h>
-
-#include <G1ConfigurationService.h>
-
-#include <cassert>
+#include <Glacier/Render/ZRender.h>
 #include <cstring>
+
+
+namespace
+{
+    int GetDiffByMask(const char* str, const char* mask)
+    {
+        if (!*mask)
+            return 0;
+
+        const char* pStr = str;
+        const char* pMask = mask;
+
+        while (*pMask)
+        {
+            while (*pMask != '*')
+            {
+                const char* pNextStar = strchr(pMask, '*');
+                if (!pNextStar)
+                    return _stricmp(pMask, pStr);
+
+                const ptrdiff_t nLen = pNextStar - pMask;
+                if (_memicmp(pMask, pStr, nLen))
+                    return -1;
+
+                pStr += nLen;
+                pMask = pNextStar;
+            }
+
+            ++pMask;
+
+            if (!*pMask)
+                return 0;
+
+            const char* pNextStar = strchr(pMask, '*');
+            if (pNextStar)
+            {
+                const ptrdiff_t nSegLen = pNextStar - pMask;
+                if (nSegLen == 0)
+                    return 0;
+
+                const size_t strLen = strlen(pStr);
+                if (static_cast<ptrdiff_t>(strLen) < nSegLen)
+                    return -1;
+
+                const char* pSearch = pStr;
+                ptrdiff_t n = 0;
+                while (_memicmp(pMask, pSearch, nSegLen))
+                {
+                    ++n;
+                    ++pSearch;
+                    if (n == static_cast<ptrdiff_t>(strLen - nSegLen + 1))
+                        return -1;
+                }
+
+                pMask = pNextStar;
+                pStr = pSearch;
+            }
+            else
+            {
+                const size_t strLen = strlen(pStr);
+                const size_t maskLen = strlen(pMask);
+                if (strLen >= maskLen)
+                    return _stricmp(pStr + strLen - maskLen, pMask);
+                else
+                    return 1;
+            }
+        }
+
+        return 0;
+    }
+}
+
 
 namespace Glacier
 {
@@ -47,7 +122,91 @@ namespace Glacier
 
     void ZGROUP::LoadSave(ISerializerStream& stream, bool bSaving)
     {
-        // TODO: Finish me
+        if (bSaving)
+        {
+            uint32_t lEntriesNr = 0u;
+            for (auto* pBaseGeom = m_pGroupFirst; pBaseGeom; pBaseGeom = pBaseGeom->Next())
+                ++lEntriesNr;
+
+            stream.ExchangeContainer("REFs", lEntriesNr);
+
+            auto* paREFs = (ZREF*)alloca(sizeof(ZREF) * lEntriesNr);
+            auto* pCurrentREF = paREFs;
+            for (auto* pBaseGeom = m_pGroupFirst; pBaseGeom; pBaseGeom = pBaseGeom->Next())
+                *(pCurrentREF++) = ZGeomBuffer::Instance().GeomPtrToRef(pBaseGeom);
+
+            stream.ExchangeArray("REFs", paREFs, lEntriesNr);
+            ZGEOM::LoadSave(stream, bSaving);
+
+            for (auto* base_geom = m_pGroupFirst; base_geom; base_geom = base_geom->Next())
+            {
+                ZASSERT(base_geom->GetGeom() && base_geom->GetGeom()->BaseGeom() == base_geom);
+
+                auto* pGeom = base_geom->GetGeom();
+                stream.Exchange(pGeom->Name(), *pGeom);
+            }
+        }
+        else
+        {
+            uint32_t lSavedCount = 0u;
+            stream.ExchangeContainer("REFs", lSavedCount);
+
+            auto* paSavedRefs = (ZREF*)alloca(sizeof(ZREF) * lSavedCount);
+            stream.ExchangeArray("REFs", paSavedRefs, lSavedCount);
+
+            uint32_t lCurrentCount = 0u;
+            for (auto* pBaseGeom = m_pGroupFirst; pBaseGeom; pBaseGeom = pBaseGeom->Next())
+                ++lCurrentCount;
+
+            auto* paToRemove = (ZBaseGeom**)alloca(sizeof(ZBaseGeom*) * lCurrentCount);
+            uint32_t lRemoveCount = 0u;
+
+            for (auto* pBaseGeom = m_pGroupFirst; pBaseGeom; pBaseGeom = pBaseGeom->Next())
+            {
+                const ZREF rRef = ZGeomBuffer::Instance().GeomPtrToRef(pBaseGeom);
+
+                bool bFound = false;
+                if (lSavedCount)
+                {
+                    for (uint32_t j = 0u; j < lSavedCount; ++j)
+                    {
+                        if (paSavedRefs[j] == rRef)
+                        {
+                            bFound = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!bFound && rRef)
+                    paToRemove[lRemoveCount++] = pBaseGeom;
+            }
+
+            for (uint32_t i = 0u; i < lRemoveCount; ++i)
+                DetachGeom(paToRemove[i], false);
+
+            ZGEOM::LoadSave(stream, bSaving);
+
+            for (uint32_t i = 0u; i < lSavedCount; ++i)
+            {
+                auto* pBaseGeom = ZGeomBuffer::Instance().GeomRefToBasePtr(paSavedRefs[i]);
+                ZASSERT(pBaseGeom->m_pExtraGeom);
+
+                auto* pThisBaseGeom = this->BaseGeom();
+
+                if (pBaseGeom->m_pParent != pThisBaseGeom)
+                {
+                    if ((pBaseGeom->m_lControl & ZCDYNAMIC) != 0 && (pThisBaseGeom->m_lControl & (ZCDYNAMIC | ZCHASDYNAMICPARENT)) != 0)
+                        pBaseGeom->SetControl(0u, ZCDYNAMIC);
+
+                    AttachGeom(pBaseGeom, true);
+                }
+
+                auto* pGeom = pBaseGeom->m_pExtraGeom;
+                const char* pszName = pBaseGeom->Name();
+                stream.Exchange(pszName, *pGeom);
+            }
+        }
     }
 
     const RTP::ZPropertyInfo& ZGROUP::GetProperties() const
@@ -119,11 +278,6 @@ namespace Glacier
             if (!pGeom->DisableParentBoundAdjust())
             {
                 const char* pName = pGeom->Name();
-                if (!pName)
-                {
-                    pName = "<NONAME>";
-                }
-
                 if (strcmp(pName, "MOVETOCREATION") != 0)
                 {
                     ZVector3 vCen;
@@ -313,20 +467,79 @@ namespace Glacier
         return false;
     }
 
+    bool ZGROUP::CheckBoxInside(const ZMat3x3& mMat, const ZVector3& vPos, const float* vHalfSize)
+    {
+        ZMat3x3 mIdent;
+        mreset(mIdent.data);
+
+        if (rectBoxColi(mIdent.data, m_vCenInsideCheck, m_vSizeInsideCheck,
+                        mMat.data, vPos, vHalfSize))
+        {
+            if (!m_pZBounds)
+                return true;
+
+            ZMat3x3 mLocalMat;
+            ZVector3 vLocalPos;
+
+            for (auto it = m_pZBounds->As<ZREF>().begin(); it != m_pZBounds->As<ZREF>().end();)
+            {
+                auto rGeom = *it;
+                auto* pGeom = ZGEOM::RefToPtr(rGeom);
+                if (!pGeom)
+                {
+                    it.Erase();
+                }
+                else
+                {
+                    vsub(vLocalPos, vPos, pGeom->Pos());
+                    vmtmul(vLocalPos, pGeom->Mat());
+                    mmtmul(mLocalMat, mMat, pGeom->Mat());
+
+                    if (pGeom->CheckBoxInside(mLocalMat, vLocalPos, vHalfSize))
+                        return true;
+
+                    ++it;
+                }
+            }
+        }
+
+        return false;
+    }
+
     float ZGROUP::GetPointInsideDistance(const ZVector3& vPos)
     {
         if (m_pZBounds)
         {
-            // TODO: Finish me
-        }
-        else
-        {
+            float fMinDist = 9.9999997e37f;
             ZVector3 vP;
-            vsub(vP, m_vCenInsideCheck, vPos);
-            //return ZCommonAlgorithms::DistanceBoxAndPoint(vP, )
+
+            for (auto it = m_pZBounds->As<ZREF>().begin(); it != m_pZBounds->As<ZREF>().end();)
+            {
+                auto rGeom = *it;
+                auto* pGeom = ZGEOM::RefToPtr(rGeom);
+                if (!pGeom)
+                {
+                    it.Erase();
+                }
+                else
+                {
+                    vsub(vP, vPos, pGeom->Pos());
+                    vmtmul(vP, pGeom->Mat());
+
+                    const float fDist = pGeom->GetPointInsideDistance(vP);
+                    if (fDist < fMinDist)
+                        fMinDist = fDist;
+
+                    ++it;
+                }
+            }
+
+            return fMinDist;
         }
-        // TODO: Finish me
-        return 0.0f;
+
+        ZVector3 vP;
+        vsub(vP, m_vCenInsideCheck, vPos);
+        return ZCommonAlgorithms::DistanceBoxAndPoint(vP, m_vSizeInsideCheck);
     }
 
     ZGEOM* ZGROUP::Duplicate(ZGROUP* DestGroup, const char* DupName, bool Recursive)
@@ -417,7 +630,96 @@ namespace Glacier
 
     ZGEOM* ZGROUP::FindGeom(const char* GName, ZBaseGeom* pZGeomContinue)
     {
-        // TODO: Finish me
+        if (!GName || !*GName)
+            return nullptr;
+
+        if (!BaseGeom()->ParentGroup() && !_stricmp(GName, "ROOT"))
+            return static_cast<ZGEOM*>(this);
+
+        if (pZGeomContinue)
+        {
+            const char* pszSlash = strrchr(GName, '\\');
+            const char* pszSearchName = pszSlash ? pszSlash + 1 : GName;
+
+            auto* pBaseGeom = pZGeomContinue->Next();
+            if (!pBaseGeom)
+                return nullptr;
+
+            while (pBaseGeom)
+            {
+                if (!pBaseGeom->IsDerivedFrom<ZGROUP>()
+                    || (static_cast<ZGROUP*>(pBaseGeom->GetGeom())->m_lGroupCon & 0x802) == 0)
+                {
+                    auto* pGeom = pBaseGeom->GetGeom();
+                    if (pGeom)
+                    {
+                        const char* pszName = pBaseGeom->Name();
+                        if (!pszName)
+                            pszName = "<NONAME>";
+
+                        if (!GetDiffByMask(pszName, pszSearchName))
+                            return pGeom;
+                    }
+                }
+                pBaseGeom = pBaseGeom->Next();
+                if (!pBaseGeom)
+                    return nullptr;
+            }
+        }
+
+        if (strlen(GName) > 5 && !memcmp(GName, "ROOT\\", 5))
+            GName += 5;
+
+        const char* pszSlash = strchr(GName, '\\');
+        if (pszSlash)
+        {
+            auto* pGroupFirst = m_pGroupFirst;
+            const size_t lNameLen = static_cast<size_t>(pszSlash - GName);
+
+            while (pGroupFirst && pGroupFirst->IsDerivedFrom<ZGROUP>())
+            {
+                auto* pGroupGeom = static_cast<ZGROUP*>(pGroupFirst->GetGeom());
+                if ((pGroupGeom->m_lGroupCon & 0x802) == 0)
+                {
+                    const char* pszName = pGroupFirst->Name();
+                    if (!pszName)
+                        pszName = "<NONAME>";
+
+                    if (strlen(pszName) == lNameLen && !_memicmp(pszName, GName, lNameLen))
+                    {
+                        auto* pResult = pGroupGeom->FindGeom(pszSlash + 1, nullptr);
+                        if (pResult)
+                            return pResult;
+                    }
+                }
+                pGroupFirst = pGroupFirst->Next();
+                if (!pGroupFirst || !pGroupFirst->IsDerivedFrom<ZGROUP>())
+                    return nullptr;
+            }
+            return nullptr;
+        }
+
+        auto* pGroupFirst = m_pGroupFirst;
+        while (pGroupFirst)
+        {
+            if (!pGroupFirst->IsDerivedFrom<ZGROUP>() || (static_cast<ZGROUP*>(pGroupFirst->GetGeom())->m_lGroupCon & 0x802) == 0)
+            {
+                auto* pGeom = pGroupFirst->GetGeom();
+                if (pGeom)
+                {
+                    const char* pszName = pGroupFirst->Name();
+                    if (!pszName)
+                        pszName = "<NONAME>";
+
+                    if (!GetDiffByMask(pszName, GName))
+                        return pGeom;
+                }
+            }
+            pGroupFirst = pGroupFirst->Next();
+            if (!pGroupFirst)
+                return nullptr;
+        }
+
         return nullptr;
     }
 
@@ -549,55 +851,358 @@ namespace Glacier
         }
     }
 
-    void ZGROUP::AttachGeom(ZBaseGeom* pBaseGeom, bool bCalcMinMax)
-    {
-        // TODO: Finish me
-    }
-
     void ZGROUP::AttachGeom(ZGEOM* pGeom, bool bCalcMinMax)
     {
-        // TODO: Finish me
+        AttachGeom(pGeom->BaseGeom(), bCalcMinMax);
     }
 
-    void ZGROUP::DetachGeom(ZBaseGeom* pBaseGeom, bool bCalcMinMax)
+    void ZGROUP::AttachGeom(ZBaseGeom* pBaseGeom, bool bCalcMinMax)
     {
-        // TODO: Finish me
+        if (pBaseGeom->m_pParent)
+        {
+            auto* pParentGroup = pBaseGeom->ParentGroup();
+            pParentGroup->DetachGeom(pBaseGeom, false);
+        }
+
+        if ((BaseGeom()->Control() & ZCINACTIVE) != 0 && (pBaseGeom->Control() & ZCINACTIVE) == 0)
+            pBaseGeom->MakeInactive();
+
+        if (GetBaseGeomListType(pBaseGeom) == BGLT_Light)
+            m_LightList = ZGeomBuffer::Instance().AddGeoms(m_LightList, pBaseGeom, pBaseGeom);
+
+        pBaseGeom->SetParent(BaseGeom());
+
+        if (pBaseGeom->IsDerivedFrom<ZGROUP>())
+        {
+            pBaseGeom->SetNext(m_pGroupFirst);
+            pBaseGeom->SetPrev(nullptr);
+
+            if (m_pGroupFirst)
+                m_pGroupFirst->SetPrev(pBaseGeom);
+            else
+                m_pGroupLast = pBaseGeom;
+
+            m_pGroupFirst = pBaseGeom;
+        }
+        else
+        {
+            pBaseGeom->SetPrev(m_pGroupLast);
+            pBaseGeom->SetNext(nullptr);
+
+            if (m_pGroupLast)
+                m_pGroupLast->SetNext(pBaseGeom);
+            else
+                m_pGroupFirst = pBaseGeom;
+
+            m_pGroupLast = pBaseGeom;
+        }
+
+        ++m_NrAttachGeom;
+
+        if ((BaseGeom()->Control() & ZCHIDDEN) != 0 && !g_pSysInterface->m_pEngineData->m_LoadingGame)
+            pBaseGeom->Hide(true);
+
+        if (pBaseGeom->IsDerivedFrom<ZBOUND>())
+        {
+            const ZREF rRef = ZGeomBuffer::Instance().GeomPtrToRef(pBaseGeom);
+            LinkBound(rRef);
+        }
+
+        auto* pTreeGroup = GetTreeGroup();
+        if (pTreeGroup)
+            pTreeGroup->AttachTreeGroupChilds(pBaseGeom);
+
+        auto* pDynTreeGroup = GetDynamicTreeGroup();
+        if (pDynTreeGroup)
+            pDynTreeGroup->AttachDynamicGeoms(pBaseGeom);
+
+        if ((pBaseGeom->Control() & ZCDYNAMIC) != 0
+            || (pBaseGeom->IsDerivedFrom<ZGROUP>() && (static_cast<ZGROUP*>(pBaseGeom->GetGeom())->m_lGroupCon & ZGRPCF_INVALID_BOUNDS) != 0))
+        {
+            InvalidateBounds();
+        }
+
+        if (pBaseGeom->IsDerivedFrom<ZLIGHT>()
+            || (pBaseGeom->IsDerivedFrom<ZGROUP>() && (static_cast<ZGROUP*>(pBaseGeom->GetGeom())->m_lGroupCon & ZGRPCF_GROUP_CONTAINS_LIGHT) != 0))
+        {
+            GroupContainsLight();
+        }
+
+        auto* pOurBaseGeom = BaseGeom();
+        const uint32_t lControl = pOurBaseGeom->Control();
+        if ((lControl & (ZCDYNAMIC | ZCHASDYNAMICPARENT)) != 0)
+        {
+            if ((lControl & ZCDYNAMIC) != 0)
+            {
+                pBaseGeom->SetDynamicParent(pOurBaseGeom);
+            }
+            else
+            {
+                auto* pDynamicParent = pOurBaseGeom->GetDynamicParent();
+                ZASSERT(pDynamicParent);
+                pBaseGeom->SetDynamicParent(pDynamicParent);
+            }
+        }
+
+        const uint32_t lGeomControl = pBaseGeom->Control();
+        if ((lGeomControl & (ZCOWNERDRAW | ZCHIDDEN | ZCINACTIVE)) == 0 && (lGeomControl & ZCDYNAMIC) != 0)
+        {
+            if (!pBaseGeom->m_pDynId)
+                pBaseGeom->AttachToDynamicContainer();
+
+            pBaseGeom->AssignToRooms();
+        }
+
+        pBaseGeom->AttachToRoomsDrawLists(nullptr);
+    }
+
+    void ZGROUP::DetachGeom(ZBaseGeom* pBaseGeom, bool bDestroying)
+    {
+        pBaseGeom->DetachFromRoomsDrawLists(nullptr);
+
+        if ((pBaseGeom->Control() & (ZCOWNERDRAW | 0xC00)) == 0 && (pBaseGeom->Control() & ZCDYNAMIC) != 0)
+        {
+            if (!pBaseGeom->m_pDynId)
+                pBaseGeom->DetachFromDynamicContainer(nullptr);
+
+            pBaseGeom->FreeRoomList();
+        }
+
+        if ((pBaseGeom->Control() & (ZCHASDYNAMICPARENT | ZCDYNAMIC)) != 0)
+            pBaseGeom->RemoveDynamicParent();
+
+        if (!bDestroying)
+        {
+            auto* pDynTreeGroup = GetDynamicTreeGroup();
+            if (pDynTreeGroup)
+                pDynTreeGroup->DetachDynamicGeoms(pBaseGeom);
+
+            auto* pTreeGroup = GetTreeGroup();
+            if (pTreeGroup)
+                pTreeGroup->DetachTreeGroupChilds(pBaseGeom);
+        }
+
+        if (GetBaseGeomListType(pBaseGeom) == BGLT_Light)
+        {
+            if (g_pSysInterface->WindowFirst)
+            {
+                auto* pBaseGeomToUpdate = pBaseGeom;
+
+                do
+                {
+                    if (pBaseGeomToUpdate->GetGeom()->IsDerivedFrom<ZROOM>())
+                    {
+                        g_pSysInterface->WindowFirst->UpdateBaseGeom(pBaseGeomToUpdate);
+                    }
+
+                    pBaseGeomToUpdate = pBaseGeomToUpdate->Parent();
+                }
+                while (pBaseGeomToUpdate);
+            }
+            m_LightList = ZGeomBuffer::Instance().RemoveGeoms(m_LightList, pBaseGeom, pBaseGeom);
+        }
+
+        // Exclude tail
+        if (pBaseGeom->GetPrev())
+        {
+            auto* pNext = pBaseGeom->Next();
+            auto* pPrev = pBaseGeom->GetPrev();
+            pPrev->SetNext(pNext);
+        }
+        else
+        {
+            m_pGroupFirst = pBaseGeom->Next();
+        }
+
+        // Exclude front
+        if (pBaseGeom->Next())
+        {
+            auto* pPrev = pBaseGeom->GetPrev();
+            auto* pNext = pBaseGeom->Next();
+            pNext->SetPrev(pPrev);
+        }
+        else
+        {
+            m_pGroupLast = pBaseGeom->GetPrev();
+        }
+
+        // Weird drop tech
+        pBaseGeom->SetNext(nullptr);
+        pBaseGeom->SetPrev(nullptr);
+        pBaseGeom->SetPrev(nullptr); // Idk why twice
+        pBaseGeom->SetNext(nullptr); // Idk why twice
+        pBaseGeom->SetParent(nullptr);
+
+        --m_NrAttachGeom;
+
+        // Drop bounds
+        if (auto* pBound = geom_cast<ZBOUND>(pBaseGeom->GetGeom()))
+        {
+            RemoveBound(pBound->GetRef());
+        }
+
+        // Weird final tech
+        pBaseGeom->SetParent(nullptr); // Idk why trice
     }
 
     void ZGROUP::RecurGetNextGroup(const ZBaseGeom** pGroup) const
     {
-        // TODO: Finish me
+        auto* pFirstChild = static_cast<const ZGROUP*>((*pGroup)->GetGeom())->m_pGroupFirst;
+        if (pFirstChild && pFirstChild->IsDerivedFrom<ZGROUP>())
+        {
+            *pGroup = pFirstChild;
+        }
+        else if (*pGroup == BaseGeom())
+        {
+            *pGroup = nullptr;
+        }
+        else
+        {
+            while (true)
+            {
+                if (auto* pNext = (*pGroup)->Next())
+                {
+                    *pGroup = pNext;
+                    if (pNext->IsDerivedFrom<ZGROUP>())
+                    {
+                        break;
+                    }
+                }
+                else
+                {
+                    auto* pParent = (*pGroup)->Parent();
+                    *pGroup = pParent;
+
+                    if (pParent == BaseGeom())
+                    {
+                        *pGroup = nullptr;
+                        break;
+                    }
+
+                    if (!pParent)
+                    {
+                        break;
+                    }
+                }
+            }
+        }
     }
 
     void ZGROUP::RecurGetNextExclRoom(const ZBaseGeom** ZGeom) const
     {
-        // TODO: Finish me
+        if (!m_NrAttachGeom && (*ZGeom) == BaseGeom())
+        {
+            *ZGeom = nullptr;
+            return;
+        }
+
+        const bool bIsGroup = (*ZGeom)->IsDerivedFrom<ZGROUP>();
+
+        if (!bIsGroup
+            || (*ZGeom != BaseGeom() && (*ZGeom)->IsDerivedFrom<ZROOM>())
+            || static_cast<const ZGROUP*>((*ZGeom)->GetGeom())->m_pGroupFirst == nullptr)
+        {
+            while (true)
+            {
+                auto* pNext = (*ZGeom)->Next();
+                if (pNext)
+                {
+                    *ZGeom = pNext;
+                    break;
+                }
+
+                auto* pParent = (*ZGeom)->Parent();
+                *ZGeom = pParent;
+
+                if (pParent == BaseGeom())
+                {
+                    *ZGeom = nullptr;
+                    return;
+                }
+
+                if (!pParent)
+                    return;
+            }
+        }
+        else
+        {
+            *ZGeom = static_cast<const ZGROUP*>((*ZGeom)->GetGeom())->m_pGroupFirst;
+        }
     }
 
     void ZGROUP::SetGroupControl(uint32_t lAddBits, uint32_t lRemBits)
     {
-        // TODO: Finish me
+        m_lGroupCon = lAddBits | (m_lGroupCon & ~lRemBits);
     }
 
     uint32_t ZGROUP::GroupControl() const
     {
-        // TODO: Finish me
-        return 0;
+        return m_lGroupCon;
     }
 
     void ZGROUP::ResetGroupPosition(bool bReset)
     {
-        // TODO: Finish me
+        if (bReset)
+        {
+            if ((GroupControl() & ZGRPCF_RESET) != 0)
+                return;
+
+            SetGroupControl(ZGRPCF_RESET, 0u);
+        }
+        else
+        {
+            if ((GroupControl() & ZGRPCF_RESET) == 0)
+                return;
+
+            SetGroupControl(0u, ZGRPCF_RESET);
+        }
+
+        ZVector3 vOldCen = BaseGeom()->m_vCen;
+        BaseGeom()->m_vCen = BaseGeom()->m_vPos;
+        BaseGeom()->m_vPos = vOldCen;
+
+        ZVector3 vDelta;
+        vsub(vDelta, BaseGeom()->m_vPos, BaseGeom()->m_vCen);
+
+        for (ZBaseGeom* pGeom = m_pGroupFirst; pGeom; pGeom = pGeom->Next())
+        {
+            vsub(pGeom->m_vPos, vDelta);
+        }
     }
 
     void ZGROUP::MakeActiveRecursive()
     {
-        // TODO: Finish me
+        for (auto* pBaseGeom = BaseGeom(); pBaseGeom; RecurGetNext(&pBaseGeom))
+        {
+            pBaseGeom->MakeActive();
+        }
     }
 
     void ZGROUP::GetStaticLights(ZBaseGeom** pDrawGeomsList, ZBaseGeom** pDrawGeomsListEnd)
     {
-        // TODO: Finish me
+        SGeomPairRecursion sGeomPairRecur {};
+        sGeomPairRecur.InitPair(m_LightList);
+
+        while (sGeomPairRecur.DpInsertList && sGeomPairRecur.m_cCur != sGeomPairRecur.m_cCurEnd)
+        {
+            auto* pPayload = reinterpret_cast<uintptr_t*>(
+                reinterpret_cast<char*>(sGeomPairRecur.DpInsertList) + sizeof(SBaseGeomListHeader));
+
+            const uintptr_t lFirstPacked = pPayload[sGeomPairRecur.m_cCur];
+            const uintptr_t lLastPacked = pPayload[sGeomPairRecur.m_cCur + 1];
+            sGeomPairRecur.m_cCur += 2;
+
+            if ((lLastPacked & 7) == 2)
+            {
+                if (pDrawGeomsListEnd <= pDrawGeomsList)
+                    return;
+
+                *pDrawGeomsList++ = reinterpret_cast<ZBaseGeom*>(lFirstPacked & ~7u);
+                *pDrawGeomsList++ = reinterpret_cast<ZBaseGeom*>(lLastPacked & ~7u);
+            }
+
+            sGeomPairRecur.NextPair();
+        }
     }
 
     void ZGROUP::CalcCenSizeRecur()
@@ -619,13 +1224,97 @@ namespace Glacier
 
     void ZGROUP::GetCenSizeRecur(ZVector3& vCen, ZVector3& vSize, bool bIgnoreHidden)
     {
-        // TODO: Finish me
+        ZVector3 vMaxAccum { -9.9999997e37f };
+        ZVector3 vMinAccum { 9.9999997e37f };
+        bool bFoundAny = false;
+
+        for (auto* pBaseGeom = m_pGroupFirst; pBaseGeom; pBaseGeom = pBaseGeom->Next())
+        {
+            if (pBaseGeom->DisableParentBoundAdjust() || (bIgnoreHidden && (pBaseGeom->Control() & (ZCHIDDEN | ZCINACTIVE)) != 0))
+                continue;
+
+            ZVector3 vChildCen;
+            ZVector3 vChildSize;
+            bFoundAny = true;
+
+            if (pBaseGeom->IsDerivedFrom<ZGROUP>())
+            {
+                static_cast<ZGROUP*>(pBaseGeom->GetGeom())->GetCenSizeRecur(vChildCen, vChildSize, bIgnoreHidden);
+            }
+            else
+            {
+                pBaseGeom->GetCen(vChildCen);
+                pBaseGeom->GetSize(vChildSize);
+            }
+
+            TransformBox(pBaseGeom->m_mMat.data, vChildSize);
+            TransformRootVector(vChildCen, pBaseGeom->m_mMat);
+            vadd(vChildCen, pBaseGeom->m_vPos);
+
+            ZVector3 vChildMax;
+            vadd(vChildMax, vChildCen, vChildSize);
+            vmax(vMaxAccum, vChildMax);
+
+            ZVector3 vChildMin;
+            vsub(vChildMin, vChildCen, vChildSize);
+            vmin(vMinAccum, vChildMin);
+        }
+
+        if (bFoundAny)
+        {
+            vadd(vCen, vMaxAccum, vMinAccum);
+            vscalar(vCen, 0.5f);
+            vsub(vSize, vMaxAccum, vCen);
+        }
+        else
+        {
+            GetCen(vCen);
+            GetSize(vSize);
+        }
     }
 
     ZGEOM* ZGROUP::FindMaskGeom(const char* pSearchName, int32_t lMask) const
     {
-        // TODO: Finish me
-        return nullptr;
+        const char* pszSlash = strchr(pSearchName, '\\');
+        const char* pszRemaining = pszSlash;
+        if (!pszSlash)
+        {
+            pszSlash = pSearchName + strlen(pSearchName);
+            pszRemaining = pszSlash;
+        }
+
+        const size_t lNameLen = static_cast<size_t>(pszSlash - pSearchName);
+
+        auto* pGroupFirst = m_pGroupFirst;
+        while (pGroupFirst)
+        {
+            if (!pGroupFirst->IsDerivedFrom<ZGROUP>())
+                return nullptr;
+
+            auto* pGroup = static_cast<ZGROUP*>(pGroupFirst->GetGeom());
+
+            if ((lMask & static_cast<int32_t>(pGroup->m_lGroupCon)) != 0)
+            {
+                const char* pszName = pGroupFirst->Name();
+                if (!pszName)
+                    pszName = "<NONAME>";
+
+                if (strlen(pszName) == lNameLen && !_memicmp(pszName, pSearchName, lNameLen))
+                    break;
+            }
+
+            pGroupFirst = pGroupFirst->Next();
+        }
+
+        if (!pGroupFirst)
+            return nullptr;
+
+        auto* pGroup = static_cast<ZGROUP*>(pGroupFirst->GetGeom());
+
+        if (*pszRemaining)
+            return pGroup->FindGeom(pszRemaining + 1, nullptr);
+        else
+            return pGroup;
     }
 
     ZGEOM* ZGROUP::CreateResourceGeom(const char* pName, uint32_t iGeomResourceId, uint32_t lGeomClassType, bool bCalcMinMax)
@@ -738,13 +1427,16 @@ namespace Glacier
         };
     }
 
-    STATIC_CLASS_VAR_IMPL(ZGROUP, RTP::ZPropertyInfo, Info, 0x00806C00, (RTP::ZPropertyInfo {
-        .First = cProperties::NamespaceItem_4176,
-        .Super = &ZGEOM::Info,
-        .Name = ZGROUP::FactoryName
-    }));
-    STATIC_CLASS_VAR_IMPL(ZGROUP, const char*, FactoryName, 0x0076A998, "ZGROUP");
-    DECLARE_ID_AND_MASK_IMPL(ZGROUP, 0x00972984, 0x00972988);
-    REGISTER_GLACIER_GEOM_CLASS(ZGROUP, ZGEOM, ZGROUP::m_TypeId, 0x00972A28);
+    DECLARE_GEOM_CLASS_IMPL(
+        ZGROUP, // ClassName
+        ZGEOM, // BaseClassName
+        0x00972A28,  // OldClassInfo addr
+        "ZGROUP", // FactoryName
+        0x0076A998, // FactoryName Addr
+        cProperties::NamespaceItem_4176, // FirstProperty
+        0x00806C00, // Properties Addr
+        0x00972984, // ID Addr
+        0x00972988  // Mask Addr
+    );
 #   pragma endregion
 }

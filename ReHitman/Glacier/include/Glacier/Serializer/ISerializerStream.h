@@ -20,7 +20,7 @@ namespace Glacier
 		struct IREFConverter
 		{
 			IREFConverter() = default;
-			
+
 			virtual ZREF GetRef() = 0;
 			virtual void SetRef(ZREF ref) = 0;
 		};
@@ -29,12 +29,12 @@ namespace Glacier
 		struct ZREFConverter : public IREFConverter
 		{
 			// methods
-			ZREFConverter(T*& pObject) : m_Object{pObject} 
+			ZREFConverter(T*& pObject) : m_Object{pObject}
 			{
 			}
 
 			// vtbl
-			ZREF GetRef() override 
+			ZREF GetRef() override
 			{
 				return T::GetRef(m_Object);
 			}
@@ -110,7 +110,7 @@ namespace Glacier
 		virtual void ExchangeData(ZSerializable*) = 0;
 		virtual void ExchangeData(ZBitfieldBase * data, const ZEnumInfo * description) = 0;
 		virtual void ExchangeData(void * data, const ZEnumInfo * description) = 0;
-		virtual void ExchangeData(zstring&) = 0;		
+		virtual void ExchangeData(zstring&) = 0;
 		virtual void ExchangeData(const char *&) = 0;
 		virtual void ExchangeData(double &) = 0;
 		virtual void ExchangeData(float &) = 0;
@@ -165,6 +165,8 @@ namespace Glacier
 		void Exchange(const char* psName, bool& data);
 		void Exchange(const ZToken token, bool& data);
 		void Exchange(const ZToken token, ZEventBase& data);
+		void Exchange(const char* psName, ZGEOM& data);
+		void Exchange(const ZToken token, ZGEOM& data);
 
 		template <size_t N>
 		void Exchange(const ZToken token, int16_t (&data)[N]) { ExchangeArray(token, data, static_cast<uint32_t>(N)); }
@@ -212,52 +214,52 @@ namespace Glacier
 	// TODOLIST: pending generic serializer overloads.
 	ISerializerStream::Exchange<ZSoundDllBase>(char const*,ZSoundDllBase &)
 	ISerializerStream::Exchange<ZSoundDllBase>(ZToken,ZSoundDllBase &)
-	
+
 	ISerializerStream::Exchange<ZROOM>(char const*,ZROOM &)
 	ISerializerStream::Exchange<ZROOM>(ZToken,ZROOM &)
-	
+
 	ISerializerStream::Exchange<ZHM3CameraSpring>(char const*,ZHM3CameraSpring &)
 	ISerializerStream::Exchange<ZHM3CameraSpring>(ZToken,ZHM3CameraSpring &)
-	
+
 	ISerializerStream::Exchange<ZHM3CameraScope>(char const*,ZHM3CameraScope &)
 	ISerializerStream::Exchange<ZHM3CameraScope>(ZToken,ZHM3CameraScope &)
-	
+
 	ISerializerStream::Exchange<ZHM3CameraPositional>(char const*,ZHM3CameraPositional &)
 	ISerializerStream::Exchange<ZHM3CameraPositional>(ZToken,ZHM3CameraPositional &)
-	
+
 	ISerializerStream::Exchange<ZHM3CameraObservation>(char const*,ZHM3CameraObservation &)
 	ISerializerStream::Exchange<ZHM3CameraObservation>(ZToken,ZHM3CameraObservation &)
-	
+
 	ISerializerStream::Exchange<ZHM3CameraDialog>(char const*,ZHM3CameraDialog &)
 	ISerializerStream::Exchange<ZHM3CameraDialog>(ZToken,ZHM3CameraDialog &)
-	
+
 	ISerializerStream::Exchange<ZHM3CameraConsole>(char const*,ZHM3CameraConsole &)
 	ISerializerStream::Exchange<ZHM3CameraConsole>(ZToken,ZHM3CameraConsole &)
-	
+
 	ISerializerStream::Exchange<ZHM3CameraColi>(char const*,ZHM3CameraColi &)
 	ISerializerStream::Exchange<ZHM3CameraColi>(ZToken,ZHM3CameraColi &)
-	
+
 	ISerializerStream::Exchange<ZHM3CameraBullet>(char const*,ZHM3CameraBullet &)
 	ISerializerStream::Exchange<ZHM3CameraBullet>(ZToken,ZHM3CameraBullet &)
-	
+
 	ISerializerStream::Exchange<ZHM3CameraBinocular>(char const*,ZHM3CameraBinocular &)
 	ISerializerStream::Exchange<ZHM3CameraBinocular>(ZToken,ZHM3CameraBinocular &)
-	
+
 	ISerializerStream::Exchange<ZHM3Camera1stPerson>(char const*,ZHM3Camera1stPerson &)
 	ISerializerStream::Exchange<ZHM3Camera1stPerson>(ZToken,ZHM3Camera1stPerson &)
-	
+
 	ISerializerStream::Exchange<ZGeomBuffer>(char const*,ZGeomBuffer &)
 	ISerializerStream::Exchange<ZGeomBuffer>(ZToken,ZGeomBuffer &)
-	
+
 	ISerializerStream::Exchange<ZGEOM>(char const*,ZGEOM &)
 	ISerializerStream::Exchange<ZGEOM>(ZToken,ZGEOM *&)
 	ISerializerStream::Exchange<ZGEOM>(ZToken,ZGEOM &)
 	ISerializerStream::Exchange<ZGEOM *>(char const*,ZGEOM * &)
-	
+
 	ISerializerStream::Exchange<ZEventBuffer>(char const*,ZEventBuffer &)
 	ISerializerStream::Exchange<ZEventBuffer>(ZToken,ZEventBuffer &)
 	ISerializerStream::Exchange<ZEventBase>(ZToken,ZEventBase &)
-	
+
 	ISerializerStream::Exchange<ZEngineDataBase>(char const*,ZEngineDataBase &)
 	ISerializerStream::Exchange<ZEngineDataBase>(ZToken,ZEngineDataBase &)
 

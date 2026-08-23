@@ -1,7 +1,6 @@
 #include <Glacier/Geom/ZBoxPrimitive.h>
 #include <Glacier/Debug/ZDebugInt.h>
 #include <Glacier/Runtime/Macro.h>
-#include <Glacier/Runtime/ZRuntimeMacro.h>
 #include <Glacier/System/ZSysInterface.h>
 #include <Glacier/RTP/VirtualTables.h>
 
@@ -190,12 +189,6 @@ namespace Glacier
         m_vScale.z = fScaleZ;
     }
 
-#   pragma region " --- ZGEOM RTTI --- "
-    STATIC_CLASS_VAR_IMPL(ZBoxPrimitive, const char*, FactoryName, 0x0076D354, "ZBoxPrimitive");
-    DECLARE_ID_AND_MASK_IMPL(ZBoxPrimitive, 0x009732AC, 0x009732B0);
-    REGISTER_GLACIER_GEOM_CLASS(ZBoxPrimitive, ZSTDOBJ, 0x2000E1u, 0x00973300);
-#   pragma endregion
-
 #   pragma region "RTTI"
     namespace cProperties
     {
@@ -233,11 +226,16 @@ namespace Glacier
         };
     }
 
-    // Entry
-    STATIC_CLASS_VAR_IMPL(ZBoxPrimitive, RTP::ZPropertyInfo, Info, 0x00806C88, (RTP::ZPropertyInfo {
-        .First = cProperties::NamespaceItem_63,
-        .Super = &ZSTDOBJ::Info,
-        .Name = ZBoxPrimitive::FactoryName
-    }));
+    DECLARE_GEOM_CLASS_IMPL(
+        ZBoxPrimitive, // ClassName
+        ZSTDOBJ,     // BaseClassName
+        0x00973300, // OldClassInfo addr
+        "ZBoxPrimitive", // FactoryName
+        0x0076D354, // FactoryName Addr
+        cProperties::NamespaceItem_63, // FirstProperty
+        0x00806C88, // Properties Addr
+        0x009732AC, // ID Addr
+        0x009732B0 // Mask Addr
+    );
 #   pragma endregion
 }

@@ -22,18 +22,16 @@ namespace Glacier
         uint32_t GetPrim() const override;
 
         // methods
-        ZRenderEntryGeom(ZRenderEntryGeomCreateInfo* pInfo);
+        ZRenderEntryGeom(const ZRenderEntryGeomCreateInfo& sInfo);
 
         // members
-        uint32_t m_lUnknown80;
-        uint32_t m_lUnknown84;
-        uint32_t m_lUnknown88;
-        ZBaseGeom* m_pBaseGeom;
-        uint32_t m_lPrimId;
-        uint32_t m_lUnknown94;
-        uint32_t m_lUnknown98;
+        uint32_t m_lUnknown80;                          // 0x80
+        uint32_t m_AlwaysInShadowColor;                 // 0x84
+        uint32_t m_lRenderFlags;                        // 0x88 - I'm not sure about this! Need R&D later
+        ZBaseGeom* m_pBaseGeom;                         // 0x8C
+        uint32_t m_lPrimId;                             // 0x90
+        uint32_t m_lUnknown94;                          // 0x94
+        uint32_t m_lUnknown98;                          // 0x98
     };
-
-    // RE_VERIFY_OFFSET(ZRenderEntryGeom, m_pBaseGeom, 0x8C); // Verified PC ctor
-    // RE_VERIFY_OFFSET(ZRenderEntryGeom, m_lPrimId, 0x90); // Verified PC ctor
+    RE_VERIFY_SIZE(ZRenderEntryGeom, 0x9C); // Verifued by ZRenderEntryGeomD3D ctor
 }

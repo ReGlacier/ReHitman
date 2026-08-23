@@ -6,6 +6,8 @@
 
 namespace Glacier
 {
+    // fwds
+    class ZBaseGeom;
     struct SUpdateLightData;
 
     // Confirmed by Mini Ninjas XBOX PDB (empty struct, all members are static).
@@ -44,5 +46,7 @@ namespace Glacier
         // PC (Blood Money) version takes 5 arguments; the Mini Ninjas XBOX version has an extra
         // trailing lAlwaysInShadowColor argument. lDrawMode is passed but unused by the PC implementation.
         static void CalcLight(uint32_t lNumVertices, const SUpdateLightData* pLights, uint32_t lNumLights, uint32_t lDrawMode, bool bIncludeHQLights);
+
+        static uint32_t GetUpdateLightData(SUpdateLightData* pUpdateLightData, const ZBaseGeom* pBaseGeom, const ZBaseGeom* pEnvironment);
     };
 }

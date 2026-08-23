@@ -9,8 +9,8 @@
 #include <Glacier/Geom/ZBaseGeom.h>
 #include <Glacier/Serializer/ZSerializable.h>
 #include <Glacier/Runtime/ZGEOMCLASSINFO.h>
-#include <Glacier/Runtime/ZRuntimeMacro.h>
 #include <Glacier/Runtime/ZFactory.h>
+#include <Glacier/Runtime/Macro.h>
 #include <Glacier/STempStripsUniqueId.h>
 #include <Glacier/RTP/Base.h>
 #include <Glacier/ZUniMemory.h>
@@ -84,12 +84,10 @@ namespace Glacier
 #       pragma region " --- Static members --- "
         // static
         STATIC_CLASS_VAR(ZGEOM, ZFactory<ZGEOM>, m_Factory);
-        STATIC_CLASS_VAR(ZGEOM, const char*, FactoryName);
-        STATIC_CLASS_VAR(ZGEOM, RTP::ZPropertyInfo, Info);
-        STATIC_CLASS_VAR(ZGEOM, ZGEOMCLASSINFO*, m_OldClassInfo);
+        DECLARE_GEOM_CLASS(ZGEOM, 0u);
+
         STATIC_CLASS_VAR(ZGEOM, ZGEOM::EStatus, m_PreferedStatus);
         STATIC_CLASS_VAR_EZ(ZGEOM, ZGEOM*, s_pLastSendCommandCaller);
-        DECLARE_ID_AND_MASK(ZGEOM);
 #       pragma endregion
 
         // Data

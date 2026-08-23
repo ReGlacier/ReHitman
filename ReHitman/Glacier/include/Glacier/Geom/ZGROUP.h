@@ -1,18 +1,21 @@
 #pragma once
 
 #include <Glacier/ReGlacier.h>
-#include <Glacier/Geom/ZBaseGeom.h> // ZBaseGeom
 #include <Glacier/GlacierFWD.h>
 #include <Glacier/ZSTL/ZMath.h>
 #include <Glacier/Geom/ZGEOM.h>
 
+
 namespace Glacier
 {
+    // fwds
+    class ZBaseGeom;
+
     class ZGROUP : public ZGEOM
     {
     public:
-        // constants
-        static constexpr uint32_t m_TypeId = 0x100001u;
+        // RTTI
+        DECLARE_GEOM_CLASS(ZGROUP, 0x100001u);
 
         // ZGROUP Control flags
         static constexpr uint32_t ZGRPCF_OVERRIDE_NEAR_FAR = 0x200u;
@@ -20,14 +23,7 @@ namespace Glacier
         static constexpr uint32_t ZGRPCF_GROUP_CONTAINS_LIGHT = 0x10000u;
         static constexpr uint32_t ZGRPCF_LIGHT_SHINES_IN = 0x1000000u;
         static constexpr uint32_t ZGRPCF_LIGHT_SHINES_OUT = 0x2000000u;
-
-        // static
-#       pragma region " --- Static members --- "
-        STATIC_CLASS_VAR(ZGROUP, const char*, FactoryName);
-        STATIC_CLASS_VAR(ZGROUP, RTP::ZPropertyInfo, Info);
-        STATIC_CLASS_VAR(ZGROUP, ZGEOMCLASSINFO*, m_OldClassInfo);
-        DECLARE_ID_AND_MASK(ZGROUP);
-#       pragma endregion
+        static constexpr uint32_t ZGRPCF_RESET = 0x40000000u;
 
         // vtbl
         ~ZGROUP() override;
@@ -53,6 +49,7 @@ namespace Glacier
         void SetMoving(bool bMoving) override;
         void SendCommandRecursive(ZMSGID Msg, void* pData, ZGEOM* pTarget) override;
         bool CheckPointInside(ZVector3& pPoint, float fDotDist) override;
+        bool CheckBoxInside(const ZMat3x3& mMat, const ZVector3& vPos, const float* vHalfSize) override;
         float GetPointInsideDistance(const ZVector3& vPos) override;
         ZGEOM* Duplicate(ZGROUP* DestGroup, const char* DupName, bool Recursive) override;
         ZGEOM* DuplicateToResource(ZGROUP* DestGroup, uint32_t lGeomResourceId, const char* DupName, bool Recursive) override;
@@ -75,9 +72,9 @@ namespace Glacier
         virtual void CorrectCenSizeRecur();
         virtual void CorrectCenSize();
         virtual void InvalidateBounds();
-        virtual void AttachGeom(ZBaseGeom* pBaseGeom, bool bCalcMinMax);
         virtual void AttachGeom(ZGEOM* pGeom, bool bCalcMinMax);
-        virtual void DetachGeom(ZBaseGeom* pBaseGeom, bool bCalcMinMax);
+        virtual void AttachGeom(ZBaseGeom* pBaseGeom, bool bCalcMinMax);
+        virtual void DetachGeom(ZBaseGeom* pBaseGeom, bool bDestroying);
         virtual void RecurGetNextGroup(const ZBaseGeom** pGroup) const;
         virtual void RecurGetNextExclRoom(const ZBaseGeom** ZGeom) const;
         virtual void SetGroupControl(uint32_t lAddBits, uint32_t lRemBits);

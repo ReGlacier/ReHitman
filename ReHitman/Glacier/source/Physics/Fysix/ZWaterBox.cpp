@@ -2,7 +2,6 @@
 #include <Glacier/Physics/Fysix/ZWaterBox.h>
 #include <Glacier/RTP/VirtualTables.h>
 #include <Glacier/Runtime/Macro.h>
-#include <Glacier/Runtime/ZRuntimeMacro.h>
 
 
 namespace Glacier

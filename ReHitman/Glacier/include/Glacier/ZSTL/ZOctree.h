@@ -8,7 +8,7 @@
 namespace Glacier
 {
     struct SRecurseInfoCompiled;
-    
+
     struct COctreeObj : CTreeObject
     {
         // There are no info about that type, just ptr or smth like that
@@ -21,9 +21,9 @@ namespace Glacier
         using RemapObjectIdFn = unsigned int(*)(unsigned int);
 
         // vtbl
-        virtual ~ZOctree();
         virtual void lort();
         virtual COctreeObj* AddMinMax(float*, float*, unsigned int, COctreeObj*);
+        virtual void Move(COctreeObj* pObj, float*, float*);
         virtual void Delete(COctreeObj*, bool);
         virtual void* Compile(int*); // Not implemented in release hbm
         virtual void RemapObjects(RemapObjectIdFn pFnRemap) = 0;

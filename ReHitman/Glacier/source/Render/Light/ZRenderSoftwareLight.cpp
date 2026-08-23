@@ -148,4 +148,10 @@ namespace Glacier
             m_SSEArrays.aDstCB[i] = Saturate(m_SSEArrays.aDstCB[i]);
         }
     }
+
+    uint32_t ZRenderSoftwareLight::GetUpdateLightData(SUpdateLightData* pUpdateLightData, const ZBaseGeom* pBaseGeom, const ZBaseGeom* pEnvironment)
+    {
+        // TODO: Finish me
+        return 0u;
+    }
 }

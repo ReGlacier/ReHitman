@@ -78,6 +78,7 @@ namespace Glacier
         void* AllocateMemory(uint32_t lSize);
         void SetObjectToWorldMatrix(const ZMatrix& mMatrix);
         bool AddRenderEntryInstances(SRenderEntryInstance** pInstances, uint32_t lNumRenderEntryInstances);
+        void InitRenderEntryInstance(SRenderEntryInstance *pRenderEntryInstance, uint8_t lLODMask, uint8_t lDrawDestination, uint32_t lFlags, uint32_t lBoneIndexMask);
 
         // members
         RE_ADD_PADDING(0x10);                           // 0x04 - 0x14. TODO: Unknown; never initialized in ctors and no reads found in examined code paths

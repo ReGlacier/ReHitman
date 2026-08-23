@@ -15,6 +15,34 @@ namespace Glacier
     class ZRenderDraw : public ZRenderDrawBase
     {
     public:
+        // types
+        struct ZRenderEntryMap
+        {
+            // constants
+            static constexpr int HASH_BUCKETS_NR = 256; // 256 verified as formal 1024 / 4 at ZRenderDraw::ZRenderEntryMap::ZRenderEntryMap
+            static constexpr int ENTRIES_NR = 1536; // 1536 verified PC at ZRenderDraw::ZRenderEntryMap::ZRenderEntryMap
+
+            // types
+            struct ZEntry
+            {
+                ZEntry* m_pNext;
+                uint32_t m_lIndentifier;
+                ZRenderEntry* m_pRenderEntry;
+            };
+            RE_VERIFY_SIZE(ZEntry, 0xC);
+
+            // methods
+            ZRenderEntryMap();
+
+            bool Add(uint32_t lIdentifier, ZRenderEntry* pEntry);
+            ZRenderEntry* GetAndRemove(uint32_t lIdentifier);
+            static uint32_t HashOfIdentifier(uint32_t lIdentifier);
+
+            // members
+            ZRenderEntryMap::ZEntry* m_HashToFirst[HASH_BUCKETS_NR];
+            ZFixedArray<ZRenderEntryMap::ZEntry, ENTRIES_NR> m_Entries;
+        };
+
         // vtbl
         void Flush() override;
         uint32_t AddMark(
@@ -22,9 +50,9 @@ namespace Glacier
             const float* vDirection,
             uint32_t lArrayIndex,
             uint32_t lSourcePrim,
-            float fRadiusX, float fRadiusY, 
-            const float* fExtraTextureSize, 
-            bool bStoreUV, 
+            float fRadiusX, float fRadiusY,
+            const float* fExtraTextureSize,
+            bool bStoreUV,
             float fRotation) override;
         void AddBoneMark(ZBaseGeom* AddBoneMark, const float* vPosition, const float* vDirection, float fRadius, uint32_t lBoneId, uint32_t lSourcePrim) override;
         void RemoveMark(uint32_t lHandle) override;
@@ -53,7 +81,7 @@ namespace Glacier
         ZRenderEntrySprite* AddRenderEntrySprite(uint32_t lPrim);
 
         // members
-        ZDecalMarkController m_DecalMarks;                        // +0x12C. Name approved by XBox PDB
+        ZDecalMarkController m_DecalMarks;                        // +0x12C. Name approved by XBox PDB & ZRenderEntryGeom::AttachUpdate
         ZRenderEntry* m_apRenderEntryLookup[0x8000];              // +0x7F70. m_lDrawId -> render entry (zeroed in Flush)
         ZAllocIndex m_RenderEntryIndex;                           // +0x27F70. Draw id allocator (15 bits, ids are index + 1)
         uint32_t m_lRenderEntriesCount;                           // +0x27F84
@@ -61,7 +89,7 @@ namespace Glacier
         stlp::map<uint32_t, ZRenderObject*> m_RenderObjects;      // +0x47F88. Prim handle -> shared render object
         uint32_t m_lToBeDeletedCount;                             // +0x47F94
         ZRenderObjectInstance* m_apToBeDeleted[512];              // +0x47F98. Object instances pending deletion
-        RE_ADD_PADDING(4);                                        // +0x48798
+        ZRenderEntryMap* m_pEntryReuse;                           // +0x48798. Verified by ZRenderDraw::AddRenderEntrySprite
         ZFixedArray<SRenderEntryInstance, 4096> m_RenderEntryInstances; // +0x4879C. Name approved by XBox PDB
         RE_ADD_PADDING(0xC4);                                     // +0x587A0 - 0x58864. Unused tail (not touched by ctor/Flush/CleanupUnused)
     };

@@ -97,3 +97,6 @@
 #   define ZINFO(fmt, ...)                  std::printf("[INFO] " fmt "\n", ##__VA_ARGS__)
 #   define ZMSG_CH(channel, fmt, ...)       std::printf("[CH_%d] " fmt "\n", (int)channel, ##__VA_ARGS__)
 #endif
+
+// always safe for dtors and noexcept stubs
+#define ZSAFE_ASSERT(expr) assert(expr)

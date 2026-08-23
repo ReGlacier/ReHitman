@@ -11,6 +11,7 @@ namespace Glacier
 
     struct  ZCmdList
     {
+        // types
         enum CMD : int32_t
         {
             CMD_SET_VIEW = 0x0,
@@ -90,6 +91,12 @@ namespace Glacier
 
         struct ZCmd
         {
+            // methods
+            void* AddData(uint32_t lDataSize);
+            void* AddData(void* pData, uint32_t lDataSize);
+            ZCmd* Next() const;
+
+            // members
             ZCmdList::CMD m_lType;
             ZRenderEntryGeom* m_pRenderEntryGeom;
             ZCmdList* m_pCmdList;
@@ -98,7 +105,11 @@ namespace Glacier
             uint32_t m_lNrObjects;
         };
 
-        // data
+        // methods
+        ZCmd* Current() const;
+        void NextCommand();
+
+        // members
         uint32_t m_lPreTransactionNrCmds;
         char *m_pPreTransactionCurrent;
         uint32_t m_lNrCmds;

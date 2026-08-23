@@ -15,7 +15,7 @@
 namespace Glacier
 {
     ZRenderEntry::ZRenderEntry() = default;
-    
+
     ZRenderEntry::~ZRenderEntry()
     {
         // TODO: Finish me
@@ -55,7 +55,7 @@ namespace Glacier
     {
         // Do nothing
     }
-    
+
     uint32_t ZRenderEntry::GetInstanceRepeat(const ZRenderObjectInstance* pObjInstance)
     {
         return 1u;
@@ -139,7 +139,7 @@ namespace Glacier
             }
         }
     }
-    
+
     ZBaseGeom* ZRenderEntry::GetBaseGeom() const
     {
         return nullptr;
@@ -301,5 +301,10 @@ namespace Glacier
         }
 
         return false;
+    }
+
+    void ZRenderEntry::InitRenderEntryInstance(SRenderEntryInstance *pRenderEntryInstance, uint8_t lLODMask, uint8_t lDrawDestination, uint32_t lFlags, uint32_t lBoneIndexMask)
+    {
+        // TODO: Finish me
     }
 }

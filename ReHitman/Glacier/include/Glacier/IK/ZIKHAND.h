@@ -33,7 +33,7 @@ namespace Glacier
     public:
         // vtbl
         void LoadSave(ZLNKOBJ* pLnkObj, ISerializerStream& stream, bool bSaving) override;
-        virtual void AttachItem(ZIKLNKOBJ* pLnkObj, ZREF rItem);
+        virtual ZREF AttachItem(ZIKLNKOBJ* pLnkObj, ZREF rItem);
         virtual void SlipItem(ZIKLNKOBJ* pLnkObj);
         virtual ZItem* GetItem() const;
         virtual ITEMHANDS GetItemType() const;

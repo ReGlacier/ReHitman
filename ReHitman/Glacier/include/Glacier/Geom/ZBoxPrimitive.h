@@ -9,17 +9,8 @@ namespace Glacier
     class ZBoxPrimitive : public ZSTDOBJ
     {
     public:
-        // constants
-        static constexpr uint32_t m_TypeId = 0x200006u;
-        // types
-
-        // static
-#       pragma region " --- Static members --- "
-        STATIC_CLASS_VAR(ZBoxPrimitive, const char*, FactoryName);
-        STATIC_CLASS_VAR(ZBoxPrimitive, RTP::ZPropertyInfo, Info);
-        STATIC_CLASS_VAR(ZBoxPrimitive, ZGEOMCLASSINFO*, m_OldClassInfo);
-        DECLARE_ID_AND_MASK(ZBoxPrimitive);
-#       pragma endregion
+        // RTTI
+        DECLARE_GEOM_CLASS(ZBoxPrimitive, 0x2000E1u);
 
         // vtbl
         ~ZBoxPrimitive() override;

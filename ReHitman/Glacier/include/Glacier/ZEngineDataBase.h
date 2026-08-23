@@ -42,7 +42,7 @@ namespace Glacier
     };
     RE_VERIFY_SIZE(SGeomTypeCount, 0xC);
 
-    enum ALLOCSEQUENCESTATUS 
+    enum ALLOCSEQUENCESTATUS
     {
         AS_ZIPLOAD = 0,
         AS_DLCLOAD = 1,
@@ -130,7 +130,7 @@ namespace Glacier
         virtual void GetGlobalColiTreeData(void* pData, uint32_t lSize);
         virtual uint32_t GetGlobalStripColiTreeSize();
         virtual void GetGlobalStripColiTreeData(void* pData, uint32_t lSize);
-        virtual ZCAMERA* CreateDefaultCam(ZCAMERA* pCamera); 
+        virtual ZCAMERA* CreateDefaultCam(ZCAMERA* pCamera);
         virtual void CorrectEditorDestGroup(SCompiledGeom* pCompiledGeom, ZGROUP* pCurrentDestGroup);
         virtual void PackHookMissingOnlyInitialize();
         virtual void CreatePackedStaticGameLevelData();
@@ -303,7 +303,8 @@ namespace Glacier
     RE_VERIFY_SIZE(ZEngineDataBase, 0x52D4); // verified
     RE_VERIFY_OFFSET(ZEngineDataBase, m_FileName, 0xD4); // Verified ZEngineDataBase::ZEngineDataBase
     RE_VERIFY_OFFSET(ZEngineDataBase, m_SceneCom, 0x1164); // Verified ZEngineDataBase::ZEngineDataBase
-    
+
     // Really weird, but it is
     #define g_pEngineData g_pSysInterface->m_pEngineData
+    #define ZROOT g_pEngineData->m_pRoot
 }

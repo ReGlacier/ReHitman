@@ -7,7 +7,6 @@
 namespace Glacier
 {
     ZOctree::ZOctree() = default;
-    ZOctree::~ZOctree() = default;
 
     void ZOctree::lort()
     {}
@@ -17,6 +16,12 @@ namespace Glacier
         // Not implemented by IOI
         ZASSERT(false);
         return nullptr;
+    }
+
+    void ZOctree::Move(COctreeObj* pObj, float*, float*)
+    {
+        // Not implemented by IOI
+        ZASSERT(false);
     }
 
     void ZOctree::Delete(COctreeObj*, bool)
@@ -46,7 +51,7 @@ namespace Glacier
     {
         return m_fScale;
     }
-    
+
     void ZOctree::GetOrigin(ZVector3& vOrigin) const
     {
         vOrigin = m_vOrigin;

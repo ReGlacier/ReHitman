@@ -89,9 +89,9 @@ namespace Glacier
         void GetMatPos(Glacier::ZMat3x3& mat, Glacier::ZVector3& pos);
         uint32_t DrawId() const;
         uint32_t ListId() const;
-        ZBaseGeom* Next();
+        ZBaseGeom* Next()  const;
         void SetNext(ZBaseGeom* next);
-        ZBaseGeom* GetPrev();
+        ZBaseGeom* GetPrev() const;
         void SetPrev(ZBaseGeom* prev);
         ZGEOM* GetGeom() const { return m_pExtraGeom; }
         uint32_t ColiId() const;
@@ -172,6 +172,7 @@ namespace Glacier
         void CopyMatPos(const ZBaseGeom* Source);
         void SetDynamicParent(ZBaseGeom* pParent);
         void SetDynamicParentPtr(const ZBaseGeom* pParent);
+        void RemoveDynamicParent();
         void SetAutoRoomAssign(bool bAutoAssign);
         bool IsHidden() const;
         bool IsMovingObject() const;
