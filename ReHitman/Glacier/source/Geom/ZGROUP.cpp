@@ -14,78 +14,8 @@
 #include <Glacier/RTP/VirtualTables.h>
 #include <Glacier/Runtime/Macro.h>
 #include <Glacier/Render/ZRender.h>
+#include <Glacier/ZSTL/StringUtils.h> // striwcmp
 #include <cstring>
-
-
-namespace
-{
-    int GetDiffByMask(const char* str, const char* mask)
-    {
-        if (!*mask)
-            return 0;
-
-        const char* pStr = str;
-        const char* pMask = mask;
-
-        while (*pMask)
-        {
-            while (*pMask != '*')
-            {
-                const char* pNextStar = strchr(pMask, '*');
-                if (!pNextStar)
-                    return _stricmp(pMask, pStr);
-
-                const ptrdiff_t nLen = pNextStar - pMask;
-                if (_memicmp(pMask, pStr, nLen))
-                    return -1;
-
-                pStr += nLen;
-                pMask = pNextStar;
-            }
-
-            ++pMask;
-
-            if (!*pMask)
-                return 0;
-
-            const char* pNextStar = strchr(pMask, '*');
-            if (pNextStar)
-            {
-                const ptrdiff_t nSegLen = pNextStar - pMask;
-                if (nSegLen == 0)
-                    return 0;
-
-                const size_t strLen = strlen(pStr);
-                if (static_cast<ptrdiff_t>(strLen) < nSegLen)
-                    return -1;
-
-                const char* pSearch = pStr;
-                ptrdiff_t n = 0;
-                while (_memicmp(pMask, pSearch, nSegLen))
-                {
-                    ++n;
-                    ++pSearch;
-                    if (n == static_cast<ptrdiff_t>(strLen - nSegLen + 1))
-                        return -1;
-                }
-
-                pMask = pNextStar;
-                pStr = pSearch;
-            }
-            else
-            {
-                const size_t strLen = strlen(pStr);
-                const size_t maskLen = strlen(pMask);
-                if (strLen >= maskLen)
-                    return _stricmp(pStr + strLen - maskLen, pMask);
-                else
-                    return 1;
-            }
-        }
-
-        return 0;
-    }
-}
 
 
 namespace Glacier
@@ -657,7 +587,7 @@ namespace Glacier
                         if (!pszName)
                             pszName = "<NONAME>";
 
-                        if (!GetDiffByMask(pszName, pszSearchName))
+                        if (!striwcmp(pszName, pszSearchName))
                             return pGeom;
                     }
                 }
@@ -711,7 +641,7 @@ namespace Glacier
                     if (!pszName)
                         pszName = "<NONAME>";
 
-                    if (!GetDiffByMask(pszName, GName))
+                    if (!striwcmp(pszName, GName))
                         return pGeom;
                 }
             }
@@ -1178,7 +1108,7 @@ namespace Glacier
         }
     }
 
-    void ZGROUP::GetStaticLights(ZBaseGeom** pDrawGeomsList, ZBaseGeom** pDrawGeomsListEnd)
+    ZBaseGeom** ZGROUP::GetStaticLights(ZBaseGeom** pDrawGeomsList, ZBaseGeom** pDrawGeomsListEnd)
     {
         SGeomPairRecursion sGeomPairRecur {};
         sGeomPairRecur.InitPair(m_LightList);
@@ -1195,7 +1125,7 @@ namespace Glacier
             if ((lLastPacked & 7) == 2)
             {
                 if (pDrawGeomsListEnd <= pDrawGeomsList)
-                    return;
+                    return pDrawGeomsList;
 
                 *pDrawGeomsList++ = reinterpret_cast<ZBaseGeom*>(lFirstPacked & ~7u);
                 *pDrawGeomsList++ = reinterpret_cast<ZBaseGeom*>(lLastPacked & ~7u);
@@ -1203,6 +1133,8 @@ namespace Glacier
 
             sGeomPairRecur.NextPair();
         }
+
+        return pDrawGeomsList;
     }
 
     void ZGROUP::CalcCenSizeRecur()
@@ -1439,4 +1371,12 @@ namespace Glacier
         0x00972988  // Mask Addr
     );
 #   pragma endregion
+
+    bool ForGroupsCheck(ZBaseGeom* pBaseGeom)
+    {
+        if (!pBaseGeom)
+            return false;
+
+        return pBaseGeom->IsDerivedFrom<ZGROUP>();
+    }
 }

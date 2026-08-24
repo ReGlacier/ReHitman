@@ -28,7 +28,7 @@ namespace Glacier
     float Zgeom__Getdistancetoitem(ZREF rGeom, ZREF rItem);
     void Zgeom__Makeinactive(ZREF rGeom);
     void Zgeom__Makeactive(ZREF rGeom);
-    void Zgeom__Hide(ZREF rGeom, char hide);
+    void Zgeom__Hide(ZREF rGeom, bool bHide);
     ZREF Zgeom__Getcurrentroom(ZREF rGeom);
-    int Zgeom__Numberofexitsfromgeomscurrentroom(ZREF rGeom, ZREF rRoom);
+    int Zgeom__Numberofexitsfromgeomscurrentroom(ZREF _, ZREF rGeom);
 }

@@ -12,7 +12,7 @@ namespace Glacier
     /**
      * @struct TabBlk
      * @brief Internal memory block header for REFTAB storage.
-     *        Each block manages a contiguous array of raw data elements immediately 
+     *        Each block manages a contiguous array of raw data elements immediately
      *        following this header in memory. Blocks are chained into a doubly-linked list.
      */
     struct TabBlk
@@ -46,20 +46,20 @@ namespace Glacier
      *
      * @details
      * REFTAB is a performance-oriented hybrid container optimized for cache locality and rapid element recycling.
-     * Instead of allocating memory for every single element (like std::list) or shifting the entire array 
+     * Instead of allocating memory for every single element (like std::list) or shifting the entire array
      * on erase operations (like std::vector), REFTAB allocates large chunks of memory called **TabBlk**.
      * * ### Key Characteristics:
-     * - **Chunked Allocations:** Contains an internal doubly-linked list of pages (@ref TabBlk). Each page holds a fixed 
+     * - **Chunked Allocations:** Contains an internal doubly-linked list of pages (@ref TabBlk). Each page holds a fixed
      * amount of elements calculated via `BlkSize`.
-     * - **Fast O(1) Erasure:** When an element is deleted via @ref RunDelRef, REFTAB avoids memory shifting. 
-     * Instead, it copies the **very last element** of the entire container into the slot of the deleted element 
+     * - **Fast O(1) Erasure:** When an element is deleted via @ref RunDelRef, REFTAB avoids memory shifting.
+     * Instead, it copies the **very last element** of the entire container into the slot of the deleted element
      * using a raw `memcpy`.
      * - **Binary Compatibility:** Strictly maintains a structure size of `0x1C` (28 bytes) to remain fully compatible
      * with the original game binary (*Hitman: Blood Money*).
      */
     class REFTAB
     {
-    public: 
+    public:
         // members
         TabBlk* TabFirstPtr; ///< Head of the memory block linked list.
         TabBlk* TabBlockPtr; ///< Tail of the memory block linked list (last allocated block).
@@ -86,10 +86,10 @@ namespace Glacier
         virtual uint32_t* AddUnique(uint32_t);
         virtual void Clear();
         virtual void ClearThis();
-        virtual int Count();
-        virtual uint32_t Size();
-        virtual uint32_t GetEleSize();
-        virtual uint32_t PoolSize();
+        virtual int Count() const;
+        virtual uint32_t Size() const;
+        virtual uint32_t GetEleSize() const;
+        virtual uint32_t PoolSize() const;
         virtual void DelRefPtr(uint32_t*);
         virtual bool Exists(uint32_t*);
         virtual bool Exists(uint32_t) const;
@@ -119,14 +119,14 @@ namespace Glacier
 
         // STL Iterators
         template <typename T = uint32_t>
-        class Iterator 
+        class Iterator
         {
         private:
             REFTAB* m_pContainer;
             RefRun  m_Run;
             uint32_t* m_pCurrentPtr;
 
-            void Advance() 
+            void Advance()
             {
                 m_pCurrentPtr = m_pContainer->RunNxtRefPtr(&m_Run);
             }
@@ -138,27 +138,27 @@ namespace Glacier
             using pointer           = T*;
             using reference         = const T&;
 
-            Iterator(REFTAB* container, bool isEnd) : m_pContainer(container) 
+            Iterator(REFTAB* container, bool isEnd) : m_pContainer(container)
             {
-                if (isEnd || !container || container->EleCount == 0) 
+                if (isEnd || !container || container->EleCount == 0)
                 {
                     m_Run._RunPtr = nullptr;
                     m_Run._RunCou = 0;
                     m_Run._RunDir = 0;
                     m_pCurrentPtr = nullptr;
-                } 
-                else 
+                }
+                else
                 {
                     m_pContainer->RunInitNxtRef(&m_Run);
                     m_pCurrentPtr = m_pContainer->RunNxtRefPtr(&m_Run);
                 }
             }
 
-            value_type operator*() const 
-            { 
+            value_type operator*() const
+            {
                 if constexpr (std::is_pointer_v<value_type>)
                 {
-                    return reinterpret_cast<value_type>(*m_pCurrentPtr); 
+                    return reinterpret_cast<value_type>(*m_pCurrentPtr);
                 }
                 else
                 {
@@ -166,11 +166,11 @@ namespace Glacier
                 }
             }
 
-            value_type operator->() const 
-            { 
+            value_type operator->() const
+            {
                 if constexpr (std::is_pointer_v<value_type>)
                 {
-                    return reinterpret_cast<value_type>(*m_pCurrentPtr); 
+                    return reinterpret_cast<value_type>(*m_pCurrentPtr);
                 }
                 else
                 {
@@ -178,7 +178,7 @@ namespace Glacier
                 }
             }
 
-            Iterator& operator++() 
+            Iterator& operator++()
             {
                 Advance();
                 return *this;
@@ -195,7 +195,7 @@ namespace Glacier
              *
              * @return Reference to *this, advanced to the replacement element.
              */
-            Iterator& Erase() 
+            Iterator& Erase()
             {
                 ZASSERT(m_pCurrentPtr != nullptr);
                 m_pContainer->RunDelRef(&m_Run);
@@ -203,22 +203,22 @@ namespace Glacier
                 return *this;
             }
 
-            Iterator operator++(int) 
+            Iterator operator++(int)
             {
                 Iterator tmp = *this;
                 Advance();
                 return tmp;
             }
 
-            bool operator==(const Iterator& other) const 
+            bool operator==(const Iterator& other) const
             {
-                if (!m_pCurrentPtr && !other.m_pCurrentPtr) 
+                if (!m_pCurrentPtr && !other.m_pCurrentPtr)
                     return true;
-                
+
                 return m_pCurrentPtr == other.m_pCurrentPtr;
             }
 
-            bool operator!=(const Iterator& other) const 
+            bool operator!=(const Iterator& other) const
             {
                 return !(*this == other);
             }
@@ -248,7 +248,7 @@ namespace Glacier
         {
             return TypedView<T>(const_cast<REFTAB*>(this));
         }
-        
+
         Iterator<uint32_t> begin() { return Iterator<uint32_t>(this, false); }
         Iterator<uint32_t> end()   { return Iterator<uint32_t>(this, true); }
 

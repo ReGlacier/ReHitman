@@ -533,7 +533,7 @@ namespace SI
         float (*Zgeom__Getdistancetoitem)(ZREF rGeom, ZREF rItem);
         void (*Zgeom__Makeinactive)(ZREF rGeom);
         void (*Zgeom__Makeactive)(ZREF rGeom);
-        void (*Zgeom__Hide)(ZREF rGeom, char hide);
+        void (*Zgeom__Hide)(ZREF rGeom, bool bHide);
         ZREF (*Zgeom__Getcurrentroom)(ZREF rGeom);
         int (*Zgeom__Numberofexitsfromgeomscurrentroom)(ZREF rGeom, ZREF rRoom);
         void (*Zhm3Boid__Die)(ZREF rBoid);
@@ -652,7 +652,7 @@ namespace SI
         void (*Item__Resetedibleitem)(ZREF rItem, v3 position);
         ZREF (*Item__Getlhanditem)(ZREF rActor);
         ZREF (*Item__Getrhanditem)(ZREF rActor);
-        void (*Item__Enablepickup)(ZREF rItem, int enabled);
+        void (*Item__Enablepickup)(ZREF rItem, bool bEnabled);
         bool (*Item__Setowner)(ZREF rOwner, ZREF rItem);
         bool (*Item__Setownerparent)(ZREF rParent, ZREF rOwner, ZREF rItem);
         ZREF (*Item__Getparent)(ZREF rItem);

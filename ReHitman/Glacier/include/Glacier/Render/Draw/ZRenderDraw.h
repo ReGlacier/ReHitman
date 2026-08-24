@@ -19,8 +19,8 @@ namespace Glacier
         struct ZRenderEntryMap
         {
             // constants
-            static constexpr int HASH_BUCKETS_NR = 256; // 256 verified as formal 1024 / 4 at ZRenderDraw::ZRenderEntryMap::ZRenderEntryMap
-            static constexpr int ENTRIES_NR = 1536; // 1536 verified PC at ZRenderDraw::ZRenderEntryMap::ZRenderEntryMap
+            static constexpr int HASH_BUCKETS_NR = 256; // Verified PC ctor 0x475010 (1024 byte bucket memset)
+            static constexpr int ENTRIES_NR = 1536; // Verified PC ctor 0x475010 (0x4800 byte free-list)
 
             // types
             struct ZEntry
@@ -34,7 +34,7 @@ namespace Glacier
             // methods
             ZRenderEntryMap();
 
-            bool Add(uint32_t lIdentifier, ZRenderEntry* pEntry);
+            ZEntry* Add(uint32_t lIdentifier, ZRenderEntry* pEntry);
             ZRenderEntry* GetAndRemove(uint32_t lIdentifier);
             static uint32_t HashOfIdentifier(uint32_t lIdentifier);
 

@@ -628,6 +628,33 @@ namespace Glacier
         mmtmul(out.data, a.data, b.data);
     }
 
+    inline void vrot(float* vec, const float* rot)
+    {
+        float sinX = sin(rot[0]);
+        float cosX = cos(rot[0]);
+        float sinY = sin(rot[1]);
+        float cosY = cos(rot[1]);
+        float sinZ = sin(rot[2]);
+        float cosZ = cos(rot[2]);
+
+        float vx = vec[0];
+        float vy = vec[1];
+        float vz = vec[2];
+
+        // Rotate around Z-Axis
+        float x1 =  cosZ * vx - sinZ * vy;
+        float y1 =  sinZ * vx + cosZ * vy;
+
+        // Rotate around X-Axis
+        float y2 =  cosX * y1 - sinX * vz;
+        float z2 =  sinX * y1 + cosX * vz;
+
+        // Rotate around Y-Axis
+        vec[0] =  cosY * x1 + sinY * z2;
+        vec[1] =  y2;
+        vec[2] =  cosY * z2 - sinY * x1;
+    }
+
     inline void TransformBox(const float* mat, float* size)
     {
         const float x = size[0];
@@ -651,6 +678,11 @@ namespace Glacier
         vec[0] -= b[0];
         vec[1] -= b[1];
         vec[2] -= b[2];
+    }
+
+    inline bool vzero(const float* v)
+    {
+        return v[0] == 0.0f && v[1] == 0.0f && v[2] == 0.0f;
     }
 
     /**

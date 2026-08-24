@@ -44,6 +44,7 @@ set(SI_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/source/SI_Zhm3Boid.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/source/SI_Zhm3Securitycamera.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/source/SI_Zusepoint.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/source/SI_Common.cpp
 )
 
 add_library(ScriptDllInterface INTERFACE)
@@ -71,15 +72,15 @@ target_link_libraries(ScriptInterface PUBLIC ScriptDllInterface)
 if (REHITMAN_TESTS AND TARGET G1::TestCore)
     # Test env
     target_link_libraries(
-        ScriptInterface 
-        PUBLIC 
+        ScriptInterface
+        PUBLIC
             G1::TestCore
     )
 else()
     # Prod env
     target_link_libraries(
-        ScriptInterface 
-        PUBLIC 
+        ScriptInterface
+        PUBLIC
             G1::Core
     )
 endif()

@@ -262,6 +262,7 @@ namespace Glacier
         void GetWorldPosition(ZVector3& vPosition) const;
         void GetLocalMatPos(ZMat3x3& mMat, ZVector3& vPos) const;
         void GetSize(ZVector3& vSize);
+        void SetCen(const ZVector3& vCen);
         void SetSize(const ZVector3& vSize);
         void SetRadius(float fRadius);
         void GetRootVect(ZVector3& vect);

@@ -10,13 +10,13 @@ namespace Glacier
         void* pRawMem = ZUniMemory::Allocate(sizeof(REFTAB));
         if (!pRawMem)
             return nullptr;
-        
+
         return ::new (pRawMem) REFTAB(pPoolSize, pUserData);
     }
 
     void REFTAB::DeleteReftab(REFTAB* pRefTab)
     {
-        if (!pRefTab) 
+        if (!pRefTab)
             return;
 
         pRefTab->~REFTAB();
@@ -92,7 +92,7 @@ namespace Glacier
         uint32_t* pFound = Find(rRef);
         if (pFound)
             return pFound + 1;
-        
+
         return Add(rRef);
     }
 
@@ -118,22 +118,22 @@ namespace Glacier
         Clear();
     }
 
-    int REFTAB::Count()
+    int REFTAB::Count() const
     {
         return EleCount;
     }
 
-    uint32_t REFTAB::Size()
+    uint32_t REFTAB::Size() const
     {
         return EleSize;
     }
 
-    uint32_t REFTAB::GetEleSize()
+    uint32_t REFTAB::GetEleSize() const
     {
         return EleSize;
     }
 
-    uint32_t REFTAB::PoolSize()
+    uint32_t REFTAB::PoolSize() const
     {
         return m_lRefsPrBlk;
     }
@@ -142,17 +142,17 @@ namespace Glacier
     {
         RefRun it;
         RunInitNxtRef(&it);
-        
+
         uint32_t* pCurrent = reinterpret_cast<uint32_t*>(RunNxtRefPtr(&it));
-        
+
         while (pCurrent)
         {
             if (pCurrent == pRefPtr)
             {
                 RunDelRef(&it);
-                return; 
+                return;
             }
-            
+
             pCurrent = reinterpret_cast<uint32_t*>(RunNxtRefPtr(&it));
         }
     }
@@ -181,7 +181,7 @@ namespace Glacier
         while (it)
         {
             uint32_t rCurrent = RunNxtRef(&it);
-            
+
             if (rCurrent == rRef)
             {
                 return true;
@@ -211,7 +211,7 @@ namespace Glacier
     {
         if (lRefNo >= EleCount)
         {
-            return 0; 
+            return 0;
         }
 
         const int refsPerBlock = m_lRefsPrBlk & 0x7FFFFFFF;
@@ -245,7 +245,7 @@ namespace Glacier
             iIndex -= refsPerBlock;
         }
 
-        uint8_t* pBlockDataStart = reinterpret_cast<uint8_t*>(pCurrentBlk + 1);        
+        uint8_t* pBlockDataStart = reinterpret_cast<uint8_t*>(pCurrentBlk + 1);
         uint32_t* pTargetSlot = reinterpret_cast<uint32_t*>(pBlockDataStart + (iIndex * EleSize));
 
         return pTargetSlot;
@@ -304,7 +304,7 @@ namespace Glacier
         ZASSERT(TabBlockPtr != nullptr);
 
         --EleCount;
-    
+
         TabBlockPtr->_Cou -= EleSize;
 
         if (pRefRun->_RunDir > 0)
@@ -319,7 +319,7 @@ namespace Glacier
 
         if (EleCount > 0)
         {
-            uint32_t* pLastElementData = reinterpret_cast<uint32_t*>(TabBlockPtr + 1) + TabBlockPtr->_Cou;            
+            uint32_t* pLastElementData = reinterpret_cast<uint32_t*>(TabBlockPtr + 1) + TabBlockPtr->_Cou;
             uint32_t* pTargetDeleteData = reinterpret_cast<uint32_t*>(pRefRun->_RunPtr + 1) + pRefRun->_RunCou;
 
             if (pLastElementData == pTargetDeleteData)
@@ -342,7 +342,7 @@ namespace Glacier
             {
                 TabFirstPtr = nullptr;
                 pRefRun->_RunPtr = nullptr;
-                
+
                 ZASSERT(EleCount == 0); // Must be empty here
             }
             else
@@ -352,7 +352,7 @@ namespace Glacier
                     pRefRun->_RunPtr = pPrevBlk;
                     pRefRun->_RunCou = BlkSize;
                 }
-                
+
                 TabBlockPtr->_Next = nullptr;
             }
 
@@ -368,7 +368,7 @@ namespace Glacier
         pRefRun->_RunDir = 1;
         pRefRun->_RunPtr = TabFirstPtr;
     }
-    
+
     void REFTAB::RunInitNxtRef(RefRun* pRefRun)
     {
         ZASSERT(pRefRun != nullptr);
@@ -405,7 +405,7 @@ namespace Glacier
         auto pRef = RunNxtRefPtr(pRefRun);
         if (pRef)
             return *pRef;
-        
+
         return 0u;
     }
 
@@ -414,7 +414,7 @@ namespace Glacier
         auto pRef = RunNxtRefPtr(pRefRun);
         if (pRef)
             return *pRef;
-        
+
         return 0u;
     }
 
@@ -443,7 +443,7 @@ namespace Glacier
             auto* pResult = reinterpret_cast<const uint32_t*>(pCurrentBlk);
             return pResult + currentCou + 4;
         }
-        
+
         pRefRun->_RunPtr = nullptr;
         return nullptr;
     }
@@ -503,7 +503,7 @@ namespace Glacier
     {
         return const_cast<uint32_t*>(const_cast<const REFTAB*>(this)->RunPrevRefPtr(pRefRun));
     }
-    
+
     uint32_t REFTAB::operator[](int lIndex) const
     {
         ZASSERT(lIndex >= 0);
@@ -519,7 +519,7 @@ namespace Glacier
         {
             return nullptr;
         }
-        
+
         const uint32_t* pBlockDataStart = reinterpret_cast<const uint32_t*>(pRefRun->_RunPtr + 1);
         return pBlockDataStart + pRefRun->_RunCou;
     }

@@ -1,33 +1,16 @@
 #include <SI/SI_Zgeom.h>
+#include <Glacier/Geom/GeomControlMasks.h>
 #include <Glacier/Geom/ZBoxPrimitive.h>
+#include <Glacier/Geom/ZROOM.h>
 #include <Glacier/Geom/ZGEOM.h>
+#include <Glacier/Items/ZItem.h>
 #include <Glacier/EventBase/ZEventBase.h>
-#include <cstdio>
+#include <Glacier/ZSTL/ZMath.h>
+#include <SI/SI_Common.h>
 
 
 namespace Glacier
 {
-    namespace
-    {
-        ZGEOM* GetGeom(ZREF rGeom)
-        {
-            ZGEOM* pGeom = ZGEOM::RefToPtr(rGeom);
-            if (!pGeom)
-            {
-                printf("ERROR: couldn't convert ref to pointer, in ZGeom.si, You probably called an interface function with a Null ref\n");
-                return nullptr;
-            }
-
-            if (pGeom->IsDerivedFrom<ZGEOM>())
-            {
-                return pGeom;
-            }
-
-            printf("ERROR: %s isn't derived from ZGeom\n", pGeom->Name());
-            return nullptr;
-        }
-    }
-
     v3 Zgeom__Getsize(ZREF rGeom)
     {
         ZVector3 vSize{};
@@ -242,51 +225,91 @@ namespace Glacier
 
     bool Zgeom__Checkworldpointinside(ZREF rGeom, v3 worldPosition)
     {
-        // TODO: Finish me
-        return false;
+        auto* pGeom = GetGeom(rGeom);
+        if (!pGeom)
+            return false;
+
+        ZVector3 vLocalPoint = worldPosition;
+        pGeom->GetLocalPoint(vLocalPoint);
+
+        return pGeom->CheckPointInside(vLocalPoint, 0.0f);
     }
 
     bool Zgeom__Isinview(ZREF rGeom)
     {
-        // TODO: Finish me
-        return false;
+        auto* pGeom = GetGeom(rGeom);
+        if (!pGeom)
+            return false;
+
+        return (pGeom->Control() & ZCINVIEW) != 0;
     }
 
     void Zgeom__Printname(ZREF rGeom)
     {
-        // TODO: Finish me
+        auto* pGeom = GetGeom(rGeom);
+        if (!pGeom)
+            return;
+
+        MYSTR sName = pGeom->CalcTotalName(true);
+        ZINFO("%s", sName.String);
     }
 
     float Zgeom__Getdistancetoitem(ZREF rGeom, ZREF rItem)
     {
-        // TODO: Finish me
-        return 0.0f;
+        auto* pGeom = GetGeom(rGeom);
+        auto* pItem = reinterpret_cast<ZItem*>(GetGeom(rItem));
+        if (!pGeom || !pItem)
+            return 0.0f;
+
+        ZVector3 vGeom, vItem;
+        ZMat3x3 mItem;
+        pItem->GetMainItemRootTM(mItem, vItem);
+        pGeom->GetLocalPoint(vItem);
+        return vdist(vItem, pGeom->Cen());
     }
 
     void Zgeom__Makeinactive(ZREF rGeom)
     {
-        // TODO: Finish me
+        auto* pGeom = GetGeom(rGeom);
+        if (!pGeom)
+            return;
+
+        pGeom->MakeInactive();
     }
 
     void Zgeom__Makeactive(ZREF rGeom)
     {
-        // TODO: Finish me
+        auto* pGeom = GetGeom(rGeom);
+        if (!pGeom)
+            return;
+
+        pGeom->MakeActive();
     }
 
-    void Zgeom__Hide(ZREF rGeom, char hide)
+    void Zgeom__Hide(ZREF rGeom, bool bHide)
     {
-        // TODO: Finish me
+        auto* pGeom = GetGeom(rGeom);
+        if (!pGeom)
+            return;
+
+        pGeom->Hide(bHide);
     }
 
     ZREF Zgeom__Getcurrentroom(ZREF rGeom)
     {
-        // TODO: Finish me
-        return 0;
+        auto* pGeom = GetGeom(rGeom);
+        if (!pGeom)
+            return 0;
+
+        return pGeom->BaseGeom()->GetOwnerRoom()->GetRef();
     }
 
-    int Zgeom__Numberofexitsfromgeomscurrentroom(ZREF rGeom, ZREF rRoom)
+    int Zgeom__Numberofexitsfromgeomscurrentroom(ZREF _, ZREF rGeom)
     {
-        // TODO: Finish me
-        return 0;
+        auto* pGeom = GetGeom(rGeom);
+        if (!pGeom)
+            return 0;
+
+        return pGeom->BaseGeom()->GetOwnerRoom()->m_lNrExits;
     }
 }

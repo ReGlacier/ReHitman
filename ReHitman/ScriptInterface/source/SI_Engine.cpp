@@ -1,6 +1,7 @@
 #include <SI/SI_Engine.h>
 
 #include <Glacier/System/ZSysInterface.h>
+#include <Glacier/Com/CComRead.h>
 #include <Glacier/ResourceCollection.h>
 #include <Glacier/ZEngineDataBase.h>
 #include <Glacier/ZUniAssert.h>
@@ -52,13 +53,13 @@ namespace Glacier
 
     ZREF Engine__Getsceneval(const char* name)
     {
-        // TODO: Finish me
-        return 0;
+        CComRead sRead { g_pEngineData->GetSceneCom(), name };
+        return static_cast<ZREF>(sRead);
     }
 
     void Engine__Setsceneval(const char* name, ZREF value)
     {
-        // TODO: Finish me
+        g_pEngineData->GetSceneCom()->SetVal(name, value, CCOMType::CCOM_TYPE_REF);
     }
 
     bool Engine__Localeexists(const char* name)

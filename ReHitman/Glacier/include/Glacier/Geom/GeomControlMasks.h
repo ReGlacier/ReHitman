@@ -9,6 +9,7 @@ namespace Glacier
     static constexpr uint32_t ZCCOLIMASK = 0xFFu; // Weird, but approved in PS2 assembly
     static constexpr uint32_t ZCINACTIVE = 0x400u; // Used in combo ZCHIDDEN|ZCINACTIVE|ZCOWNERDRAW|ZCINVISIBLE
     static constexpr uint32_t ZCHIDDEN   = 0x800u; // Approved by ZBaseGeom::Hide
+    static constexpr uint32_t ZCINVIEW = 0x1000u; // Approved by Zgeom__Isinview
     static constexpr uint32_t ZCINVISIBLE = 0x2000u; // Approved by ZBaseGeom::Invisible
     static constexpr uint32_t ZCROOMASSIGN = 0x4000u; // Approved by ZBaseGeom::AutoAssignToRooms
     static constexpr uint32_t ZCCHKLIGHT = 0x8000u; // PS2

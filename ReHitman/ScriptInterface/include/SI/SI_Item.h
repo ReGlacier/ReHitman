@@ -11,7 +11,7 @@ namespace Glacier
     void Item__Resetedibleitem(ZREF rItem, v3 position);
     ZREF Item__Getlhanditem(ZREF rActor);
     ZREF Item__Getrhanditem(ZREF rActor);
-    void Item__Enablepickup(ZREF rItem, int enabled);
+    void Item__Enablepickup(ZREF rItem, bool bEnabled);
     bool Item__Setowner(ZREF rOwner, ZREF rItem);
     bool Item__Setownerparent(ZREF rParent, ZREF rOwner, ZREF rItem);
     ZREF Item__Getparent(ZREF rItem);

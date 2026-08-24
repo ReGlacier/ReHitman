@@ -1,7 +1,13 @@
+#include <Glacier/Component/Debug/ZDrawDebugObjectComponent.h>
 #include <SI/SI_Debugfunctions.h>
+
 
 namespace Glacier
 {
+    // DronCode: 100% of that functions are empty in PC build
+    //           But I'd like to port all that stuff from PS2
+    //           Yep, I know that it's unused in PC final DLLs, but I don't care
+
     void Addlinedecay(v3 start, v3 end, int color, float decay)
     {
         // TODO: Finish me

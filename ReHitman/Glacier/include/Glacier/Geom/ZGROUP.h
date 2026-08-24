@@ -81,7 +81,7 @@ namespace Glacier
         virtual uint32_t GroupControl() const;
         virtual void ResetGroupPosition(bool bReset);
         virtual void MakeActiveRecursive();
-        virtual void GetStaticLights(ZBaseGeom** pDrawGeomsList, ZBaseGeom** pDrawGeomsListEnd);
+        virtual ZBaseGeom** GetStaticLights(ZBaseGeom** pDrawGeomsList, ZBaseGeom** pDrawGeomsListEnd);
         virtual void CalcCenSizeRecur();
         virtual void GetCenSizeRecur(ZVector3& vCen, ZVector3& vSize, bool bIgnoreHidden);
         virtual ZGEOM* FindMaskGeom(const char* pSearchName, int32_t lMask) const;
@@ -115,4 +115,6 @@ namespace Glacier
         RE_ADD_PADDING(2);
     };
     RE_VERIFY_SIZE(ZGROUP, 0x4C); // Verified
+
+    bool ForGroupsCheck(ZBaseGeom* pBaseGeom);
 }

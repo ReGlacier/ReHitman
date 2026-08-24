@@ -18,7 +18,7 @@ namespace Glacier
         virtual void CreateFromTemplate();
         virtual void GetItemRootTM(float *,float *);
         virtual void GetMainItemRootTM(float *,float *);
-        virtual void GetState();
+        virtual ITEMSTATE GetState() const;
         virtual void SetState(ITEMSTATE, CCom*);
         virtual void Place(const ZMat3x3& mMat, const ZVector3& vPos);
         virtual void SetMain(uint32_t);
@@ -28,7 +28,7 @@ namespace Glacier
         virtual ZItemTemplate* GetItemTemplate();
         virtual void VerifyItemTemplate(ZItemTemplate const*);
         virtual void SetItemOwner(uint32_t,ZGROUP *,bool,bool);
-        virtual void GetItemOwner();
+        virtual ZGEOM* GetItemOwner() const;
         virtual void GetAction(uint32_t);
         virtual void* InitPickup();
         virtual void EnablePickup(bool);

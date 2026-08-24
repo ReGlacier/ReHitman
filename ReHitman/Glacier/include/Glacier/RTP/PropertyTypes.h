@@ -2,6 +2,7 @@
 
 #include <Glacier/ReGlacier.h>
 #include <Glacier/ZSTL/ZRTStringObject.h>
+#include <Glacier/ZUniMemory.h>
 #include <cstdint>
 
 
@@ -35,13 +36,25 @@ namespace Glacier
 
     struct ZRawData
     {
-        void* m_Data{};
-        uint32_t m_Size{};
+        // methods
+        ZRawData() = default;
+        ~ZRawData()
+        {
+            if (m_Data && m_Size)
+            {
+                ZUniMemory::Delete(m_Data);
+                m_Data = nullptr;
+            }
+        }
 
         void SetSize(uint32_t size)
         {
             m_Size = size;
         }
+
+        // members
+        void* m_Data{};
+        uint32_t m_Size{};
     };
     RE_VERIFY_SIZE(ZRawData, 0x8);
 

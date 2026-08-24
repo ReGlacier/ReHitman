@@ -20,15 +20,15 @@ namespace Glacier
 
     ZRenderObjectInstance::~ZRenderObjectInstance()
     {
-        ZASSERT(m_pRenderObject);
-        ZASSERT(m_pRenderObject->m_lNumActiveInstances);
+        ZSAFE_ASSERT(m_pRenderObject);
+        ZSAFE_ASSERT(m_pRenderObject->m_lNumActiveInstances);
 
         if (!--m_pRenderObject->m_lNumActiveInstances && (m_pRenderObject->m_lFlags & 2))
         {
             ZUniMemory::Delete(m_pRenderObject);
         }
     }
-    
+
     void ZRenderObjectInstance::UpdateLight(const SUpdateLightData* pUpdateLightData, uint32_t lNumLights)
     {
         // Do nothing

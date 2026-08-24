@@ -36,35 +36,25 @@ namespace Glacier
 
     ZRenderDraw::ZRenderEntryMap::ZRenderEntryMap()
     {
-        // Reset entries data
-        m_Entries = {};
-
-        // Fill default entries
-        for (int i = ENTRIES_NR - 1; i != -1; --i)
-        {
-            m_Entries.GetEntry(i)->m_lIndentifier = i;
-        }
-
-        // Cleanup hash entries
-        memset(&m_HashToFirst, 0, sizeof(uint32_t*) * HASH_BUCKETS_NR);
+        // PC 0x475010: m_Entries default-constructs (chaining the 1536 slot free-list),
+        // then the 1024 byte hash bucket table is zeroed.
+        memset(&m_HashToFirst, 0, sizeof(m_HashToFirst));
     }
 
-
-    bool ZRenderDraw::ZRenderEntryMap::Add(uint32_t lIdentifier, ZRenderEntry* pEntry)
+    ZRenderDraw::ZRenderEntryMap::ZEntry* ZRenderDraw::ZRenderEntryMap::Add(uint32_t lIdentifier, ZRenderEntry* pEntry)
     {
-        if (m_Entries.Count() == ENTRIES_NR)
-            return false;
+        ZEntry* pInserted = m_Entries.Add();
+        if (!pInserted)
+            return nullptr;
 
-        auto* pInserted = m_Entries.Add();
         pInserted->m_lIndentifier = lIdentifier;
         pInserted->m_pRenderEntry = pEntry;
 
-        const uint32_t lHash = HashOfIdentifier(lIdentifier);
+        ZEntry** const ppBucket = &m_HashToFirst[HashOfIdentifier(lIdentifier)];
+        pInserted->m_pNext = *ppBucket;
+        *ppBucket = pInserted;
 
-        pInserted->m_pNext = m_HashToFirst[lHash];
-        m_HashToFirst[lHash] = pInserted;
-
-        return true;
+        return pInserted;
     }
 
     ZRenderEntry* ZRenderDraw::ZRenderEntryMap::GetAndRemove(uint32_t lIdentifier)
@@ -105,7 +95,8 @@ namespace Glacier
 
     uint32_t ZRenderDraw::ZRenderEntryMap::HashOfIdentifier(uint32_t lIdentifier)
     {
-        return (lIdentifier >> 2u) & 0x3FCu;
+        // PC 0x475060 / 0x473EA0: byte 2 of the identifier selects one of the 256 buckets
+        return (lIdentifier >> 4) & 0xFFu; // (uint8_t)(lIdentifier >> 4)
     }
 
     ZRenderDraw::ZRenderDraw()

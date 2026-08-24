@@ -23,7 +23,7 @@ namespace Glacier
         uint32_t* Add(uint32_t) override;
         void Clear() override;
         void ClearThis() override;
-        int Count() override;
+        int Count() const override;
         void DelRefPtr(uint32_t*) override;
         void RunDelRef(RefRun *) override;
         void RunInitNxtRef(RefRun *) const override;
@@ -52,11 +52,11 @@ namespace Glacier
         REFTAB *FreeStack;
 
     private:
-        PrevNext* GetPrevNext(uint32_t* pRecord) 
+        PrevNext* GetPrevNext(uint32_t* pRecord)
         {
             return reinterpret_cast<PrevNext*>(pRecord + EleSize - 2);
         }
-        
+
         uint32_t* GetRecord(PrevNext* pNode)
         {
             return reinterpret_cast<uint32_t*>(pNode) + (2 - EleSize);

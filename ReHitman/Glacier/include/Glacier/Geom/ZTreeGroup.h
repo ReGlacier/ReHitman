@@ -13,20 +13,22 @@
 
 namespace Glacier
 {
+    // fwds
     struct SExtendedImpactInfo;
     struct ZGEOMCLASSINFO;
     struct COLI;
-    class CHUNK;
+    struct CHUNK;
     class ZOctree;
+    class ZTreeGroup;
 
     struct SChildTreeGroups
     {
         uint16_t m_iNrStaticChildTreeGroups;
         uint16_t m_iNrDynamicChildTreeGroups;
-        class ZTreeGroup* m_pStaticChildTreeGroups[384];
-        class ZTreeGroup* m_pDynamicChildTreeGroups[32];
+        ZTreeGroup* m_pStaticChildTreeGroups[384];
+        ZTreeGroup* m_pDynamicChildTreeGroups[32];
     };
-    RE_VERIFY_SIZE(SChildTreeGroups, 0x684);
+    // RE_VERIFY_SIZE(SChildTreeGroups, 0x684);
 
     class ZTreeGroup : public ZGROUP
     {

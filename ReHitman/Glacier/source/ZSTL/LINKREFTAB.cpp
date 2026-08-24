@@ -15,7 +15,7 @@ namespace Glacier
         BlkSize = (Exsize + 3) * RefsPrBlk;
         TabFirstPtr = 0;
         TabBlockPtr = 0;
-        
+
         FreeStack = 0;
         First = 0;
         Last = 0;
@@ -56,7 +56,7 @@ namespace Glacier
         REFTAB::Clear();
     }
 
-    void LINKREFTAB::ClearThis() 
+    void LINKREFTAB::ClearThis()
     {
         if (FreeStack)
         {
@@ -68,7 +68,7 @@ namespace Glacier
         Last = nullptr;
     }
 
-    int LINKREFTAB::Count() 
+    int LINKREFTAB::Count() const
     {
         if (FreeStack)
         {
@@ -146,7 +146,7 @@ namespace Glacier
             Next->_Prev = RunPtr->_Prev;
         else
             Last = (PrevNext*)RunPtr->_Prev;
-        
+
         RunPtr->_Next = 0;
         RunPtr->_Prev = 0;
     }
@@ -175,7 +175,7 @@ namespace Glacier
     {
         pRefRun->_RunCou = -1;
         pRefRun->_RunPtr = nullptr;
-        
+
         REFTAB::MakeDirty();
     }
 
@@ -234,7 +234,7 @@ namespace Glacier
     {
         return const_cast<uint32_t*>(const_cast<const LINKREFTAB*>(this)->RunPrevRefPtr(pRefRun));
     }
-    
+
     const uint32_t* LINKREFTAB::RunToRefPtr(RefRun *pRefRun) const
     {
         uint32_t* result = (uint32_t *)pRefRun->_RunPtr;
@@ -245,7 +245,7 @@ namespace Glacier
 
         return result;
     }
-    
+
     void LINKREFTAB::RemoveFreeStack()
     {
         if (FreeStack)
@@ -254,7 +254,7 @@ namespace Glacier
             FreeStack = nullptr;
         }
     }
-    
+
     void LINKREFTAB::CreateFreeStack()
     {
         ZASSERT(FreeStack == nullptr); // Otherwise mem leak (same in original code)
@@ -278,7 +278,7 @@ namespace Glacier
 
         return pRecord + 1;
     }
-    
+
     uint32_t* LINKREFTAB::AddEnd(uint32_t rRef)
     {
         return Add(rRef);

@@ -62,7 +62,7 @@ namespace Glacier
     class ZActionDispatcher;
     class ZROUTCLASSINFO;
     struct CHUNKFILE;
-    class CHUNK;
+    struct CHUNK;
     class REFTAB;
     class REFTAB32;
     class ZOffsetAlloc;
