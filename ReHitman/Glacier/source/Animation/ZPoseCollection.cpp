@@ -1,4 +1,8 @@
 #include <Glacier/Animation/ZPoseCollection.h>
+#include <Glacier/Render/Prim/ZPrimControlBase.h>
+#include <Glacier/Render/Prim/ZPoseBoneHeader.h>
+#include <Glacier/Render/ZRenderBaseDll.h>
+#include <Glacier/Render/Globals.h>
 
 
 namespace Glacier::Animation
@@ -7,25 +11,33 @@ namespace Glacier::Animation
 
     ZPoseBone* ZPoseCollection::poseData()
     {
-        // TODO: Finish after g_pRenderDll reversed
-        return nullptr;
+        auto* hdr = ZPrimControlBase::GetPrimitive<ZPoseBoneHeader>(m_PoseIdx);
+        ZASSERT(hdr);
+
+        return ZPrimControlBase::GetPrimitive<ZPoseBone>(hdr->m_PoseData);
     }
-    
+
     int32_t ZPoseCollection::poseCount()
     {
-        // TODO: Finish after g_pRenderDll reversed
-        return 0;
+        auto* hdr = ZPrimControlBase::GetPrimitive<ZPoseBoneHeader>(m_PoseIdx);
+        ZASSERT(hdr);
+
+        return hdr ? hdr->m_PoseCount : 0;
     }
 
     int32_t* ZPoseCollection::indexToOffsetLookup()
     {
-        // TODO: Finish after g_pRenderDll reversed
-        return nullptr;
+        auto* hdr = ZPrimControlBase::GetPrimitive<ZPoseBoneHeader>(m_PoseIdx);
+        ZASSERT(hdr);
+
+        return ZPrimControlBase::GetPrimitive<int32_t>(hdr->m_PoseIndexToOffsetLookup);
     }
 
     int16_t* ZPoseCollection::idToPosLookup()
     {
-        // TODO: Finish after g_pRenderDll reversed
-        return nullptr;
+        auto* hdr = ZPrimControlBase::GetPrimitive<ZPoseBoneHeader>(m_PoseIdx);
+        ZASSERT(hdr);
+
+        return ZPrimControlBase::GetPrimitive<int16_t>(hdr->m_PoseIdToPosLookup);
     }
 }

@@ -31,7 +31,6 @@
 #include <Glacier/Geom/ZROOM.h>
 #include <Glacier/Geom/ZTreeGroup.h>
 #include <Glacier/ZTypeTraits.h>
-#include <Glacier/ZPrimControlWintel.h>
 #include <Glacier/Geom/ZLIST.h>
 #include <Glacier/Items/ZItemTemplateAmmo.h>
 #include <Glacier/Items/ZItemTemplateWeapon.h>
@@ -52,7 +51,6 @@
 #include <BloodMoney/Game/UI/ZLINEOBJ.h>
 
 #include <HF/HackingFramework.hpp>
-#include <Glacier/ZPrimControlWintel.h>
 #include <Glacier/ZEngineGeomControl.h>
 #include <Glacier/Com/CCom.h>
 #include <Glacier/EventBase/ZEventBuffer.h>

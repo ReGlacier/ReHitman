@@ -56,13 +56,13 @@ namespace Glacier::Animation
 
         // methods
         Model();
-        int DynamicSize(ZLNKOBJ* pLnkObj, uint32_t poseIdx, uint32_t id2IndexIdx, uint32_t index2IdIdx, uint32_t id2PosIdx, uint32_t parentIdx, bool stateModel);
+        int DynamicSize(ZLNKOBJ* pLnkObj, uint32_t poseIdx, uint32_t id2IndexIdx, uint32_t index2IdIdx, uint32_t id2PosIdx, uint32_t parentIdx, bool stateModel, int boneCount);
         void Init(ZLNKOBJ* pLnkObj, ZBone* pBones, uint32_t poseIdx, uint32_t id2IndexIdx, uint32_t index2IdIdx, uint32_t id2PosIdx, uint32_t parentIdx, bool stateModel, char* buffer);
         int DepackOrder(uint8_t* order);
         void PostAnim(float fUnused);
         void PrepareAnim();
         void PoseRotationAndTranslation();
-        void AnimateState(Manager* pManager, float);
+        void AnimateState(Manager* pManager, float fDt);
         void PrintDebugInfo();
         void StateFit(ZAngelBone* pAngelBone);
         void BlendOutPoseWeights();
@@ -70,8 +70,8 @@ namespace Glacier::Animation
         void ResetBones();
         void AnimateQuats(Manager* pManager);
         void ModelSpaceBones();
-        void LookAt(ZAngelBone* pAngelBone, Manager* pManager, float);
-        void Bank(float);
+        void LookAt(ZAngelBone* pAngelBone, Manager* pManager, float fDt);
+        void Bank(float fDt);
 
         // members
         int16_t*           m_PoseIdToPosLookup;

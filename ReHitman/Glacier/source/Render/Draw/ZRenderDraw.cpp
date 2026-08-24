@@ -7,10 +7,10 @@
 #include <Glacier/Render/Material/ZRenderMaterialInstance.h>
 #include <Glacier/Render/Object/ZRenderObject.h>
 #include <Glacier/Render/Object/ZRenderObjectInstance.h>
+#include <Glacier/Render/Prim/ZPrimControlBase.h>
 #include <Glacier/Geom/ZBaseGeom.h>
 #include <Glacier/Geom/ZGEOM.h>
 #include <Glacier/IK/ZLNKOBJ.h>
-#include <Glacier/ZPrimControlWintel.h>
 #include <Glacier/System/ZSysMem.h>
 #include <Glacier/ZUniMemory.h>
 #include <cstring>
