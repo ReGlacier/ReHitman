@@ -3,6 +3,8 @@
 #include <Glacier/Render/Draw/IDraw.h>
 #include <Glacier/Render/Globals.h>
 #include <Glacier/System/ZSysInterface.h>
+#include <Glacier/Render/Prim/ZBoneConstraintsHeader.h>
+#include <Glacier/Render/Prim/ZBoneConstraintLookAt.h>
 #include <Glacier/IK/ZBoneModifyBase.h>
 #include <Glacier/Physics/ZRagdollContainer.h>
 #include <Glacier/Physics/ZDynamicsExtend.h>
@@ -10,6 +12,7 @@
 #include <Glacier/Animation/Model.h>
 #include <Glacier/Animation/ZBone.h>
 #include <Glacier/IK/ZLNKOBJ.h>
+#include <limits>
 
 
 
@@ -277,6 +280,155 @@ namespace Glacier
         }
 
         return false;
+    }
+
+    namespace
+    {
+        void GetTargetPosition(ZVector3& vTarget, const ZBone* pBones, const ZBoneConstraintLookAt* pBoneConstraintLookAt)
+        {
+            vTarget.Reset();
+
+            if (!pBoneConstraintLookAt->m_lNrTargets)
+                return;
+
+            ZASSERT(pBoneConstraintLookAt->m_lNrTargets <= 2); // otherwise out of bounds
+
+            float fWeightsSum = 0.0f;
+            ZVector3 v1;
+
+            for (int i = 0; i < pBoneConstraintLookAt->m_lNrTargets; ++i)
+            {
+                float fWeight = pBoneConstraintLookAt->m_lBoneTargetsWeights[i];
+
+                vmmul(v1, pBoneConstraintLookAt->m_TargetPos[i], pBones[pBoneConstraintLookAt->m_TargetParentIdx[i]]._Mat);
+                vadd(v1, pBones[pBoneConstraintLookAt->m_TargetParentIdx[i]]._Pos);
+                vaddscalar(vTarget, vTarget, v1, fWeight);
+
+                fWeightsSum += fWeight;
+            }
+
+            if(fWeightsSum > 0.0f)
+            {
+                const float fInvWeightSum = 1.0f / fWeightsSum;
+                vscalar(vTarget, fInvWeightSum);
+            }
+        }
+
+        void ProjectionOnPerpPlane(ZVector3& vRes, const ZVector3& vProjectionOf, const ZVector3& vOnPlatePerpTo, bool bFlip)
+        {
+            ZVector3 vCross;
+            vcross(vCross, vOnPlatePerpTo, vProjectionOf);
+
+            // Are they parallel?
+            if (vlen2(vCross) < std::numeric_limits<float>::epsilon())
+            {
+                // Find index of lower component of vectors
+                int lMinIndex = 0;
+                if (vOnPlatePerpTo.x > vOnPlatePerpTo.y)
+                    lMinIndex = 1;
+
+                const float* components = &vOnPlatePerpTo.x;
+                if (components[lMinIndex] > vOnPlatePerpTo.z)
+                    lMinIndex = 2;
+
+                // Make axis vector
+                vCross.Reset();
+                static_cast<float*>(vCross)[lMinIndex] = 1.0f;
+
+                // Make ortho-vector to vOnPlatePerpTo
+                ZVector3 vOrtho {};
+                vcross(vOrtho, vCross, vOnPlatePerpTo);
+                vcross(vCross, vOnPlatePerpTo, vOrtho);
+                vnorm(vCross);
+            }
+
+            vcross(vRes, vCross, vOnPlatePerpTo);
+            vnorm(vRes);
+            if (bFlip)
+                vneg(vRes);
+        }
+
+        void CalculateLookAtMatrix(ZMat3x3& m0, const ZBone* pBones, const ZBoneConstraintLookAt* pBoneConstraintLookAt)
+        {
+            // TODO: Finish me (PC at 0058DD00)
+        }
+    }
+
+    void ZBoneModifyBase::UpdateGlobalIK(ZBone* pBones, uint32_t lPrim, ZLNKOBJ* pLnkObj)
+    {
+        if (m_fGlobalScale != 1.0f && m_lNumActiveBones > 1)
+        {
+            for (uint32_t i = 1; i < m_lNumActiveBones; ++i)
+            {
+                vscalar(pBones[i]._Mat.XAxis(), m_fGlobalScale);
+                vscalar(pBones[i]._Mat.YAxis(), m_fGlobalScale);
+                vscalar(pBones[i]._Mat.ZAxis(), m_fGlobalScale);
+            }
+        }
+
+        if (m_pDynamicsExt || (m_pRagdoll && m_pRagdoll->IsActive()) || m_bPassive)
+        {
+            if (m_pRagdoll && m_pRagdoll->IsActive())
+            {
+                m_pRagdoll->HandleCalcMatsMsg(pBones, false, pLnkObj->Model()->m_BoneCount);
+                UpdateConstraintBones(pBones, lPrim, pLnkObj);
+                return;
+            }
+
+            if (m_pDynamicsExt && m_pDynamicsExt->Awake(m_wBody))
+            {
+                pLnkObj->Model()->ResetBones();
+                pLnkObj->Model()->ModelSpaceBones();
+
+                m_pDynamicsExt->Update(m_wBody, pLnkObj);
+            }
+        }
+
+        UpdateConstraintBones(pBones, lPrim, pLnkObj);
+    }
+
+    void ZBoneModifyBase::UpdateConstraintBones(ZBone* pBones, uint32_t lPrim, ZLNKOBJ* pLnkObj)
+    {
+        auto* pBoneConstraintsHeader = ZPrimControlBase::Instance()->GetBoneConstraints(lPrim);
+        if (!pBoneConstraintsHeader)
+            return;
+
+        if (!pBoneConstraintsHeader->m_lNrConstraints)
+            return;
+
+        const auto lTotalConstraints = pBoneConstraintsHeader->m_lNrConstraints;
+        uint8_t lTargetsNr = 0;
+
+        for (int lConstraintIndex = 0; lConstraintIndex < lTotalConstraints; ++lConstraintIndex)
+        {
+            auto* pConstraint = pBoneConstraintsHeader->Get();
+            if (pConstraint->m_lBoneIndex >= m_lNumActiveBones)
+            {
+                if (pConstraint->m_lType != ZBoneConstraintLookAt::Type)
+                {
+                    ZASSERT(false);
+                }
+                else
+                {
+                    auto* pLookAt = pConstraint->As<ZBoneConstraintLookAt>();
+
+                    if (pLookAt->m_lNrTargets)
+                        lTargetsNr = pLookAt->m_lNrTargets;
+
+                    if (lTargetsNr == pLookAt->m_lNrTargets)
+                    {
+                        CalculateLookAtMatrix(pBones[pConstraint->m_lBoneIndex]._Mat, pBones, pLookAt);
+                    }
+                }
+            }
+
+            pConstraint = pConstraint->Next();
+        }
+    }
+
+    bool ZBoneModifyBase::DoAnimations() const
+    {
+        return !m_pDynamicsExt && (!m_pRagdoll || m_pRagdoll->IsActive()) && !m_bPassive;
     }
 
     STATIC_GLOBAL_CLASS_INSTANCE_IMPL(int32_t, lDecalLookup, 0x008EBE58, 0);

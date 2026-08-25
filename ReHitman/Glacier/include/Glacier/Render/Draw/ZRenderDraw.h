@@ -5,6 +5,7 @@
 #include <Glacier/Render/Draw/ZRenderDrawBase.h>
 #include <Glacier/Render/Decal/ZDecalMarkController.h>
 #include <Glacier/Render/Entry/SRenderEntryInstance.h>
+#include <Glacier/Render/Config.h>
 #include <Glacier/ZSTL/ZAllocIndex.h>
 #include <Glacier/ZSTL/ZFixedArray.h>
 #include <Glacier/ZSTL/STLport.h>
@@ -79,6 +80,10 @@ namespace Glacier
 
         ZRenderEntry* AddRenderEntryArray(uint32_t lPrim, const SDrawArray* pDrawArray);
         ZRenderEntrySprite* AddRenderEntrySprite(uint32_t lPrim);
+        void UpdateBoneModifiers(ZRenderEntryLists* pLists);
+        void UpdateBoneModifiersList(ZStackArray<ELEMENTS_IN_RENDER_ENTRY_LIST_COUNT, ZRenderEntryGeom*>& sList);
+        void UpdateBoneModifiersListIK(ZStackArray<ELEMENTS_IN_RENDER_ENTRY_LIST_COUNT, ZRenderEntryGeom*>& sList);
+        void UpdateBoneModifiersListIK(ZStackArray<ELEMENTS_IN_RENDER_ENTRY_LIST_COUNT, ZRenderEntryGeom*>::iterator* pIt);
 
         // members
         ZDecalMarkController m_DecalMarks;                        // +0x12C. Name approved by XBox PDB & ZRenderEntryGeom::AttachUpdate

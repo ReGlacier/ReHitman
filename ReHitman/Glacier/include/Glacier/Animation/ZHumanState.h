@@ -4,6 +4,8 @@
 
 #include <Glacier/ReGlacier.h>
 #include <Glacier/ZSTL/ZMath.h>
+#include <Glacier/ZUniMemory.h>
+
 
 namespace Glacier
 {
@@ -22,7 +24,7 @@ namespace Glacier
         eQuat = 3,
         eBone = 4,
     };
-    
+
     struct DataInfo
     {
         /** Packing type used to encode this channel. */
@@ -85,7 +87,7 @@ namespace Glacier
 
         /** Convenience mask for every known mirrorable human-state group. */
         static constexpr int kMirrorAll = kMirrorTorso | kMirrorSpine | kMirrorHead | kMirrorLegs | kMirrorArms | kMirrorHands;
-        
+
         // methods
         /** Initializes the instance to the original default human pose. */
         ZHumanState();

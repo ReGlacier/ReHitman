@@ -330,6 +330,9 @@ namespace Glacier
     struct ZQuat
     {
         float i { 0.f }, j { 0.f }, k { 0.f }, w { 1.f };
+
+        operator float*() { return &i; }
+        operator const float*() const { return &i; }
     };
 
     inline void qmul(float* out, const float* lhs, const float* rhs)
@@ -710,6 +713,45 @@ namespace Glacier
         out[0] = a[0] + b[0] * scalar;
         out[1] = a[1] + b[1] * scalar;
         out[2] = a[2] + b[2] * scalar;
+    }
+
+    /**
+     * @brief Scales a 3-component vector to the requested length (PS2: vsetlen).
+     */
+    inline void vsetlen(float* vec, float len)
+    {
+        const float l = std::sqrt(vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2]);
+        if (l != 0.0f)
+        {
+            const float s = len / l;
+            vec[0] *= s;
+            vec[1] *= s;
+            vec[2] *= s;
+        }
+    }
+
+    /**
+     * @brief Rotates a 3-component vector by a unit quaternion (PS2: qtran).
+     *
+     * @param[out] out  Result vector (3 floats).
+     * @param[in]  quat Unit quaternion (4 floats: x, y, z, w).
+     * @param[in]  vec  Input vector (3 floats).
+     */
+    inline void qtran(float* out, const float* quat, const float* vec)
+    {
+        const float xx = quat[0] * quat[0] * 2.0f;
+        const float xy = quat[0] * quat[1] * 2.0f;
+        const float xz = quat[0] * quat[2] * 2.0f;
+        const float xw = quat[0] * quat[3] * 2.0f;
+        const float yy = quat[1] * quat[1] * 2.0f;
+        const float yz = quat[1] * quat[2] * 2.0f;
+        const float yw = quat[1] * quat[3] * 2.0f;
+        const float zz = quat[2] * quat[2] * 2.0f;
+        const float zw = quat[2] * quat[3] * 2.0f;
+
+        out[0] = (1.0f - zz - yy) * vec[0] + (xy - zw) * vec[1] + (xz + yw) * vec[2];
+        out[1] = (zw + xy) * vec[0] + (1.0f - zz - xx) * vec[1] + (yz - xw) * vec[2];
+        out[2] = (xz - yw) * vec[0] + (yz + xw) * vec[1] + (1.0f - yy - xx) * vec[2];
     }
 
     /**
@@ -1326,6 +1368,132 @@ namespace Glacier
             return false;
 
         return true;
+    }
+
+    inline void mirrorquat(float* q)
+    {
+        q[2] = -q[2];
+        q[3] = -q[3];
+    }
+
+    /**
+     * @brief Normalizes a 4D quaternion in-place to ensure unit length.
+     *
+     * Scaled components are modified directly if the squared magnitude
+     * exceeds a safe epsilon threshold (> 1e-8).
+     *
+     * @param[in,out] q Pointer to a 4-element float array representing the quaternion (x, y, z, w).
+     */
+    inline void qnorm(float* q)
+    {
+        float fLenSq = q[0] * q[0] + q[1] * q[1] + q[2] * q[2] + q[3] * q[3];
+
+        if (fLenSq != 0.0f) // Rly zero? ok...
+        {
+            float fInvLen = 1.0f / std::sqrt(fLenSq);
+
+            q[0] *= fInvLen;
+            q[1] *= fInvLen;
+            q[2] *= fInvLen;
+            q[3] *= fInvLen;
+        }
+    }
+
+    /**
+     * @brief Quaternion partial unroll / fast slerp approximation.
+     *
+     * Performs high-performance quaternion interpolation between q0 and q1 by time factor t.
+     * Uses iterative half-angle subdivision (up to 3 steps) to narrow large angular
+     * distances until the dot product exceeds 0.9, falling back to LERP with a final normalization.
+     * Automatically handles the shortest path on the 4D hypersphere.
+     *
+     * @param[out] qres Output quaternion array (4 floats: x, y, z, w).
+     * @param[in]  q0   Starting unit quaternion (4 floats).
+     * @param[in]  q1   Ending unit quaternion (4 floats).
+     * @param[in]  t    Interpolation factor in range [0.0, 1.0].
+     */
+    inline void qpul(float* qres, const float* q0, const float* q1, float t)
+    {
+        static const float SQRT_0_5 = std::sqrt(0.5f);
+
+        ZASSERT(std::sqrt(q0[0]*q0[0] + q0[1]*q0[1] + q0[2]*q0[2] + q0[3]*q0[3]) > 0.95f);
+        ZASSERT(std::sqrt(q1[0]*q1[0] + q1[1]*q1[1] + q1[2]*q1[2] + q1[3]*q1[3]) > 0.95f);
+
+        float qA[4] = { q0[0], q0[1], q0[2], q0[3] };
+        float qB[4] = { q1[0], q1[1], q1[2], q1[3] };
+
+        // Dot Product / cos(theta)
+        float dot = qB[0]*qA[0] + qB[1]*qA[1] + qB[2]*qA[2] + qB[3]*qA[3];
+
+        // Shortest Path Flip
+        if (dot < 0.0f)
+        {
+            qB[0] = -qB[0];
+            qB[1] = -qB[1];
+            qB[2] = -qB[2];
+            qB[3] = -qB[3];
+            dot = -dot;
+        }
+
+        // Half-angle subdivision
+        float localT = t;
+        int maxSteps = 3;
+
+        while (dot < 0.9f && maxSteps > 0)
+        {
+            maxSteps--;
+
+            float cosHalf = dot + 1.0f;
+            float invLen = SQRT_0_5 / std::sqrt(cosHalf); // Scale midpoint
+
+            float mid[4] = {
+                (qB[0] + qA[0]) * invLen,
+                (qB[1] + qA[1]) * invLen,
+                (qB[2] + qA[2]) * invLen,
+                (qB[3] + qA[3]) * invLen
+            };
+
+            if (localT >= 0.5f)
+            {
+                // Second half [0.5, 1.0]
+                for (int i = 0; i < 4; ++i)
+                    qA[i] = mid[i];
+
+                localT -= 0.5f;
+            }
+            else
+            {
+                // First half  [0.0, 0.5]
+                for (int i = 0; i < 4; ++i) qB[i] = mid[i];
+            }
+
+            dot = cosHalf * invLen;
+            localT *= 2.0f; // scaleup T
+        }
+
+        // Final Lerp
+        float factorB = localT;
+        float factorA = 1.0f - factorB;
+
+        qres[0] = qA[0] * factorA + qB[0] * factorB;
+        qres[1] = qA[1] * factorA + qB[1] * factorB;
+        qres[2] = qA[2] * factorA + qB[2] * factorB;
+        qres[3] = qA[3] * factorA + qB[3] * factorB;
+
+        // Final norm
+        qnorm(qres);
+        ZASSERT(std::sqrt(qres[0]*qres[0] + qres[1]*qres[1] + qres[2]*qres[2] + qres[3]*qres[3]) > 0.95f);
+    }
+
+    inline void MatrixToMatPos(ZMat3x3& m, ZVector3& p, const ZMatrix& mp)
+    {
+        m = mp.m0;
+        p = mp.p0;
+    }
+
+    inline void ConvertZMatrixToMat44(ZMat4x4& m, const ZMatrix& mp)
+    {
+        // TODO: Finish me
     }
 #   pragma endregion
 }

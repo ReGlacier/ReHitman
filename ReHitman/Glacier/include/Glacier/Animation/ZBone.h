@@ -18,7 +18,11 @@ namespace Glacier
         ZBone& operator=(const ZBone& copy);
 
         // members
-        ZMat3x3 _Mat;
+        union
+        {
+            ZMat3x3 _Mat;
+            ZQuat   _Quat;
+        };
         ZVector3 _Pos;
     };
     RE_VERIFY_SIZE(ZBone, 0x30);

@@ -25,9 +25,8 @@ namespace Glacier::Animation
             ActiveAnimation::CallBack_t callback;
             float sort;
         };
-
-        static_assert(offsetof(AnimationCallback, callback) == 0x10);
-        static_assert(offsetof(AnimationCallback, sort) == 0x18);
+        RE_VERIFY_OFFSET(AnimationCallback, callback, 0x10);
+        RE_VERIFY_OFFSET(AnimationCallback, sort, 0x18);
 
         AnimationCallback* AsCallback(uint32_t* pRef)
         {
@@ -85,7 +84,7 @@ namespace Glacier::Animation
         s_AnimationCallbackAllocator.Free(m_prtCallBacks);
         m_prtCallBacks = nullptr;
     }
-        
+
     void ActiveAnimation::LoadSave(ISerializerStream& stream, bool bSaving)
     {
         stream.Exchange("Mode", mode);
@@ -119,7 +118,7 @@ namespace Glacier::Animation
 
         stream.Exchange("m_fRemCallBackFrame", m_fRemCallBackFrame);
     }
-        
+
     void ActiveAnimation::UpdateCallBacks()
     {
         if (!m_prtCallBacks || m_fRemCallBackFrame == frame)
@@ -202,12 +201,12 @@ namespace Glacier::Animation
         pCallbackData->callback = pCallback;
         pCallbackData->sort = fFrameNr;
     }
-        
+
     void ActiveAnimation::AddCallBackAlways(float fFrameNr, CallBack_t pCallback, unsigned int rGeomRef)
     {
         AddCallBack(fFrameNr, pCallback, rGeomRef, 1, 0);
     }
-        
+
     void ActiveAnimation::AddCallBackLoop(float fFrameNr, CallBack_t pCallback, unsigned int rGeomRef)
     {
         AddCallBack(fFrameNr, pCallback, rGeomRef, 2, 0);
@@ -239,7 +238,7 @@ namespace Glacier::Animation
             }
         }
     }
-        
+
     void ActiveAnimation::AddMetaKeyCallBack(
         const char* pszValue,
         CallBack_t pCallback,
@@ -266,14 +265,14 @@ namespace Glacier::Animation
             }
         }
     }
-        
+
     void ActiveAnimation::SetCurrentFrame(float fFrameNr)
     {
         frame = fFrameNr;
         m_fRemCallBackFrame = -1.0f;
     }
 
-    
+
     char ActiveAnimation::s_AnimationCallbackBuffer[34816] { '\0' };
     ZPoolAllocator ActiveAnimation::s_AnimationCallbackAllocator {
         (char*)&ActiveAnimation::s_AnimationCallbackBuffer[0], 34816, "Animation::ActiveAnimation::s_AnimationCallbackAllocator", false

@@ -25,13 +25,13 @@ struct ZUniMemory
         return reinterpret_cast<T*>(ptr);
     }
 
-    template <typename T>
-    static T* NewArray(size_t count)
+    template <typename T, typename... TArgs>
+    static T* NewArray(size_t count, TArgs&&... args)
     {
         void** ptr = (void**)Allocate(sizeof(T) * count);
         for (int i = 0; i < count; ++i)
         {
-            new (ptr[i]) T();
+            new (ptr[i]) T(std::forward<TArgs>(args)...);
         }
 
         return reinterpret_cast<T*>(ptr);

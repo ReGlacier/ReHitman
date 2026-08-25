@@ -1,4 +1,4 @@
-#include <Glacier/Animation/Manager.h>
+#include <Glacier/Animation/ZNameList.h>
 #include <cstring>
 
 
@@ -51,10 +51,10 @@ namespace Glacier::Animation
                 {
                     ++currentStr;
                 }
-                
+
                 --id;
                 ++currentStr;
-            } 
+            }
             while (id > 0);
         }
 

@@ -307,4 +307,9 @@ namespace Glacier
     {
         // TODO: Finish me
     }
+
+    void ZRenderEntry::AddToDrawChain(ZCmdList::ZCmd* pCmd, SRenderEntryNotifyInfo* pNotifyInfo, uint32_t lLayerMask, uint8_t lDrawDestination, uint8_t lTransparencyMask, bool bFirstPersonCamera)
+    {
+        // TODO: Finish me
+    }
 }

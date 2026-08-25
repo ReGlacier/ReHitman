@@ -49,6 +49,9 @@ namespace Glacier
         void ForceRagdollDeactivation(ZLNKOBJ* pLnkObj);
         bool Update(ZLNKOBJ* pLnkObj, ZMat3x3& mMat, ZVector3& vPos);
         const SRagdollCollisionInfo* GetCollisionInfo() const;
+        void UpdateGlobalIK(ZBone* pBones, uint32_t lPrim, ZLNKOBJ* pLnkObj);
+        void UpdateConstraintBones(ZBone* pBones, uint32_t lPrim, ZLNKOBJ* pLnkObj);
+        bool DoAnimations() const;
 
         // members
         bool m_bIsPlayer;

@@ -1,6 +1,7 @@
 #include <Glacier/Render/Draw/ZRenderDraw.h>
 #include <Glacier/Render/Entry/ZRenderEntry.h>
 #include <Glacier/Render/Entry/ZRenderEntryGeom.h>
+#include <Glacier/Render/Entry/ZRenderEntryLists.h>
 #include <Glacier/Render/Entry/ZRenderEntrySprite.h>
 #include <Glacier/Render/Entry/SRenderEntryNotifyInfo.h>
 #include <Glacier/Render/Material/ZRenderMaterialBuffer.h>
@@ -8,6 +9,7 @@
 #include <Glacier/Render/Object/ZRenderObject.h>
 #include <Glacier/Render/Object/ZRenderObjectInstance.h>
 #include <Glacier/Render/Prim/ZPrimControlBase.h>
+#include <Glacier/Geom/GeomControlMasks.h>
 #include <Glacier/Geom/ZBaseGeom.h>
 #include <Glacier/Geom/ZGEOM.h>
 #include <Glacier/IK/ZLNKOBJ.h>
@@ -565,5 +567,66 @@ namespace Glacier
         // pEntry->Notify(&notifyInfo);
         // return (ZRenderEntrySprite*)pEntry;
         return nullptr;
+    }
+
+    void ZRenderDraw::UpdateBoneModifiers(ZRenderEntryLists* pLists)
+    {
+        ZStackArray<ELEMENTS_IN_RENDER_ENTRY_LIST_COUNT, ZRenderEntryGeom*> aGeneric, aOwners;
+        auto* pList = pLists->GetList(ZRenderEntryLists::LISTTYPES::LT_BONES);
+
+        if (!pList->IsEmpty())
+        {
+            for (int i = 0; i < pList->Count(); ++i)
+            {
+                auto* pEntry = *pList->Get(i);
+                if ((pEntry->GetBaseGeom()->Control() & ZCOWNERDRAW) != 0)
+                {
+                    aOwners.Add(&pEntry);
+                }
+                else
+                {
+                    aGeneric.Add(pList->Get(i));
+                }
+            }
+        }
+
+        // Normal draw all generic entries as a single batch
+        UpdateBoneModifiersList(aGeneric);
+
+        if (!aOwners.IsEmpty())
+        {
+            // It's weird technique, but in general it's simple:
+            // Remember original capacity
+            const uint32_t lOriginalCap = aOwners.Count();
+            uint32_t lStep = 0;
+
+            do
+            {
+                // Force override capacity to 1
+                aOwners.m_lNrEntries = 1;
+
+                // Run process on single size list
+                UpdateBoneModifiersList(aOwners);
+
+                // Move to next element
+                aOwners.m_Array[0] = aOwners.m_Array[lStep];
+            }
+            while (lStep < lOriginalCap);
+        }
+    }
+
+    void ZRenderDraw::UpdateBoneModifiersList(ZStackArray<ELEMENTS_IN_RENDER_ENTRY_LIST_COUNT, ZRenderEntryGeom*>& sList)
+    {
+        // TODO: Finish me
+    }
+
+    void ZRenderDraw::UpdateBoneModifiersListIK(ZStackArray<ELEMENTS_IN_RENDER_ENTRY_LIST_COUNT, ZRenderEntryGeom*>& sList)
+    {
+
+    }
+
+    void ZRenderDraw::UpdateBoneModifiersListIK(ZStackArray<ELEMENTS_IN_RENDER_ENTRY_LIST_COUNT, ZRenderEntryGeom*>::iterator* pIt)
+    {
+
     }
 }

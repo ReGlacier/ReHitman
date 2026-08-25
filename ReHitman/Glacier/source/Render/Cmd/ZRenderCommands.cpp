@@ -44,9 +44,7 @@ namespace Glacier
         pCmd->m_lNrObjects = 0;
 
         // TODO: Finish me
-        // ZRenderEntry::AddToDrawChain used here, need locate this method on PC
-        //
-        // SortRenderObjectInstances - need locate this method too
+        // PC: 004B2410
     }
 
     void CmdScissorSetup(ZCmdList* pCmdList, ZRenderView* pRenderView, const ZVector4& vScissor, bool bUnk)

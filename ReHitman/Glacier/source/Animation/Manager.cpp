@@ -125,7 +125,7 @@ namespace Glacier::Animation
         return m_pMetaKeyDataStrings;
     }
 
-    bool Manager::GetPlayUncompressed()
+    bool Manager::GetPlayUncompressed() const
     {
         return m_PlayUncompressed;
     }
@@ -335,6 +335,6 @@ namespace Glacier::Animation
         return 0;
     }
 
-
     STATIC_GLOBAL_CLASS_INSTANCE_IMPL(Manager*, instance, 0x009AC998, nullptr);
+    bool printDebugInfo = false;
 }

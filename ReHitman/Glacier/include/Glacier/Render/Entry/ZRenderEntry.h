@@ -3,6 +3,7 @@
 #include <Glacier/ReGlacier.h>
 #include <Glacier/GlacierFWD.h>
 #include <Glacier/Render/Fwd.h>
+#include <Glacier/Render/Cmd/ZCmdList.h>
 #include <Glacier/ZSTL/ZStackArray.h>
 #include <Glacier/ZSTL/ZMath.h>
 #include <cstdint>
@@ -79,6 +80,7 @@ namespace Glacier
         void SetObjectToWorldMatrix(const ZMatrix& mMatrix);
         bool AddRenderEntryInstances(SRenderEntryInstance** pInstances, uint32_t lNumRenderEntryInstances);
         void InitRenderEntryInstance(SRenderEntryInstance *pRenderEntryInstance, uint8_t lLODMask, uint8_t lDrawDestination, uint32_t lFlags, uint32_t lBoneIndexMask);
+        void AddToDrawChain(ZCmdList::ZCmd* pCmd, SRenderEntryNotifyInfo* pNotifyInfo, uint32_t lLayerMask, uint8_t lDrawDestination, uint8_t lTransparencyMask, bool bFirstPersonCamera);
 
         // members
         RE_ADD_PADDING(0x10);                           // 0x04 - 0x14. TODO: Unknown; never initialized in ctors and no reads found in examined code paths

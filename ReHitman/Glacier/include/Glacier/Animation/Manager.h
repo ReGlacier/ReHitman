@@ -5,6 +5,8 @@
 #include <Glacier/Animation/Fwd.h>
 #include <Glacier/Animation/ZPose.h>
 #include <Glacier/Animation/ZBone.h>
+#include <Glacier/Animation/StreamPacker.h>
+#include <Glacier/Animation/ZNameList.h>
 #include <cstdint>
 
 
@@ -29,43 +31,25 @@ namespace Glacier::Animation
     };
     RE_VERIFY_SIZE(CrowdHeader, 0x28);
 
-    struct ZNameList
+    struct StateCacheEntry
     {
-        // members
-        char* m_Names { nullptr };
-        int m_Size { 0 };
-        int m_Count { 0 };
-
-        // methods
-        ZNameList() = default;
-        ~ZNameList() = default;
-
-        int GetId(const char* pszAnimName, int iNoneIndex);
-        const char* GetName(int id, int none);
-    };
-    RE_VERIFY_SIZE(ZNameList, 0xC);
-
-    struct BlockCache 
-    {
-        int16_t m_Block;
-        int16_t m_Size;
-        uint16_t* m_Ids;
-        uint8_t* m_Lps;
-        float* m_Data;
-    };
-    RE_VERIFY_SIZE(BlockCache, 0x10);
-
-    struct StateCacheEntry 
-    {
-        BlockCache m_Entry;
+        StreamPacker::BlockCache m_Entry;
         int32_t m_Used;
         struct StateCacheEntry* m_Next;
         float m_Data[936];
     };
     RE_VERIFY_SIZE(StateCacheEntry, 0xEB8);
 
-    struct StateCache 
+    struct StateCache
     {
+        // methods
+        StateCache(int lAnimCount, int lCacheLines);
+        ~StateCache();
+        StateCacheEntry* FindEntry(int lCacheEntry, int16_t lBlock);
+        StateCacheEntry* AllocEntry(int lNextCacheEntry, int16_t lBlock);
+        void Update();
+
+        // members
         StateCacheEntry** m_CacheEntry;
         StateCacheEntry*  m_Data;
         int32_t           m_CacheLines;
@@ -76,7 +60,7 @@ namespace Glacier::Animation
         int32_t           m_Misses;
     };
     RE_VERIFY_SIZE(StateCache, 0x20);
-    
+
     class Manager
     {
     public:
@@ -134,7 +118,7 @@ namespace Glacier::Animation
         int ToIndex(const Header* pHeader);
         PoseID GetPoseID(const char* pszPoseName);
         const char* GetMetaKeyDataStrings();
-        bool GetPlayUncompressed();
+        bool GetPlayUncompressed() const;
         int Clear();
         uint32_t GetMetaKeyDataLength(int lMetaKey);
         ZMetaKey* GetMetaKeyData(int lMetaKey);
@@ -171,4 +155,5 @@ namespace Glacier::Animation
     RE_VERIFY_SIZE(Manager, 0x68); // Verified by ZEngineDataBase::AllocSequence method
 
     STATIC_GLOBAL_CLASS_INSTANCE(Manager*, instance);
+    extern bool printDebugInfo;
 }

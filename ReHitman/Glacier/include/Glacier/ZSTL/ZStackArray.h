@@ -10,17 +10,28 @@ namespace Glacier
 	template <size_t CAPACITY, typename T>
 	struct ZStackArray
 	{
+	    // types
+		struct iterator
+		{
+		    T** current;
+		};
+
+	    // members
 		uint32_t m_lNrEntries;
 		T m_Array[CAPACITY];
 
+		// methods
 		ZStackArray()
 		{
 			Clear();
 		}
 
-		uint32_t Count() const 
-		{ 
-			return m_lNrEntries; 
+		iterator begin() const { return iterator { &m_Array[0] }; }
+		iterator end() const { return iterator { &m_Array[CAPACITY] }; }
+
+		uint32_t Count() const
+		{
+			return m_lNrEntries;
 		}
 
 		bool IsEmpty() const
@@ -33,9 +44,9 @@ namespace Glacier
 			return CAPACITY;
 		}
 
-		void Clear() 
-		{ 
-			m_lNrEntries = 0; 
+		void Clear()
+		{
+			m_lNrEntries = 0;
 		}
 
 		uint32_t Add(T* pElem)
@@ -49,7 +60,7 @@ namespace Glacier
 
 		uint32_t Push(T elem)
 		{
-			return Add(&elem); 
+			return Add(&elem);
 		}
 
 		T* Get(uint32_t index)
@@ -93,7 +104,7 @@ namespace Glacier
 		T* Peek()
 		{
 			uint32_t count = Count();
-			return Get(count - 1); 
+			return Get(count - 1);
 		}
 
 		const T* Peek() const
@@ -168,8 +179,8 @@ namespace Glacier
 		}
 	};
 
-	template <size_t CAPACITY, typename T> 
-    struct ZSafeStackArray : public ZStackArray<CAPACITY, T> 
+	template <size_t CAPACITY, typename T>
+    struct ZSafeStackArray : public ZStackArray<CAPACITY, T>
 	{
 		T PopSafe()
 		{

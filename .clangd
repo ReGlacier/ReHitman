@@ -10,3 +10,6 @@ CompileFlags:
     - "-fms-extensions"
     - "-fms-compatibility"
     - "-fdelayed-template-parsing"
+    - "-DRE_VERIFY_SIZE(cls,expected)="
+    - "-DRE_VERIFY_OFFSET(cls,mbr,expected)="
+    - "-ferror-limit=0"

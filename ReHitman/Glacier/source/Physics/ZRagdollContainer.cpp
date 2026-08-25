@@ -14,8 +14,10 @@ namespace Glacier
     ZRagdollContainer::ZRagdollContainer()
     {
         m_lMaxNumRagdolls = 4;
-
-        // TODO: Finish me
+        m_pRagdolls = ZUniMemory::NewArray<CRagdoll2>(m_lMaxNumRagdolls, false);
+        m_pDragRagdoll = ZUniMemory::New<CRagdoll2>(true);
+        m_pUsed = (bool*)ZUniMemory::Allocate(sizeof(bool) * m_lMaxNumRagdolls);
+        std::memset(m_pUsed, 0, sizeof(bool) * m_lMaxNumRagdolls);
     }
 
     ZRagdollContainer::~ZRagdollContainer()

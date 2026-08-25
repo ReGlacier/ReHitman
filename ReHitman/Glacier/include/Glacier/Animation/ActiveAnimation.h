@@ -10,13 +10,21 @@
 
 namespace Glacier::Animation
 {
-    struct ActiveAnimation 
+    struct ActiveAnimation
     {
         // types
         using CallBack_t = bool(ZGEOM::*)(ActiveAnimation*, float, float, unsigned int);
 
+        enum ECallType
+        {
+            CALL_ONCE = 0,
+            CALL_ALWAYS = 1,
+            CALL_LOOP = 2,
+            CALL_LOOP_ALWAYS = 3,
+        };
+
         // constants
-        
+
         // static
         static char s_AnimationCallbackBuffer[34816];
         static ZPoolAllocator s_AnimationCallbackAllocator;

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Glacier/ReGlacier.h>
+#include <type_traits>
 #include <cstdint>
 
 
@@ -10,18 +11,30 @@ namespace Glacier
     {
     public:
         // methods
-        ZBoneConstraint* ZBoneConstraint::Next()
+        ZBoneConstraint* Next()
         {
-            const auto* pByte = reinterpret_cast<const uint8_t*>(this);
-            return const_cast<ZBoneConstraint*>(reinterpret_cast<const ZBoneConstraint*>(pByte + m_lStructSize));
+            auto* pByte = reinterpret_cast<uint8_t*>(this);
+            return const_cast<ZBoneConstraint*>(reinterpret_cast<ZBoneConstraint*>(pByte + m_lStructSize));
         }
 
-        const ZBoneConstraint* ZBoneConstraint::Next() const
+        const ZBoneConstraint* Next() const
         {
             const auto* pByte = reinterpret_cast<const uint8_t*>(this);
             return reinterpret_cast<const ZBoneConstraint*>(pByte + m_lStructSize);
         }
-        
+
+        template <typename T>
+        const T* As() const requires (std::is_base_of_v<ZBoneConstraint, T>)
+        {
+            return reinterpret_cast<const T*>(this);
+        }
+
+        template <typename T>
+        T* As() requires (std::is_base_of_v<ZBoneConstraint, T>)
+        {
+            return reinterpret_cast<T*>(this);
+        }
+
         // members
         uint8_t m_lType;
         uint8_t m_lStructSize;

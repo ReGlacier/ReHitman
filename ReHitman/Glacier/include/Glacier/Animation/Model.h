@@ -2,6 +2,7 @@
 
 #include <Glacier/ReGlacier.h>
 #include <Glacier/ZSTL/ZMath.h>
+#include <Glacier/ZUniMemory.h>
 
 #include <Glacier/Animation/ZPoseCollection.h>
 #include <Glacier/Animation/ActiveAnimation.h>
@@ -54,23 +55,34 @@ namespace Glacier::Animation
         static void ResolveStaticResourceRefs();
         static void GetAimFrames(float &,float &,float &,float,float);
 
+        STATIC_CLASS_VAR(Model, int, m_EyePoseIdOk);
+        STATIC_CLASS_VAR(Model, int, m_EyePoseId);
+        STATIC_CLASS_VAR(Model, float, g_YCEN);
+        STATIC_CLASS_VAR(Model, int, g_UseNewAim);
+        STATIC_CLASS_VAR(Model, float, g_EyeLookAtHor);
+        STATIC_CLASS_VAR(Model, float, g_EyeLookAtVer);
+        STATIC_CLASS_VAR(Model, float, g_AimIkFac);
+        STATIC_CLASS_VAR(Model, int, g_AimBasePelvis);
+        STATIC_CLASS_VAR(Model, float, _g_AimArmFac);
+
         // methods
         Model();
         int DynamicSize(ZLNKOBJ* pLnkObj, uint32_t poseIdx, uint32_t id2IndexIdx, uint32_t index2IdIdx, uint32_t id2PosIdx, uint32_t parentIdx, bool stateModel, int boneCount);
-        void Init(ZLNKOBJ* pLnkObj, ZBone* pBones, uint32_t poseIdx, uint32_t id2IndexIdx, uint32_t index2IdIdx, uint32_t id2PosIdx, uint32_t parentIdx, bool stateModel, char* buffer);
+        void Init(ZLNKOBJ* pLnkObj, ZBone* pBones, uint32_t poseIdx, uint32_t id2IndexIdx, uint32_t index2IdIdx, uint32_t id2PosIdx, uint32_t parentIdx, bool stateModel, char* buffer, int boneCount);
         int DepackOrder(uint8_t* order);
         void PostAnim(float fUnused);
         void PrepareAnim();
         void PoseRotationAndTranslation();
-        void AnimateState(Manager* pManager, float fDt);
+        void AnimateState(Manager* manager, float fDt);
         void PrintDebugInfo();
         void StateFit(ZAngelBone* pAngelBone);
         void BlendOutPoseWeights();
         void BlendQuats();
         void ResetBones();
-        void AnimateQuats(Manager* pManager);
+        void AnimateQuats(Manager* manager);
         void ModelSpaceBones();
         void LookAt(ZAngelBone* pAngelBone, Manager* pManager, float fDt);
+        void EyeLookAt(ZAngelBone* pAngelBone, Manager* pManager, float fDt);
         void Bank(float fDt);
 
         // members
@@ -94,7 +106,7 @@ namespace Glacier::Animation
         int                m_BoneCount;
         ActiveAnimation    m_BlendAnim;
         ActiveAnimation    m_LastAnim;
-        ZVector2           m_Banking;
+        float              m_Banking[2];
         ZAngelBone         m_PelvisPlacement;
         float              m_PelvisPlacementWeight;
         ZVector3           m_AimDir;
