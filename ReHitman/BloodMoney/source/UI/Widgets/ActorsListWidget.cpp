@@ -20,7 +20,7 @@
 #include <Glacier/CInventory.h>
 #include <Glacier/EventBase/ZEventBuffer.h>
 #include <Glacier/Geom/ZGeomBuffer.h>
-#include <Glacier/ZActorCommunication.h>
+#include <Glacier/GameBase/ZActorCommunication.h>
 #include <Glacier/ScriptEngine/ZScriptC.h>
 
 #include <Glacier/Physics/CRigidBody.h>
@@ -183,7 +183,7 @@ namespace ImGui
 
                 spdlog::info("<< FindGeom(Ground)");
                 auto clonedActor = reinterpret_cast<Hitman::BloodMoney::ZHM3Actor*>(reinterpret_cast<Glacier::ZGROUP*>(duplicateGroup)->FindGeom("Ground", nullptr));
-                
+
                 spdlog::info("ClonedActor: {:08X}", reinterpret_cast<std::intptr_t>(clonedActor));
                 spdlog::info("<< InitMapIcon");
                 clonedActor->m_eCharacterType = Hitman::BloodMoney::eCharacterType::eCharacterType_VIP;
@@ -373,10 +373,10 @@ namespace Hitman::BloodMoney
 
         auto sysInterface = Glacier::getInterface<Glacier::ZSysInterfaceWintel>(Globals::kSysInterfaceAddr);
         if (!sysInterface) { return; }
-        
+
         auto engineDb = sysInterface->m_pEngineData;
         if (!engineDb) { return; }
-        
+
         auto gameData = Glacier::getInterface<Hitman::BloodMoney::ZHM3GameData>(Globals::kGameDataAddr);
 
         if (!gameData)

@@ -8,15 +8,24 @@ namespace Glacier
 	struct ZROUTCLASSINFO : public ZNonResourceClassInfo
 	{
 		// methods
-		ZROUTCLASSINFO(
-			const char* psClassName,
-        	uint32_t lClassSize,
-        	const char* psUnused,
-        	const char* psEventName,
-        	const char* psHelpText,
-        	int lRoutType,
-        	uint32_t lFlags,
-        	const char* psBaseClassName);
+		constexpr ZROUTCLASSINFO(
+                const char* psClassName,
+                uint32_t lClassSize,
+                const char* psUnused,
+                const char* psEventName,
+                const char* psHelpText,
+                int lRoutType,
+                uint32_t lFlags,
+                const char* psBaseClassName
+		    )
+            : ZNonResourceClassInfo(psClassName, 1, lClassSize, psBaseClassName)
+            , m_szRoutName(psEventName)
+            , m_szGeomName(psHelpText)
+            , m_lPrio(lRoutType)
+            , m_lRoutCases(lFlags)
+        {
+        }
+
 		ZROUTCLASSINFO(const ZROUTCLASSINFO& copy);
 		~ZROUTCLASSINFO();
 

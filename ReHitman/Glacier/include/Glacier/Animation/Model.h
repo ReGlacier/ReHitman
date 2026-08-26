@@ -19,7 +19,6 @@ namespace Glacier::Animation
 {
     // fwds
     struct Manager;
-    class ZLNKOBJ;
 
     struct ZAngelBone
     {
@@ -53,10 +52,10 @@ namespace Glacier::Animation
     {
         // static
         static void ResolveStaticResourceRefs();
-        static void GetAimFrames(float &,float &,float &,float,float);
+        static void GetAimFrames(float& fCircle1Prc, float& fCircle2Prc, float& fBlendPrc, float fAngleHorz, float fAngleVert);
 
         STATIC_CLASS_VAR(Model, int, m_EyePoseIdOk);
-        STATIC_CLASS_VAR(Model, int, m_EyePoseId);
+        STATIC_CLASS_VAR_ARRAY(Model, int, m_EyePoseId, 8);
         STATIC_CLASS_VAR(Model, float, g_YCEN);
         STATIC_CLASS_VAR(Model, int, g_UseNewAim);
         STATIC_CLASS_VAR(Model, float, g_EyeLookAtHor);

@@ -1,4 +1,5 @@
 #include <Glacier/Animation/ZHumanState.h>
+#include <Glacier/Animation/ZStateBlending.h>
 
 #include <cmath>
 #include <cstring>
@@ -458,5 +459,166 @@ namespace Glacier
     void ZHumanState::NukeStaticData()
     {
         ZHumanState::firstRun = 1;
+    }
+
+    void ZHumanState::Blend(ZHumanState* state, float blend, int mask)
+    {
+        const float lSrcWeight = 1.0f - blend;
+
+        for (int g = 0; g < 9; ++g)
+        {
+            if ((mask & (1 << g)) == 0)
+                continue;
+
+            const int lQuatCount = m_QuatCount[g];
+            const int lFloatCount = m_FloatCount[g];
+            const int lFloatStart = m_FloatStart[g];
+            const int lQuatStart = m_QuatStart[g];
+
+            int lFloatIndex = lFloatStart;
+            int lRemaining = lFloatCount;
+
+            // Arm groups interpolate their position vector's length separately.
+            if (g == 5 || g == 6)
+            {
+                const float lDstLen = vlen(&m_Floats[lFloatIndex]);
+                const float lSrcLen = vlen(&state->m_Floats[lFloatIndex]);
+                const float lLen = lDstLen * blend + lSrcLen * lSrcWeight;
+
+                for (int i = 0; i < 3; ++i)
+                    m_Floats[lFloatIndex + i] = lSrcWeight * state->m_Floats[lFloatIndex + i] + blend * m_Floats[lFloatIndex + i];
+
+                vsetlen(&m_Floats[lFloatIndex], lLen);
+                lFloatIndex += 3;
+                lRemaining -= 3;
+            }
+
+            for (int i = 0; i < lRemaining; ++i, ++lFloatIndex)
+            {
+                const float lDst = m_Floats[lFloatIndex];
+                const float lSrc = state->m_Floats[lFloatIndex];
+
+                if (m_DataInfo[10 + lFloatIndex].m_Type != eAngle || std::fabs(lSrc - lDst) <= 3.1415927f)
+                {
+                    m_Floats[lFloatIndex] = lSrcWeight * lSrc + blend * lDst;
+                }
+                else
+                {
+                    float lA = lDst;
+                    float lB = lSrc;
+                    if (lA >= 0.0f)
+                        lB += 6.2831855f;
+                    else
+                        lA += 6.2831855f;
+
+                    float lRes = lSrcWeight * lA + blend * lB;
+                    if (lRes > 3.1415927f)
+                        lRes -= 6.2831855f;
+                    m_Floats[lFloatIndex] = lRes;
+                }
+            }
+
+            for (int i = 0; i < lQuatCount; ++i)
+            {
+                ZQuat lTmp = m_Quats[lQuatStart + i];
+                qpul(m_Quats[lQuatStart + i], lTmp, state->m_Quats[lQuatStart + i], lSrcWeight);
+            }
+        }
+    }
+
+    void ZHumanState::Blend(int mask, ZHumanState* state, Animation::ZStateBlending* current, Animation::ZStateBlending* next, float seconds)
+    {
+        for (int g = 0; g < 9; ++g)
+        {
+            if ((mask & (1 << g)) == 0)
+                continue;
+
+            const int lQuatCount = m_QuatCount[g];
+            const int lFloatCount = m_FloatCount[g];
+            const int lFloatStart = m_FloatStart[g];
+            const int lQuatStart = m_QuatStart[g];
+
+            if (current[g].m_MagicNumber != next[g].m_MagicNumber)
+            {
+                if (current[g].m_MagicNumber == 0xFFFFFFFFu)
+                    current[g].m_BlendTime = 0.0f;
+                else
+                    current[g].m_BlendTime = next[g].m_BlendTime;
+            }
+
+            current[g].m_MagicNumber = next[g].m_MagicNumber;
+
+            const float lOldBlend = current[g].m_BlendTime;
+            current[g].m_BlendTime -= seconds * 25.0f;
+            if (current[g].m_BlendTime < 0.0f)
+                current[g].m_BlendTime = 0.0f;
+
+            // Fully blended (or no next animation) -> copy the source state directly.
+            if (current[g].m_BlendTime <= 0.0f || next[g].m_MagicNumber == 0xFFFFFFFFu || next[g].m_BlendTime <= 0.0f)
+            {
+                for (int i = 0; i < lFloatCount; ++i)
+                    m_Floats[lFloatStart + i] = state->m_Floats[lFloatStart + i];
+
+                for (int i = 0; i < lQuatCount; ++i)
+                {
+                    m_Quats[lQuatStart + i] = state->m_Quats[lQuatStart + i];
+                    qnorm(m_Quats[lQuatStart + i]);
+                }
+                continue;
+            }
+
+            const float lSrcWeight = (lOldBlend - current[g].m_BlendTime) / lOldBlend;
+            const float lDstWeight = 1.0f - lSrcWeight;
+
+            int lFloatIndex = lFloatStart;
+            int lRemaining = lFloatCount;
+
+            // Arm groups interpolate their position vector's length separately.
+            if (g == 5 || g == 6)
+            {
+                const float lDstLen = vlen(&m_Floats[lFloatIndex]);
+                const float lSrcLen = vlen(&state->m_Floats[lFloatIndex]);
+                const float lLen = lDstLen * lDstWeight + lSrcLen * lSrcWeight;
+
+                for (int i = 0; i < 3; ++i)
+                    m_Floats[lFloatIndex + i] = lDstWeight * m_Floats[lFloatIndex + i] + lSrcWeight * state->m_Floats[lFloatIndex + i];
+
+                vsetlen(&m_Floats[lFloatIndex], lLen);
+                lFloatIndex += 3;
+                lRemaining -= 3;
+            }
+
+            for (int i = 0; i < lRemaining; ++i, ++lFloatIndex)
+            {
+                const float lDst = m_Floats[lFloatIndex];
+                const float lSrc = state->m_Floats[lFloatIndex];
+
+                if (m_DataInfo[10 + lFloatIndex].m_Type != eAngle || std::fabs(lSrc - lDst) <= 3.1415927f)
+                {
+                    m_Floats[lFloatIndex] = lDstWeight * lDst + lSrcWeight * lSrc;
+                }
+                else
+                {
+                    float lA = lDst;
+                    float lB = lSrc;
+                    if (lA >= 0.0f)
+                        lB += 6.2831855f;
+                    else
+                        lA += 6.2831855f;
+
+                    float lRes = lDstWeight * lA + lSrcWeight * lB;
+                    if (lRes > 3.1415927f)
+                        lRes -= 6.2831855f;
+                    m_Floats[lFloatIndex] = lRes;
+                }
+            }
+
+            for (int i = 0; i < lQuatCount; ++i)
+            {
+                ZQuat lTmp = m_Quats[lQuatStart + i];
+                qpul(m_Quats[lQuatStart + i], lTmp, state->m_Quats[lQuatStart + i], lSrcWeight);
+                qnorm(m_Quats[lQuatStart + i]);
+            }
+        }
     }
 }

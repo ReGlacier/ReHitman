@@ -15,7 +15,7 @@ namespace Glacier
     public:
         // static
         STATIC_CLASS_VAR(ZRenderMaterialBuffer, ZRenderMaterialBuffer*, g_pMaterialBufferInstance);
-        
+
         // vtbl
         ~ZRenderMaterialBuffer() override;
         virtual ZRenderMaterialInstance* GetMaterialInstance(uint32_t lMaterialId) = 0;
@@ -32,6 +32,4 @@ namespace Glacier
         uint32_t m_lNumOpaqueMaterials { 0u };
         uint32_t m_lNumTransparentMaterials { 0u };
     };
-
-    STATIC_GLOBAL_CLASS_INSTANCE(ZRenderMaterialBuffer*, g_pMaterialBufferInstance);
 }

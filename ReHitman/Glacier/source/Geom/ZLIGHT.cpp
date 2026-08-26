@@ -10,30 +10,6 @@
 
 namespace Glacier
 {
-    namespace
-    {
-        int32_t binarySearch(const uint32_t* arr, uint32_t target)
-        {
-            if (!arr || arr[0] == 0)
-                return -1;
-
-            uint32_t size = arr[0];
-            const uint32_t* begin = arr + 1;
-            const uint32_t* end = begin + size;
-
-            const uint32_t* it = std::lower_bound(begin, end, target);
-
-            int index = static_cast<int>(it - arr);
-
-            if (it != end && *it == target)
-            {
-                return index;
-            }
-
-            return -(index + 1);
-        }
-    }
-
     ZLIGHT::ZLIGHT(const char* psName, ZBaseGeom* pBaseGeom)
         : ZGEOM(psName, pBaseGeom)
     {

@@ -47,6 +47,8 @@ namespace Glacier
         // trailing lAlwaysInShadowColor argument. lDrawMode is passed but unused by the PC implementation.
         static void CalcLight(uint32_t lNumVertices, const SUpdateLightData* pLights, uint32_t lNumLights, uint32_t lDrawMode, bool bIncludeHQLights);
 
+        static void CalcLightHQ(uint32_t lNumVertices, const SUpdateLightData *pLights, int32_t lNumLights, int32_t lDrawMode, bool bIncludeHQLights);
+
         static uint32_t GetUpdateLightData(SUpdateLightData* pUpdateLightData, const ZBaseGeom* pBaseGeom, const ZBaseGeom* pEnvironment);
     };
 }

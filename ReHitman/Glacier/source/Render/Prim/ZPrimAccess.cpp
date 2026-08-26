@@ -42,12 +42,12 @@ namespace Glacier
 
     ZPrimAccess* ZPrimAccess::Create(const ZPrimHandle& hPrim)
     {
-        ZASSERT(g_pMaterialBufferInstance);
+        ZASSERT(ZRenderMaterialBuffer::g_pMaterialBufferInstance);
         ZASSERT(hPrim);
 
         const SPrimObject* pPrimObject = hPrim;
 
-        auto* pMaterialInstance = g_pMaterialBufferInstance->GetMaterialInstance(pPrimObject->lMaterialId);
+        auto* pMaterialInstance = ZRenderMaterialBuffer::g_pMaterialBufferInstance->GetMaterialInstance(pPrimObject->lMaterialId);
         if (!pMaterialInstance)
         {
             return nullptr;

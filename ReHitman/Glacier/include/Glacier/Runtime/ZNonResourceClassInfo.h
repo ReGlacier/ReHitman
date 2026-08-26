@@ -10,7 +10,17 @@ namespace Glacier
     struct ZNonResourceClassInfo : public ZCLASSINFO
     {
         // methods
-        ZNonResourceClassInfo(const char *szClassInfoName, int ClassInfoType, uint32_t lSize, const char *szParameters);
+        constexpr ZNonResourceClassInfo(const char *szClassInfoName, int ClassInfoType, unsigned int lSize, const char *szParameters)
+            : ZCLASSINFO(szClassInfoName, ClassInfoType)
+            , m_lSize(lSize)
+            , m_bResourceLinked(false)
+            , m_lAllocatedCount(0)
+            , m_lAllocatedPeakCount(0)
+            , m_lRuntimeAllocatedCount(0)
+            , m_lRuntimeAllocatedPeakCount(0)
+        {
+            (void)szParameters; // unused
+        }
         ~ZNonResourceClassInfo();
 
         uint32_t Size() const;

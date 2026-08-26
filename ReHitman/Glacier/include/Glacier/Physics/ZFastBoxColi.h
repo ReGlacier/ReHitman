@@ -19,7 +19,6 @@ namespace Glacier
         ~ZFastBoxColi();
 
         void SetBox(ZVector3& vPos, ZMat3x3& mMat, ZVector3& vSize, bool bRefresh);
-        bool ChkLineColi(const ZVector3& v0, const ZVector3& v1, bool);
         void Update();
         void EnableExtendedMode(bool);
         void IgnoreMovingObjects(bool);

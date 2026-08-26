@@ -12,12 +12,12 @@ namespace Glacier
 		// Do nothing else, but in PS2 build we had memory tracking logic
 	}
 
-	ZBaseConRout::ZBaseConRout() 
+	ZBaseConRout::ZBaseConRout()
 		: ZEventBase()
 	{
 	}
 
-	void ZBaseConRout::InitBaseConRout(ZROUTCLASSINFO* pRoutClassInfo)
+	void ZBaseConRout::InitBaseConRout(const ZROUTCLASSINFO* pRoutClassInfo)
 	{
 		m_pRoutClassInfo = pRoutClassInfo;
 		m_lRoutCases = pRoutClassInfo->RoutCases();
@@ -72,7 +72,7 @@ namespace Glacier
 		return ZBaseConRout::m_Factory;
 	}
 
-	ZROUTCLASSINFO* ZBaseConRout::GetRoutClassInfo() const
+	const ZROUTCLASSINFO* ZBaseConRout::GetRoutClassInfo() const
 	{
 		return m_pRoutClassInfo;
 	}

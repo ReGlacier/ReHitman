@@ -53,4 +53,6 @@ namespace Glacier
         static uint32_t GetOffsetInScriptCode(const void* ptr);
         static void* GetAddressInScriptCode(uint32_t rRef);
     };
+
+    void ScriptSendCommand(ZGEOM* pGeom, ZMSGID msg, void* pData);
 }

@@ -26,7 +26,7 @@ namespace Glacier
         virtual bool IsPrimUnique(uint32_t lPrim);
         virtual bool CheckPointInsidePrim(uint32_t lPrim, const ZVector3& vPoint, float fThreshold);
         virtual bool CheckBoxInsidePrim(uint32_t lPrim, const float* pvBoxP1, const float* pvBoxP2, const float* pvThreshold);
-        virtual uint32_t AddPrimDataUnique(const void* pData, uint32_t lDataSize);
+        virtual uint32_t AddPrimDataUnique(const void* pData, uint32_t lDataSize, bool bFront);
         virtual void FreePrimData(uint32_t lPrim);
         virtual void GetPrimInfoString(char* pInfo, uint32_t lInfoMaxSize, uint32_t lPrim);
         virtual uint32_t CountSubPrims(uint32_t lPrim);
@@ -47,7 +47,7 @@ namespace Glacier
         virtual uint32_t CreateUserLight(uint32_t lType);
         virtual bool GetOmniLightData(const uint32_t lPrimId, SPrimLightOmni* pDst);
         virtual bool GetSpotLightData(const uint32_t lPrimId, SPrimLightSpot* pDst);
-        virtual bool GetSpotLightSquareData(const uint32_t lPrimId, SPrimLightSpot* pDst);
+        virtual bool GetSpotLightSquareData(const uint32_t lPrimId, SPrimLightSpotSquare* pDst);
         virtual bool GetEnvironmentLightData(const uint32_t lPrimId, SPrimLightEnvironment* pDst);
         virtual void ModifyOmniLight(SPrimLightOmni* pDst, const SPrimLightOmni* pSrc);
         virtual void ModifyOmniLight(uint32_t lPrim, const SPrimLightOmni* pSrc);
@@ -78,7 +78,7 @@ namespace Glacier
         virtual void SetActiveNrTriangles(uint32_t lPrim, uint32_t lNrTriangles);
         virtual uint32_t GetActiveNrTriangles(uint32_t lPrim);
         virtual ZTextureBase* GetTextureFromPrim(uint32_t lPrim);
-        virtual uint32_t GetMaterialIdFromPrim(uint32_t lPrim);
+        virtual uint32_t GetMaterialIdFromPrim(uint32_t lPrim, uint32_t lVariation);
         virtual const float* GetPrimSplineVertices(uint32_t lPrim) = 0;
         virtual uint32_t* GetPrimSplineIndices(uint32_t lPrim) = 0;
         virtual uint32_t CreateSpriteArray(uint32_t lTextureId, uint32_t lDrawMode, SPRITETYPE lSpriteType, bool bSaveLoadThisPrim);

@@ -4,18 +4,6 @@
 
 namespace Glacier
 {
-    ZNonResourceClassInfo::ZNonResourceClassInfo(const char *szClassInfoName, int ClassInfoType, unsigned int lSize, const char *szParameters)
-        : ZCLASSINFO(szClassInfoName, ClassInfoType)
-        , m_lSize(lSize)
-        , m_bResourceLinked(false)
-        , m_lAllocatedCount(0)
-        , m_lAllocatedPeakCount(0)
-        , m_lRuntimeAllocatedCount(0)
-        , m_lRuntimeAllocatedPeakCount(0)
-    {
-        (void)szParameters; // unused
-    }
-
     ZNonResourceClassInfo::~ZNonResourceClassInfo() = default;
 
     uint32_t ZNonResourceClassInfo::Size() const

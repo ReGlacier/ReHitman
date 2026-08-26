@@ -1,4 +1,4 @@
-#include <Glacier/ZActorCommunication.h>
+#include <Glacier/GameBase/ZActorCommunication.h>
 #include <G1ConfigurationService.h>
 #include <cassert>
 

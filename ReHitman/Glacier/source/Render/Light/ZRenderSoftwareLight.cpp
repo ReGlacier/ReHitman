@@ -154,4 +154,9 @@ namespace Glacier
         // TODO: Finish me
         return 0u;
     }
+
+    void ZRenderSoftwareLight::CalcLightHQ(uint32_t lNumVertices, const SUpdateLightData *pLights, int32_t lNumLights, int32_t lDrawMode, bool bIncludeHQLights)
+    {
+        // TODO: Finish me
+    }
 }

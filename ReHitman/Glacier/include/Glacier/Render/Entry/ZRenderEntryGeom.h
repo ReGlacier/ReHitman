@@ -26,7 +26,7 @@ namespace Glacier
 
         // members
         uint32_t m_lUnknown80;                          // 0x80
-        uint32_t m_AlwaysInShadowColor;                 // 0x84
+        float m_fVertexFrameNumber;                     // 0x84 - Verified PC ZPrimControlBase::SetPrimFrameNr
         uint32_t m_lRenderFlags;                        // 0x88 - I'm not sure about this! Need R&D later
         ZBaseGeom* m_pBaseGeom;                         // 0x8C
         uint32_t m_lPrimId;                             // 0x90

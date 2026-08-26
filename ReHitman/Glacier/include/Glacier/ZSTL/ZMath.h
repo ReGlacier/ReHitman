@@ -4,6 +4,7 @@
 #include <Glacier/ZUniAssert.h>
 #include <Glacier/ZSTL/ZMemory.h>
 #include <algorithm>
+#include <numbers>
 #include <cmath>
 
 
@@ -434,7 +435,6 @@ namespace Glacier
         }
     };
 
-
     inline void TransformRootVector(ZVector3& vec, const ZMat3x3& mat) // GetRootVec_Asm
     {
         const float x = vec.x;
@@ -444,6 +444,14 @@ namespace Glacier
         vec.x = x * mat.data[6] + y * mat.data[3] + z * mat.data[0];
         vec.y = x * mat.data[7] + y * mat.data[4] + z * mat.data[1];
         vec.z = x * mat.data[8] + y * mat.data[5] + z * mat.data[2];
+    }
+
+    inline void TransformRootVector(float* vec, const float* mat)
+    {
+        ZVector3* pVec = reinterpret_cast<ZVector3*>(vec);
+        const ZMat3x3* pMat = reinterpret_cast<const ZMat3x3*>(mat);
+
+        TransformRootVector(*pVec, *pMat);
     }
 
     inline void TransformLocalVector(ZVector3& vec, const ZMat3x3& mat) // vmtmul
@@ -1494,6 +1502,87 @@ namespace Glacier
     inline void ConvertZMatrixToMat44(ZMat4x4& m, const ZMatrix& mp)
     {
         // TODO: Finish me
+    }
+
+    inline void pcpy(float* vres, const float* v0)
+    {
+        vres[0] = v0[0];
+        vres[1] = v0[1];
+        vres[2] = v0[2];
+        vres[3] = v0[3];
+    }
+
+    /**
+     * @brief Pulls a value toward a target by at most a fixed step (PC: PullToValue).
+     *
+     * Steps @c value toward @c target by @c rate and clamps to @c target when
+     * overshooting. Returns true once @c target is reached.
+     */
+    template <typename T>
+    inline bool PullToValue(T& value, const T& target, const T& rate)
+    {
+        if (value < target)
+        {
+            value += rate;
+            if (value > target)
+            {
+                value = target;
+                return true;
+            }
+        }
+        else if (value > target)
+        {
+            value -= rate;
+            if (value < target)
+            {
+                value = target;
+                return true;
+            }
+        }
+        else
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * @brief Builds the minimal-rotation quaternion that aligns the +X axis to @c dir
+     *        (PC: minTransformQuat, PS2: minTransformQuat).
+     *
+     * @param[out] q   Result quaternion (x, y, z, w).
+     * @param[in]  dir Unit direction vector (x, y, z).
+     */
+    inline void minTransformQuat(float* q, const float* dir)
+    {
+        const float s = std::sqrt(dir[0] + 1.0f);
+        const float f = 0.70710677f / s;
+
+        q[0] = 0.0f;
+        q[1] = -dir[2] * f;
+        q[2] = dir[1] * f;
+        q[3] = s * 0.70710677f;
+    }
+
+    inline float GetAngle(float x, float y)
+    {
+        if (x == 0.0f)
+        {
+            return (y <= 0.0f) ? std::numbers::pi_v<float> * 1.5f : std::numbers::pi_v<float> * 0.5f;
+        }
+
+        float angle = atanf(y / x);
+        if (x < 0.0f)
+        {
+            return angle + std::numbers::pi_v<float>;
+        }
+        else if (y < 0.0f)
+        {
+            return angle + (std::numbers::pi_v<float> * 2.0f);
+        }
+
+        return angle;
     }
 #   pragma endregion
 }

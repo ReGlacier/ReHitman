@@ -11,7 +11,7 @@ namespace Glacier
 		// methods
 		ZCLASSINFO() = default;
 
-		ZCLASSINFO(const char* psClassName, int lType)
+		constexpr ZCLASSINFO(const char* psClassName, int lType)
 			: m_szClassInfoName{psClassName}
 			, m_iClassInfoType{lType}
 			, m_lSceneInstanceCount{0}

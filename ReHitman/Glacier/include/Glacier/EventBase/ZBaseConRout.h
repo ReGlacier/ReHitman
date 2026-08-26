@@ -22,28 +22,28 @@ namespace Glacier
 				template <typename T>
                 static T* Do(const ZROUTCLASSINFO& sRoutClassInfo)
                 {
-					auto* pEvent = ZEventBuffer::Instance().AllocEventRam(sizeof(T));
+					auto* pEvent = reinterpret_cast<T*>(ZEventBuffer::Instance().AllocEventRam(sizeof(T)));
 					if (pEvent)
 					{
 						// init
 						ZBaseConRout* pInstance = znew_placement<T>(pEvent);
-						pInstance->InitBaseConRout(sRoutClassInfo);
+						pInstance->InitBaseConRout(&sRoutClassInfo);
 					}
 
-					return pEvent;
+					return reinterpret_cast<T*>(pEvent);
                 }
             };
 		};
 
 		DECLARE_FACTORY(ZROUTCLASSINFO, const char*, ZRoutCreator);
 #		pragma endregion
-		
+
 		// static vars
 		STATIC_CLASS_VAR(ZBaseConRout, ZFactory<ZBaseConRout>, m_Factory);
 
 		// vtbl
 		~ZBaseConRout() override;
-		virtual void InitBaseConRout(ZROUTCLASSINFO* pBaseConRout);
+		virtual void InitBaseConRout(const ZROUTCLASSINFO* pRoutClassInfo);
 		virtual int32_t UnknownCommand(ZMSGID command, ZDATA data);
 		const char* EventName() override;
 		int DoEvent(int lType, uint16_t lParam, void* pData) override;
@@ -51,10 +51,10 @@ namespace Glacier
 		// methods
 		ZBaseConRout();
 		static ZFactory<ZBaseConRout>& GetFactory();
-		ZROUTCLASSINFO* GetRoutClassInfo() const;
+		const ZROUTCLASSINFO* GetRoutClassInfo() const;
 
 		// members
-		ZROUTCLASSINFO* m_pRoutClassInfo;
+		const ZROUTCLASSINFO* m_pRoutClassInfo;
 	};
 	RE_VERIFY_SIZE(ZBaseConRout, 0x30); // Verified
 	RE_VERIFY_OFFSET(ZBaseConRout, m_pRoutClassInfo, 0x2C);

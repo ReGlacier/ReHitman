@@ -56,7 +56,7 @@ namespace Glacier
             }
         }
     }
-    
+
     STATIC_CLASS_VAR_IMPL(ScriptEngine, _SpecialScriptReturnType, m_SpecialScriptReturnType, 0x008289A8, {});
 
     void InitializeScriptFunctions(_SCRIPTFUNCTIONS* pSF)
@@ -176,18 +176,18 @@ namespace Glacier
 
             if (dwFormatResult > 0 && pszBuffer)
             {
-                printf("[ScriptEngine::AttachSceneScripts] Failed to load library '%s'. Error code: %lu (0x%X) - %s", 
-                    pszSceneScriptDllName, 
-                    dwLastError, 
-                    dwLastError, 
+                printf("[ScriptEngine::AttachSceneScripts] Failed to load library '%s'. Error code: %lu (0x%X) - %s",
+                    pszSceneScriptDllName,
+                    dwLastError,
+                    dwLastError,
                     pszBuffer);
-                
+
                 LocalFree(pszBuffer);
             }
             else
             {
                 printf("[ScriptEngine::AttachSceneScripts] Failed to load library '%s'. Error code: %lu (0x%X)\n",
-                    pszSceneScriptDllName, 
+                    pszSceneScriptDllName,
                     dwLastError,
                     dwLastError);
             }
@@ -204,13 +204,13 @@ namespace Glacier
             reinterpret_cast<SCRIPTFUNCTIONS*>(
                 GetProcAddress(
                     // Our script mod
-                    (HMODULE)g_pScripts, 
+                    (HMODULE)g_pScripts,
                     MAKEINTRESOURCEA(ZScriptImportTable::Z_SF)
                 )));
 
         // Fetch the script's internal function table and link the running
         // thread both ways: the script's slot is cleared, ours points at it.
-        auto* pInternalFunctions = 
+        auto* pInternalFunctions =
             reinterpret_cast<INTERNALSCRIPTFUNCTIONS*>(
                 GetProcAddress(
                     (HMODULE)g_pScripts,
@@ -248,7 +248,7 @@ namespace Glacier
             {
                 pCreator->Initialize();
             }
-        }        
+        }
 
         g_bScriptLoadResult = true;
         return g_bScriptLoadResult;
@@ -261,7 +261,7 @@ namespace Glacier
             if (!--lScriptLoadedCount)
             {
                 ScriptsPtr = nullptr;
-                
+
                 FreeLibrary((HMODULE)g_pScripts);
                 g_pScripts = nullptr;
             }
@@ -284,7 +284,7 @@ namespace Glacier
     }
 
     void ScriptEngine::RunNoBreak(_ScriptState* pState)
-    {        
+    {
         auto* pFuncController = pState->m_pVariables->m_pFunctionController;
         if (!pFuncController)
         {
@@ -324,7 +324,7 @@ namespace Glacier
     int ScriptEngine::GetPriority(_ScriptState* pScript)
     {
         if (!pScript) return 0;
-        
+
         auto* pSchedEvent = static_cast<ZScheduledEvent*>(pScript->m_pThreadInfo);
         if (!pSchedEvent) return 0;
 
@@ -509,7 +509,7 @@ namespace Glacier
     {
         g_ScriptAllocator.Free((char*)ptr);
     }
-    
+
     _ScriptState* ScriptEngine::GetAlienScriptState(ZREF rScript)
     {
         if (!rScript) return nullptr;
@@ -630,7 +630,7 @@ namespace Glacier
     void ScriptEngine::InstallScriptMessages(ZScriptC_ZMessage* pMsg, const char** pUniques)
     {
         ZASSERT(g_pZScriptC_Messages == nullptr);
-        
+
         g_pZScriptC_Messages = pMsg;
         g_pZScriptC_Uniques = pUniques;
     }
@@ -650,7 +650,7 @@ namespace Glacier
             pSender->SendCommand(Msg, pData, pTarget);
         }
     }
-    
+
     int ScriptEngine::SendScriptCommand(ZREF rGeomTarget, ZMSGID Msg, void* pData, int rGeomSender)
     {
         if (!rGeomTarget)
@@ -661,7 +661,7 @@ namespace Glacier
         ZGEOM* pReceiver = ZGEOM::RefToPtr(rGeomTarget);
         if (!pReceiver)
         {
-            printf("[ScriptEngine::SendScriptCommand(%d, %x, %p, %d)] Trying to send event to null pointer.. probably an import which is not set up correctly!\n", 
+            printf("[ScriptEngine::SendScriptCommand(%d, %x, %p, %d)] Trying to send event to null pointer.. probably an import which is not set up correctly!\n",
                 rGeomTarget, Msg, pData, rGeomSender);
             return 0;
         }
@@ -696,5 +696,63 @@ namespace Glacier
     void ScriptEngine::SetForkStateController(const _STATECONTROLLER* pController)
     {
         ScriptEngine::m_SpecialScriptReturnType.m_pForkStateController = pController;
+    }
+
+    void ScriptSendCommand(ZGEOM* pGeom, ZMSGID msg, void* pData)
+    {
+        if (reinterpret_cast<std::intptr_t>(pGeom->m_pExData) == static_cast<std::intptr_t>(-2))
+        {
+            return;
+        }
+
+        auto* pExData = pGeom->m_pExData;
+
+        ZGeomEventListBuffers::SGeomEventListBufferEntity* pEntity = nullptr;
+        bool bFinished = false;
+
+        if (pExData->_Events.m_bListEntityOffset_Or_DirectOffset == 3)
+        {
+            pEntity = ZGeomEventList::m_pGeomEventListBuffers->Get_Buffer_Entity(
+                pExData->_Events.m_Control_Routine_List_Entity_Id);
+        }
+        else
+        {
+            bFinished = (pExData->_Events.m_bListEntityOffset_Or_DirectOffset == 1);
+        }
+
+        while (!bFinished)
+        {
+            ZASSERT(pExData->_Events.m_bListEntityOffset_Or_DirectOffset != 1);
+
+            const ZREF rEvent =
+                (pExData->_Events.m_bListEntityOffset_Or_DirectOffset == 3)
+                    ? pEntity->m_GeomEventListBufferEntity_Used.m_iValue.GetVal()
+                    : pExData->_Events.m_iControl_Routine_Direct_Id.GetVal();
+
+            ZEventBase* pEvent = ZEventBuffer::Instance().ConvEventRefToPtr(rEvent);
+            if (pEvent && pEvent->EventName() && !strcmp(pEvent->EventName(), "ScriptC"))
+            {
+                pEvent->Command(msg, pData);
+            }
+
+            if (pExData->_Events.m_bListEntityOffset_Or_DirectOffset == 3)
+            {
+                ZASSERT(pEntity != nullptr);
+
+                const auto nextId = pEntity->m_GeomEventListBufferEntity_Used.m_Next_In_List;
+                if (nextId.m_iEntity_Id == 0xFF)
+                {
+                    bFinished = true;
+                }
+                else
+                {
+                    pEntity = ZGeomEventList::m_pGeomEventListBuffers->Get_Buffer_Entity(nextId);
+                }
+            }
+            else
+            {
+                bFinished = true;
+            }
+        }
     }
 }

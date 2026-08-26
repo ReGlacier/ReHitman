@@ -3,10 +3,16 @@
 #include <Glacier/Render/Prim/ZPoseBone.h>
 #include <Glacier/Animation/Manager.h>
 #include <Glacier/Animation/ZBone.h>
+#include <Glacier/Animation/ZBoneQuat.h>
 #include <Glacier/Animation/Model.h>
 #include <Glacier/Animation/Header.h>
+#include <Glacier/Animation/ZHumanState.h>
+#include <Glacier/Animation/StreamPacker.h>
+#include <Glacier/IK/ZLNKOBJ.h>
 #include <Glacier/System/ZSysInterface.h>
 #include <Glacier/ZSTL/ZMath.h>
+#include <numbers>
+#include <cstring>
 #include <cstdio>
 
 
@@ -58,6 +64,29 @@ namespace Glacier::Animation
         }
     }
 
+    // Computes the state-blending "magic number" that identifies an active animation
+    // (matches the magic number used by Model::AnimateQuats).
+    int MagicNr(const ActiveAnimation& anim)
+    {
+        if ((anim.mode & 7) != 2)
+            return anim.sequenceId << 16;
+
+        const int lHeaderIndex = anim.header ? Animation::instance->ToIndex(anim.header) : -1;
+        return (lHeaderIndex & 0x7FFF) | (((anim.mode >> 8) & 1) << 15);
+    }
+
+    // File-scope scratch state buffers used by Model::AnimateState (originally
+    // flt_9ACB68 / flt_9AC9C8 / stru_9ACB78).
+    ZHumanState g_StateScratch;
+    ZHumanState g_StateScratch2;
+    ZQuat g_AimQuat;
+
+    // Aim IK arm-base data. Per arm: {pos.x, pos.y, pos.z, factor}; left arm at
+    // float offset 16, right arm at float offset 20.
+    // TODO: Find where these arm-base positions are populated (the attacker/aim setup).
+    float g_AimArmBase[64] = {};
+    const int g_AimArmBaseOffsets[2] = { 16, 20 }; // dword_7832E0
+
     Model::Model()
     {
         for (int i = 3; i != -1; --i)
@@ -93,7 +122,176 @@ namespace Glacier::Animation
 
     void Model::Init(ZLNKOBJ* pLnkObj, ZBone* pBones, uint32_t poseIdx, uint32_t id2IndexIdx, uint32_t index2IdIdx, uint32_t id2PosIdx, uint32_t parentIdx, bool stateModel, char* buffer, int boneCount)
     {
-        // TODO: Finish me
+        ZASSERT((reinterpret_cast<uintptr_t>(buffer) & 0xF) == 0);
+
+        m_Valid = true;
+        m_AimDir.x = -2.0f;
+
+        const uint32_t lPrim = pLnkObj->m_baseGeom->m_lPrim;
+
+        m_PelvisPlacement.m_Quat.i = -2.0f;
+        m_PelvisPlacement.m_Quat.j = 0.0f;
+        m_PelvisPlacement.m_Quat.k = 0.0f;
+        m_PelvisPlacement.m_Quat.w = 1.0f;
+        m_PelvisPlacement.m_Pos.x = -2.0f;
+        m_PelvisPlacementWeight = 0.0f;
+
+        m_Poses.m_PoseIdx = poseIdx;
+        m_Bones = pBones;
+        m_AngelPose = reinterpret_cast<ZAngelBone*>(const_cast<float*>(ZPrimControlBase::Instance()->GetLocalPrimBonesQuats(lPrim)));
+        m_BoneIdToIndexLookup = ZPrimControlBase::GetPrimitive<BoneIndex>(id2IndexIdx);
+        m_BoneIndexToIdLookup = ZPrimControlBase::GetPrimitive<BoneID>(index2IdIdx);
+        m_BoneCount = boneCount;
+        m_Parent = ZPrimControlBase::GetPrimitive<BoneIndex>(parentIdx);
+        m_BoneIdToPosLookup = ZPrimControlBase::GetPrimitive<int16_t>(id2PosIdx);
+
+        m_State = nullptr;
+
+        char* lBlendBones = buffer;
+        if ((reinterpret_cast<uintptr_t>(lBlendBones) & 0x3F) != 0)
+            lBlendBones = lBlendBones - (reinterpret_cast<uintptr_t>(lBlendBones) & 0x3F) + 64;
+        m_BlendBones = reinterpret_cast<ZBlendBone*>(lBlendBones);
+
+        float* lCursor = reinterpret_cast<float*>(buffer + 48 * m_BoneCount + 96);
+
+        for (int i = 0; i < m_BoneCount; ++i)
+        {
+            m_BlendBones[i].m_Quat = m_AngelPose[i].m_Quat;
+            m_BlendBones[i].m_Pos = m_AngelPose[i].m_Pos;
+            m_BlendBones[i].m_MagicNr = -1;
+            m_BlendBones[i].m_Blend = 0.0f;
+        }
+
+        m_PoseWeights = nullptr;
+        if (m_Poses.m_PoseIdx)
+        {
+            auto* lPoseHeader = ZPrimControlBase::GetPrimitive<ZPoseBoneHeader>(m_Poses.m_PoseIdx);
+            if (lPoseHeader && lPoseHeader->m_PoseCount)
+            {
+                m_PoseWeights = lCursor;
+                lCursor += lPoseHeader->m_PoseCount;
+                memset(m_PoseWeights, 0, sizeof(float) * lPoseHeader->m_PoseCount);
+            }
+        }
+
+        if (m_BoneIndexToIdLookup)
+        {
+            if (stateModel)
+            {
+                char* lState = reinterpret_cast<char*>(lCursor);
+                if ((reinterpret_cast<uintptr_t>(lState) & 0x3F) != 0)
+                    lState = lState - (reinterpret_cast<uintptr_t>(lState) & 0x3F) + 64;
+                m_State = znew_placement<ZHumanState>(reinterpret_cast<ZHumanState*>(lState));
+
+                m_StateBlending = reinterpret_cast<ZStateBlending*>(lCursor + 136);
+                for (int i = 0; i < 9; ++i)
+                    m_StateBlending[i].m_MagicNumber = 0xFFFFFFFFu;
+
+                m_ScaleInfo.m_ArmScale = vlen(m_AngelPose[m_BoneIdToIndexLookup[LClavicle]].m_Pos);
+                m_ScaleInfo.m_ArmScale += vlen(m_AngelPose[m_BoneIdToIndexLookup[LUArm]].m_Pos);
+                m_ScaleInfo.m_ArmScale += vlen(m_AngelPose[m_BoneIdToIndexLookup[LLArm]].m_Pos);
+                m_ScaleInfo.m_ArmScale += vlen(m_AngelPose[m_BoneIdToIndexLookup[LHand]].m_Pos);
+                m_ScaleInfo.m_ArmScale += vlen(m_AngelPose[m_BoneIdToIndexLookup[RClavicle]].m_Pos);
+                m_ScaleInfo.m_ArmScale += vlen(m_AngelPose[m_BoneIdToIndexLookup[RUArm]].m_Pos);
+                m_ScaleInfo.m_ArmScale += vlen(m_AngelPose[m_BoneIdToIndexLookup[RLArm]].m_Pos);
+                m_ScaleInfo.m_ArmScale = (vlen(m_AngelPose[m_BoneIdToIndexLookup[RHand]].m_Pos) + m_ScaleInfo.m_ArmScale) * 0.5f;
+
+                m_ScaleInfo.m_HipScale = vlen(m_AngelPose[m_BoneIdToIndexLookup[LLLeg]].m_Pos);
+                m_ScaleInfo.m_HipScale += vlen(m_AngelPose[m_BoneIdToIndexLookup[LAnkle]].m_Pos);
+                m_ScaleInfo.m_HipScale += vlen(m_AngelPose[m_BoneIdToIndexLookup[RLLeg]].m_Pos);
+                m_ScaleInfo.m_HipScale = (vlen(m_AngelPose[m_BoneIdToIndexLookup[RAnkle]].m_Pos) + m_ScaleInfo.m_HipScale) * 0.5f;
+
+                int lIndex = 0;
+                for (; lIndex < 4; ++lIndex)
+                {
+                    if ((m_ActiveAnims[lIndex].mode & 7) != 0 && (m_ActiveAnims[lIndex].mode & 0x8000) != 0)
+                        break;
+                }
+
+                if (lIndex == 4)
+                {
+                    const int lBailAt = (m_BoneCount < 30) ? 34 : 74;
+
+                    const int lFullBodyIndex = static_cast<int>(m_LastFullBody.m_Raw << 17) >> 17;
+                    if (lFullBodyIndex != -1)
+                    {
+                        ZASSERT(lFullBodyIndex >= 0 && lFullBodyIndex < Animation::instance->m_Animcount);
+                        Header* lHeader = &Animation::instance->m_Headers[lFullBodyIndex];
+                        lHeader->DePackState(*m_State, static_cast<float>(lHeader->m_Frames - 1), Animation::instance, lBailAt);
+                        if (m_LastFullBody.m_Raw & 0x8000u)
+                            m_State->Mirror(lHeader->m_States);
+                    }
+
+                    const int lUpperBodyIndex = static_cast<int>(m_LastUpperBody.m_Raw << 17) >> 17;
+                    if (lUpperBodyIndex != -1)
+                    {
+                        ZASSERT(lUpperBodyIndex >= 0 && lUpperBodyIndex < Animation::instance->m_Animcount);
+                        Header* lHeader = &Animation::instance->m_Headers[lUpperBodyIndex];
+                        lHeader->DePackState(*m_State, static_cast<float>(lHeader->m_Frames - 1), Animation::instance, lBailAt);
+                        if (m_LastUpperBody.m_Raw & 0x8000u)
+                            m_State->Mirror(lHeader->m_States);
+                    }
+                }
+            }
+            else
+            {
+                m_State = nullptr;
+                m_StateBlending = nullptr;
+                m_Animated = true;
+
+                int lIndex = 0;
+                for (; lIndex < 4; ++lIndex)
+                {
+                    if ((m_ActiveAnims[lIndex].mode & 7) != 0 && (m_ActiveAnims[lIndex].mode & 0x8000) != 0)
+                        break;
+                }
+
+                if (lIndex == 4)
+                {
+                    const int lFullBodyIndex = static_cast<int>(m_LastFullBody.m_Raw << 17) >> 17;
+                    m_Animated = false;
+
+                    if (lFullBodyIndex != -1)
+                    {
+                        ZASSERT(lFullBodyIndex >= 0 && lFullBodyIndex < Animation::instance->m_Animcount);
+                        Header* lHeader = &Animation::instance->m_Headers[lFullBodyIndex];
+
+                        mreset(m_Bones[0]._Mat.data);
+                        m_Bones[0]._Pos.Reset();
+
+                        for (int i = 1; i < m_BoneCount; ++i)
+                        {
+                            m_Bones[i]._Quat = m_AngelPose[i].m_Quat;
+                            m_Bones[i]._Pos = m_AngelPose[i].m_Pos;
+                        }
+
+                        lHeader->DePackQuats(m_BoneIdToPosLookup, reinterpret_cast<ZBoneQuat*>(m_Bones), static_cast<float>(lHeader->m_Frames - 1), Animation::instance);
+
+                        EBoneID lCount;
+                        uint8_t* pVectorIds = StreamPacker::GetVectorIds(&Animation::instance->m_Data[lHeader->m_QuatOffset], lCount);
+
+                        for (int i = 0; i < lCount; ++i)
+                        {
+                            const uint32_t lBoneId = static_cast<uint16_t>(pVectorIds[2 * i]) | (static_cast<uint16_t>(pVectorIds[2 * i + 1]) << 8);
+                            const uint8_t lBoneIndex = m_BoneIdToIndexLookup[lBoneId];
+
+                            if (lBoneIndex != 0xFF && lBoneIndex < m_BoneCount)
+                            {
+                                m_BlendBones[lBoneIndex].m_Quat = m_Bones[lBoneIndex]._Quat;
+                                m_BlendBones[lBoneIndex].m_Pos = m_Bones[lBoneIndex]._Pos;
+                            }
+                        }
+
+                        ModelSpaceBones();
+                    }
+                }
+            }
+        }
+        else
+        {
+            m_State = nullptr;
+            m_StateBlending = nullptr;
+        }
     }
 
     int Model::DynamicSize(ZLNKOBJ* pLnkObj, uint32_t poseIdx, uint32_t id2IndexIdx, uint32_t index2IdIdx, uint32_t id2PosIdx, uint32_t parentIdx, bool stateModel, int boneCount)
@@ -113,7 +311,7 @@ namespace Glacier::Animation
 
         if (m_BoneIndexToIdLookup && stateModel)
         {
-            lBufferSize += 0x268; // TODO: Understand what it means (I guess size of some struct?)
+            lBufferSize += 0x268; // NOTE: Understand what it means (I guess size of some struct?)
         }
 
         return lBufferSize + 16 * (3 * boneCount + 9);
@@ -234,7 +432,331 @@ namespace Glacier::Animation
 
     void Model::AnimateState(Manager* manager, float fDt)
     {
-        // TODO: Finish me
+        if (manager->GetPlayUncompressed())
+            return;
+
+        int lMask = 0;
+
+        if (!m_State)
+            return;
+
+        memcpy(&g_StateScratch, m_State, sizeof(ZHumanState));
+
+        m_FaceAnimated = false;
+        bool lHasAim = false;
+
+        const int lBailAt = (m_BoneCount < 50) ? 34 : 74;
+
+        ZStateBlending lNext[9];
+        for (int i = 0; i < 9; ++i)
+            lNext[i].m_MagicNumber = 0xFFFFFFFFu;
+
+        for (int i = 0; i < m_OrderSize; ++i)
+        {
+            const int lSlot = m_DepackOrder[i];
+            ActiveAnimation& lAnim = m_ActiveAnims[lSlot];
+
+            if ((lAnim.mode & 7) == 0)
+                continue;
+
+            m_Animated = true;
+
+            Header* lHeader = lAnim.header;
+            const float lFrame = lAnim.frame;
+
+            if (!lHeader || (lHeader->m_Mask & Header::ZHM_HAS_STATE) == 0)
+                continue;
+
+            const int lMode = lAnim.mode;
+
+            if ((lMode & 0xF0) != 0)
+            {
+                const float lWeight = lFrame <= 1.0f ? lFrame : 1.0f;
+                if (lMode & 0x10)
+                    m_Targets[3].m_Weight2 = lWeight;
+                if (lMode & 0x20)
+                    m_Targets[4].m_Weight2 = lWeight;
+                if (lMode & 0x40)
+                    m_Targets[5].m_Weight2 = lWeight;
+                if (lMode & 0x80)
+                    m_Targets[6].m_Weight2 = lWeight;
+            }
+
+            if ((lMode & 0x800) == 0)
+            {
+                lHeader->DePackState(g_StateScratch, lFrame, manager, lBailAt);
+
+                if (lBailAt != 34 && lHeader->m_PoseDataOffset != -1 && m_Poses.m_PoseIdx)
+                {
+                    m_FaceAnimated = true;
+                    lHeader->DePackPose(m_Poses.idToPosLookup(), m_PoseWeights, lFrame, manager);
+                }
+
+                int lStates = lHeader->m_States;
+                if (lMode & 0x100)
+                    lStates = g_StateScratch.Mirror(lHeader->m_States);
+
+                lMask |= lStates;
+
+                const int lMagic = MagicNr(lAnim);
+                for (int j = 0; j < 9; ++j)
+                {
+                    if ((1 << j) & lStates)
+                    {
+                        lNext[j].m_MagicNumber = lMagic;
+                        lNext[j].m_BlendTime = lAnim.blend;
+                    }
+                }
+            }
+            else
+            {
+                lHasAim = true;
+                lMask |= lHeader->m_States;
+
+                const uint8_t lBone = m_BoneIdToIndexLookup[eStateBoneCount];
+
+                ZQuat lBaseQuat{ 0.0f, 0.0f, 0.0f, 1.0f };
+
+                auto lDepackAim = [&](float lAngleH, float lAngleV)
+                {
+                    float lCircle1, lCircle2, lBlendPrc;
+                    GetAimFrames(lCircle1, lCircle2, lBlendPrc, lAngleH, lAngleV);
+                    lHeader->DePackState(g_StateScratch, lCircle2, manager, lBailAt);
+                    lHeader->DePackState(g_StateScratch2, lCircle1, manager, lBailAt);
+                    g_StateScratch.Blend(&g_StateScratch2, lBlendPrc, lHeader->m_States);
+                };
+
+                if (m_Targets[1].m_Data[3] == 2.0f)
+                {
+                    if (lHeader->m_Frames > 50)
+                        lDepackAim(3.1415927f, 1.5707964f);
+                    else
+                        lHeader->DePackState(g_StateScratch, lFrame, manager, lBailAt);
+                }
+                else
+                {
+                    float lSlice = 0.0f;
+                    float lAngle = 0.0f;
+                    float lDist = 500.0f;
+
+                    ZVector3 lToTarget = m_Targets[1].m_Pos2 - m_Bones[lBone]._Pos;
+                    vmtmul(&lToTarget.x, m_Bones[lBone]._Mat.data);
+
+                    if (lHeader->m_Mask & 8)
+                    {
+                        if (lMask & 1)
+                        {
+                            lMask &= ~1u;
+                            m_State->Blend(1, &g_StateScratch, m_StateBlending, lNext, fDt);
+                        }
+
+                        const ZQuat lStateQuat = m_State->m_Quats[0];
+                        ZVector3 lUp{ 0.0f, 1.0f, 0.0f };
+
+                        ZQuat lInv = lStateQuat;
+                        lInv.i = -lInv.i;
+                        lInv.j = -lInv.j;
+                        lInv.k = -lInv.k;
+                        qtran(&lUp.x, &lInv.i, &lUp.x);
+
+                        if (g_AimBasePelvis)
+                            minTransformQuat(&lBaseQuat.i, &lUp.x);
+
+                        ZQuat lAimQuat;
+                        qmul(lAimQuat, lStateQuat, lBaseQuat);
+
+                        ZMat3x3 lMat;
+                        quattomat(lMat, lAimQuat);
+
+                        ZVector3 lPelvis{ m_State->m_Floats[0], m_State->m_Floats[1], m_State->m_Floats[2] };
+                        vscalar(&lPelvis.x, m_ScaleInfo.m_HipScale);
+
+                        ZVector3 lDir;
+                        if (m_AimDir.x == -2.0f)
+                        {
+                            vsub(&lDir.x, &lToTarget.x, &lPelvis.x);
+                            lDir.y -= 60.0f;
+                            vmtmul(&lDir.x, lMat.data);
+                            lDist = vnorm(&lDir.x);
+                        }
+                        else
+                        {
+                            lDir.x = -m_AimDir.x;
+                            lDir.y = -m_AimDir.y;
+                            lDir.z = -m_AimDir.z;
+                            vmtmul(&lDir.x, m_Bones[lBone]._Mat.data);
+                            vmtmul(&lDir.x, lMat.data);
+                            lDist = 1.0f;
+                        }
+
+                        lSlice = GetAngle(-lDir.z, -lDir.y);
+                        lAngle = std::acos(lDir.x);
+                    }
+                    else
+                    {
+                        ZVector3 lDir;
+                        lDir.x = -lToTarget.z;
+                        lDir.y = -lToTarget.x;
+                        lDir.z = lToTarget.y - 180.0f;
+                        lDist = vnorm(&lDir.x);
+                        lSlice = GetAngle(-lDir.x, lDir.y);
+                        lAngle = std::acos(lDir.z);
+                    }
+
+                    if (m_Targets[1].m_Weight2 == 0.0f)
+                    {
+                        m_Targets[1].m_Data[0] = lSlice;
+                        m_Targets[1].m_Data[1] = lAngle;
+                        m_Targets[1].m_Data[2] = lDist;
+                    }
+                    else
+                    {
+                        const float lRate = fDt * 400.0f;
+                        PullToValue(m_Targets[1].m_Data[0], lSlice, lRate);
+                        PullToValue(m_Targets[1].m_Data[1], lAngle, lRate);
+                        PullToValue(m_Targets[1].m_Data[2], lDist, fDt * 5000.1001f);
+                        lSlice = m_Targets[1].m_Data[0];
+                        lAngle = m_Targets[1].m_Data[1];
+                    }
+
+                    m_Targets[1].m_Weight2 = 1.0f;
+
+                    float lVert = lAngle + m_Targets[1].m_Data[4];
+                    float lHorz = lSlice + m_Targets[1].m_Data[5];
+
+                    if (lVert < 0.0f)
+                        lVert = 0.0f;
+                    else if (lVert > 3.1415927f)
+                        lVert = 3.1415927f;
+
+                    if (lHorz < 0.0f)
+                        lHorz = 0.0f;
+                    else if (lHorz > 6.2831855f)
+                        lHorz = 6.2831855f;
+
+                    if (!g_UseNewAim)
+                    {
+                        lDepackAim(lHorz, lVert);
+                    }
+                    else
+                    {
+                        if (lVert < 0.62831855f)
+                            lVert = 0.62831855f;
+                        else if (lVert > 2.8274333f)
+                            lVert = 2.8274333f;
+
+                        if (lHorz >= 1.5707964f && lHorz <= 4.712389f)
+                        {
+                            if (lHeader->m_Frames > 50)
+                                lDepackAim(3.1415927f, 1.5707964f);
+                            else
+                                lHeader->DePackState(g_StateScratch, lFrame, manager, lBailAt);
+
+                            const float lVertDelta = lVert - 1.5707964f;
+                            const float lArmFac = g_AimIkFac * lVertDelta;
+
+                            ZQuat lRotX;
+                            {
+                                const float h = (lHorz - 3.1415927f) * 0.5f;
+                                lRotX.i = -std::sin(h);
+                                lRotX.j = 0.0f;
+                                lRotX.k = 0.0f;
+                                lRotX.w = std::cos(h);
+                            }
+
+                            ZQuat lRotY1;
+                            {
+                                const float h = lVertDelta * (1.0f - g_AimIkFac) * 0.5f;
+                                lRotY1.i = 0.0f;
+                                lRotY1.j = -std::sin(h);
+                                lRotY1.k = 0.0f;
+                                lRotY1.w = std::cos(h);
+                            }
+
+                            const ZQuat lOldAimQuat = g_AimQuat;
+
+                            ZQuat lCombined;
+                            qmul(lCombined, lRotX, lRotY1);
+
+                            ZQuat lAimQuat;
+                            qmul(lAimQuat, lCombined, lOldAimQuat);
+                            qmul(g_AimQuat, lBaseQuat, lAimQuat);
+
+                            ZQuat lRotY2;
+                            {
+                                const float h = lArmFac * 0.5f;
+                                lRotY2.i = 0.0f;
+                                lRotY2.j = -std::sin(h);
+                                lRotY2.k = 0.0f;
+                                lRotY2.w = std::cos(h);
+                            }
+
+                            // pQuat1 = inverse(lOldAimQuat) * lRotY2 * lOldAimQuat
+                            ZQuat lInvAim{ -lOldAimQuat.i, -lOldAimQuat.j, -lOldAimQuat.k, lOldAimQuat.w };
+                            ZQuat lPivotQuat;
+                            qmul(lPivotQuat, lInvAim, lRotY2);
+                            qmul(lPivotQuat, lPivotQuat, lOldAimQuat);
+
+                            const ZVector3 lPivot{ 0.2f, -0.2f, 0.05f };
+
+                            const bool lLeftArm = (lMode & 0x800000) == 0 ? (lHeader->m_States & 0x20) != 0 : false;
+                            const bool lRightArm = (lMode & 0x1000000) == 0 ? (lHeader->m_States & 0x40) != 0 : false;
+
+                            for (int j = 0; j < 2; ++j)
+                            {
+                                if (!(j == 0 ? lLeftArm : lRightArm))
+                                    continue;
+
+                                const int lOff = g_AimArmBaseOffsets[j];
+
+                                ZVector3 lPos;
+                                vcpy(&lPos.x, &g_AimArmBase[lOff]);
+                                vsub(&lPos.x, &lPivot.x);
+
+                                ZVector3 lRotated;
+                                qtran(&lRotated.x, &lPivotQuat.i, &lPos.x);
+                                vadd(&lRotated.x, &lPivot.x);
+
+                                vcpy(&g_AimArmBase[lOff], &lRotated.x);
+                                g_AimArmBase[lOff + 3] -= lArmFac * _g_AimArmFac;
+                            }
+                        }
+                    }
+                }
+
+                const int lMagic = MagicNr(lAnim);
+                for (int j = 0; j < 9; ++j)
+                {
+                    if ((1 << j) & lHeader->m_States)
+                    {
+                        lNext[j].m_MagicNumber = lMagic;
+                        lNext[j].m_BlendTime = lAnim.blend;
+                    }
+                }
+            }
+
+            if (lMode & 8)
+            {
+                lHeader->DePackState(g_StateScratch, lFrame, manager, lBailAt);
+
+                Header* lDualHeader = m_ActiveAnims[lSlot + 1].header;
+                lDualHeader->DePackState(g_StateScratch2, m_ActiveAnims[lSlot + 1].frame, manager, lBailAt);
+                g_StateScratch.Blend(&g_StateScratch2, 1.0f - m_ActiveAnims[lSlot + 1].blend, lDualHeader->m_States);
+
+                lMask |= lDualHeader->m_States;
+
+                for (int j = 0; j < 9; ++j)
+                {
+                    if ((1 << j) & lDualHeader->m_States)
+                        lNext[j].m_MagicNumber += 4999 * Animation::instance->ToIndex(lDualHeader);
+                }
+            }
+        }
+
+        if (!lHasAim)
+            m_Targets[1].m_Weight2 = 0.0f;
+
+        m_State->Blend(lMask, &g_StateScratch, m_StateBlending, lNext, fDt);
     }
 
     void Model::PrintDebugInfo()
@@ -620,8 +1142,80 @@ namespace Glacier::Animation
         }
     }
 
+    void Model::ResolveStaticResourceRefs()
+    {
+        m_EyePoseId[0] = Animation::instance->GetPoseID("E_AimL_Left");
+        m_EyePoseId[1] = Animation::instance->GetPoseID("E_AimL_Right");
+        m_EyePoseId[2] = Animation::instance->GetPoseID("E_AimL_Down");
+        m_EyePoseId[3] = Animation::instance->GetPoseID("E_AimL_Up");
+        m_EyePoseId[4] = Animation::instance->GetPoseID("E_AimR_Left");
+        m_EyePoseId[5] = Animation::instance->GetPoseID("E_AimR_Right");
+        m_EyePoseId[6] = Animation::instance->GetPoseID("E_AimR_Down");
+        m_EyePoseId[7] = Animation::instance->GetPoseID("E_AimR_Up");
+
+        m_EyePoseIdOk = 1;
+        for (int i = 0; i < 8; ++i)
+        {
+            if (m_EyePoseId[i] == ePoseIDNA)
+                m_EyePoseIdOk = 0;
+        }
+    }
+
+    void Model::GetAimFrames(float& fCircle1Prc, float& fCircle2Prc, float& fBlendPrc, float fAngleHorz, float fAngleVert)
+    {
+        const float fHorz = std::clamp(fAngleHorz, 0.f, std::numbers::pi_v<float> * 2.0f);
+        float fVert = std::clamp(fAngleHorz, 0.f, std::numbers::pi_v<float>);
+
+        const float fCircle = fHorz * 0.15915494f * 64.0f;
+        fCircle1Prc = fCircle;
+        fCircle2Prc = fCircle;
+
+        if (fVert > 0.78539819f)
+        {
+            if (fVert > 1.5707964f)
+            {
+                if (fVert > 2.3561945f)
+                {
+                    if (fVert > 2.8797934f)
+                        fVert = 2.8797934f;
+                    fCircle1Prc += 65.0f;
+                    fCircle2Prc += 260.0f;
+                    fBlendPrc = 1.0f - (fVert - 2.3561945f) * 1.9098593f;
+                }
+                else
+                {
+                    fCircle2Prc += 65.0f;
+                    fBlendPrc = 1.0f - (fVert - 1.5707964f) * 1.2732395f;
+                }
+            }
+            else
+            {
+                fCircle2Prc += 130.0f;
+                fBlendPrc = (fVert - 0.78539819f) * 1.2732395f;
+            }
+        }
+        else
+        {
+            if (fVert < 0.2617994f)
+                fVert = 0.2617994f;
+            fCircle1Prc += 130.0f;
+            fCircle2Prc += 195.0f;
+            fBlendPrc = (fVert - 0.2617994f) * 1.9098593f;
+        }
+
+        if (fBlendPrc >= 0.0f)
+        {
+            if (fBlendPrc > 1.0f)
+                fBlendPrc = 1.0f;
+        }
+        else
+        {
+            fBlendPrc = 0.0f;
+        }
+    }
+
     STATIC_CLASS_VAR_IMPL(Model, int, m_EyePoseIdOk, 0x009AC9A8, 0);
-    STATIC_CLASS_VAR_IMPL(Model, int, m_EyePoseId, 0x009A3DB4, 0);
+    STATIC_CLASS_VAR_ARRAY_IMPL(Model, int, m_EyePoseId, 8, 0x009A3DB4);
     STATIC_CLASS_VAR_IMPL(Model, float, g_YCEN, 0x007FEB5C, 20.0f);
     STATIC_CLASS_VAR_IMPL(Model, int, g_UseNewAim, 0x007FEB60, 1);
     STATIC_CLASS_VAR_IMPL(Model, float, g_EyeLookAtHor, 0x007FEB64, 60.0f);

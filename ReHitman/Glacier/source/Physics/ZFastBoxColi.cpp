@@ -75,13 +75,7 @@ namespace Glacier
             Update();
         }
     }
-    
-    bool ZFastBoxColi::ChkLineColi(const ZVector3& v0, const ZVector3& v1, bool)
-    {
-        // TODO: This method has no implementation in any known build (XBOX_KL2/PC/iOS/PS2) — it was most likely stripped by the linker.
-        return false;
-    }
-    
+
     void ZFastBoxColi::Update()
     {
         if (m_bBoxSet)
@@ -95,7 +89,7 @@ namespace Glacier
     {
         m_bExtendedMode = value;
     }
-    
+
     void ZFastBoxColi::IgnoreMovingObjects(bool value)
     {
         m_bIgnoreMovingObjects = value;
@@ -105,12 +99,12 @@ namespace Glacier
     {
         return m_pFaceList;
     }
-    
+
     uint32_t ZFastBoxColi::GetNumFaces()
     {
         return m_lNrTrisInAll;
     }
-    
+
     void ZFastBoxColi::GetFaces()
     {
         uint32_t lNrStrips = 0;
