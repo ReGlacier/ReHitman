@@ -41,8 +41,8 @@ namespace Glacier
         // ZLIGHT
         virtual void Enable();
         virtual void Disable();
-        virtual void SetMultiplier(float fValue); // In default implementation it's do nothing
-        virtual void SetDiffuseColor(unsigned int rgba); // In default implementation it's do nothing
+        virtual void SetMultiplier(float fValue);
+        virtual void SetDiffuseColor(uint32_t lColor);
         virtual void MakeLightUnique();
 
         // methods

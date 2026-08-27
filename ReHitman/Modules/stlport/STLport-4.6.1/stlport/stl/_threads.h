@@ -153,7 +153,13 @@ static inline void __dec_and_fetch(volatile __stl_atomic_t* __x)
 
 # elif defined(_STLP_WIN32THREADS)
 #  if !defined (_STLP_WINDOWS_H_INCLUDED) && ! defined (_WINDOWS_H)
-#   if ! (defined ( _STLP_MSVC ) || defined (__BORLANDC__) || defined (__ICL) || defined (__WATCOMC__) || defined (__MINGW32__) || defined (__DMC__))
+#   if defined(_STLP_MSVC) && (_MSC_VER >= 1400)
+#    if !defined(NOMINMAX)
+#     define NOMINMAX
+#    endif
+#    include <windows.h>
+#    define _STLP_WINDOWS_H_INCLUDED
+#   elif ! (defined ( _STLP_MSVC ) || defined (__BORLANDC__) || defined (__ICL) || defined (__WATCOMC__) || defined (__MINGW32__) || defined (__DMC__))
 #    ifdef _STLP_USE_MFC
 #     include <afx.h>
 #    else
@@ -719,4 +725,3 @@ _STLP_END_NAMESPACE
 // Local Variables:
 // mode:C++
 // End:
-

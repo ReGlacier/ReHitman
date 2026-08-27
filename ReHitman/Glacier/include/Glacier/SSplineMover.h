@@ -16,6 +16,18 @@ namespace Glacier
 
         virtual void LoadSave(ISerializerStream&);
         virtual int RecSub(float *,float *,float *,float *,float *,float,int,int);
+
+        // methods
+        ParametricCurve();
+
+        float CalcVal(float t) const;
+        float CalcLen(float fTess);
+        float GetLen() const;
+
+        void DefineBezier(const float (*p0)[3], const float (*p1)[3], const float (*p2)[3], const float (*p3)[3], float fTess);
+        void DefineHermite(const float (*p0)[3], const float (*p1)[3], const float (*m0)[3], const float (*m1)[3], float fTess);
+        void GetSplinePos(float (*pPos)[3], float t) const;
+        void GetSplineVelocity(float (*pVel)[3], float t) const;
     };
     RE_VERIFY_SIZE(ParametricCurve, 0x38);
 

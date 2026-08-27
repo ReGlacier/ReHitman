@@ -21,4 +21,6 @@ namespace Glacier
     static constexpr uint32_t ZCNONRUNTIME = 0x8000000u; // K&L 2 from ZBaseGeom::SetControl
     static constexpr uint32_t ZCHASMOVED = 0x20000000u; /// Approved by ZEngineGeomControl::UpdateMovedGeoms
     static constexpr uint32_t ZCHASDYNAMICPARENT = 0x40000000u; // Approved by ZBaseGeom::GetDynamicParentPtr(
+    static constexpr uint32_t ZCUPDATELIGHT = 0x1000000u; // Approved by PC ZBaseGeom::SetControl + CListUser
+    static constexpr uint32_t ZCLIGHTCHANGED = 0x2000000u; // Approved by ZBaseGeom::FixLightList / UpdateLightListForLight (needs light list rebuild)
 }

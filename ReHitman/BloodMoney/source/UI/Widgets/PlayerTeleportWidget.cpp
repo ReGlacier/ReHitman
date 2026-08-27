@@ -78,7 +78,7 @@ namespace Hitman::BloodMoney {
         auto* pTeleportList = (CTelePortList*)Glacier::ZEventBase::RefToPtr(rTeleportListREF);
         if (pTeleportList) {
             ImGui::Separator();
-            auto teleportPoints = reinterpret_cast<Glacier::ZLIST*>(pTeleportList->m_pBaseGeom)->m_entries;
+            auto teleportPoints = reinterpret_cast<Glacier::ZLIST*>(pTeleportList->m_pBaseGeom)->m_pZList;
             const int totalTeleportPoints = teleportPoints->Count();
             ImGui::Text("Teleport points (%d):", totalTeleportPoints);
 

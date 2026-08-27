@@ -1,9 +1,33 @@
 #include <Glacier/Render/Cmd/ZRenderCommands.h>
 #include <Glacier/Render/Cmd/ZCmdList.h>
+#include <Glacier/Render/Object/ZRenderObjectInstance.h>
+#include <Glacier/Render/Entry/SRenderEntryNotifyInfo.h>
+#include <Glacier/Render/Entry/ZRenderEntry.h>
 
 
 namespace Glacier
 {
+    namespace
+    {
+        int CmpRenderObjectInstances(const void* a, const void* b)
+        {
+            const ZRenderObjectInstance* pA = *(const ZRenderObjectInstance**)(a);
+            const ZRenderObjectInstance* pB = *(const ZRenderObjectInstance**)(b);
+
+            if (pA->m_lSortValue == pB->m_lSortValue)
+            {
+                return pA - pB;
+            }
+
+            return pA->m_lSortValue - pB->m_lSortValue;
+        }
+
+        void SortRenderObjectInstances(ZRenderObjectInstance** ppInstances, uint32_t lCount)
+        {
+            qsort((void*)ppInstances, lCount, 4, CmpRenderObjectInstances);
+        }
+    }
+
     void CmdSetViewport(ZCmdList* pCmdList, uint32_t x, uint32_t y, uint32_t w, uint32_t h)
     {
         ZCmdList::ZCmd* pCmd = pCmdList->Current();
@@ -36,15 +60,34 @@ namespace Glacier
     )
     {
         ZCmdList::ZCmd* pCmd = pCmdList->Current();
-        pCmd->m_lLayer = ZCmdList::CMD_OBJECT_DRAW;
+        pCmd->m_lType = static_cast<ZCmdList::CMD>(0x11); // PC CmdDrawEntries writes 17 for object draws.
         pCmd->m_pRenderEntryGeom = nullptr;
         pCmd->m_pCmdList = pCmdList;
         pCmd->m_pRenderView = pRenderView;
-        pCmd->m_lLayer = lLayer;
         pCmd->m_lNrObjects = 0;
+        pCmdList->NextCommand();
 
-        // TODO: Finish me
-        // PC: 004B2410
+        pCmd->m_lLayer = lLayer;
+
+        SRenderEntryNotifyInfo sInfo {};
+        sInfo.fLODScale = fLODScale;
+        sInfo.vObserver[0] = vObserver.x;
+        sInfo.vObserver[1] = vObserver.y;
+        sInfo.vObserver[2] = vObserver.z;
+        sInfo.bMirror = false;
+        sInfo.bFirstPersonCamera = false;
+        sInfo.lDrawDestinationOverride = 0;
+
+        for (int i = 0; i < lNumRenderEntries; ++i)
+        {
+            auto* pEntry = const_cast<ZRenderEntry*>(apRenderEntries[i]);
+
+            pEntry->CalcLODMask(&sInfo);
+            pEntry->Notify(&sInfo);
+            pEntry->AddToDrawChain(pCmd, &sInfo, 1 << lLayer, lDrawDestination, lTransparencyMask, false);
+        }
+
+        SortRenderObjectInstances(reinterpret_cast<ZRenderObjectInstance**>(pCmd + 1), pCmd->m_lNrObjects);
     }
 
     void CmdScissorSetup(ZCmdList* pCmdList, ZRenderView* pRenderView, const ZVector4& vScissor, bool bUnk)

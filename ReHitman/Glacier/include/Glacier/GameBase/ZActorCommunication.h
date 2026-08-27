@@ -1,26 +1,55 @@
 #pragma once
 
+#include <Glacier/ReGlacier.h>
 #include <Glacier/CBaseEvent.h>
 #include <Glacier/Geom/ZBoxPrimitive.h>
+#include <Glacier/Runtime/Macro.h>
+#include <cstdint>
 
-namespace Glacier {
+
+namespace Glacier
+{
     class ZLIST;
 
-    class ZActorCommunication : public CBaseEvent<ZBoxPrimitive> {
+    class ZActorCommunication : public CBaseEvent<ZBoxPrimitive>
+    {
     public:
-        //structures
-        struct sRadioOwner {
+        // RTTI
+        DECLARE_ROUT_CLASS(ZActorCommunication, ZBoxPrimitive, ActorCommunication, 0, 0);
+
+        // types
+        struct sRadioOwner
+        {
             ZREF rUser;
-            unsigned int iChannel;
+            uint32_t iChannel;
         };
 
-        //vftable (no changes)
-        //data (size is 0x358, base size is 0x30)
-        sRadioOwner m_aRadioUsers[100];
-        unsigned int m_iNrOfRadioUsers;
-        ZLIST* m_pActorList;
+        // vtbl
+        ~ZActorCommunication() override;
+        bool PostLoad(ISerializerStream& stream) override;
+        void PostSave(ISerializerStream& stream) override;
+        RTP::ZPropertyInfo& GetProperties() const override;
+        void Init() override;
+        void Init2() override;
+        void CopyData(const ZEventBase* Source) override;
 
-        //api methods
-        void RegisterRadioUser(ZREF rActor, unsigned int iChannel);
+        // methods
+        ZActorCommunication();
+        void RegisterRadioUser(ZREF rActor, uint32_t iChannel);
+        bool IsReceiverDead(ZGEOM*) const;
+        void CalculateDistances(unsigned int, int, float*, float*);
+        void SendRadioMessage(unsigned int, int, short unsigned int, void*);
+        void SendRadioMessageToClosestN(unsigned int, int, int, short unsigned int, void*);
+        float SendRadioMessageToNeededForce(unsigned int, int, float, short unsigned int, void*);
+        void SendRangedMessage(unsigned int, float, short unsigned int, void*);
+        void SendGlobalEvent(unsigned int, short unsigned int, void*);
+        static void SendEventToActorsInBox();
+        static void SendEventToActorsInBox2();
+
+        // members
+        sRadioOwner m_aRadioUsers[100];
+        int32_t m_iNrOfRadioUsers;
+        ZLIST* m_pActorList;
     };
+    RE_VERIFY_SIZE(ZActorCommunication, 0x358);
 }

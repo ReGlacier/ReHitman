@@ -6,7 +6,7 @@
 
 namespace Glacier
 {
-    struct SUpdateLightDataSSE // Layout confirmed by Mini Ninjas XBOX PDB and PC ZRenderSoftwareLight::CalcLight
+    struct alignas(16) SUpdateLightDataSSE // Layout confirmed by Mini Ninjas XBOX PDB and PC ZRenderSoftwareLight::CalcLight
     {
         float vPosX[4];
         float vPosY[4];
@@ -36,9 +36,7 @@ namespace Glacier
         float fLConst1[4];
     };
     
-    // Layout confirmed by Mini Ninjas XBOX PDB (stride 0x250).
-    // NOTE: PC (Blood Money) uses stride 0x240, so the scalar tail below differs on PC (not reversed yet).
-    // The SSE block, lType and lLightControl match PC exactly.
+    // PC Blood Money layout. CalcLight, CalcLightHQ and GetUpdateLightData all use stride 0x240.
     struct SUpdateLightData
     {
         SUpdateLightDataSSE SSE;
@@ -64,9 +62,7 @@ namespace Glacier
         float fScaleY;
         float hotpct;
         float ihotpct;
-        float fTanFallOff;
-        float fTanHotSpot;
-        float fAspect;
-        unsigned int pad[3];
+        unsigned int pad[2];
     };
+    RE_VERIFY_SIZE(SUpdateLightData, 0x240);
 }

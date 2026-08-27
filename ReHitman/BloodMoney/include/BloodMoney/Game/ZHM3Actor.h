@@ -6,14 +6,14 @@
 #include <Glacier/ZSTL/ZMath.h>
 #include <Glacier/Geom/ZBaseGeom.h>
 #include <Glacier/IK/ZIKHAND.h>
-#include <Glacier/ZHumanBoid.h>
+#include <Glacier/GameBase/Boid/ZHumanBoid.h>
 #include <Glacier/Animation/ZAnimVariationHandle.h>
 #include <BloodMoney/Game/ZHM3HmAs.h>
 #include <BloodMoney/Game/ZActor.h>
 
 namespace Hitman::BloodMoney
 {
-    enum EActorMapRole : int 
+    enum EActorMapRole : int
     {
         Civilian                 = 0,
         Enemy                    = 1,
@@ -100,7 +100,7 @@ namespace Hitman::BloodMoney
     };
     RE_VERIFY_SIZE(ZDecaying, 0x10);
 
-    struct SBodyInfo 
+    struct SBodyInfo
     {
         Glacier::ZGEOM* pBody;
         int16_t oldpos[3];
@@ -182,11 +182,11 @@ namespace Hitman::BloodMoney
             int m_LastDirectPathQuery;
             float m_HasPausedSecs;
             Glacier::ZVector3 m_DoorNormal;
-            
+
             union
             {
                 uint8_t m_LoadSaveMask;
-                struct 
+                struct
                 {
                     uint8_t m_bOpenDoorAnimStarted : 1;
                     uint8_t m_bDoorIsDouble : 1;
@@ -197,7 +197,7 @@ namespace Hitman::BloodMoney
             };
         };
         RE_VERIFY_SIZE(UseDoorInfo, 0x20);
- 
+
         union HitmanInfo
         {
             uint16_t m_LoadSaveMask;
@@ -218,12 +218,12 @@ namespace Hitman::BloodMoney
         };
         RE_VERIFY_SIZE(HitmanInfo, sizeof(uint16_t));
 
-        struct ExtraFlags 
+        struct ExtraFlags
         {
             union
             {
                 uint32_t loadSaveMask2;
-                struct 
+                struct
                 {
                     uint32_t m_iTimeToNextElevatorUpdate : 8;
                     uint32_t m_bDieWithoutRagdollOrAnim : 1;
@@ -421,13 +421,13 @@ namespace Hitman::BloodMoney
     RE_VERIFY_OFFSET(ZHM3Actor, m_fToiletTime, 0x964); // Verified by ZHM3Actor::UpdateNeeds
     RE_VERIFY_OFFSET(ZHM3Actor, m_fInterest, 0x968); // Verified by ZHM3Actor::UpdateNeeds
     RE_VERIFY_OFFSET(ZHM3Actor, m_fInterestTime, 0x96C); // Verified by ZHM3Actor::UpdateNeeds
-    RE_VERIFY_OFFSET(ZHM3Actor, m_PushAnnoyance, 0x970); // Verified by ZHM3Actor::LoadSave 
+    RE_VERIFY_OFFSET(ZHM3Actor, m_PushAnnoyance, 0x970); // Verified by ZHM3Actor::LoadSave
     RE_VERIFY_OFFSET(ZHM3Actor, m_vLastHitPos, 0x980); // Verified by ZHM3Actor::OnProjectileDamage
-    RE_VERIFY_OFFSET(ZHM3Actor, m_vLastHitDir, 0x98C); // Verified by ZHM3Actor::OnProjectileDamage 
+    RE_VERIFY_OFFSET(ZHM3Actor, m_vLastHitDir, 0x98C); // Verified by ZHM3Actor::OnProjectileDamage
     RE_VERIFY_OFFSET(ZHM3Actor, m_fLastHitForce, 0x998); // Verified by ZHM3Actor::Initialize
-    RE_VERIFY_OFFSET(ZHM3Actor, m_UseDoorInfo, 0x9AC); // Verified by ZHM3Actor::LoadSave 
+    RE_VERIFY_OFFSET(ZHM3Actor, m_UseDoorInfo, 0x9AC); // Verified by ZHM3Actor::LoadSave
     RE_VERIFY_OFFSET(ZHM3Actor, m_HitmanInfo, 0x9CC); // runtime flags
-    RE_VERIFY_OFFSET(ZHM3Actor, m_rActorProperties, 0x9DC); // Verified by ZHM3Actor::ClassFrameUpdate 
+    RE_VERIFY_OFFSET(ZHM3Actor, m_rActorProperties, 0x9DC); // Verified by ZHM3Actor::ClassFrameUpdate
     RE_VERIFY_OFFSET(ZHM3Actor, m_HumanShieldWeight, 0x9E0); // Verified by ZHM3Actor::sub_63BCC0 code logic
     RE_VERIFY_OFFSET(ZHM3Actor, m_pScriptUbAnim, 0x9E4); // Verified by ZHM3Actor::SetScriptUBAnim
     RE_VERIFY_OFFSET(ZHM3Actor, m_pSpecialPushAnim, 0x9E8); // Verified by ZHM3Actor::OnPushed

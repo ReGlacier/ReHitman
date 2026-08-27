@@ -33,11 +33,6 @@ namespace Glacier::BS_Runtime
         }
     };
 
-    struct ZString
-    {
-        int ID;
-    };
-
     template <typename T>
     struct ZArray
     {
@@ -54,6 +49,17 @@ namespace Glacier::BS_Runtime
     struct ZStringDB
     {
         ZArray<ZReference<struct ZStringData>> StringTable;
+    };
+
+    struct ZString
+    {
+        // methods
+        const char* GetCStr(const uint8_t* baseptr, const BS_Runtime::ZStringDB* strdb) const
+        {
+            return reinterpret_cast<const char*>(&baseptr[strdb->StringTable.m_Data[ID].Offset]);
+        }
+        // members
+        int ID;
     };
 
     struct ZSerializable {};

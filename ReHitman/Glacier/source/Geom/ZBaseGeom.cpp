@@ -10,12 +10,18 @@
 #include <Glacier/Geom/ZSNDOBJ.h>
 #include <Glacier/Geom/ZGROUP.h>
 #include <Glacier/Geom/ZLIGHT.h>
+#include <Glacier/Geom/ZENVIRONMENT.h>
+#include <Glacier/Geom/ZGateLightOmni.h>
+#include <Glacier/Geom/ZGateLightSpot.h>
+#include <Glacier/Geom/ZGateLightSpotSquare.h>
 #include <Glacier/IK/ZLNKOBJ.h>
 #include <Glacier/Geom/ZROOM.h>
 #include <Glacier/Geom/ZTreeGroup.h>
+#include <Glacier/Physics/ZCollisionBase.h>
 #include <Glacier/Serializer/ISerializerStream.h>
 #include <Glacier/ZEngineGeomControl.h>
 #include <Glacier/ZEngineDataBase.h>
+#include <Glacier/ZSTL/CListUser.h>
 #include <Glacier/System/ZSysInterface.h>
 #include <Glacier/Render/Entry/ZRenderEntry.h>
 #include <Glacier/Render/Draw/ZRenderDraw.h>
@@ -26,6 +32,212 @@
 
 namespace Glacier
 {
+    namespace
+    {
+        /**
+         * @brief Collects the "top groups" of a light, i.e. the chain of groups the light
+         *        shines out of, terminated by the first group it does not shine out of.
+         *        (PC 0x00432A90)
+         */
+        int FindLightTopGroups(const ZBaseGeom* pBaseGeom, ZGROUP** paGroups)
+        {
+            ZASSERT(pBaseGeom->IsDerivedFrom<ZLIGHT>());
+
+            int lNrGroups = 0;
+
+            if ((pBaseGeom->Control() & (ZCOWNERDRAW | ZCROOMASSIGN | ZCHASDYNAMICPARENT | ZCDYNAMIC)) != 0)
+            {
+                const ZBaseGeom* pCur = pBaseGeom;
+                while (pCur)
+                {
+                    if ((pCur->Control() & ZCDYNAMIC) != 0)
+                    {
+                        if (auto* pRoomList = pCur->GetRoomList())
+                        {
+                            if (pRoomList->Count())
+                            {
+                                paGroups[lNrGroups++] = static_cast<ZGROUP*>(pRoomList->GetRoomNr(0));
+                            }
+                        }
+                        return lNrGroups;
+                    }
+
+                    pCur = pCur->Parent();
+                    ZASSERT(pCur && pCur->IsDerivedFrom<ZGROUP>());
+
+                    auto* pGroupGeom = static_cast<ZGROUP*>(pCur->GetGeom());
+                    if ((pGroupGeom->GroupControl() & ZGROUP::ZGRPCF_LIGHT_SHINES_OUT) == 0)
+                    {
+                        paGroups[lNrGroups] = pGroupGeom;
+                        return lNrGroups + 1;
+                    }
+
+                    if ((pGroupGeom->GroupControl() & ZGROUP::ZGRPCF_LIGHT_SHINES_IN) == 0)
+                    {
+                        paGroups[lNrGroups++] = pGroupGeom;
+                    }
+                }
+
+                return lNrGroups;
+            }
+
+            const ZBaseGeom* pCur = pBaseGeom->Parent();
+            ZASSERT(pCur);
+
+            while (true)
+            {
+                auto* pGroupGeom = static_cast<ZGROUP*>(pCur->GetGeom());
+                if ((pGroupGeom->GroupControl() & ZGROUP::ZGRPCF_LIGHT_SHINES_OUT) == 0)
+                {
+                    break;
+                }
+
+                if ((pGroupGeom->GroupControl() & ZGROUP::ZGRPCF_LIGHT_SHINES_IN) == 0)
+                {
+                    paGroups[lNrGroups++] = pGroupGeom;
+                }
+
+                pCur = pCur->Parent();
+                if (!pCur)
+                {
+                    return lNrGroups;
+                }
+            }
+
+            paGroups[lNrGroups] = static_cast<ZGROUP*>(pCur->GetGeom());
+            return lNrGroups + 1;
+        }
+
+        /**
+         * @brief Checks whether an object is affected by a light, i.e. whether any of its
+         *        ancestor groups belongs to the light's top groups.
+         *        (PC 0x00432B90)
+         */
+        bool IsObjectAffectedByLight(const ZBaseGeom* pObject, const ZBaseGeom* pLightBase, int lNumGroups, ZGROUP** paGroups)
+        {
+            ZASSERT(pLightBase->IsDerivedFrom<ZLIGHT>());
+
+            auto* pLightGeom = static_cast<ZLIGHT*>(pLightBase->GetGeom());
+            if (pLightGeom->IsGeomExcluded(pObject->GetRef()))
+            {
+                return false;
+            }
+
+            if (lNumGroups == 0)
+            {
+                return false;
+            }
+
+            if ((pObject->Control() & (ZCOWNERDRAW | ZCROOMASSIGN | ZCHASDYNAMICPARENT | ZCDYNAMIC)) != 0)
+            {
+                const ZBaseGeom* pCur = pObject;
+                while (pCur)
+                {
+                    if ((pCur->Control() & ZCDYNAMIC) != 0)
+                    {
+                        if (auto* pRoomList = pCur->GetRoomList())
+                        {
+                            if (pRoomList->Count())
+                            {
+                                auto* pRoomGeom = static_cast<ZGROUP*>(pRoomList->GetRoomNr(0));
+                                for (int i = 0; i < lNumGroups; ++i)
+                                {
+                                    if (paGroups[i] == pRoomGeom)
+                                    {
+                                        return true;
+                                    }
+                                }
+                            }
+                        }
+                        return false;
+                    }
+
+                    pCur = pCur->Parent();
+                    ZASSERT(pCur && pCur->IsDerivedFrom<ZGROUP>());
+
+                    auto* pGroupGeom = static_cast<ZGROUP*>(pCur->GetGeom());
+                    for (int i = 0; i < lNumGroups; ++i)
+                    {
+                        if (paGroups[i] == pGroupGeom)
+                        {
+                            return true;
+                        }
+                    }
+
+                    if ((pGroupGeom->GroupControl() & ZGROUP::ZGRPCF_LIGHT_SHINES_IN) == 0)
+                    {
+                        return false;
+                    }
+                }
+
+                return false;
+            }
+
+            const ZBaseGeom* pCur = pObject->Parent();
+            ZASSERT(pCur);
+
+            while (true)
+            {
+                auto* pGroupGeom = static_cast<ZGROUP*>(pCur->GetGeom());
+                for (int i = 0; i < lNumGroups; ++i)
+                {
+                    if (paGroups[i] == pGroupGeom)
+                    {
+                        return true;
+                    }
+                }
+
+                if ((pGroupGeom->GroupControl() & ZGROUP::ZGRPCF_LIGHT_SHINES_IN) == 0)
+                {
+                    break;
+                }
+
+                pCur = pCur->Parent();
+                if (!pCur)
+                {
+                    return false;
+                }
+            }
+
+            return false;
+        }
+
+        /**
+         * @brief Recursively collects all lights below a group tree that affect the object.
+         *        (PC 0x00432CF0)
+         */
+        int GetLightsRecur(int iLights, uint32_t* pCatch, const ZBaseGeom* pObject, ZBaseGeom* pBaseGeom)
+        {
+            if (pBaseGeom->IsDerivedFrom<ZGROUP>())
+            {
+                auto* pGroup = static_cast<ZGROUP*>(pBaseGeom->GetGeom());
+                for (auto* pChild = pGroup->m_pGroupFirst; pChild; pChild = pChild->Next())
+                {
+                    if ((pChild->Control() & (ZCINVISIBLE | ZCHIDDEN | ZCINACTIVE)) == 0)
+                    {
+                        iLights = GetLightsRecur(iLights, pCatch, pObject, pChild);
+                    }
+                }
+            }
+            else if (pBaseGeom->IsDerivedFrom<ZLIGHT>() && pBaseGeom->m_uListID != 0)
+            {
+                ZASSERT(!pBaseGeom->IsDerivedFrom<ZENVIRONMENT>());
+
+                ZGROUP* aGroups[128] {};
+                const int lNumGroups = FindLightTopGroups(pBaseGeom, aGroups);
+                ZASSERT(lNumGroups <= 128);
+
+                if (IsObjectAffectedByLight(pObject, pBaseGeom, lNumGroups, aGroups))
+                {
+                    ZASSERT(iLights < 512);
+                    pCatch[iLights++] = reinterpret_cast<uint32_t>(pBaseGeom);
+                }
+            }
+
+            return iLights;
+        }
+    }
+
     ZBaseGeom* ZBaseGeom::RefToPtr(ZREF rRef)
     {
         return ZGeomBuffer::Instance().GeomRefToBasePtr(rRef);
@@ -93,7 +305,7 @@ namespace Glacier
         std::memset(this, 0, sizeof(ZBaseGeom)); // LOL
         m_mMat.Reset();
 
-        m_lControl |= 0x1000000; // TODO: Find this mask
+        m_lControl |= ZCUPDATELIGHT;
 
         if (g_pEngineData->RunTime())
         {
@@ -129,7 +341,7 @@ namespace Glacier
 
             if (m_lControl >= 0)
             {
-                SetControl(0x80000000u, 0u); // TODO: Find this mask
+                SetControl(0x80000000u, 0u); // NOTE: Find this mask
                 m_pExtraGeom->Delete();
             }
         }
@@ -654,7 +866,6 @@ namespace Glacier
         uint32_t lRealAddBits = lAddBits & ~m_lControl;
         uint32_t lRealRemBits = lRemBits & m_lControl;
 
-        constexpr uint32_t ZCUPDATELIGHT = 0x1000000u; // TODO: Find this mask
         constexpr uint32_t kControlChangeMask = ZCOWNERDRAW | ZCDYNAMIC | ZCCHKLIGHT | ZCROOMASSIGN | ZCINVISIBLE | ZCHIDDEN | ZCINACTIVE;
         constexpr uint32_t kRoomsDrawListMask = ZCOWNERDRAW | ZCDYNAMIC | ZCINVISIBLE | ZCHIDDEN | ZCINACTIVE;
         constexpr uint32_t kDynamicContainerMask = ZCOWNERDRAW | ZCINVISIBLE | ZCHIDDEN | ZCINACTIVE;
@@ -727,17 +938,41 @@ namespace Glacier
             m_lControl &= ~lRealRemBits;
             m_lControl |= lRealAddBits;
 
-            // TODO: Finish after ZEngineDataBase/CListUser are reversed.
-            // Original runtime flow registers/unregisters lit ZSTDOBJ/ZLIGHT geoms in CListUser
-            // when ZCCHKLIGHT changes, updates m_uListID, and marks ZCUPDATELIGHT.
-            if (lRealAddBits & ZCCHKLIGHT)
+            if (g_pEngineData && g_pEngineData->RunTime())
             {
-                ZASSERT((m_lControl & ZCNONRUNTIME) == 0);
-            }
+                if (lRealAddBits & ZCCHKLIGHT)
+                {
+                    ZASSERT((m_lControl & ZCNONRUNTIME) == 0);
 
-            if ((lRealAddBits | lRealRemBits) & ZCCHKLIGHT)
-            {
-                m_lControl |= ZCUPDATELIGHT;
+                    if (m_lPrim && (IsDerivedFrom<ZSTDOBJ>() || IsDerivedFrom<ZLIGHT>()))
+                    {
+                        if (auto* pListUser = g_pEngineData->GetListUser())
+                        {
+                            ZASSERT(!m_uListID);
+                            m_uListID = pListUser->AddRuntimeMember(this);
+                            m_lControl |= ZCUPDATELIGHT;
+                        }
+                    }
+                }
+                else if ((lRealRemBits & ZCCHKLIGHT)
+                    && (m_lControl & ZCNONRUNTIME) == 0
+                    && m_lPrim
+                    && (IsDerivedFrom<ZSTDOBJ>() || IsDerivedFrom<ZLIGHT>()))
+                {
+                    if (auto* pListUser = g_pEngineData->GetListUser())
+                    {
+                        ZASSERT(m_uListID);
+
+                        if (IsDerivedFrom<ZLIGHT>())
+                        {
+                            LightNotifyPotentialDetachment(false);
+                        }
+
+                        pListUser->RemoveRuntimeMember(this);
+                        m_uListID = 0;
+                        m_lControl |= ZCUPDATELIGHT;
+                    }
+                }
             }
 
             if (lRealAddBits & ZCDYNAMIC)
@@ -800,8 +1035,14 @@ namespace Glacier
 
             if (lRealAddBits & ZCINACTIVE)
             {
-                // TODO: Notify CListUser after ZEngineDataBase/CListUser are reversed.
-                // Original removes this geom from ListUser when m_uListID is set.
+                if (m_uListID)
+                {
+                    if (auto* pListUser = g_pEngineData->GetListUser())
+                    {
+                        pListUser->DisconnectFromAllMembers(this);
+                    }
+                }
+
                 if (auto* pGeom = GetGeom())
                 {
                     pGeom->Activate(false);
@@ -869,13 +1110,9 @@ namespace Glacier
             {
                 DynamicPosChanged();
             }
-            else
+            else if (!g_pEngineData->MinMaxLocked())
             {
-                // TODO: Finish me
-                // if (!ZEngineDataBase::MinMaxLocked)
-                //{
-                //    ZEngineDataBase::AdjustMinMax(false);
-                //}
+                AdjustMinMax(nullptr);
             }
         }
     }
@@ -1075,7 +1312,7 @@ namespace Glacier
 
     void ZBaseGeom::AddToRoomList(ZROOM* pRoom)
     {
-        if ((Control() & (ZCOWNERDRAW|0xC00u)) == 0) // TODO: Find mask
+        if ((Control() & (ZCOWNERDRAW|0xC00u)) == 0) // NOTE: Find mask
         {
             if (!GetRoomListPtr())
             {
@@ -1625,8 +1862,6 @@ void ZBaseGeom::RemoveDynamicParent()
 
     void ZBaseGeom::SetUpdateLight(bool bUpdateLight)
     {
-        constexpr uint32_t ZCUPDATELIGHT = 0x1000000u; // TODO: Find this mask
-
         m_lControl &= ~ZCUPDATELIGHT;
         if (bUpdateLight)
         {
@@ -1788,26 +2023,70 @@ void ZBaseGeom::RemoveDynamicParent()
             return;
         }
 
-        // ZMat3x3 mMat;
-        // mMat.Reset();
+        ZMat3x3 mMat;
+        mMat.Reset();
 
-        // ZVector3 vPos;
-        // GetCen(vPos);
-        // ZASSERT((vPos.x * vPos.x + vPos.y * vPos.y + vPos.z * vPos.z) < 1.0e12f);
+        ZVector3 vPos;
+        GetCen(vPos);
+        ZASSERT(vlen(vPos.Get()) < 1000000.0f);
 
-        // ZVector3 vSize;
-        // GetSize(vSize);
-        // GetRootMatPos(mMat, vPos);
-        // ZASSERT((vPos.x * vPos.x + vPos.y * vPos.y + vPos.z * vPos.z) < 1.0e12f);
+        ZVector3 vSize;
+        GetSize(vSize);
 
-        // ZROOM* aRooms[128] {};
-        // uint32_t lNrRooms = 0;
+        if (Parent())
+        {
+            GetRootPoint(vPos);
+            GetRootMat(mMat);
+        }
 
-        // Original flow:
-        // - ZCollisionBase::GetCollisionInterface()->GetRoomsInsideBox(aRooms, &lNrRooms, mMat, vPos, vSize, false)
-        // - if at least one room was found, expand through open connected exits intersecting the box
+        ZASSERT(vlen(vPos.Get()) < 1000000.0f);
 
-        // AdjustRoomList(aRooms, lNrRooms);
+        ZROOM* aRooms[128] {};
+        uint32_t lNrRooms = 0;
+
+        if (auto* pColi = ZCollisionBase::GetCollisionInterface())
+        {
+            lNrRooms = pColi->GetInnerRoomsLst(aRooms, &aRooms[128], mMat.data, vPos.Get(), vSize.Get(), false);
+        }
+
+        if (lNrRooms)
+        {
+            auto* pRoom = aRooms[0];
+
+            // Enlarge the query box to also reach rooms behind open exits
+            ZVector3 vExitBoxSize;
+            vExitBoxSize.x = vSize.x * 2.75f;
+            vExitBoxSize.y = vSize.y;
+            vExitBoxSize.z = vSize.z * 2.75f;
+
+            uint16_t aExitIndices[16] {};
+            const uint32_t lNrExitIndices = pRoom->GetExitsIndicesInsideBox(aExitIndices, 16, mMat, vPos, vExitBoxSize);
+
+            for (uint32_t i = 0; i < lNrExitIndices; ++i)
+            {
+                const auto* pExit = &pRoom->m_pExits[aExitIndices[i]];
+
+                if ((pExit->m_lControl & 0x3u) == 0x2u) // connected && open
+                {
+                    bool bAlreadyInList = false;
+                    for (uint32_t j = 0; j < lNrRooms; ++j)
+                    {
+                        if (aRooms[j] == pExit->m_pNeighbor)
+                        {
+                            bAlreadyInList = true;
+                            break;
+                        }
+                    }
+
+                    if (!bAlreadyInList)
+                    {
+                        aRooms[lNrRooms++] = pExit->m_pNeighbor;
+                    }
+                }
+            }
+        }
+
+        AdjustRoomList(aRooms, lNrRooms);
     }
 
     void ZBaseGeom::AdjustRoomList(ZROOM** ppRooms, uint32_t lNrRooms)
@@ -2032,22 +2311,425 @@ void ZBaseGeom::RemoveDynamicParent()
 
     void ZBaseGeom::LightNotifyPotentialDetachment(bool bIncrease)
     {
-        // TODO: Finish me
+        ZASSERT(IsDerivedFrom<ZLIGHT>());
+
+        if (bIncrease)
+        {
+            if (m_lPotentialLightListChange == 0)
+            {
+                if (auto* pListUser = g_pEngineData->GetListUser())
+                {
+                    uint32_t lNrMembers = 0;
+                    if (auto* pMembers = pListUser->UnfoldList(&lNrMembers, m_uListID))
+                    {
+                        for (uint32_t i = 0; i < lNrMembers; ++i)
+                        {
+                            auto* pMember = reinterpret_cast<ZBaseGeom*>(pMembers[i]);
+                            ++pMember->m_lPotentialLightListChange;
+                            pMember->m_lControl |= ZCUPDATELIGHT;
+                        }
+                    }
+                }
+
+                m_lPotentialLightListChange = 1;
+            }
+        }
+        else if (m_lPotentialLightListChange != 0)
+        {
+            if (auto* pListUser = g_pEngineData->GetListUser())
+            {
+                uint32_t lNrMembers = 0;
+                if (auto* pMembers = pListUser->UnfoldList(&lNrMembers, m_uListID))
+                {
+                    for (uint32_t i = 0; i < lNrMembers; ++i)
+                    {
+                        auto* pMember = reinterpret_cast<ZBaseGeom*>(pMembers[i]);
+                        if (pMember->m_lPotentialLightListChange != 0)
+                        {
+                            --pMember->m_lPotentialLightListChange;
+                        }
+                    }
+                }
+            }
+
+            m_lPotentialLightListChange = 0;
+        }
     }
 
     void ZBaseGeom::FixLightList()
     {
-        // TODO: Finish me
+        if (auto* pListUser = g_pEngineData->GetListUser())
+        {
+            ZASSERT(m_lPotentialLightListChange != 0);
+
+            uint32_t lNrLights = 0;
+            if (uint32_t* pLights = pListUser->UnfoldList(&lNrLights, m_uListID))
+            {
+                ZASSERT(lNrLights <= 512);
+
+                // Copy the unfolded list, as the updates below reuse the internal unfold buffer
+                uint32_t aLightValues[512] {};
+                std::memcpy(aLightValues, pLights, sizeof(uint32_t) * lNrLights);
+
+                for (uint32_t i = 0; i < lNrLights; ++i)
+                {
+                    auto* pLight = reinterpret_cast<ZBaseGeom*>(aLightValues[i]);
+                    if (pLight->Control() & ZCLIGHTCHANGED)
+                    {
+                        pLight->LightNotifyPotentialDetachment(false);
+                        pLight->UpdateLightListForLight();
+                    }
+                }
+            }
+
+            m_lPotentialLightListChange = 0;
+        }
     }
 
     void ZBaseGeom::UpdateLightListForLight()
     {
-        // TODO: Finish me
+        if (IsDerivedFrom<ZENVIRONMENT>())
+        {
+            return;
+        }
+
+        auto* pListUser = g_pEngineData->GetListUser();
+        if (!pListUser)
+        {
+            SetControl(0, ZCLIGHTCHANGED);
+            return;
+        }
+
+        if (m_bFreezeLightList)
+        {
+            SetControl(0, ZCLIGHTCHANGED);
+            pListUser->NotifyAllMembers(this);
+            return;
+        }
+
+        if (m_uListID == 0)
+        {
+            return;
+        }
+
+        uint32_t lMaxElems = 0;
+        uint32_t* pCatch = pListUser->GetCatchBuffer(&lMaxElems);
+        ZASSERT(lMaxElems == 512);
+
+        ZBaseGeomRoomList* pRoomList = nullptr;
+        ZROOM* pSingleRoom = nullptr;
+        uint32_t lNrRooms = 0;
+
+        if ((Control() & (ZCOWNERDRAW | ZCROOMASSIGN | ZCHASDYNAMICPARENT | ZCDYNAMIC)) != 0)
+        {
+            auto* pDynamicParent = (Control() & ZCHASDYNAMICPARENT) ? GetDynamicParent() : this;
+            pRoomList = pDynamicParent->GetRoomListPtr();
+            if (pRoomList && pRoomList->Count())
+            {
+                lNrRooms = pRoomList->Count();
+            }
+            else
+            {
+                pRoomList = nullptr;
+                pSingleRoom = g_pEngineData->m_pRoot;
+                lNrRooms = 1;
+            }
+        }
+        else
+        {
+            pSingleRoom = static_cast<ZROOM*>(GetGeom()->GetOwner(false));
+            lNrRooms = 1;
+        }
+
+        ZGROUP* aGroups[128] {};
+        int lNumGroups = 0;
+        if ((Control() & ZCROOMASSIGN) == 0)
+        {
+            lNumGroups = FindLightTopGroups(this, aGroups);
+            ZASSERT(lNumGroups <= 128);
+        }
+
+        ZMat3x3 mMat;
+        mMat.Reset();
+
+        ZVector3 vPos;
+        GetCen(vPos);
+
+        if (Parent())
+        {
+            GetRootPoint(vPos);
+            GetRootMat(mMat);
+        }
+
+        ZBaseGeom* aGeoms[1024] {};
+        uint32_t lNrGeoms = 0;
+
+        if (pRoomList)
+        {
+            lNrGeoms = ZCollisionBase::GetCollisionInterface()->GetDynamicGeomsInBoxInRooms(
+                aGeoms, &aGeoms[1024], eGlobalTreeType::GT_StdObjs, pRoomList->GetRoomList(), pRoomList->Count(),
+                mMat.data, vPos.Get(), Size(), -1, true);
+
+            if ((Control() & ZCROOMASSIGN) != 0)
+            {
+                lNumGroups = pRoomList->Count();
+                for (int i = 0; i < lNumGroups; ++i)
+                {
+                    aGroups[i] = static_cast<ZGROUP*>(pRoomList->GetRoomNr(i));
+                }
+            }
+        }
+        else
+        {
+            lNumGroups = 1;
+            aGroups[0] = static_cast<ZGROUP*>(pSingleRoom);
+
+            lNrGeoms = ZCollisionBase::GetCollisionInterface()->GetDynamicGeomsInBoxInRooms(
+                aGeoms, &aGeoms[1024], eGlobalTreeType::GT_StdObjs, &pSingleRoom, 1,
+                mMat.data, vPos.Get(), Size(), -1, true);
+        }
+
+        uint32_t lNrLights = 0;
+
+        // Dynamic geoms in the light's rooms
+        for (uint32_t i = 0; i < lNrGeoms; ++i)
+        {
+            auto* pGeom = aGeoms[i];
+
+            if (pGeom->IsDerivedFrom<ZLIGHT>())
+            {
+                continue;
+            }
+
+            if (pGeom->m_uListID != 0 && pGeom->m_lPrim != 0 && IsObjectAffectedByLight(pGeom, this, lNumGroups, aGroups))
+            {
+                pCatch[lNrLights++] = reinterpret_cast<uint32_t>(pGeom);
+            }
+        }
+
+        // Static geoms in each of the light's rooms
+        for (uint32_t lRoomNr = 0; lRoomNr < lNrRooms; ++lRoomNr)
+        {
+            ZROOM* pRoom = pSingleRoom;
+            if (pRoomList)
+            {
+                pRoom = pRoomList->GetRoomNr(lRoomNr);
+                lNumGroups = 1;
+                aGroups[0] = static_cast<ZGROUP*>(pRoom);
+            }
+
+            ZMat3x3 mLocalMat;
+            mLocalMat.Reset();
+
+            ZVector3 vLocalPos;
+            GetCen(vLocalPos);
+
+            if (Parent())
+            {
+                GetRootPoint(vLocalPos);
+                GetRootMat(mLocalMat);
+            }
+
+            pRoom->BaseGeom()->GetLocalMatPos(mLocalMat, vLocalPos);
+
+            ZBaseGeom* aRoomGeoms[1024] {};
+            const uint32_t lNrRoomGeoms = ZCollisionBase::GetCollisionInterface()->GetGeomsInBoxLocal(
+                aRoomGeoms, &aRoomGeoms[1024], static_cast<ZTreeGroup*>(pRoom), eGlobalTreeType::GT_StdObjs,
+                mLocalMat.data, vLocalPos.Get(), Size(), -1, true, false, true);
+
+            for (uint32_t i = 0; i < lNrRoomGeoms; ++i)
+            {
+                auto* pGeom = aRoomGeoms[i];
+
+                if (pGeom->IsDerivedFrom<ZLIGHT>())
+                {
+                    continue;
+                }
+
+                if (pGeom->m_uListID != 0 && pGeom->m_lPrim != 0 && IsObjectAffectedByLight(pGeom, this, lNumGroups, aGroups))
+                {
+                    pCatch[lNrLights++] = reinterpret_cast<uint32_t>(pGeom);
+                }
+            }
+        }
+
+        pListUser->AnalyzeCatch(lNrLights, this);
+        SetControl(0, ZCLIGHTCHANGED);
     }
 
     void ZBaseGeom::UpdateLightListForGeom()
     {
-        // TODO: Finish me
+        if (!g_pEngineData->GetListUser() || (Control() & ZCOWNERDRAW))
+        {
+            SetControl(0, ZCLIGHTCHANGED);
+            return;
+        }
+
+        ZASSERT(m_uListID != 0);
+
+        if (m_bFreezeLightList)
+        {
+            SetControl(ZCUPDATELIGHT, ZCLIGHTCHANGED);
+            return;
+        }
+
+        auto* pListUser = g_pEngineData->GetListUser();
+        uint32_t lMaxElems = 0;
+        uint32_t* pCatch = pListUser->GetCatchBuffer(&lMaxElems);
+        ZASSERT(lMaxElems == 512);
+
+        ZGEOM* pRoomGeom = nullptr;
+        ZBaseGeomRoomList* pRoomList = nullptr;
+
+        if ((Control() & (ZCOWNERDRAW | ZCROOMASSIGN | ZCHASDYNAMICPARENT | ZCDYNAMIC)) != 0)
+        {
+            auto* pDynamicParent = (Control() & ZCHASDYNAMICPARENT) ? GetDynamicParent() : this;
+            pRoomList = pDynamicParent->GetRoomListPtr();
+            if (pRoomList && pRoomList->Count())
+            {
+                pRoomGeom = pRoomList->GetRoomNr(0);
+            }
+            else
+            {
+                pRoomGeom = g_pEngineData->m_pRoot;
+            }
+        }
+        else
+        {
+            pRoomGeom = GetGeom()->GetOwner(false);
+            ZASSERT(pRoomGeom && pRoomGeom->IsDerivedFrom<ZROOM>());
+        }
+
+        ZMat3x3 mMat;
+        mMat.Reset();
+
+        ZVector3 vPos;
+        GetCen(vPos);
+
+        if (Parent())
+        {
+            GetRootPoint(vPos);
+            GetRootMat(mMat);
+        }
+
+        pRoomGeom->BaseGeom()->GetLocalMatPos(mMat, vPos);
+
+        ZBaseGeom* aGeoms[1024] {};
+        const uint32_t lNrGeoms = ZCollisionBase::GetCollisionInterface()->GetGeomsInBoxLocal(
+            aGeoms, &aGeoms[1024], static_cast<ZTreeGroup*>(pRoomGeom), eGlobalTreeType::GT_Lights,
+            mMat.data, vPos.Get(), Size(), -1, true, true, true);
+
+        uint32_t lNrLights = 0;
+        for (uint32_t i = 0; i < lNrGeoms; ++i)
+        {
+            auto* pGeom = aGeoms[i];
+
+            if ((pGeom->Control() & ZCINACTIVE) != 0)
+            {
+                continue;
+            }
+
+            if (pGeom->IsDerivedFrom<ZENVIRONMENT>())
+            {
+                continue;
+            }
+
+            if (pGeom->IsDerivedFrom<ZLIGHT>())
+            {
+                if (pGeom->m_uListID == 0)
+                {
+                    continue;
+                }
+
+                ZGROUP* aGroups[128] {};
+                const int lNumGroups = FindLightTopGroups(pGeom, aGroups);
+                ZASSERT(lNumGroups <= 128);
+
+                if (!IsObjectAffectedByLight(this, pGeom, lNumGroups, aGroups))
+                {
+                    continue;
+                }
+
+                ZASSERT(lNrLights < 512);
+                pCatch[lNrLights++] = reinterpret_cast<uint32_t>(pGeom);
+
+                // Also add the light's master light (fixture) when it resides in the same room(s)
+                auto* pLightGeom = static_cast<ZLIGHT*>(pGeom->GetGeom());
+                if (pLightGeom->m_rMasterLight)
+                {
+                    if (auto* pMasterGeom = ZGEOM::RefToPtr(pLightGeom->m_rMasterLight))
+                    {
+                        auto* pMasterRoom = pMasterGeom->BaseGeom()->GetOwnerRoom();
+
+                        const bool bInTargetRooms = pRoomList
+                            ? (pMasterRoom && pRoomList->Exists(pMasterRoom))
+                            : (static_cast<ZGEOM*>(pMasterRoom) == pRoomGeom);
+
+                        if (bInTargetRooms)
+                        {
+                            ZASSERT(lNrLights < 512);
+                            pCatch[lNrLights++] = reinterpret_cast<uint32_t>(pMasterGeom->BaseGeom());
+                        }
+                    }
+                }
+
+                // Gate lights: also collect their slave lights that reside in the same room(s)
+                REFTAB* pGateSlaves = nullptr;
+                if (pGeom->IsDerivedFrom<ZGateLightOmni>())
+                {
+                    pGateSlaves = &static_cast<ZGateLightOmni*>(pGeom->GetGeom())->m_Slaves;
+                }
+                else if (pGeom->IsDerivedFrom<ZGateLightSpot>())
+                {
+                    pGateSlaves = &static_cast<ZGateLightSpot*>(pGeom->GetGeom())->m_Slaves;
+                }
+                else if (pGeom->IsDerivedFrom<ZGateLightSpotSquare>())
+                {
+                    pGateSlaves = &static_cast<ZGateLightSpotSquare*>(pGeom->GetGeom())->m_Slaves;
+                }
+
+                if (pGateSlaves)
+                {
+                    for (const uint32_t lSlaveRef : *pGateSlaves)
+                    {
+                        auto* pSlaveGeom = ZGEOM::RefToPtr(lSlaveRef);
+                        if (!pSlaveGeom)
+                        {
+                            continue;
+                        }
+
+                        auto* pSlaveRoom = pSlaveGeom->BaseGeom()->GetOwnerRoom();
+
+                        const bool bInTargetRooms = pRoomList
+                            ? (pSlaveRoom && pRoomList->Exists(pSlaveRoom))
+                            : (static_cast<ZGEOM*>(pSlaveRoom) == pRoomGeom);
+
+                        if (bInTargetRooms)
+                        {
+                            ZASSERT(lNrLights < 512);
+                            pCatch[lNrLights++] = reinterpret_cast<uint32_t>(pSlaveGeom->BaseGeom());
+                        }
+                    }
+                }
+            }
+            else if ((pGeom->Control() & ZCDYNAMIC) != 0 && pGeom->IsDerivedFrom<ZGROUP>())
+            {
+                auto* pGroupGeom = static_cast<ZGROUP*>(pGeom->GetGeom());
+                if ((pGroupGeom->GroupControl() & ZGROUP::ZGRPCF_GROUP_CONTAINS_LIGHT) != 0)
+                {
+                    lNrLights = GetLightsRecur(lNrLights, pCatch, this, pGeom);
+                }
+            }
+        }
+
+        if (lNrLights >= 13)
+        {
+            printf("WARNING: Geom '%s' is hit by %d lights! Truncating list to %d lights!\n", Name(), lNrLights, 12);
+            lNrLights = 12;
+        }
+
+        pListUser->AnalyzeCatch(lNrLights, this);
+        SetControl(0, ZCLIGHTCHANGED);
     }
 
     bool ZBaseGeom::IsDerivedFromStdObj(uint32_t lClassId) const
@@ -2062,9 +2744,8 @@ void ZBaseGeom::RemoveDynamicParent()
             return;
         }
 
-        // TODO: Finish me after ZRenderDraw reversed!
-        // ZRenderEntry* pDrawEntry = IDraw::Instance<ZRenderDraw>()->m_DrawIdToPointer[m_lDrawId];
-        // pDrawEntry->m_lControl |= ZRenderEntry::RENDERENTRY_FLAGS::RE_ATTACH_UPDATE;
+        ZRenderEntry* pDrawEntry = IDraw::Instance<ZRenderDraw>()->m_apRenderEntryLookup[m_lDrawId];
+        pDrawEntry->m_lControl |= ZRenderEntry::RENDERENTRY_FLAGS::RE_ATTACH_UPDATE;
     }
 
     template bool ZBaseGeom::IsDerivedFrom<ZSTDOBJ>() const;

@@ -118,6 +118,8 @@ namespace Glacier
         void FreeGeomsLists();
         void FreeDynamicGeomList();
         void SetAttachedRoom(ZROOM* pRoom);
+        void CalcBoundFromExit(const ZROOM::ZExit* pExit, ZMat3x3& mMat, ZVector3& vPos, ZVector3& vSize);
+        uint32_t GetExitsIndicesInsideBox(uint16_t* pExitIndices, uint32_t maxCount, const ZMat3x3& mMat, const ZVector3& vPos, const ZVector3& vSize);
 
         // members
         uint32_t m_lNrExits;

@@ -3,7 +3,12 @@
 #include <Glacier/PF4/ZLocation.h>
 #include <Glacier/ReGlacier.h>
 #include <Glacier/ZSTL/ZMath.h>
-#include <cstdint>
+
+
+namespace Glacier
+{
+    class ZBoid;
+}
 
 namespace Glacier::PF4
 {
@@ -21,7 +26,7 @@ namespace Glacier::PF4
 		// members
 		void* m_Data{nullptr};
 		int m_Type{0};
-		ZPathFollower* m_Follower{nullptr}; // WARNING: In PS2 build it's ZBoid* m_pBoid, check this!!!
+		ZBoid* m_pBoid{nullptr};
 		ZMetaNode* m_Next{nullptr};
 		ZMetaNode* m_Prev{nullptr};
 		ZLocation m_Location{};

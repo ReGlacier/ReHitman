@@ -26,7 +26,6 @@ namespace Glacier
         ZGEOMCLASSINFO* GetOldClassInfo() const override;
 
         // ZGROUP
-        // ZSkipSaveGroup
 
         // methods
         ZSkipSaveGroup(const char* psName, ZBaseGeom* pBaseGeom);

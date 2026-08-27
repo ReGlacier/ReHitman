@@ -1,5 +1,7 @@
 #include <Glacier/Geom/ZGeomBuffer.h>
 #include <Glacier/Geom/ZROOM.h>
+#include <Glacier/Geom/ZGROUP.h>
+#include <Glacier/Geom/ZLIGHT.h>
 #include <Glacier/ZSTL/StringUtils.h>
 #include <Glacier/ZSTL/REFTAB32.h>
 #include <Glacier/RTP/VirtualTables.h>
@@ -208,16 +210,66 @@ namespace Glacier
     ZBaseGeom** ZROOM::GetDynamicLightsInRoom(ZBaseGeom** pDrawGeomsList, ZBaseGeom** pDrawGeomsListEnd)
     {
         if (!m_pDynamicGeoms)
+        {
             return pDrawGeomsList;
+        }
 
-        // TODO: Finish me
-        return nullptr;
+        for (auto* pBaseGeom : m_pDynamicGeoms->As<ZBaseGeom*>())
+        {
+            if (pDrawGeomsList >= pDrawGeomsListEnd)
+            {
+                return pDrawGeomsList;
+            }
+
+            if (pBaseGeom->IsDerivedFrom<ZLIGHT>())
+            {
+                *pDrawGeomsList++ = pBaseGeom;
+            }
+            else if (pBaseGeom->IsDerivedFrom<ZGROUP>())
+            {
+                auto* pGroupGeom = static_cast<ZGROUP*>(pBaseGeom->GetGeom());
+                if ((pGroupGeom->GroupControl() & ZGROUP::ZGRPCF_GROUP_CONTAINS_LIGHT) != 0)
+                {
+                    for (ZBaseGeom* pCur = pGroupGeom->BaseGeom(); pCur; pGroupGeom->RecurGetNext(&pCur))
+                    {
+                        if (pCur->IsDerivedFrom<ZLIGHT>() && pDrawGeomsList < pDrawGeomsListEnd)
+                        {
+                            *pDrawGeomsList++ = pCur;
+                        }
+                    }
+                }
+            }
+        }
+
+        return pDrawGeomsList;
     }
 
     ZBaseGeom** ZROOM::GetStaticPrimDrawGeomsListsRecur(ZBaseGeom** pDrawGeomsList, ZBaseGeom** pDrawGeomsListEnd)
     {
-        // TODO: Finish me
-        return nullptr;
+        SGeomPairRecursion sRecur {};
+        sRecur.InitPair(m_lStaticGeomsPrimDrawList);
+
+        while (sRecur.DpInsertList && sRecur.m_cCur != sRecur.m_cCurEnd)
+        {
+            auto* pPayload = reinterpret_cast<uintptr_t*>(
+                reinterpret_cast<char*>(sRecur.DpInsertList) + sizeof(SBaseGeomListHeader));
+
+            const auto pFirstGeom = reinterpret_cast<ZBaseGeom*>(pPayload[sRecur.m_cCur] & ~uintptr_t(7));
+            const auto pLastGeom = reinterpret_cast<ZBaseGeom*>(pPayload[sRecur.m_cCur + 1] & ~uintptr_t(7));
+            sRecur.m_cCur += 2;
+
+            if (pDrawGeomsList >= pDrawGeomsListEnd)
+            {
+                break;
+            }
+
+            *pDrawGeomsList++ = pFirstGeom;
+            *pDrawGeomsList++ = pLastGeom;
+
+            sRecur.NextPair();
+        }
+
+        return pDrawGeomsList;
     }
 
     ZBaseGeom** ZROOM::GetStaticCustomDrawGeomsListsRecur(ZBaseGeom** pDrawGeomsList, ZBaseGeom** pDrawGeomsListEnd)
@@ -225,8 +277,27 @@ namespace Glacier
         SGeomPairRecursion sRecur {};
         sRecur.InitPair(m_lStaticGeomsCustomDrawList);
 
-        // TODO: Finish me
-        return nullptr;
+        while (sRecur.DpInsertList && sRecur.m_cCur != sRecur.m_cCurEnd)
+        {
+            auto* pPayload = reinterpret_cast<uintptr_t*>(
+                reinterpret_cast<char*>(sRecur.DpInsertList) + sizeof(SBaseGeomListHeader));
+
+            const auto pFirstGeom = reinterpret_cast<ZBaseGeom*>(pPayload[sRecur.m_cCur] & ~uintptr_t(7));
+            const auto pLastGeom = reinterpret_cast<ZBaseGeom*>(pPayload[sRecur.m_cCur + 1] & ~uintptr_t(7));
+            sRecur.m_cCur += 2;
+
+            if (pDrawGeomsList >= pDrawGeomsListEnd)
+            {
+                break;
+            }
+
+            *pDrawGeomsList++ = pFirstGeom;
+            *pDrawGeomsList++ = pLastGeom;
+
+            sRecur.NextPair();
+        }
+
+        return pDrawGeomsList;
     }
 
     ZBaseGeom** ZROOM::GetStaticLightsRecur(ZBaseGeom** pDrawGeomsList, ZBaseGeom** pDrawGeomsListEnd)
@@ -345,9 +416,76 @@ namespace Glacier
         }
     }
 
+    void ZROOM::CalcBoundFromExit(const ZROOM::ZExit* pExit, ZMat3x3& mMat, ZVector3& vPos, ZVector3& vSize)
+    {
+        ZVector3 vEdge1 = pExit->p2 - pExit->p1;
+        ZVector3 vEdge2 = pExit->p3 - pExit->p1;
+
+        ZVector3 vNormal;
+        vcross(vNormal.Get(), vEdge1.Get(), vEdge2.Get());
+        vnorm(vNormal.Get());
+
+        createmat(mMat.data, vNormal.Get(), nullptr);
+
+        ZVector3 vMin { 0.0f, 0.0f, 0.0f };
+        ZVector3 vMax { 0.0f, 0.0f, 0.0f };
+
+        for (const ZVector3* pPoint = &pExit->p2; pPoint <= &pExit->p4; ++pPoint)
+        {
+            ZVector3 vPoint = *pPoint - pExit->p1;
+            vmtmul(vPoint.Get(), mMat.data);
+
+            vmin(vMin.Get(), vPoint.Get());
+            vmax(vMax.Get(), vPoint.Get());
+        }
+
+        vPos = (vMax + vMin) * 0.5f;
+        vSize = vMax - vPos;
+
+        vmmul(vPos.Get(), mMat.data);
+        vPos += pExit->p1;
+    }
+
+    uint32_t ZROOM::GetExitsIndicesInsideBox(uint16_t* pExitIndices, uint32_t maxCount, const ZMat3x3& mMat, const ZVector3& vPos, const ZVector3& vSize)
+    {
+        if (!m_lNrExits)
+            return 0u;
+
+        ZMat3x3 mRoot;
+        ZVector3 vRoot;
+
+        GetRootTM(mRoot, vRoot);
+
+        uint32_t lResult = 0u;
+        for (uint32_t lExitIdx = 0; lExitIdx < m_lNrExits; ++lExitIdx)
+        {
+            ZMat3x3 mExitMat;
+            ZVector3 vExitPos;
+            ZVector3 vExitSize;
+
+            CalcBoundFromExit(&m_pExits[lExitIdx], mExitMat, vExitPos, vExitSize);
+
+            vmmul(vExitPos.Get(), mRoot.data);
+            vadd(vExitPos.Get(), vRoot.Get());
+
+            if (rectBoxColi(mMat, vPos, vSize, mExitMat, vExitPos, vExitSize))
+            {
+                pExitIndices[lResult] = static_cast<uint16_t>(lExitIdx);
+                ++lResult;
+                if (lResult == maxCount)
+                {
+                    break;
+                }
+            }
+        }
+
+        return lResult;
+    }
+
 #   pragma region " --- RTTI --- "
     namespace cProperties
     {
+        // TODO: Finish me
         // static RTP::ZDataProperty<REFTAB*> NamespaceItem_2074
         // {
         //     .m_Node = {

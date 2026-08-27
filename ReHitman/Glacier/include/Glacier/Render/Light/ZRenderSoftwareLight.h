@@ -15,8 +15,8 @@ namespace Glacier
     {
         // SoA scratch buffers for a chunk of up to 32 vertices.
         // Layout confirmed by Mini Ninjas XBOX PDB (ZRenderSoftwareLight::SSEArrays).
-        // aDirX/aDirY/aDirZ and aAmbCR/aAmbCG/aAmbCB are used by CalcLightHQ only (not reversed yet).
-        struct SSEArrays
+        // aDirX/aDirY/aDirZ and aAmbCR/aAmbCG/aAmbCB are used by CalcLightHQ only.
+        struct alignas(16) SSEArrays
         {
             float aSrcPX[32];
             float aSrcPY[32];
@@ -47,7 +47,7 @@ namespace Glacier
         // trailing lAlwaysInShadowColor argument. lDrawMode is passed but unused by the PC implementation.
         static void CalcLight(uint32_t lNumVertices, const SUpdateLightData* pLights, uint32_t lNumLights, uint32_t lDrawMode, bool bIncludeHQLights);
 
-        static void CalcLightHQ(uint32_t lNumVertices, const SUpdateLightData *pLights, int32_t lNumLights, int32_t lDrawMode, bool bIncludeHQLights);
+        static void CalcLightHQ(uint32_t lNumVertices, const SUpdateLightData* pLights, uint32_t lNumLights, uint32_t lDrawMode, bool bIncludeHQLights);
 
         static uint32_t GetUpdateLightData(SUpdateLightData* pUpdateLightData, const ZBaseGeom* pBaseGeom, const ZBaseGeom* pEnvironment);
     };

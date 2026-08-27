@@ -34,7 +34,7 @@ namespace ImGui
                 const auto ZLISTEntityId = pathFollower->m_listsOfWaypoints[waypointListIndex];
                 auto pointsList = reinterpret_cast<Glacier::ZLIST*>(Glacier::ZGEOM::RefToPtr(ZLISTEntityId));
 
-                if (!pointsList || !pointsList->m_entries)
+                if (!pointsList || !pointsList->m_pZList)
                 {
                     ImGui::TextColored(ImVec4 { 1.f, 1.f, 0.f, 1.f }, "Waypoint List #%d not found", (waypointListIndex + 1));
                     continue;

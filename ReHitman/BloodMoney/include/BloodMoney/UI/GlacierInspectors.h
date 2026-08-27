@@ -4,7 +4,7 @@
 #include <BloodMoney/Game/ZHM3Actor.h>
 #include <BloodMoney/UI/ImGuiInspector.h>
 
-#include <Glacier/ZHumanBoid.h>
+#include <Glacier/GameBase/Boid/ZHumanBoid.h>
 #include <Glacier/CInventory.h>
 #include <Glacier/ZCAMERA.h>
 #include <Glacier/System/ZSysInterfaceWintel.h>

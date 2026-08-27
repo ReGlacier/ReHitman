@@ -10,13 +10,33 @@ namespace Glacier
     class ZSHADOWMESHOBJ : public ZSTDOBJ
     {
     public:
-        // vtbl
-        virtual bool GetParentBox(float *pMin, float *pMax);
+        // RTTI
+        DECLARE_GEOM_CLASS(ZSHADOWMESHOBJ, 0x200110u);
 
-        // data
+        // vtbl
+        ~ZSHADOWMESHOBJ() override;
+
+        // RTP::cBase
+        const RTP::ZPropertyInfo& GetProperties() const override;
+
+        // ZGEOM
+        uint32_t GetObjectId() const override;
+        void GetObjectIdAndMask(uint32_t& id, uint32_t& mask) const override;
+        ZGEOMCLASSINFO* GetOldClassInfo() const override;
+        bool DisableParentBoundAdjust() override;
+        void ClassInit() override;
+        void CopyData(const ZGEOM* Source) override;
+
+        // ZSHADOWMESHOBJ
+        virtual bool GetParentBox(float* pMin, float* pMax);
+
+        // methods
+        ZSHADOWMESHOBJ(const char* psName, ZBaseGeom* pBaseGeom);
+
+        // members
         int m_iFlags;
         ZREF m_rLight;
-        class ZLIGHT *m_pLight;
-    }; // Verified size 0x1C
-    RE_VERIFY_SIZE(ZSHADOWMESHOBJ, 0x1C);
+        class ZLIGHT* m_pLight;
+    };
+    RE_VERIFY_SIZE(ZSHADOWMESHOBJ, 0x1C); // Verified PC alloc
 }

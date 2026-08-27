@@ -18,10 +18,10 @@ namespace Glacier
 
         if ((m_lControl & RE_NEEDUPDATE) != 0 && m_pBaseGeom)
         {
-            SUpdateLightData sUpdateLightData {};
+            SUpdateLightData sUpdateLightData[12] {};
 
             uint32_t lIndex = 0,
-                     lNumLightSources = ZRenderSoftwareLight::GetUpdateLightData(&sUpdateLightData, m_pBaseGeom, m_pEnvironment);
+                     lNumLightSources = ZRenderSoftwareLight::GetUpdateLightData(sUpdateLightData, m_pBaseGeom, m_pEnvironment);
 
             for (; lIndex < m_lNumRenderEntryInstances; ++lIndex)
             {
@@ -29,7 +29,7 @@ namespace Glacier
 
                 if ((m_lControl & RE_UPDATELIGHT) != 0 || (pInstance->m_lFlags & 1) != 0)
                 {
-                    pInstance->UpdateLight(&sUpdateLightData, lNumLightSources);
+                    pInstance->UpdateLight(sUpdateLightData, lNumLightSources);
                     pInstance->m_lFlags &= ~0x1u;
                 }
             }
