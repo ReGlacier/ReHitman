@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Glacier/ZGameStats.h>
+#include <Glacier/Data/ZGameStats.h>
 
 namespace Hitman::BloodMoney {
     class ZHM3GameStats : public Glacier::ZGameStats {

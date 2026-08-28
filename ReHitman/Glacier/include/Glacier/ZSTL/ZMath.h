@@ -388,11 +388,12 @@ namespace Glacier
         const float twoW = pQuat[3] + pQuat[3];
         const float twoI = pQuat[0] + pQuat[0];
         const float twoJ = pQuat[1] + pQuat[1];
+        const float twoK = pQuat[2] + pQuat[2];
 
         const float twoWK = twoW * pQuat[2];
         const float twoIK = twoI * pQuat[2];
         const float twoJK = twoJ * pQuat[2];
-        const float twoWW = twoW * pQuat[3];
+        const float twoKK = twoK * pQuat[2];
         const float twoIW = twoI * pQuat[3];
         const float twoJW = twoJ * pQuat[3];
         const float twoII = twoI * pQuat[0];
@@ -403,11 +404,11 @@ namespace Glacier
         pMat[7] = twoIW + twoJK;
         pMat[8] = twoJW - twoIK;
         pMat[3] = twoIW - twoJK;
-        pMat[4] = 1.0f - (twoJJ + twoWW);
+        pMat[4] = 1.0f - (twoJJ + twoKK);
         pMat[5] = twoWK + twoJI;
         pMat[0] = twoJW + twoIK;
         pMat[1] = twoJI - twoWK;
-        pMat[2] = 1.0f - (twoII + twoWW);
+        pMat[2] = 1.0f - (twoII + twoKK);
     }
 
     inline void quattomat(ZMat3x3& mat, const ZQuat& quat)

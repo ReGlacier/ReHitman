@@ -39,12 +39,13 @@ namespace Glacier
         virtual void ShowNextFrame() = 0;
         virtual void SetSize(uint32_t lWidth, uint32_t lHeight);
         virtual bool IsLastFrame() = 0;
-        virtual void UpdateSubtitles(const TIMETYPE& tTime);
+        virtual bool UpdateSubtitles(const TIMETYPE& tTime);
 
         // methods
         ZBaseVideo();
 
         void BeginPlaying();
+        ZGEOM* FindSubtitleCamera(); // PC 0x59B5C0 (finds the "SubtitleWindow" ZCAMERA in the scene)
 
         // members
         int m_iNumSubtitles;

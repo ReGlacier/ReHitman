@@ -9,7 +9,7 @@
 #include <Glacier/Com/CGlobalCom.h>
 #include <Glacier/Com/CCOMType.h>
 #include <Glacier/Geom/ZGEOM.h>
-#include <Glacier/ZEngineDataBase.h>
+#include <Glacier/Data/ZEngineDataBase.h>
 
 #include <utility>
 #include <cstdarg>

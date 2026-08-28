@@ -2,10 +2,10 @@
 
 #include <Glacier/ReGlacier.h>
 #include <Glacier/ZSTL/ZMath.h>
-#include <Glacier/ZCAMERA.h>
+#include <Glacier/Geom/ZCAMERA.h>
 
 namespace Glacier {
-    class ZCameraSpace 
+    class ZCameraSpace
     {
     public:
         // data

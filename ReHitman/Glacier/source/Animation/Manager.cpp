@@ -1,8 +1,8 @@
 #include <Glacier/Animation/Manager.h>
 #include <Glacier/Animation/Header.h>
 #include <Glacier/Animation/ZHumanState.h>
-#include <Glacier/CHUNKFILE.h>
-#include <Glacier/ZEngineDataBase.h>
+#include <Glacier/ZSTL/CHUNKFILE.h>
+#include <Glacier/Data/ZEngineDataBase.h>
 #include <Glacier/System/ZSysInterface.h>
 #include <Glacier/ZUniMemory.h>
 #include <cstddef>

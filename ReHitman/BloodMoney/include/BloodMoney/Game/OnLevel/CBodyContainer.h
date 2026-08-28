@@ -3,14 +3,14 @@
 #include <Glacier/ReGlacier.h>
 #include <Glacier/GlacierFWD.h>
 #include <Glacier/CBaseEvent.h>
-#include <Glacier/ZRunMatPosAnim.h>
+#include <Glacier/Animation/ZRunMatPosAnim.h>
 #include <Glacier/ZSTL/ZMath.h>
 #include <Glacier/Geom/ZGROUP.h>
 
 
 namespace Hitman::BloodMoney
 {
-    enum eBCState 
+    enum eBCState
     {
         STATE_OPEN = 0,
         STATE_CLOSE = 1,
@@ -18,7 +18,7 @@ namespace Hitman::BloodMoney
         STATE_CLOSING = 3,
     };
 
-    enum eBCType 
+    enum eBCType
     {
         BC_CRATE = 0,
         BC_DUMPSTER = 1,
@@ -26,7 +26,7 @@ namespace Hitman::BloodMoney
     };
 
     // used in "ContainerState" ZMSG (via SendCommand("ContainerState", &state))
-    struct sBodyContainerState 
+    struct sBodyContainerState
     {
         int      m_iNumBodies;
         eBCState m_eState;

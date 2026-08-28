@@ -1,6 +1,6 @@
 #include <Glacier/Geom/ZSHAPE.h>
 #include <Glacier/ZUniMemory.h>
-#include <Glacier/ZEngineDataBase.h>
+#include <Glacier/Data/ZEngineDataBase.h>
 #include <Glacier/Render/Prim/ZPrimControlBase.h>
 #include <Glacier/Render/ZRenderBaseDll.h>
 #include <Glacier/System/ZSysInterface.h>

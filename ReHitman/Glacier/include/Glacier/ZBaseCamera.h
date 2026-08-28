@@ -4,7 +4,7 @@
 #include <Glacier/GlacierFWD.h>
 #include <Glacier/ZSTL/ZMath.h>
 #include <Glacier/CBaseEvent.h>
-#include <Glacier/ZCAMERA.h>
+#include <Glacier/Geom/ZCAMERA.h>
 
 
 namespace Glacier

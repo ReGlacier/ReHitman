@@ -16,7 +16,7 @@ namespace Glacier
         // constants
         static constexpr int NUMBER_OF_PLAYERS = 4;
 
-        // static 
+        // static
         STATIC_CLASS_VAR(CConfiguration, float, m_fMouseSpeed);
         STATIC_CLASS_VAR(CConfiguration, bool, m_bUseMouse);
         STATIC_CLASS_VAR_ARRAY(CConfiguration, bool, m_bInvertVertical, NUMBER_OF_PLAYERS);
@@ -81,6 +81,7 @@ namespace Glacier
         bool GetSubtitles();
         void SetSubtitles(bool bShowSubtitles);
         void Save();
+        static bool IsMouseGrabbed();
 
         template <typename T>
         void SetGenericOptionValue(const char* pszName, const T& value)

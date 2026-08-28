@@ -5,7 +5,7 @@
 #include <Glacier/ScriptEngine/Common.h>
 #include <Glacier/Geom/ZGEOM.h>
 #include <Glacier/ZSTL/ZMath.h>
-#include <Glacier/ZEngineDataBase.h>
+#include <Glacier/Data/ZEngineDataBase.h>
 
 
 namespace Glacier

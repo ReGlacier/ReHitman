@@ -6,8 +6,8 @@
 #include <Glacier/Render/Prim/ZPrimControlBase.h>
 #include <Glacier/RTP/VirtualTables.h>
 #include <Glacier/Runtime/Macro.h>
-#include <Glacier/CHUNKFILE.h>
-#include <Glacier/ZEngineDataBase.h>
+#include <Glacier/ZSTL/CHUNKFILE.h>
+#include <Glacier/Data/ZEngineDataBase.h>
 #include <Glacier/ZSTL/ZFilePath.h>
 #include <cstdint>
 #include <cstring>

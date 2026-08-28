@@ -2,7 +2,7 @@
 
 #include <Glacier/GlacierFWD.h>
 #include <Glacier/ZSTL/ZMath.h>
-#include <Glacier/ZWinEvents.h>
+#include <Glacier/GUI/ZWinEvents.h>
 #include <Glacier/CBaseEvent.h>
 
 #include <BloodMoney/Game/UI/ZWINDOW.h>

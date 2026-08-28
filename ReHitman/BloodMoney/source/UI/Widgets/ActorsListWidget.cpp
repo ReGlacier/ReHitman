@@ -13,11 +13,11 @@
 #include <BloodMoney/UI/BloodMoneyInspectors.h>
 
 #include <Glacier/System/ZSysInterfaceWintel.h>
-#include <Glacier/ZEngineDataBase.h>
+#include <Glacier/Data/ZEngineDataBase.h>
 #include <Glacier/Geom/ZGeomBuffer.h>
 #include <Glacier/IK/ZLNKOBJ.h>
 #include <Glacier/IK/ZIKLNKOBJ.h>
-#include <Glacier/CInventory.h>
+#include <Glacier/GameBase/CInventory.h>
 #include <Glacier/EventBase/ZEventBuffer.h>
 #include <Glacier/Geom/ZGeomBuffer.h>
 #include <Glacier/GameBase/ZActorCommunication.h>

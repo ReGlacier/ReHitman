@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Glacier/ReGlacier.h>
-#include <Glacier/ZPlayer.h>
+#include <Glacier/GameBase/ZPlayer.h>
 #include <Glacier/Glacier.h>
 #include <Glacier/ZSTL/zstring.h>
 #include <Glacier/ZSTL/ZArray.h>

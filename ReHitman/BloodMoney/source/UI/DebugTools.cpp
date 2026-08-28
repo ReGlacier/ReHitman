@@ -80,16 +80,16 @@
 // Etc
 #include <Glacier/ResourceCollection.h>
 #include <Glacier/Serializer/ISerializerStream.h>
-#include <Glacier/ZEngineDataBase.h>
+#include <Glacier/Data/ZEngineDataBase.h>
 #include <Glacier/System/ZSysInterfaceWintel.h>
 #include <Glacier/Action/ZActionManager.h>
-#include <Glacier/ZRunMatPosAnim.h>
+#include <Glacier/Animation/ZRunMatPosAnim.h>
 #include <Glacier/SSplineMover.h>
 #include <Glacier/GUI/ZWINGROUP.h>
 #include <Glacier/GUI/ZCONTROL.h>
-#include <Glacier/CInventory.h>
-#include <Glacier/ZPlayer.h>
-#include <Glacier/ZEngineGeomControl.h>
+#include <Glacier/GameBase/CInventory.h>
+#include <Glacier/GameBase/ZPlayer.h>
+#include <Glacier/Geom/ZEngineGeomControl.h>
 #include <Glacier/ZLnkActionQueue.h>
 #include <Glacier/ZLnkAction.h>
 #include <Glacier/Component/ZComponentBase.h>
@@ -179,7 +179,7 @@ namespace Hitman::BloodMoney
     void DebugTools::toggleVisibility()
     {
         m_bIsVisible = !m_bIsVisible;
-        
+
         (m_bIsVisible ? Glacier::Action::instance->Enable() : Glacier::Action::instance->Disable());
     }
 

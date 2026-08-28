@@ -16,7 +16,6 @@ namespace Glacier
         virtual ~ZMovementBase();
 
         // ZSerializable
-        // Интерфейс ZSerializable / Управление жизненным циклом данных
         virtual void PreSave(ISerializerStream&);
         virtual void PostSave(ISerializerStream&);
         virtual void PreLoad(ISerializerStream&);

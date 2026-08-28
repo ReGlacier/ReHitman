@@ -3,7 +3,7 @@
 #include <Glacier/Render/ZRenderBaseDll.h>
 #include <Glacier/System/ZSysInterface.h>
 #include <Glacier/Render/Globals.h>
-#include <Glacier/ZGameData.h>
+#include <Glacier/Data/ZGameData.h>
 
 
 namespace Glacier
@@ -115,30 +115,30 @@ namespace Glacier
         return nullptr;
     }
 
-    uint8_t* ZPostFilterWintelD3D::GetZBufferPalette() 
+    uint8_t* ZPostFilterWintelD3D::GetZBufferPalette()
     {
         // TODO: Finish me
         return nullptr;
     }
-    
+
     int ZPostFilterWintelD3D::UnlockRedPalette(uint32_t lIndex)
     {
         // TODO: Finish me
         return 0;
     }
-    
+
     int ZPostFilterWintelD3D::UnlockGreenPalette(uint32_t lIndex)
     {
         // TODO: Finish me
         return 0;
     }
-    
+
     int ZPostFilterWintelD3D::UnlockBluePalette(uint32_t lIndex)
     {
         // TODO: Finish me
         return 0;
     }
-    
+
     int ZPostFilterWintelD3D::UnlockZBufferPalette()
     {
         // TODO: Finish me

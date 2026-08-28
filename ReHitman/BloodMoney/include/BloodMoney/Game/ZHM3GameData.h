@@ -6,7 +6,7 @@
 #include <BloodMoney/Game/ZClothTracker.h>
 #include <BloodMoney/Game/UI/ZOSD.h>
 
-#include <Glacier/ZGameData.h>
+#include <Glacier/Data/ZGameData.h>
 #include <Glacier/ZSTL/ZArray.h>
 #include <Glacier/ZSTL/REFTAB.h>
 #include <Glacier/ZSTL/ZStaticVector.h>
@@ -219,7 +219,7 @@ namespace Hitman::BloodMoney
         eFriskOp_TakeWeapons = 3
     };
 
-    struct ZBloodTrail : public Glacier::ZSTDOBJ 
+    struct ZBloodTrail : public Glacier::ZSTDOBJ
     {
         int m_iTrailIndex;
         int m_iElementNr;
@@ -345,7 +345,7 @@ namespace Hitman::BloodMoney
         static_assert(sizeof(ZExcludedAnimList) == 12, "Bad size of ZExcludedAnimList");
 
         ZExcludedAnimList m_aExcluded[4]; // 0x6A50
-        
+
         uint8_t  m_bAnimContainerFlag;    // 0x6A80
         char     m_pad6A81;               // 0x6A81
         char     m_pad6A82;               // 0x6A82

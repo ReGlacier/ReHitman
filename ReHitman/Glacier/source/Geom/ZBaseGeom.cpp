@@ -19,8 +19,8 @@
 #include <Glacier/Geom/ZTreeGroup.h>
 #include <Glacier/Physics/ZCollisionBase.h>
 #include <Glacier/Serializer/ISerializerStream.h>
-#include <Glacier/ZEngineGeomControl.h>
-#include <Glacier/ZEngineDataBase.h>
+#include <Glacier/Geom/ZEngineGeomControl.h>
+#include <Glacier/Data/ZEngineDataBase.h>
 #include <Glacier/ZSTL/CListUser.h>
 #include <Glacier/System/ZSysInterface.h>
 #include <Glacier/Render/Entry/ZRenderEntry.h>

@@ -5,8 +5,8 @@
 #include <BloodMoney/Game/CTelePortList.h>
 
 #include <Glacier/System/ZSysInterfaceWintel.h>
-#include <Glacier/ZEngineDataBase.h>
-#include <Glacier/ZCTRLIKLNKOBJ.h>
+#include <Glacier/Data/ZEngineDataBase.h>
+#include <Glacier/IK/ZCTRLIKLNKOBJ.h>
 #include <Glacier/EventBase/ZEventBuffer.h>
 
 #include <Glacier/Geom/ZLIST.h>

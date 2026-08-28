@@ -5,9 +5,9 @@
 #include <BloodMoney/Game/Globals.h>
 
 #include <Glacier/System/ZSysInterfaceWintel.h>
-#include <Glacier/ZEngineDataBase.h>
+#include <Glacier/Data/ZEngineDataBase.h>
 #include <Glacier/EventBase/ZEventBase.h>
-#include <Glacier/CInventory.h>
+#include <Glacier/GameBase/CInventory.h>
 #include <Glacier/Geom/ZBaseGeom.h>
 #include <Glacier/Geom/ZGROUP.h>
 #include <Glacier/Geom/ZGEOM.h>

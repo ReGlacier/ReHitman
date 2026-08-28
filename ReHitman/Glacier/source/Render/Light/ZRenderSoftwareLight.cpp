@@ -11,7 +11,7 @@
 #include <Glacier/Render/Prim/SPrimLightSpot.h>
 #include <Glacier/Render/Prim/SPrimLightSpotSquare.h>
 #include <Glacier/System/ZSysInterface.h>
-#include <Glacier/ZEngineDataBase.h>
+#include <Glacier/Data/ZEngineDataBase.h>
 #include <Glacier/ZSTL/CListUser.h>
 #include <Glacier/ZSTL/ZMath.h>
 

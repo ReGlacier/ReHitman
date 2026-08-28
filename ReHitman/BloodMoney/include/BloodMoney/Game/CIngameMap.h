@@ -2,14 +2,15 @@
 
 #include <Glacier/Glacier.h>
 #include <Glacier/ReGlacier.h>
-#include <Glacier/ZHandle.h>
+#include <Glacier/Action/ActionInterface.h>
 #include <Glacier/ZSTL/ZRTTI.h>
 #include <Glacier/ZSTL/ZMath.h>
 #include <Glacier/ZSTL/REFTAB.h>
 #include <Glacier/ZSTL/REFTAB32.h>
 #include <Glacier/ZSTL/ZStackArray.h>
-#include <Glacier/ZWinEvents.h>
-#include <Glacier/SpriteDraw.h>
+#include <Glacier/GUI/ZWinEvents.h>
+#include <Glacier/Render/Sprite/SSpriteArrayElementRaw.h>
+#include <Glacier/Render/Sprite/SSpriteArray.h>
 
 #include <BloodMoney/Game/SMapGroup.h>
 #include <BloodMoney/Game/SIconBase.h>
@@ -59,13 +60,13 @@ namespace Hitman::BloodMoney
     }; //Size: 0x0098 (see CIngameMap::AddText at 00663E20 for details)
     RE_VERIFY_SIZE(SMapText, 0x98); // Verified
 
-    struct SIconInstance : public SIconBase 
+    struct SIconInstance : public SIconBase
     {
         uint32_t iIconIndex;
     };
     RE_VERIFY_SIZE(SIconInstance, 0xC);
 
-    struct CMapIconDraw : public Glacier::ZSTDOBJ 
+    struct CMapIconDraw : public Glacier::ZSTDOBJ
     {
         struct SMatPos
         {
@@ -74,7 +75,7 @@ namespace Hitman::BloodMoney
         };
         RE_VERIFY_SIZE(SMatPos, 0x30);
 
-        struct SIconInfo 
+        struct SIconInfo
         {
             uint32_t m_iIcon;
             Glacier::ZREF m_rBaseGeom;
@@ -109,18 +110,18 @@ namespace Hitman::BloodMoney
         virtual void NotifyUpdate(uint16_t);
 
         //data (total size is 0x2C4, CWinEvent<ZWINDOW> : ZEventBase size is 0x30)
-        Glacier::ZHandle m_ahLegend;
-        Glacier::ZHandle m_ahSelect;
-        Glacier::ZHandle m_ahCamLeft;
-        Glacier::ZHandle m_ahCamRight;
-        Glacier::ZHandle m_ahCamUp;
-        Glacier::ZHandle m_ahCamDown;
-        Glacier::ZHandle m_ahMoveUp;
-        Glacier::ZHandle m_ahMoveDown;
-        Glacier::ZHandle m_ahPrev;
-        Glacier::ZHandle m_ahNext;
-        Glacier::ZHandle m_ahMenu;
-        Glacier::ZHandle m_ahMap;
+        Glacier::Action::ZHandle m_ahLegend;
+        Glacier::Action::ZHandle m_ahSelect;
+        Glacier::Action::ZHandle m_ahCamLeft;
+        Glacier::Action::ZHandle m_ahCamRight;
+        Glacier::Action::ZHandle m_ahCamUp;
+        Glacier::Action::ZHandle m_ahCamDown;
+        Glacier::Action::ZHandle m_ahMoveUp;
+        Glacier::Action::ZHandle m_ahMoveDown;
+        Glacier::Action::ZHandle m_ahPrev;
+        Glacier::Action::ZHandle m_ahNext;
+        Glacier::Action::ZHandle m_ahMenu;
+        Glacier::Action::ZHandle m_ahMap;
         Glacier::ZREF m_rBackgroundCamera;
         Glacier::ZREF m_rMapCamera;
         Glacier::ZREF m_rOverlayCamera;

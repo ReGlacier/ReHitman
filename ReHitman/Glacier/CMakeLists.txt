@@ -15,6 +15,7 @@ set(GLACIER_ASM_SOURCES
 set(GLACIER_COMMON_LIBS 
     PRIVATE 
         zlib
+        jpeg
     PUBLIC
         HF::Core
         stlport

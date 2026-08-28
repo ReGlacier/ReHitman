@@ -324,7 +324,7 @@ namespace Glacier
         const char* pszFileName = g_pSysInterface->m_sIniFile;
         return WriteIniSettings(pszFileName);
     }
-    
+
     const STRREFTAB& CConfiguration::GetGenericOptions() const
     {
         return m_GenericOptions;
@@ -425,7 +425,7 @@ namespace Glacier
         g_pSysInterface->RemoveOption(psOptionName);
 
     }
-    
+
     void CConfiguration::Load()
     {
         char* pszValue = nullptr;
@@ -529,12 +529,12 @@ namespace Glacier
         ApplySound();
         ApplyDisplay();
     }
-    
+
     void CConfiguration::ApplyDisplay()
     {
         // Do nothing
     }
-    
+
     float CConfiguration::GetMouseSpeed()
     {
         return m_fMouseSpeed;
@@ -551,12 +551,12 @@ namespace Glacier
             SetGenericOptionValue<float>("MouseSpeed", fSpeed);
         }
     }
-    
+
     bool CConfiguration::GetUseMouse()
     {
         return m_bUseMouse;
     }
-    
+
     void CConfiguration::SetUseMouse(bool bUseMouse)
     {
         m_bUseMouse = bUseMouse;
@@ -567,19 +567,19 @@ namespace Glacier
         ZASSERT(iPlayer < NUMBER_OF_PLAYERS);
         return m_bInvertVertical[iPlayer];
     }
-    
+
     void CConfiguration::SetInvertVertical(bool bInvert, uint32_t iPlayer)
     {
         ZASSERT(iPlayer < NUMBER_OF_PLAYERS);
         m_bInvertVertical[iPlayer] = bInvert;
     }
-    
+
     bool CConfiguration::GetInvertHorizontal(uint32_t iPlayer)
     {
         ZASSERT(iPlayer < NUMBER_OF_PLAYERS);
         return m_bInvertHorizontal[iPlayer];
     }
-    
+
     void CConfiguration::SetInvertHorizontal(bool bInvert, uint32_t iPlayer)
     {
         ZASSERT(iPlayer < NUMBER_OF_PLAYERS);
@@ -591,17 +591,17 @@ namespace Glacier
         // NOTE: In PC it's covered into 'ifdef RELEASE -> always false'
         m_bCheatsEnabled = bEnabled;
     }
-    
+
     bool CConfiguration::GetCheatsEnabled()
     {
         return m_bCheatsEnabled;
     }
-    
+
     void CConfiguration::SetWideScreen(bool bWideScreen)
     {
         m_bWideScreen = bWideScreen;
-    } 
-    
+    }
+
     bool CConfiguration::GetWideScreen()
     {
         return m_bWideScreen;
@@ -613,13 +613,13 @@ namespace Glacier
 
         m_iControlMode[iPlayer] = lCtrl;
     }
-    
+
     uint32_t CConfiguration::GetControlMode(uint32_t iPlayer)
     {
         ZASSERT(iPlayer < NUMBER_OF_PLAYERS);
         return m_iControlMode[iPlayer];
     }
-    
+
     void CConfiguration::SetAutoSaveEnabled(bool bEnabled, uint32_t iPlayer)
     {
         ZASSERT(iPlayer < NUMBER_OF_PLAYERS);
@@ -631,7 +631,7 @@ namespace Glacier
         ZASSERT(iPlayer < NUMBER_OF_PLAYERS);
         return m_bAutoSaveEnabled[iPlayer];
     }
-    
+
     bool CConfiguration::GetSubtitles()
     {
         return m_bSubtitles;

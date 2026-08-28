@@ -16,14 +16,14 @@
 #include <BloodMoney/Game/Globals.h>
 
 #include <Glacier/System/ZSysInterfaceWintel.h>
-#include <Glacier/ZEngineDataBase.h>
+#include <Glacier/Data/ZEngineDataBase.h>
 #include <Glacier/Geom/ZBaseGeom.h>
 #include <Glacier/Geom/ZGeomBuffer.h>
 #include <Glacier/Glacier.h>
 #include <Glacier/Geom/ZGROUP.h>
 #include <Glacier/Geom/ZGEOM.h>
 #include <Glacier/IK/ZLNKOBJ.h>
-#include <Glacier/CInventory.h>
+#include <Glacier/GameBase/CInventory.h>
 #include <Glacier/System/CConfiguration.h>
 #include <Glacier/ZSTL/REFTAB32.h>
 #include <Glacier/Items/ZItem.h>
@@ -51,7 +51,7 @@
 #include <BloodMoney/Game/UI/ZLINEOBJ.h>
 
 #include <HF/HackingFramework.hpp>
-#include <Glacier/ZEngineGeomControl.h>
+#include <Glacier/Geom/ZEngineGeomControl.h>
 #include <Glacier/Com/CCom.h>
 #include <Glacier/EventBase/ZEventBuffer.h>
 

@@ -8,7 +8,7 @@
 #include <Glacier/Glacier.h>
 #include <Glacier/ZAction.h>
 #include <Glacier/System/ZSysInterfaceWintel.h>
-#include <Glacier/ZEngineDataBase.h>
+#include <Glacier/Data/ZEngineDataBase.h>
 #include <Glacier/Geom/ZROOM.h>
 #include <Glacier/IK/ZLNKOBJ.h>
 #include <Glacier/EventBase/ZEventBuffer.h>
@@ -74,7 +74,7 @@ namespace Hitman::BloodMoney
                                         270);
 
             auto* pAction = (Glacier::ZAction*)Glacier::ZEventBase::RefToPtr(actionId);
-            if (pAction) 
+            if (pAction)
             {
                 pAction->Show();
             }

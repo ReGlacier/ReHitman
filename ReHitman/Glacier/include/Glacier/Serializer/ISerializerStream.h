@@ -4,6 +4,7 @@
 #include <Glacier/GlacierFWD.h>
 #include <Glacier/ZSTL/ZSimpleArray.h>
 #include <Glacier/ZSTL/ZBitfield.h>
+#include <Glacier/ZSTL/TIMETYPE.h>
 #include <Glacier/ZSTL/ZList.h>
 #include <Glacier/Serializer/ZTokenCache.h>
 #include <Glacier/Serializer/ZToken.h>
@@ -167,6 +168,8 @@ namespace Glacier
 		void Exchange(const ZToken token, ZEventBase& data);
 		void Exchange(const char* psName, ZGEOM& data);
 		void Exchange(const ZToken token, ZGEOM& data);
+		void Exchange(const char* psName, TIMETYPE& data);
+		void Exchange(const ZToken token, TIMETYPE& data);
 
 		template <size_t N>
 		void Exchange(const ZToken token, int16_t (&data)[N]) { ExchangeArray(token, data, static_cast<uint32_t>(N)); }

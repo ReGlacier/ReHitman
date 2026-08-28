@@ -30,7 +30,7 @@ namespace Glacier
             for (int j = 0; j < pCurrent->Count(); ++j)
             {
                 auto* pEntry = *pCurrent->Get(j);
-                ZASSERT(pEntry);
+                ZSAFE_ASSERT(pEntry);
 
                 pEntry->m_lGeomListsControl &= ~lCtlMask;
             }

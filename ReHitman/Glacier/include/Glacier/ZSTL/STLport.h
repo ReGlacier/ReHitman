@@ -10,6 +10,15 @@
 #include <stlport/map>
 #include <stlport/set>
 #include <stlport/vector>
+#include <stlport/exception.h>
 
 #undef std
 #undef _STL
+
+// stlport/exception.h only forwards to the native <exception>. The original engine ran
+// STLport in its own-namespace mode, which re-exposed the standard exception base through
+// the STLport namespace; restore that so engine code can use stlp::exception.
+namespace stlp
+{
+    using std::exception;
+}

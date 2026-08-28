@@ -5,8 +5,8 @@
 #include <Glacier/Filesystem/ZSysFile.h>
 #include <Glacier/Render/ZRenderBaseDll.h>
 #include <Glacier/Render/ZRender.h>
-#include <Glacier/ZDllBase.h>
-#include <Glacier/ZEngineDataBase.h>
+#include <Glacier/System/ZDllBase.h>
+#include <Glacier/Data/ZEngineDataBase.h>
 
 #include <Windows.h>
 #include <intrin.h>
@@ -121,7 +121,7 @@ namespace Glacier
 
         if (!m_bQuit)
         {
-            // TODO: Finish after ZSoundDllWintel reversed! 
+            // TODO: Finish after ZSoundDllWintel reversed!
             // NOTE: Actually, nothing serious here
         }
     }
@@ -233,7 +233,7 @@ namespace Glacier
     void ZSysInterfaceWintel::ReloadDLLs()
     {
         m_pEngineData->FreeDlcFiles();
-        // ^^ That's all folks   
+        // ^^ That's all folks
     }
 
     void ZSysInterfaceWintel::EditorMessage(int, void*, int)
@@ -655,7 +655,7 @@ namespace Glacier
 
         return fileName;
     }
-    
+
     bool ZSysInterfaceWintel::IsPacking() const
     {
         return m_bIsPacking || m_bAlwaysPack;
@@ -682,7 +682,7 @@ namespace Glacier
         SaveReplayBuffer();
         ClosePlayFile();
     }
-    
+
     bool ZSysInterfaceWintel::RunMainOnce(bool UpdateViews)
     {
         if (!m_bInitialized)
@@ -719,7 +719,7 @@ namespace Glacier
         DumpAutoShots();
         return true;
     }
-    
+
     void ZSysInterfaceWintel::DumpAutoShots()
     {
         // Do nothing
@@ -922,7 +922,7 @@ namespace Glacier
             ProcessReplay(&CycSec, sizeof(CycSec), 15, __FILE__, __LINE__);
         }
     }
-    
+
     void ZSysInterfaceWintel::Sleep(float fTime)
     {
         Sleep(fTime);
@@ -932,27 +932,27 @@ namespace Glacier
     {
         // NOTE: This is not original blood money code! Just for debug, will remove later
         char aMessageBuffer[1024] {};
-        
+
         std::snprintf(
-            aMessageBuffer, 
-            sizeof(aMessageBuffer), 
-            "Assertion Failed!\n\nMessage: %s\nFile: %s\nLine: %d", 
-            pMessage  ? pMessage  : "N/A", 
-            pFileName ? pFileName : "N/A", 
+            aMessageBuffer,
+            sizeof(aMessageBuffer),
+            "Assertion Failed!\n\nMessage: %s\nFile: %s\nLine: %d",
+            pMessage  ? pMessage  : "N/A",
+            pFileName ? pFileName : "N/A",
             lLineNr
         );
 
         MessageBoxA(
-            nullptr, 
-            aMessageBuffer, 
-            "ReHitman | Assertion failed", 
+            nullptr,
+            aMessageBuffer,
+            "ReHitman | Assertion failed",
             MB_OK | MB_ICONEXCLAMATION | MB_TOPMOST
         );
 
         ZASSERT(false);
         return true;
     }
-    
+
     MYSTR ZSysInterfaceWintel::GetSuggestedUserPath() const
     {
         char rawPath[MAX_PATH] = { 0 };
@@ -987,7 +987,7 @@ namespace Glacier
         ProcessReplay(&lSeed, sizeof(4), 17, pSourceFile, lLineNr);
         m_lRandSeed = lSeed;
     }
-    
+
     int ZSysInterfaceWintel::Rand(char* pSourceFile, int lLineNr)
     {
         // 0x130 + 0x0075FDAC
@@ -999,7 +999,7 @@ namespace Glacier
 
         return lValue;
     }
-    
+
     float ZSysInterfaceWintel::FRand(char* pSourceFile, int lLineNr)
     {
         // DronCode: I'm not sure about this, IDA disasm says that constant is different, but a little bit
@@ -1024,7 +1024,7 @@ namespace Glacier
             pNotifyFunc();
         }
     }
-    
+
     void ZSysInterfaceWintel::SaveGraphicsOptions()
     {
         if (m_bDisableOptions)
@@ -1175,7 +1175,7 @@ namespace Glacier
     {
         // Do nothing
     }
-    
+
     void ZSysInterfaceWintel::UPlotF(ZRender* Window, int PosX, int PosY, const char* Format, ...)
     {
         char aBuffer[0x400] { 0 };

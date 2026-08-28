@@ -7,6 +7,7 @@ namespace Glacier
     STATIC_GLOBAL_CLASS_INSTANCE_IMPL(uint32_t, g_lPrimHandleToPointerCount, 0x008EBE0C, 0);
     STATIC_GLOBAL_CLASS_INSTANCE_IMPL(float, g_fFogFar, 0x007F6F3C, 1.0f);
     STATIC_GLOBAL_CLASS_INSTANCE_IMPL(bool, g_bd3dDeviceLost, 0x0090AF04, false);
+    STATIC_GLOBAL_CLASS_INSTANCE_IMPL(bool, g_bForceResetDevice, 0x0090AF05, false);
     STATIC_GLOBAL_CLASS_INSTANCE_IMPL(IDirect3D9*, g_pd3dInterface, 0x0090AF08, nullptr);
     STATIC_GLOBAL_CLASS_INSTANCE_IMPL(ZDirect3DDevice*, g_pd3dDevice, 0x0090AF0C, nullptr);
     STATIC_GLOBAL_CLASS_INSTANCE_IMPL(uint32_t, g_dwTextureUnits, 0x0090AF10, 0);
@@ -23,7 +24,19 @@ namespace Glacier
     STATIC_GLOBAL_CLASS_INSTANCE_IMPL(SpotMapArray_t, g_pSpotAttenuationMap, 0x0090AA14, {});
     STATIC_GLOBAL_CLASS_INSTANCE_IMPL(SpotMapArray_t, g_pSpotAttenuationMap2, 0x0090A98C, {});
     STATIC_GLOBAL_CLASS_INSTANCE_IMPL(ShadowColorMapArray_t, g_texShadowMapColor, 0x0090AB34, {});
+    STATIC_GLOBAL_CLASS_INSTANCE_IMPL(ZTextureD3D, g_texShadowCubeMapColor, 0x0090AC60, {});
+    STATIC_GLOBAL_CLASS_INSTANCE_IMPL(ZTextureD3D, g_texNormalizer, 0x0090ACA8, {});
+    STATIC_GLOBAL_CLASS_INSTANCE_IMPL(ZTextureD3D, g_texShadowMapDepth, 0x0090AD80, {});
+    STATIC_GLOBAL_CLASS_INSTANCE_IMPL(ZTextureD3D, g_texCubeShadowColor, 0x0090AAC0, {});
+    STATIC_GLOBAL_CLASS_INSTANCE_IMPL(ZTextureD3D, g_texShadowDepth, 0x0090AA78, {});
+    STATIC_GLOBAL_CLASS_INSTANCE_IMPL(ZTextureD3D, g_texRefractionMap, 0x0090AC18, {});
     STATIC_GLOBAL_CLASS_INSTANCE_IMPL(bool, g_bIsResettingDevice, 0x0090D58C, false);
+    STATIC_GLOBAL_CLASS_INSTANCE_IMPL(bool, g_bDisablePostEffects, 0x0090AEE4, false);
+    STATIC_GLOBAL_CLASS_INSTANCE_IMPL(bool, g_lShowBufferAllocators, 0x0090AF24, false);
+    STATIC_GLOBAL_CLASS_INSTANCE_IMPL(int, g_lOverrideSLI, 0x0090AF30, 0);
+    STATIC_GLOBAL_CLASS_INSTANCE_IMPL(bool, g_bD3DViewportInited, 0x0090AF34, false);
+    STATIC_GLOBAL_CLASS_INSTANCE_IMPL(D3DVIEWPORT9, g_sD3DViewport, 0x0090A940, {});
+    STATIC_GLOBAL_CLASS_INSTANCE_IMPL(bool, g_lShowShadowVolumes, 0x0090AF28, false);
     STATIC_GLOBAL_CLASS_INSTANCE_IMPL(uint32_t, g_dwMinFilter, 0x007F6F28, 2);
     STATIC_GLOBAL_CLASS_INSTANCE_IMPL(uint32_t, g_dwMagFilter, 0x007F6F2C, 2);
     STATIC_GLOBAL_CLASS_INSTANCE_IMPL(uint32_t, g_dwMipFilter, 0x007F6F30, 2);
@@ -34,7 +47,12 @@ namespace Glacier
     STATIC_GLOBAL_CLASS_INSTANCE_IMPL(uint32_t, g_lPrimToFreeCount, 0x008EBE14, 0);
     STATIC_GLOBAL_CLASS_INSTANCE_IMPL(SPrimToFreeList_t, g_lPrimToFreeList, 0x008C3A08, {});
     STATIC_GLOBAL_CLASS_INSTANCE_IMPL(SHandleTableEntry*, g_pPrimHandleTable, 0x008EBE08, nullptr);
-    
+    STATIC_GLOBAL_CLASS_INSTANCE_IMPL(float, g_fStaticShadowSampleHeightLimit, 0x007F66C8, 0.f);
+    STATIC_GLOBAL_CLASS_INSTANCE_IMPL(float, g_fTrisPerSec, 0x008C39F4, 0.f);
+    STATIC_GLOBAL_CLASS_INSTANCE_IMPL(TIMETYPE, g_ttLastTime, 0x008C39F8, {});
+    STATIC_GLOBAL_CLASS_INSTANCE_IMPL(uint32_t, g_lTrisPerSecFlags, 0x008C39FC, 0);
+    STATIC_GLOBAL_CLASS_INSTANCE_IMPL(uint32_t, g_lNumTris, 0x008C3A00, 0);
+
     // stuff
     using SMapper = ZRenderMaterialBinderParser::SMapper;
     using RT_TYPE = ZRenderMaterialBinderParser::RT_TYPE;

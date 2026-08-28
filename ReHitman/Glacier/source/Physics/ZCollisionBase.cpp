@@ -21,7 +21,7 @@
 #include <Glacier/ZSTL/CQuadtree.h>
 #include <Glacier/ZSTL/ZOctree.h>
 #include <Glacier/ZSTL/CHUNK.h>
-#include <Glacier/ZEngineDataBase.h>
+#include <Glacier/Data/ZEngineDataBase.h>
 
 
 namespace Glacier

@@ -3,13 +3,13 @@
 #include <Glacier/Com/CGlobalCom.h>
 #include <Glacier/Filesystem/ZSysFile.h>
 #include <Glacier/ZSTL/CHUNK.h>
-#include <Glacier/ZEngineDataBase.h>
-#include <Glacier/ZDllBase.h>
+#include <Glacier/Data/ZEngineDataBase.h>
+#include <Glacier/System/ZDllBase.h>
 
 
 namespace Glacier
 {
-    ZSysInterfacePack::ZSysInterfacePack(int hInstance) 
+    ZSysInterfacePack::ZSysInterfacePack(int hInstance)
         : ZSysInterface(hInstance)
     {
         m_sRecordFile = "";
@@ -61,7 +61,7 @@ namespace Glacier
             m_pEngineData = nullptr;
         }
     }
-    
+
     void ZSysInterfacePack::ParseOptions()
     {
         ZSysInterface::ParseOptions();

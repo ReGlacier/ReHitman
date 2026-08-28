@@ -2,7 +2,7 @@
 
 #include <Glacier/GlacierFWD.h>
 #include <Glacier/ReGlacier.h>
-#include <Glacier/ZCTRLIKLNKOBJ.h>
+#include <Glacier/IK/ZCTRLIKLNKOBJ.h>
 #include <Glacier/IK/ZIKHAND.h>
 #include <Glacier/Audio/ZSDOwner.h>
 #include <Glacier/ZSTL/ZMath.h>

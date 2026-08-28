@@ -1,7 +1,7 @@
 #include <Glacier/Input/ZMouseWintel.h>
 #include <Glacier/Input/ZDirectInput.h>
 #include <Glacier/System/ZSysInterface.h>
-#include <Glacier/ZEngineDataBase.h>
+#include <Glacier/Data/ZEngineDataBase.h>
 #include <Glacier/ResourceCollection.h>
 
 #include <cstring>
@@ -91,7 +91,7 @@ namespace Glacier
     {
         m_pDevice = nullptr;
 
-        return 
+        return
             SUCCEEDED(m_pDI->CreateDevice(m_guidInstance, &m_pDevice, nullptr)) &&
             SUCCEEDED(m_pDevice->SetDataFormat(&g_MouseDataFormat)) &&
             SUCCEEDED(m_pDevice->SetCooperativeLevel(static_cast<HWND>(g_pSysInterface->MainhWnd), DISCL_FOREGROUND | DISCL_NONEXCLUSIVE));
@@ -207,7 +207,7 @@ namespace Glacier
 
         m_pDevice->Unacquire();
         m_bAcquired = false;
-        
+
         return 1;
     }
 
@@ -241,7 +241,7 @@ namespace Glacier
         { .name = "x", .nr = 0 },
         { .name = "y", .nr = 1 },
         { .name = "z", .nr = 2 },
-        { .name = "wheel", .nr = 2 }, 
+        { .name = "wheel", .nr = 2 },
         {} //<<< REQUIRED
     };
 

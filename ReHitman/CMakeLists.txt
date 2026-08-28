@@ -13,6 +13,7 @@ add_subdirectory(Modules/HF)
 add_subdirectory(Modules/gtest)
 add_subdirectory(Modules/zlib)
 add_subdirectory(Modules/stlport)
+add_subdirectory(Modules/jpeg-6b)
 
 add_subdirectory(Glacier)
 add_subdirectory(BloodMoney)

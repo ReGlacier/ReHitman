@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Glacier/GlacierFWD.h>
-#include <Glacier/ZWinEvents.h>
+#include <Glacier/GUI/ZWinEvents.h>
 #include <Glacier/ZSTL/ZMath.h>
 #include <Glacier/ZSTL/ZRTTI.h>
 #include <Glacier/ZSTL/zstring.h>
@@ -28,7 +28,7 @@ namespace Hitman::BloodMoney
     struct IGUIElement;
     struct IWindowInterface;
 
-    struct SMenuLayer 
+    struct SMenuLayer
     {
         ZWINGROUP* pParent;
         Glacier::ZStaticVector<IGUIElement*, 16> vReceiveAllInput;
@@ -36,7 +36,7 @@ namespace Hitman::BloodMoney
     };
     RE_VERIFY_SIZE(SMenuLayer, 0x4C); // Verified
 
-    struct ZMapping 
+    struct ZMapping
     {
         bool m_bFlip;
         bool m_bMirror;
@@ -45,7 +45,7 @@ namespace Hitman::BloodMoney
         float m_fDstVal;
         float m_fStartVal;
         Glacier::TIMETYPE m_StartTime;
-        Glacier::TIMETYPE m_TimeInterval; 
+        Glacier::TIMETYPE m_TimeInterval;
 
         virtual float MapFunction();
     };
@@ -57,7 +57,7 @@ namespace Hitman::BloodMoney
     };
     RE_VERIFY_SIZE(ZEaseIn, 0x20);
 
-    struct ZMenu3DCam 
+    struct ZMenu3DCam
     {
         enum EState
         {
@@ -86,7 +86,7 @@ namespace Hitman::BloodMoney
     };
     RE_VERIFY_SIZE(ZMenu3DCam, 0xAC);
 
-    struct ZResourceManager 
+    struct ZResourceManager
     {
         ZWINGROUP* m_pWinGroupLineObjs;
         ZWINGROUP* m_pWinGroupButtons;
@@ -101,7 +101,7 @@ namespace Hitman::BloodMoney
     };
     RE_VERIFY_SIZE(ZResourceManager, 0x2DC);
 
-    struct SOpenWindowParams 
+    struct SOpenWindowParams
     {
         // Size: 0x14 (20) bytes
         bool bOpenWindow;
@@ -110,7 +110,7 @@ namespace Hitman::BloodMoney
         bool bResetStack;
     };
 
-    struct SCloseWindowParams 
+    struct SCloseWindowParams
     {
         // Size: 0x2 (2) bytes
         bool bCloseWindow;
@@ -131,14 +131,14 @@ namespace Hitman::BloodMoney
     {
     public:
         // types
-        enum EMenuLayer 
+        enum EMenuLayer
         {
             EMENU = 0,
             EDIALOG = 1,
             ETRC = 2,
             NUM_OF_LAYERS = 3,
         };
-        
+
         // vtbl
         virtual void SetFocus();
         virtual void AddOtherWindowCount(int);

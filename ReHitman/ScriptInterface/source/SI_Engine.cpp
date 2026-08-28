@@ -3,7 +3,7 @@
 #include <Glacier/System/ZSysInterface.h>
 #include <Glacier/Com/CComRead.h>
 #include <Glacier/ResourceCollection.h>
-#include <Glacier/ZEngineDataBase.h>
+#include <Glacier/Data/ZEngineDataBase.h>
 #include <Glacier/ZUniAssert.h>
 
 #include <cstdio>

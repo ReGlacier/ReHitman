@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include <Glacier/CHUNKFILE.h>
+#include <Glacier/ZSTL/CHUNKFILE.h>
 #include <cstdint>
 
 
@@ -11,7 +11,7 @@ constexpr uint32_t FOURCC_SUB2 = 0x32425553; // 'SUB2'
 using namespace Glacier;
 
 
-TEST(ChunkFileTest, SimpleFlatChunk) 
+TEST(ChunkFileTest, SimpleFlatChunk)
 {
     ChunkBuilder builder(FOURCC_DATA);
     std::vector<uint8_t> dummyData = { 0xAA, 0xBB, 0xCC, 0xDD };
@@ -20,20 +20,20 @@ TEST(ChunkFileTest, SimpleFlatChunk)
     std::vector<uint8_t> buffer = builder.Serialize();
     CHUNKFILE* chunk = reinterpret_cast<CHUNKFILE*>(buffer.data());
 
-    EXPECT_EQ(chunk->Name, FOURCC_DATA);    
+    EXPECT_EQ(chunk->Name, FOURCC_DATA);
     EXPECT_EQ(chunk->m_lTotalSize & 0x3FFFFFFF, 12);
     EXPECT_GE(chunk->m_lTotalSize, 0);
     EXPECT_EQ(chunk->DataSize(), 4);
-    
+
     uint8_t* rawDataPtr = reinterpret_cast<uint8_t*>(chunk->Data());
     EXPECT_EQ(rawDataPtr[0], 0xAA);
     EXPECT_EQ(rawDataPtr[3], 0xDD);
 }
 
-TEST(ChunkFileTest, ContainerWithChildren) 
+TEST(ChunkFileTest, ContainerWithChildren)
 {
     ChunkBuilder rootBuilder(FOURCC_ROOT);
-    
+
     auto& child1 = rootBuilder.AddChild(FOURCC_SUB1);
     std::vector<uint8_t> data1 = { 0x11, 0x11 };
     child1.SetData(data1.data(), data1.size());
@@ -63,7 +63,7 @@ TEST(ChunkFileTest, ContainerWithChildren)
     EXPECT_EQ(fakeChild, nullptr);
 }
 
-TEST(ChunkFileTest, ComplexType3Chunk) 
+TEST(ChunkFileTest, ComplexType3Chunk)
 {
     ChunkBuilder rootBuilder(FOURCC_ROOT);
 
@@ -80,7 +80,7 @@ TEST(ChunkFileTest, ComplexType3Chunk)
     CHUNKFILE* rootChunk = reinterpret_cast<CHUNKFILE*>(buffer.data());
 
     uint32_t flags = rootChunk->m_lTotalSize & 0xC0000000;
-    EXPECT_EQ(flags, 0xC0000000); 
+    EXPECT_EQ(flags, 0xC0000000);
 
     uint32_t* parsedPiece1 = reinterpret_cast<uint32_t*>(rootChunk->Data());
     EXPECT_EQ(*parsedPiece1, 0x11223344);
@@ -88,7 +88,7 @@ TEST(ChunkFileTest, ComplexType3Chunk)
     CHUNKFILE* foundChild = rootChunk->FindChild(FOURCC_SUB1);
     ASSERT_NE(foundChild, nullptr);
     EXPECT_EQ(foundChild->Name, FOURCC_SUB1);
-    
+
     uint8_t* childDataPtr = reinterpret_cast<uint8_t*>(foundChild->Data());
     EXPECT_EQ(*childDataPtr, 0x99);
 }

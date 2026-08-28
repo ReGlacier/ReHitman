@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Glacier/GlacierFWD.h>
-#include <Glacier/ZWinEvents.h>
+#include <Glacier/GUI/ZWinEvents.h>
 #include <Glacier/ZSTL/ZMath.h>
 #include <Glacier/ZSTL/ZRTTI.h>
 #include <Glacier/ZSTL/REFTAB32.h>

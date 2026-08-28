@@ -6,8 +6,8 @@
 #include <Glacier/Render/ZOldDrawInfo.h>
 #include <Glacier/Render/ZRender.h>
 #include <Glacier/Render/Globals.h>
-#include <Glacier/ZCAMERA.h>
-#include <Glacier/ZGameData.h> // WTF...
+#include <Glacier/Geom/ZCAMERA.h>
+#include <Glacier/Data/ZGameData.h> // WTF...
 #include <Glacier/ZUniMemory.h>
 #include <Glacier/ZUniAssert.h>
 
@@ -49,7 +49,7 @@ namespace Glacier
     {
         // Do nothing
     }
-    
+
     void ZRenderViewBase::End()
     {
         // Do nothing
@@ -130,7 +130,7 @@ namespace Glacier
             m_pDrawSurface->SetViewport(x1, y1, width, height);
         }
     }
-    
+
     void ZRenderViewBase::SetOverrideScissor(const uint32_t* pScissors)
     {
         m_lScissorOverride[0] = pScissors[0];
@@ -149,7 +149,7 @@ namespace Glacier
     {
         IDraw::Instance()->Invalidate();
         ZASSERT(m_Cameras.Count()); // Need to have at least 1 camera to process
-        
+
         if (const auto lIndex = m_Cameras.Find(&pCamera); lIndex >= 0)
         {
             m_Cameras.Remove(lIndex);
@@ -210,7 +210,7 @@ namespace Glacier
             }
         }
     }
-    
+
     bool ZRenderViewBase::IsCameraInView(ZBaseGeom* pBaseGeom)
     {
         if (!m_Cameras.Count())
@@ -246,17 +246,17 @@ namespace Glacier
             m_pPostFilter->AllocateDeviceBuffers();
         }
     }
-    
+
     void ZRenderViewBase::CreatePostFilter()
     {
         // Do nothing
     }
-    
+
     ZPostFilter* ZRenderViewBase::GetPostFilter()
     {
         return m_pPostFilter;
     }
-    
+
     ZPostFilter* ZRenderViewBase::FindPostFilterForCamera(ZBaseGeom* pCameraGeom)
     {
         return IsCameraInView(pCameraGeom) ? GetPostFilter() : nullptr;

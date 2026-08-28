@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Glacier/Geom/ZGROUP.h>
-#include <Glacier/ZWinEvents.h>
+#include <Glacier/GUI/ZWinEvents.h>
 
 namespace Hitman::BloodMoney
 {

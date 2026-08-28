@@ -12,7 +12,7 @@
 #include <Glacier/Render/ZRenderBaseDll.h>
 #include <Glacier/Render/ZRPropertyReader.h>
 #include <Glacier/Render/SRMaterialProperties.h>
-#include <Glacier/ZEngineDataBase.h>
+#include <Glacier/Data/ZEngineDataBase.h>
 #include <Glacier/System/ZSysInterface.h>
 #include <Glacier/ReGlacier.h>
 #include <cstdlib>

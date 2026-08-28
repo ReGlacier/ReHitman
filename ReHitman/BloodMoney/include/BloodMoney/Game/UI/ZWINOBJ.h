@@ -4,12 +4,13 @@
 #include <Glacier/GlacierFWD.h>
 #include <Glacier/Geom/ZSTDOBJ.h>
 #include <Glacier/ZCameraSpace.h>
-#include <Glacier/SpriteDraw.h>
+#include <Glacier/Render/Sprite/SSpriteArrayElementUV.h>
+#include <Glacier/Render/Sprite/SSpriteArray.h>
 #include <Glacier/Render/Sprite/SPRITETYPE.h>
 
 namespace Hitman::BloodMoney
 {
-    class ZWINOBJ : public Glacier::ZSTDOBJ 
+    class ZWINOBJ : public Glacier::ZSTDOBJ
     {
     public:
         // vftable

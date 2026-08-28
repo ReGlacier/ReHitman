@@ -3,12 +3,12 @@
 #include <Glacier/EventBase/ZScheduledEvent.h>
 #include <Glacier/EventBase/ZScheduledScript.h>
 #include <Glacier/EventBase/ZEventBase.h>
-#include <Glacier/ZEngineDataBase.h>
+#include <Glacier/Data/ZEngineDataBase.h>
 #include <Glacier/System/ZSysInterface.h>
 #include <cassert>
 
 
-namespace Glacier 
+namespace Glacier
 {
     extern bool s_bSleeperChanged;
     bool g_bBlockSchedUpdate = false;
@@ -61,7 +61,7 @@ namespace Glacier
     ZScheduledEvent* ZScheduledUpdate::AddEvent(ZEventBase* pEvent)
     {
         ZASSERT(pEvent->m_pScheduleEvent == nullptr);
-        
+
         ZScheduledEvent* pResult = nullptr;
         if (!strcmp(pEvent->EventName(), "ScriptC")) // same to ScriptC (related to ZScriptC)
         {
@@ -105,7 +105,7 @@ namespace Glacier
         }
 
         pSchedEvent->m_bChanged = 0;
-        
+
         int lSec = static_cast<int>(pSchedEvent->m_tNextRun);
         if (lSec)
         {
@@ -162,7 +162,7 @@ namespace Glacier
                             }
 
                             pCurr = pNext;
-                        } 
+                        }
                         while (pCurr && pCurr != pLastThread);
                     }
                 }

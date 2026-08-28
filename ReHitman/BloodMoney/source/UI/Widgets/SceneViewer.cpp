@@ -10,7 +10,7 @@
 #include <BloodMoney/Game/Globals.h>
 
 #include <Glacier/System/ZSysInterfaceWintel.h>
-#include <Glacier/ZEngineDataBase.h>
+#include <Glacier/Data/ZEngineDataBase.h>
 #include <Glacier/Geom/ZBaseGeom.h>
 #include <Glacier/Glacier.h>
 #include <Glacier/Geom/ZGROUP.h>

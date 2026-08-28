@@ -39,6 +39,14 @@ namespace Glacier
         // methods
         ZDirect3DDevice(IDirect3DDevice9* pDevice);
 
+        HRESULT BeginScene();          // PC 0x004903F0
+        HRESULT EndScene();            // PC 0x0048FA60
+        HRESULT CreateAdditionalSwapChain(D3DPRESENT_PARAMETERS* pPresentParameters, IDirect3DSwapChain9** ppSwapChain); // PC 0x00490430
+        HRESULT GetSwapChain(UINT iSwapChain, IDirect3DSwapChain9** ppSwapChain); // PC 0x004903A0
+        HRESULT CreateRenderTarget(UINT iWidth, UINT iHeight, D3DFORMAT format, D3DMULTISAMPLE_TYPE multiSample, DWORD msQuality, BOOL bLockable, IDirect3DSurface9** ppSurface, HANDLE* pSharedHandle); // PC 0x004902F0
+        HRESULT ColorFill(IDirect3DSurface9* pSurface, const RECT* pRect, D3DCOLOR dwColor); // PC 0x0048F990
+        HRESULT TestCooperativeLevel(); // PC 0x0048F760
+
         // TBD
         // ...
         HRESULT Reset(D3DPRESENT_PARAMETERS* pPresentationParameters);
@@ -52,6 +60,11 @@ namespace Glacier
         HRESULT GetViewport(D3DVIEWPORT9* pViewport);
         HRESULT SetScissorRect(const RECT* pRect);
         HRESULT DrawPrimitive(D3DPRIMITIVETYPE PrimitiveType, UINT StartVertex, UINT PrimitiveCount);
+        HRESULT DrawPrimitiveUP(D3DPRIMITIVETYPE PrimitiveType, UINT PrimitiveCount, const void* pVertexStreamZeroData, UINT VertexStreamZeroStride); // PC 0x00490380
+        HRESULT CreateOffscreenPlainSurface(UINT iWidth, UINT iHeight, D3DFORMAT format, D3DPOOL pool, IDirect3DSurface9** ppSurface, HANDLE* pSharedHandle); // PC 0x004904A0
+
+        // PC 0x004A4D50 (static; draws a textured quad plane through g_pVBPDT1)
+        static void DrawPlane(ZDirect3DDevice* pD3DDev, float x, float y, float w, float h, D3DCOLOR color, float z, float uMax, float vMax);
         HRESULT SetVertexDeclaration(IDirect3DVertexDeclaration9* pDecl);
         HRESULT SetIndices(IDirect3DIndexBuffer9* pIndexBuffer);
         HRESULT SetStreamSource(uint32_t lStreamNumber, IDirect3DVertexBuffer9* pVertexBuffer, uint32_t lOffset, uint32_t lStride);
@@ -65,7 +78,7 @@ namespace Glacier
         HRESULT DrawIndexedPrimitive(D3DPRIMITIVETYPE ePrimitiveType, INT BaseVertexIndex, UINT MinVertexIndex, UINT NumVertices, UINT startIndex, UINT primCount);
         HRESULT CreateDepthStencilSurface(DWORD lWidth, DWORD lHeight, _D3DFORMAT Format, _D3DMULTISAMPLE_TYPE MutlisampleType, DWORD Quality, bool Discard, IDirect3DSurface9** ppSurface, HANDLE* pHandle);
         HRESULT GetDeviceCaps(D3DCAPS9* pCaps);
-        
+        void SetGammaRamp(UINT iSwapChain, DWORD dwFlags, const D3DGAMMARAMP* pRamp); // PC 0x0048F490
         void ResetState();
 
         // members

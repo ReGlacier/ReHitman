@@ -17,9 +17,9 @@
 
 #include <Glacier/System/ZSysInterfaceWintel.h>
 #include <Glacier/Render/Fwd.h>
-#include <Glacier/ZEngineDataBase.h>
+#include <Glacier/Data/ZEngineDataBase.h>
 #include <Glacier/ZCameraSpace.h>
-#include <Glacier/ZCAMERA.h>
+#include <Glacier/Geom/ZCAMERA.h>
 #include <Glacier/Glacier.h>
 
 #include <imgui.h>

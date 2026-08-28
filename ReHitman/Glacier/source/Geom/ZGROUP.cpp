@@ -10,7 +10,7 @@
 #include <Glacier/Physics/ZCommonAlgorithms.h>
 #include <Glacier/ZSTL/REFTAB.h>
 #include <Glacier/System/ZSysInterface.h>
-#include <Glacier/ZEngineDataBase.h>
+#include <Glacier/Data/ZEngineDataBase.h>
 #include <Glacier/RTP/VirtualTables.h>
 #include <Glacier/Runtime/Macro.h>
 #include <Glacier/Render/ZRender.h>

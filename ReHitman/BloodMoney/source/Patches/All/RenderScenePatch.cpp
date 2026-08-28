@@ -1,13 +1,13 @@
 #include <BloodMoney/Patches/All/RenderScenePatch.h>
 #include <BloodMoney/Game/Globals.h>
-#include <Glacier/ZEngineDataBase.h>
+#include <Glacier/Data/ZEngineDataBase.h>
 #include <Glacier/System/ZSysInterfaceWintel.h>
 #include <Glacier/Geom/ZGROUP.h>
 #include <Glacier/Geom/ZGEOM.h>
 #include <Glacier/Geom/ZBaseGeom.h>
 #include <Glacier/Render/Fwd.h>
 #include <Glacier/Render/Entry/ZRenderEntry.h>
-#include <Glacier/ZCAMERA.h>
+#include <Glacier/Geom/ZCAMERA.h>
 #include <spdlog/spdlog.h>
 
 

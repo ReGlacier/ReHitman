@@ -365,10 +365,10 @@ namespace Glacier
         {
             // TODO: Finish this place after ZRenderMaterialBuffer will be reversed.
             // Reference (PC 0x476520):
-            // SPrimInfo* pPrimInfo = hPrim.Get<SPrimInfo>();
-            // uint32_t lMaterialId = pPrimInfo->m_kind == 2
-            //     ? g_pMaterialBufferInstance->CreateMaterialInstanceSprite(pPrimInfo->m_field8, pPrimInfo->m_field10, pPrimInfo->m_byteC)
-            //     : static_cast<uint16_t>(pPrimInfo->m_word0 /* iMaterialId */);
+            // const auto* pPrim = hPrim.Get<SPrims>(); // SPrimInfo is a decompiler label; resolve via ZPrimHandle::Get<T>
+            // uint32_t lMaterialId = pPrim->lType == 2
+            //     ? g_pMaterialBufferInstance->CreateMaterialInstanceSprite(...)
+            //     : static_cast<uint16_t>(pPrim->lTextureId /* iMaterialId */);
             // ZRenderMaterialInstance* pMaterial = g_pMaterialBufferInstance->GetMaterialInstance(lMaterialId);
             // if (pMaterial)
             // {
@@ -390,10 +390,10 @@ namespace Glacier
             {
                 // TODO: Finish this place after ZRenderMaterialBuffer will be reversed.
                 // Reference (PC 0x476520):
-                // SPrimInfo* pPrimInfo = hPrim.Get<SPrimInfo>();
-                // uint32_t lMaterialId = pPrimInfo->m_kind == 2
+                // const auto* pPrim = hPrim.Get<SPrims>(); // SPrimInfo is a decompiler label; resolve via ZPrimHandle::Get<T>
+                // uint32_t lMaterialId = pPrim->lType == 2
                 //     ? g_pMaterialBufferInstance->CreateMaterialInstanceSprite(...)
-                //     : static_cast<uint16_t>(pPrimInfo->m_word0);
+                //     : static_cast<uint16_t>(pPrim->lTextureId);
                 // ZRenderMaterialInstance* pMaterial = g_pMaterialBufferInstance->GetMaterialInstance(lMaterialId);
                 // if (pMaterial)
                 // {

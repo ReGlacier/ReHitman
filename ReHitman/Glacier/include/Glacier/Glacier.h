@@ -22,3 +22,9 @@ namespace Glacier
         class ZMetaKey;
     }
 }
+
+#if defined(_WIN32) || defined(__WIN32__) || defined(WIN32)
+#   define GLACIER_API __declspec(dllexport)
+#else
+#   define GLACIER_API
+#endif

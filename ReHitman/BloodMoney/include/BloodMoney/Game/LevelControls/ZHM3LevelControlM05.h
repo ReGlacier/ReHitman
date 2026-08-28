@@ -2,7 +2,7 @@
 
 #include <Glacier/ReGlacier.h>
 #include <Glacier/GlacierFWD.h>
-#include <Glacier/ZRunMatPosAnim.h>
+#include <Glacier/Animation/ZRunMatPosAnim.h>
 #include <Glacier/PF4/Fwd.h>
 #include <Glacier/ZSTL/REFTAB.h>
 #include <BloodMoney/Game/LevelControls/ZHM3LevelControl.h>
@@ -10,7 +10,7 @@
 
 namespace Hitman::BloodMoney
 {
-    enum eGarageState 
+    enum eGarageState
     {
         eGClosed = 0,
         eGOpened = 1,
@@ -46,10 +46,10 @@ namespace Hitman::BloodMoney
         Glacier::ZREF m_rGarageDoorSound;
         Glacier::ZREF m_rGaragePathfinderExitBox;
 
-        Glacier::ZItem* m_pDonutCrate;                 
-        Glacier::ZItem* m_pDonutHack;                  
-        Glacier::ZGEOM* m_pGarageGeom;                 
-        Glacier::ZGEOM* m_pGarageDoorActionArea;       
+        Glacier::ZItem* m_pDonutCrate;
+        Glacier::ZItem* m_pDonutHack;
+        Glacier::ZGEOM* m_pGarageGeom;
+        Glacier::ZGEOM* m_pGarageDoorActionArea;
 
         Glacier::ZRunMatPosAnim m_GarageAnim;
         eGarageState m_eState;
@@ -63,10 +63,10 @@ namespace Hitman::BloodMoney
 
         bool m_bBurnWife;
         RE_ADD_PADDING(3);
-        float m_fTimeSmokeWife;               
-        float m_fTimeBurnWife;                
-        float m_fTimeEmitBurnWife;            
-        float m_fNewEmitTime;                 
+        float m_fTimeSmokeWife;
+        float m_fTimeBurnWife;
+        float m_fTimeEmitBurnWife;
+        float m_fNewEmitTime;
         bool m_bNecklacePickedUp;
         bool m_bSwapWifeModel;
         bool m_bWifeBurned;
@@ -81,7 +81,7 @@ namespace Hitman::BloodMoney
         Glacier::ZMSGID m_msgImmediateBackup;
         Glacier::ZMSGID m_LevelEnd;
 
-        int32_t m_KilledFBIGuards; 
+        int32_t m_KilledFBIGuards;
         int32_t m_GuardSendTimer;
         int32_t m_iLevelStartTime;
         int32_t m_iSuspiciousGuards;

@@ -12,6 +12,7 @@ using D3DXMACRO = _D3DXMACRO;
 
 struct IDirect3D9;
 struct IDirect3DDevice9;
+struct IDirect3DBaseTexture9;
 struct IDirect3DTexture9;
 struct IDirect3DSurface9;
 struct IDirect3DCubeTexture9;

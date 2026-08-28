@@ -1,8 +1,8 @@
 #include <Glacier/IK/ZLNKOBJ.h>
 #include <Glacier/Animation/ZAnimVariationHandle.h>
 #include <Glacier/System/ZSysInterface.h>
-#include <Glacier/ZEngineDataBase.h>
-#include <Glacier/CHUNKFILE.h>
+#include <Glacier/Data/ZEngineDataBase.h>
+#include <Glacier/ZSTL/CHUNKFILE.h>
 #include <cstdint>
 #include <cstring>
 

@@ -5,10 +5,10 @@
 #include <BloodMoney/UI/ImGuiInspector.h>
 
 #include <Glacier/GameBase/Boid/ZHumanBoid.h>
-#include <Glacier/CInventory.h>
-#include <Glacier/ZCAMERA.h>
+#include <Glacier/GameBase/CInventory.h>
+#include <Glacier/Geom/ZCAMERA.h>
 #include <Glacier/System/ZSysInterfaceWintel.h>
-#include <Glacier/ZEngineDataBase.h>
+#include <Glacier/Data/ZEngineDataBase.h>
 
 #include <Glacier/Geom/ZGROUP.h>
 #include <Glacier/Geom/ZGEOM.h>

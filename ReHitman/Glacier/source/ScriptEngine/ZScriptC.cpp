@@ -20,7 +20,7 @@
 #include <Glacier/Serializer/ISerializerStream.h>
 #include <Glacier/System/ZSysInterface.h>
 #include <Glacier/Geom/ZGEOM.h>
-#include <Glacier/ZEngineDataBase.h>
+#include <Glacier/Data/ZEngineDataBase.h>
 #include <Glacier/ZMessageResolver.h>
 #include <Glacier/ZSTL/ZOffsetAlloc.h>
 #include <Glacier/ZUniMemory.h>

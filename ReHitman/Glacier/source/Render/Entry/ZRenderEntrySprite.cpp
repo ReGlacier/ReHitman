@@ -12,29 +12,42 @@
 namespace Glacier
 {
     ZRenderEntrySprite::~ZRenderEntrySprite() = default;
-        
+
     ZRenderEntrySprite::ZRenderEntrySprite(ZRenderEntryGeomCreateInfo* pInfo)
         : ZRenderEntry()
     {
         ZPrimHandle hPrim{pInfo->m_lPrim};
-        
-        // TODO: Finish me
 
+        m_unk14 = 0;
+        m_lLODLevelsActive = 0;
+        m_lLODLevelsWanted = 0;
+        m_lVariantId = 0;
+        m_lEntryListsMask = 0;
+        m_unk2C = 0;
+        m_lDrawDestinationOverride = 0;
+        m_lGeomListsControl = 0;
+        m_lFade = -1;
+        m_lControl = 0;
+        m_lNumRenderEntryInstances = 0;
+        m_pRenderEntryInstances = 0;
+        m_pEnvironment = 0;
+        m_pDrawArray = 0;
 
         m_ObjectToWorldMatrix.Reset();
         m_bLocal = false;
         m_pSpriteArray = nullptr;
+        m_lPrim = pInfo->m_lPrim;
 
         // Extract prim
         const SPrimHeader* pPrimHeader = hPrim;
         ZASSERT(pPrimHeader->lType == PTSPRITES);
-        
+
         auto* pDraw = IDraw::Instance<ZRenderDraw>();
         auto* pEntry = pDraw->CreateRenderEntryInstance(hPrim, this, nullptr, false);
 
         if (pEntry)
         {
-            // TODO: Finish me (PC sub_476D10: per-instance setup)
+            InitRenderEntryInstance(pEntry, 0xFF, 1, 0, 0);
             AddRenderEntryInstances(&pEntry, 1u);
         }
 
@@ -67,7 +80,7 @@ namespace Glacier
             ZRenderEntry::SetRenderContext(pContext, pObjInstance);
         }
     }
-    
+
     void ZRenderEntrySprite::SetLocal(bool bLocal)
     {
         m_bLocal = bLocal;

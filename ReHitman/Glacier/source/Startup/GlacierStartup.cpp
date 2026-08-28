@@ -12,7 +12,7 @@ namespace Glacier
     void InitGlacierSystem(int hInstance, bool bEditorMode, char* pszGameName)
     {
         ZComponentGlobalList::Instance().CreateComponents(1u);
-        
+
         g_pGlobalCOM = &g_GlobalCom;
         g_pSysFile = ZUniMemory::New<ZSysFileWintel>();
 
@@ -52,7 +52,18 @@ namespace Glacier
             ZUniMemory::Delete(g_pSysFile);
             g_pSysFile = nullptr;
         }
-        
+
         ZComponentGlobalList::Instance().DestroyComponents(1u);
     }
+}
+
+// PC 00450C10
+int RunEngine(bool bOnce)
+{
+    using namespace Glacier;
+
+    ZASSERT(g_pSysInterface);
+    g_pSysInterface->RunMainOnce(bOnce);
+
+    return 0;
 }

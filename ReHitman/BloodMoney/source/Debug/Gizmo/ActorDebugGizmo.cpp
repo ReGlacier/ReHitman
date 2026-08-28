@@ -7,9 +7,9 @@
 
 #include <Glacier/System/ZSysInterfaceWintel.h>
 #include <Glacier/Render/Fwd.h>
-#include <Glacier/ZEngineDataBase.h>
+#include <Glacier/Data/ZEngineDataBase.h>
 #include <Glacier/ZCameraSpace.h>
-#include <Glacier/ZCAMERA.h>
+#include <Glacier/Geom/ZCAMERA.h>
 #include <Glacier/Glacier.h>
 
 #include <imgui.h>
@@ -51,7 +51,7 @@ namespace Hitman::BloodMoney::Debug {
         // Glacier::ZVector2 vHeadPos4;
 
         // if (!g_pGameData->m_Hitman3->m_pBoneModify) return;
-        
+
 
         // pPlayer->GetRootCenter(&mPlayerMat, &vPlayerPos);
 

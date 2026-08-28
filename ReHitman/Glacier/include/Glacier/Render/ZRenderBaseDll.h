@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Glacier/ReGlacier.h>
-#include <Glacier/ZDllBase.h>
+#include <Glacier/System/ZDllBase.h>
 #include <Glacier/ZUniMemory.h>
 #include <Glacier/Render/Fwd.h>
 #include <Glacier/Render/DLLTEXCON.h>
@@ -11,7 +11,7 @@
 
 namespace Glacier
 {
-    enum GLOBALMESSAGE 
+    enum GLOBALMESSAGE
     {
         NONE = 0,
         INSERTDISC = 1,

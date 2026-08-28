@@ -7,10 +7,7 @@
 
 namespace Glacier
 {
-    ZRenderEntrySpriteD3D::~ZRenderEntrySpriteD3D()
-    {
-        // TODO: Finish me
-    }
+    ZRenderEntrySpriteD3D::~ZRenderEntrySpriteD3D() = default;
 
     ZRenderEntrySpriteD3D::ZRenderEntrySpriteD3D(ZRenderEntryGeomCreateInfo* pInfo)
         : ZRenderEntrySprite(pInfo)

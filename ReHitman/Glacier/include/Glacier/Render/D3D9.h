@@ -1,5 +1,9 @@
 #pragma once
 
+#define NOMINMAX
+#include <Windows.h>
+#undef NOMINMAX
+
 #include <d3d9.h>
 #include <d3dx9.h>
 #include <d3dx9shader.h>

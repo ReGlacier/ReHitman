@@ -4,7 +4,7 @@
 
 #include <Glacier/Glacier.h>
 #include <Glacier/System/ZSysInterfaceWintel.h>
-#include <Glacier/ZEngineDataBase.h>
+#include <Glacier/Data/ZEngineDataBase.h>
 
 #include <spdlog/spdlog.h>
 

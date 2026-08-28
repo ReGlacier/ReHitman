@@ -7,7 +7,7 @@
 #include <Glacier/Geom/ZSkipSaveGroup.h>
 #include <Glacier/RTP/Base.h>
 #include <Glacier/Serializer/ISerializerStream.h>
-#include <Glacier/ZEngineDataBase.h>
+#include <Glacier/Data/ZEngineDataBase.h>
 #include <Glacier/System/ZSysInterface.h>
 #include <Glacier/RTP/VirtualTables.h>
 #include <G1ConfigurationService.h>

@@ -7,12 +7,12 @@
 #include <Glacier/ZSTL/REFTAB32.h>
 #include <Glacier/RTP/Base.h>
 #include <Glacier/RTP/VirtualTables.h>
-#include <Glacier/CHUNKFILE.h>
+#include <Glacier/ZSTL/CHUNKFILE.h>
 #include <Glacier/Serializer/ISerializerStream.h>
 #include <Glacier/Serializer/IOutputSerializerStream.h>
 #include <Glacier/System/ZSysInterface.h>
 #include <Glacier/Runtime/Macro.h>
-#include <Glacier/ZEngineDataBase.h>
+#include <Glacier/Data/ZEngineDataBase.h>
 #include <Glacier/ZSTL/StringUtils.h>
 #include <cstring>
 

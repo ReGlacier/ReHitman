@@ -58,12 +58,130 @@ namespace Glacier
         STATIC_GLOBAL_VAR(SRenderStateCache, g_RenderStateCache, 0x90AF48, {});
         STATIC_GLOBAL_VAR(STextureStateCache, g_TextureStateCache, 0x90BF9C, {});
         STATIC_GLOBAL_VAR(SSamplerStateCache, g_SamplerStateCache, 0x90C82C, {});
+
+        // PC sub_4903B0: after a device BeginScene, reset the tracked render/texture/sampler
+        // cache call+set counters (the cached values themselves are re-applied below).
+        void ResetStateCaches()
+        {
+            for (uint32_t i = 0; i < kRenderStateCount; ++i)
+            {
+                SStateCacheEntry& entry = g_RenderStateCache.aEntries[i];
+                if (entry.dwEnabled)
+                {
+                    entry.dwCallCount = 0;
+                    entry.dwSetCount = 0;
+                }
+            }
+
+            g_TextureStateCache.dwSetTextureCalls = 0;
+            g_TextureStateCache.dwSetTextureSets = 0;
+            g_TextureStateCache.dwSetTextureStageStateCalls = 0;
+            g_TextureStateCache.dwSetTextureStageStateSets = 0;
+
+            for (uint32_t s = 0; s < kSamplerCount; ++s)
+            {
+                for (uint32_t r = 0; r < kSamplerStateRecords; ++r)
+                {
+                    SStateCacheEntry& entry = g_SamplerStateCache.aEntries[s * kSamplerStateRecords + r];
+                    entry.dwCallCount = 0;
+                    entry.dwSetCount = 0;
+                }
+            }
+        }
+
+        // PC sub_490260: re-apply the cached render states to the device. The value at +0xC
+        // (dwUnused) is pushed to the device and copied into dwValue (+0x0), which the
+        // SetRenderState comparison reads.
+        void ApplyRenderStatesToDevice(IDirect3DDevice9* pDevice)
+        {
+            for (uint32_t i = 0; i < kRenderStateCount; ++i)
+            {
+                SStateCacheEntry& entry = g_RenderStateCache.aEntries[i];
+                if (entry.dwEnabled)
+                {
+                    const uint32_t dwValue = entry.dwUnused;
+                    entry.dwValue = dwValue;
+                    pDevice->SetRenderState(static_cast<D3DRENDERSTATETYPE>(i), dwValue);
+                }
+            }
+        }
+
+        // PC sub_4902A0: invalidate the texture-stage cache (all state values -> -1, textures ->
+        // nullptr) and re-apply the cached sampler states to the device.
+        void ReapplyTextureAndSamplerStates(IDirect3DDevice9* pDevice)
+        {
+            for (uint32_t s = 0; s < kTextureStageCount; ++s)
+            {
+                STextureStageCacheEntry& stage = g_TextureStateCache.aStages[s];
+                stage.pTexture = nullptr;
+                for (uint32_t st = 0; st < kTextureStageStateSlots; ++st)
+                    stage.dwStateValues[st] = 0xFFFFFFFF;
+            }
+
+            for (uint32_t s = 0; s < kSamplerCount; ++s)
+            {
+                for (uint32_t st = 0; st < kSamplerStateRecords; ++st)
+                {
+                    SStateCacheEntry& entry = g_SamplerStateCache.aEntries[s * kSamplerStateRecords + st];
+                    if (entry.dwEnabled)
+                    {
+                        const uint32_t dwValue = entry.dwUnused;
+                        entry.dwValue = dwValue;
+                        pDevice->SetSamplerState(s, static_cast<D3DSAMPLERSTATETYPE>(st), dwValue);
+                    }
+                }
+            }
+        }
     }
 
     ZDirect3DDevice::ZDirect3DDevice(IDirect3DDevice9* pDevice)
         : m_pDevice(pDevice)
         , m_lRefCount(0)
     {
+    }
+
+    // PC 0x004903F0. Begins the D3D scene; on success resets the state-cache counters and
+    // re-applies the cached render/sampler states (the device reset them on BeginScene).
+    HRESULT ZDirect3DDevice::BeginScene()
+    {
+        const HRESULT hResult = m_pDevice->BeginScene();
+        if (!hResult)
+        {
+            ResetStateCaches();
+            ApplyRenderStatesToDevice(m_pDevice);
+            ReapplyTextureAndSamplerStates(m_pDevice);
+        }
+        return hResult;
+    }
+
+    HRESULT ZDirect3DDevice::EndScene()
+    {
+        return m_pDevice->EndScene();
+    }
+
+    HRESULT ZDirect3DDevice::ColorFill(IDirect3DSurface9* pSurface, const RECT* pRect, D3DCOLOR dwColor)
+    {
+        return m_pDevice->ColorFill(pSurface, pRect, dwColor);
+    }
+
+    HRESULT ZDirect3DDevice::TestCooperativeLevel()
+    {
+        return m_pDevice->TestCooperativeLevel();
+    }
+
+    HRESULT ZDirect3DDevice::CreateAdditionalSwapChain(D3DPRESENT_PARAMETERS* pPresentParameters, IDirect3DSwapChain9** ppSwapChain)
+    {
+        return m_pDevice->CreateAdditionalSwapChain(pPresentParameters, ppSwapChain);
+    }
+
+    HRESULT ZDirect3DDevice::GetSwapChain(UINT iSwapChain, IDirect3DSwapChain9** ppSwapChain)
+    {
+        return m_pDevice->GetSwapChain(iSwapChain, ppSwapChain);
+    }
+
+    HRESULT ZDirect3DDevice::CreateRenderTarget(UINT iWidth, UINT iHeight, D3DFORMAT format, D3DMULTISAMPLE_TYPE multiSample, DWORD msQuality, BOOL bLockable, IDirect3DSurface9** ppSurface, HANDLE* pSharedHandle)
+    {
+        return m_pDevice->CreateRenderTarget(iWidth, iHeight, format, multiSample, msQuality, bLockable, ppSurface, pSharedHandle);
     }
 
     STDMETHODIMP ZDirect3DDevice::QueryInterface(REFIID riid, void** ppvObject)
@@ -307,6 +425,11 @@ namespace Glacier
         return m_pDevice->DrawPrimitive(PrimitiveType, StartVertex, PrimitiveCount);
     }
 
+    HRESULT ZDirect3DDevice::DrawPrimitiveUP(D3DPRIMITIVETYPE PrimitiveType, UINT PrimitiveCount, const void* pVertexStreamZeroData, UINT VertexStreamZeroStride)
+    {
+        return m_pDevice->DrawPrimitiveUP(PrimitiveType, PrimitiveCount, pVertexStreamZeroData, VertexStreamZeroStride);
+    }
+
     HRESULT ZDirect3DDevice::SetVertexDeclaration(IDirect3DVertexDeclaration9* pDecl)
     {
         return m_pDevice->SetVertexDeclaration(pDecl);
@@ -370,6 +493,50 @@ namespace Glacier
     HRESULT ZDirect3DDevice::GetDeviceCaps(D3DCAPS9* pCaps)
     {
         return m_pDevice->GetDeviceCaps(pCaps);
+    }
+
+    void ZDirect3DDevice::SetGammaRamp(UINT iSwapChain, DWORD dwFlags, const D3DGAMMARAMP* pRamp)
+    {
+        m_pDevice->SetGammaRamp(iSwapChain, dwFlags, pRamp);
+    }
+
+    HRESULT ZDirect3DDevice::CreateOffscreenPlainSurface(UINT iWidth, UINT iHeight, D3DFORMAT format, D3DPOOL pool, IDirect3DSurface9** ppSurface, HANDLE* pSharedHandle)
+    {
+        return m_pDevice->CreateOffscreenPlainSurface(iWidth, iHeight, format, pool, ppSurface, pSharedHandle);
+    }
+
+    // PC 0x004A4D50. Draws a textured quad (XYZRHW | DIFFUSE | TEX1) into g_pVBPDT1.
+    void ZDirect3DDevice::DrawPlane(ZDirect3DDevice* pD3DDev, float x, float y, float w, float h, D3DCOLOR color, float z, float uMax, float vMax)
+    {
+        struct SQuadVertex
+        {
+            float x, y, z, rhw;
+            D3DCOLOR color;
+            float u, v;
+        };
+        static_assert(sizeof(SQuadVertex) == 0x1C);
+
+        const float fX0 = x - 0.5f;
+        const float fY0 = y - 0.5f;
+        const float fX1 = x + w - 0.5f;
+        const float fY1 = y + h - 0.5f;
+
+        SQuadVertex* pVertices = nullptr;
+        g_pVBPDT1->Lock(0, 0, reinterpret_cast<void**>(&pVertices), D3DLOCK_DISCARD);
+
+        pVertices[0] = { fX0, fY0, z, 1.0f, color, 0.0f, 0.0f };
+        pVertices[1] = { fX0, fY1, z, 1.0f, color, 0.0f, vMax };
+        pVertices[2] = { fX1, fY0, z, 1.0f, color, uMax, 0.0f };
+        pVertices[3] = { fX1, fY1, z, 1.0f, color, uMax, vMax };
+
+        g_pVBPDT1->Unlock();
+
+        pD3DDev->SetIndices(nullptr);
+        pD3DDev->SetStreamSource(0, g_pVBPDT1, 0, sizeof(SQuadVertex));
+        g_pd3dDevice->SetVertexShader(nullptr);
+        g_pd3dDevice->SetFVF(D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_TEX1);
+        pD3DDev->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+        pD3DDev->SetStreamSource(0, nullptr, 0, 0);
     }
 
     void ZDirect3DDevice::ResetState()

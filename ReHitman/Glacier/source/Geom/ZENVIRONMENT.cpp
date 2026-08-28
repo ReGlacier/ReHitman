@@ -5,7 +5,7 @@
 #include <Glacier/Render/Prim/ZPrimControlBase.h>
 #include <Glacier/Render/Prim/SPrimLight.h>
 #include <Glacier/System/ZSysInterface.h>
-#include <Glacier/ZEngineDataBase.h>
+#include <Glacier/Data/ZEngineDataBase.h>
 #include <Glacier/ZSTL/StringUtils.h>
 
 
