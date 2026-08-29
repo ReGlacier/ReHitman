@@ -53,6 +53,11 @@ namespace Glacier
         AS_INCLUDESCENE = 6,
     };
 
+    struct ILoadCallBack
+    {
+        virtual void CallMe() = 0;
+    };
+
     class ZEngineDataBase : public ZSerializable
     {
     public:
@@ -164,15 +169,18 @@ namespace Glacier
         ZREF GetREFByName(const char* pszName) const;
         ZGEOM* GeomRefToPtr(ZREF rGeom) const;
         CCom* GetSceneCom();
-        std::intptr_t GetSceneVar(const char* varname);
+        ZREF GetSceneVar(const char* varname) const;
         ZSoundObject* SRefToPtr(Glacier::ZREF sref);
 	    ZGEOMCLASSINFO* GetGeomClassInfo(uint32_t lTypeId);
         ZROUTCLASSINFO* GetRoutClassInfo(const char* pszRoutInfo);
         void FreeMsgValues();
         uint32_t GetTreesSize();
         void GetTreesData(void* pData, unsigned int lSize);
+        uint32_t GetStaticGameLevelDataSize();
+        void GetStaticGameLevelData(void* pData, unsigned int lSize);
         void DoLoadScene();
         MYSTR CalcCacheFileName(MYSTR sFileName, const char* pExt);
+        void NetworkUpdate();
 
 #if 0   // TO FILTER & IMPL
         public: uint16 AddGeomResource(const char*, unsigned int);
@@ -248,7 +256,7 @@ namespace Glacier
         // members
         bool m_SavingGame;
         bool m_LoadingGame;
-        struct ILoadCallBack* m_pLoadCallBack;
+        ILoadCallBack* m_pLoadCallBack;
         struct ZSaveClass* m_pSaveObject;
         ZGeomBuffer* m_pGeomBuffer;
         PF4::ZInterface* m_pPathfinder4Data;

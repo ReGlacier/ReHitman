@@ -21,6 +21,9 @@ namespace Glacier::Animation
 
     int Header::GetRef()
     {
+        if (!this)
+            return 0;
+
         return Animation::instance->ToIndex(this) + 1;
     }
 
@@ -280,7 +283,7 @@ namespace Glacier::Animation
         else
         {
             // Compressed
-            if (m_GroundOffset != -1)
+            if (m_GroundOffset == -1)
             {
                 q[0] = 0.0f;
                 q[1] = 0.0f;

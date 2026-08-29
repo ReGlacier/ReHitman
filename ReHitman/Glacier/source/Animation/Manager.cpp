@@ -175,12 +175,12 @@ namespace Glacier::Animation
 
     uint32_t Manager::GetMetaKeyDataLength(int lMetaKey)
     {
-        return *reinterpret_cast<uint32_t*>(m_pMetaKeyData + (lMetaKey * 16));
+        return *reinterpret_cast<uint32_t*>(m_pMetaKeyData + lMetaKey);
     }
 
     ZMetaKey* Manager::GetMetaKeyData(int lMetaKey)
     {
-        return reinterpret_cast<ZMetaKey*>(m_pMetaKeyData + (lMetaKey * 16) + 16);
+        return reinterpret_cast<ZMetaKey*>(m_pMetaKeyData + lMetaKey + 16);
     }
 
     ZMetaKey* Manager::GetMetaKeyAtFrame(int lMetaKey, uint32_t lFrame)

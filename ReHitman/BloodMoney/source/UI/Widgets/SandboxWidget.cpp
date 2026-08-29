@@ -46,7 +46,6 @@
 #include <BloodMoney/Game/UI/ZWINOBJ.h>
 #include <BloodMoney/Game/UI/ZXMLGUISystem.h>
 
-#include <BloodMoney/Game/ZCloth.h>
 #include <BloodMoney/Game/ZTie.h>
 #include <BloodMoney/Game/UI/ZLINEOBJ.h>
 

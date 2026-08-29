@@ -46,7 +46,7 @@ namespace Glacier
         void OverrideMemColors(char* pStart, uint32_t lSize, uint32_t lColor);
         uint32_t SetAllocColor(uint32_t lColor);
         void GetTotalPrCol(uint32_t* pSumBuffer);
-        void PrintStatus(const char* pszTitle);
+        void PrintStatus();
         uint32_t GetNumNonContBlocks();
         uint32_t GetBlockSize() const;
         const ZMemReadOut::SMemBlock* GetNonContMemoryBlocks();

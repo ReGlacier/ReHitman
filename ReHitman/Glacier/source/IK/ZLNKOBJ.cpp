@@ -4,8 +4,10 @@
 #include <Glacier/Animation/ZAnimVariationHandle.h>
 #include <Glacier/Render/ZRenderBaseDll.h>
 #include <Glacier/Render/Prim/ZPrimControlBase.h>
+#include <Glacier/Render/Prim/SBoneDefinition.h>
 #include <Glacier/RTP/VirtualTables.h>
 #include <Glacier/Runtime/Macro.h>
+#include <Glacier/Physics/ZCommonAlgorithms.h>
 #include <Glacier/ZSTL/CHUNKFILE.h>
 #include <Glacier/Data/ZEngineDataBase.h>
 #include <Glacier/ZSTL/ZFilePath.h>
@@ -360,14 +362,61 @@ namespace Glacier
         // TODO: Finish me
     }
 
-    void ZLNKOBJ::CheckLineCollision(float*, float const*, float const*)
+    int ZLNKOBJ::CheckLineCollision(float* pResult, const float* pLineStart, const float* pLineDirection) const
     {
-        // TODO: Finish me
+        if (!m_pBoneModify || m_pBoneModify->m_lNumActiveBones <= 1)
+            return 0;
+
+        const auto* pBones = GetBones();
+        const auto* pBoneDefinitions = GetBoneDefinitions();
+        if (!pBones || !pBoneDefinitions)
+            return 0;
+
+        int bestBoneId = 0;
+        float bestT = *pResult;
+        for (uint32_t i = 1; i < m_pBoneModify->m_lNumActiveBones; ++i)
+        {
+            const auto& definition = pBoneDefinitions[i];
+            if (definition.Size.x == 0.0f && definition.Size.y == 0.0f && definition.Size.z == 0.0f)
+                continue;
+
+            ZVector3 boneCenter;
+            vmmul(boneCenter, definition.Center, pBones[i]._Mat);
+            boneCenter += pBones[i]._Pos;
+
+            ZVector3 localStart;
+            vsub(localStart, pLineStart, boneCenter);
+            vmtmul(localStart, pBones[i]._Mat.data);
+
+            ZVector3 localDirection { pLineDirection };
+            vmtmul(localDirection, pBones[i]._Mat.data);
+
+            float hitT = bestT;
+            if (!ZCommonAlgorithms::LineVS_AABB(
+                    -definition.Size.x, -definition.Size.y, -definition.Size.z,
+                    definition.Size.x, definition.Size.y, definition.Size.z,
+                    localStart.x, localStart.y, localStart.z,
+                    localDirection.x, localDirection.y, localDirection.z,
+                    &hitT) || hitT >= bestT)
+            {
+                continue;
+            }
+
+            bestT = hitT;
+            bestBoneId = definition.Id;
+        }
+
+        if (!bestBoneId)
+            return 0;
+
+        *pResult = bestT;
+        return bestBoneId;
     }
 
-    void ZLNKOBJ::CheckLineCollision(float*, float const*, float const*, float*)
+    int ZLNKOBJ::CheckLineCollision(float* pResult, const float* pLineStart, const float* pLineDirection, float* pUnused) const
     {
-        // TODO: Finish me
+        (void)pUnused;
+        return CheckLineCollision(pResult, pLineStart, pLineDirection);
     }
 
     void ZLNKOBJ::CheckBoxCollision(float const*, float const*, float const*)

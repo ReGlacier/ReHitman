@@ -5,6 +5,14 @@
 namespace Glacier::Animation
 {
     StateCache::StateCache(int lAnimCount, int lCacheLines)
+        : m_CacheEntry(nullptr)
+        , m_Data(nullptr)
+        , m_CacheLines(0)
+        , m_AllocStack(nullptr)
+        , m_AllocPos(0)
+        , m_AnimCount(lAnimCount)
+        , m_Hits(0)
+        , m_Misses(0)
     {
         if (lCacheLines)
         {
@@ -19,9 +27,6 @@ namespace Glacier::Animation
             m_AllocStack = (StateCacheEntry**)ZUniMemory::Allocate(sizeof(StateCacheEntry*) * m_CacheLines);
         }
 
-        m_AllocPos = 0;
-        m_AnimCount = lAnimCount;
-
         for (int i = 0; i < m_CacheLines; ++i)
         {
             m_AllocStack[i] = &m_Data[i];
@@ -32,9 +37,6 @@ namespace Glacier::Animation
         {
             m_CacheEntry[i] = nullptr;
         }
-
-        m_Misses = 0;
-        m_Hits = 0;
     }
 
     StateCache::~StateCache()
@@ -58,25 +60,20 @@ namespace Glacier::Animation
     StateCacheEntry* StateCache::FindEntry(int lCacheEntry, int16_t lBlock)
     {
         auto* pEntry = m_CacheEntry[lCacheEntry];
-        if (pEntry)
+        while (pEntry && pEntry->m_Entry.m_Block != lBlock)
         {
-            while (pEntry->m_Entry.m_Block != lBlock)
-            {
-                pEntry = pEntry->m_Next;
-                if (!pEntry)
-                {
-                    ++m_Misses;
-                    return nullptr;
-                }
-
-                ++pEntry->m_Used;
-                ++m_Hits;
-                return pEntry;
-            }
+            pEntry = pEntry->m_Next;
         }
 
-        ++m_Misses;
-        return nullptr;
+        if (!pEntry)
+        {
+            ++m_Misses;
+            return nullptr;
+        }
+
+        ++pEntry->m_Used;
+        ++m_Hits;
+        return pEntry;
     }
 
     StateCacheEntry* StateCache::AllocEntry(int lNextCacheEntry, int16_t lBlock)
@@ -108,7 +105,7 @@ namespace Glacier::Animation
                 else
                 {
                     *pEntry = j->m_Next;
-                    m_AllocStack[m_AllocPos--] = j;
+                    m_AllocStack[--m_AllocPos] = j;
                 }
             }
         }

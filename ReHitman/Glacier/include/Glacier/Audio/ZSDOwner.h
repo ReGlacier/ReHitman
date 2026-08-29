@@ -29,7 +29,7 @@ namespace Glacier
         // members
         int m_iSoundDefinitionIndex;
         bool m_bEnsureOneChannel;
-        char pad[3];
+        RE_ADD_PADDING(3);
         float m_Time_AllowedToPlay;
         unsigned int m_rLastPlayed;
     };

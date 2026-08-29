@@ -28,13 +28,13 @@ struct ZUniMemory
     template <typename T, typename... TArgs>
     static T* NewArray(size_t count, TArgs&&... args)
     {
-        void** ptr = (void**)Allocate(sizeof(T) * count);
+        T* ptr = static_cast<T*>(Allocate(sizeof(T) * count));
         for (int i = 0; i < count; ++i)
         {
-            new (ptr[i]) T(std::forward<TArgs>(args)...);
+            new (&ptr[i]) T(std::forward<TArgs>(args)...);
         }
 
-        return reinterpret_cast<T*>(ptr);
+        return ptr;
     }
 
     template <typename T>

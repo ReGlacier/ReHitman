@@ -4,7 +4,7 @@
 
 namespace Glacier
 {
-    namespace 
+    namespace
     {
         // SysMemReadOutInfo
         struct SysMemReadOutInfo
@@ -138,7 +138,7 @@ namespace Glacier
     {
         if (!pSumBuffer)
             return;
-            
+
         std::memset(pSumBuffer, 0, sizeof(uint32_t) * SYS_MEM_INFO_NR);
 
         uint16_t aPackedColors[SYS_MEM_INFO_NR];
@@ -157,7 +157,7 @@ namespace Glacier
         for (uint32_t i = 0; i < kMaxBlocks; ++i)
         {
             const uint16_t blockColor = m_ReadOutBlock[i].m_iColor;
-            
+
             for (int j = 0; j < SYS_MEM_INFO_NR; ++j)
             {
                 if (aPackedColors[j] == blockColor)
@@ -169,7 +169,7 @@ namespace Glacier
         }
     }
 
-    void ZMemReadOut::PrintStatus(const char* pszTitle)
+    void ZMemReadOut::PrintStatus()
     {
         printf("Begin PrintMemoryUsed\n");
         printf("---------------------------\n");
@@ -194,13 +194,13 @@ namespace Glacier
             std::memcpy(szAlignedName, pzName, std::min(nameLen, static_cast<size_t>(20)));
 
             char szBuffer[1024];
-            std::snprintf(szBuffer, sizeof(szBuffer), "%s%.3fMb (%u)\n", 
+            std::snprintf(szBuffer, sizeof(szBuffer), "%s%.3fMb (%u)\n",
                         szAlignedName, static_cast<double>(iBytes) * kBytesToMb, iBytes);
             printf("%s", szBuffer);
         }
 
         char szDest[1024];
-        std::snprintf(szDest, sizeof(szDest), "Total               %2.3fMb (%u)\n", 
+        std::snprintf(szDest, sizeof(szDest), "Total               %2.3fMb (%u)\n",
                     static_cast<double>(iTotalUsedBytes) * kBytesToMb, iTotalUsedBytes);
         printf("%s", szDest);
         printf("---------------------------\n");
@@ -208,38 +208,38 @@ namespace Glacier
         // Get allocator
         auto& pSysMem = ZSysMem::Instance();
 
-        ZAllocatorBase* pGlobalAllocator = pSysMem.GetAllocator(DEFAULT_MEM); 
+        ZAllocatorBase* pGlobalAllocator = pSysMem.GetAllocator(DEFAULT_MEM);
         const int iFreeTotal = pGlobalAllocator->GetFreeTotal();
         const int iLargestBlock = pGlobalAllocator->GetLargestBlock();
 
-        std::snprintf(szDest, sizeof(szDest), "Free Mem           %6.3fMb (%d)\n", 
+        std::snprintf(szDest, sizeof(szDest), "Free Mem           %6.3fMb (%d)\n",
                     static_cast<double>(iFreeTotal) * kBytesToMb, iFreeTotal);
         printf("%s", szDest);
 
-        std::snprintf(szDest, sizeof(szDest), "Largest Block      %6.3fMb (%d)\n", 
+        std::snprintf(szDest, sizeof(szDest), "Largest Block      %6.3fMb (%d)\n",
                     static_cast<double>(iLargestBlock) * kBytesToMb, iLargestBlock);
         printf("%s", szDest);
 
         const int iFreeMemAt1024 = iFreeTotal + 0x3C000000;
-        std::snprintf(szDest, sizeof(szDest), "Free Mem at %d MB  %6.3fMb (%d)\n", 
+        std::snprintf(szDest, sizeof(szDest), "Free Mem at %d MB  %6.3fMb (%d)\n",
                     1024, static_cast<double>(iFreeMemAt1024) * kBytesToMb, iFreeMemAt1024);
         printf("%s", szDest);
 
         const int iDiff = 0x40000000 - iFreeMemAt1024 - iTotalUsedBytes;
-        std::snprintf(szDest, sizeof(szDest), "Diff:               %6.3fMb (%d)\n", 
+        std::snprintf(szDest, sizeof(szDest), "Diff:               %6.3fMb (%d)\n",
                     static_cast<double>(iDiff) * kBytesToMb, iDiff);
         printf("%s", szDest);
 
         printf("---------------------------\n");
         printf("End PrintMemoryUsed\n");
     }
-    
+
     uint32_t ZMemReadOut::GetNumNonContBlocks()
     {
         // TODO: Finish me
         return 0;
     }
-    
+
     uint32_t ZMemReadOut::GetBlockSize() const
     {
         return m_iBlockSize;

@@ -314,7 +314,7 @@ namespace Glacier::Animation
             lBufferSize += 0x268; // NOTE: Understand what it means (I guess size of some struct?)
         }
 
-        return lBufferSize + 16 * (3 * boneCount + 9);
+        return lBufferSize + 16 * (3 * boneCount + 6);
     }
 
     int Model::DepackOrder(uint8_t* order)
@@ -1032,8 +1032,8 @@ namespace Glacier::Animation
             uint8_t parentIndex = m_Parent[i];
             ZBone& parentBone = m_Bones[parentIndex];
 
-            // Convert local quat of current bone to it's matrix
-            quattomat(bone._Mat, parentBone._Quat);
+            // Convert local quat of current bone to its matrix
+            quattomat(bone._Mat, bone._Quat);
 
             // Multiply rotations mat by mat
             mmmul(bone._Mat, parentBone._Mat);
@@ -1164,7 +1164,7 @@ namespace Glacier::Animation
     void Model::GetAimFrames(float& fCircle1Prc, float& fCircle2Prc, float& fBlendPrc, float fAngleHorz, float fAngleVert)
     {
         const float fHorz = std::clamp(fAngleHorz, 0.f, std::numbers::pi_v<float> * 2.0f);
-        float fVert = std::clamp(fAngleHorz, 0.f, std::numbers::pi_v<float>);
+        float fVert = std::clamp(fAngleVert, 0.f, std::numbers::pi_v<float>);
 
         const float fCircle = fHorz * 0.15915494f * 64.0f;
         fCircle1Prc = fCircle;

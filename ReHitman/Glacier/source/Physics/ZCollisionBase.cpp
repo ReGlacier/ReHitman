@@ -17,11 +17,15 @@
 #include <Glacier/Geom/ZGeomBuffer.h>
 #include <Glacier/Geom/ZGEOM.h>
 #include <Glacier/Geom/ZROOM.h>
+#include <Glacier/Geom/ZBackdrop.h>
 #include <Glacier/IK/ZLNKOBJ.h>
 #include <Glacier/ZSTL/CQuadtree.h>
 #include <Glacier/ZSTL/ZOctree.h>
 #include <Glacier/ZSTL/CHUNK.h>
 #include <Glacier/Data/ZEngineDataBase.h>
+#include <Glacier/Physics/ZCommonAlgorithms.h>
+#include <Glacier/Physics/STreeGetDynamic.h>
+#include <cmath>
 
 
 namespace Glacier
@@ -209,6 +213,117 @@ namespace Glacier
 
             return true;
         }
+
+        bool TreeGetDynamicCallBack(uint32_t lID, SOctreeChk* pDat)
+        {
+            auto* pData = reinterpret_cast<STreeGetDynamic*>(pDat);
+            auto* pGeom = ZGeomBuffer::Instance().GeomRefToBasePtr(lID);
+            if (!pGeom || (pGeom->Control() & ZCTEMPDRAW) != 0)
+                return false;
+
+            if (pData->pRoom)
+            {
+                auto* pRooms = pGeom->GetRoomListPtr();
+                if (!pRooms || !pRooms->Exists(pData->pRoom))
+                    return false;
+            }
+
+            if (pData->lNrGeomsInList < static_cast<uint32_t>(pData->pGeomListEnd - pData->pGeomList))
+            {
+                pGeom->SetControl(ZCTEMPDRAW, 0);
+                pData->pGeomList[pData->lNrGeomsInList++] = pGeom;
+                if (pData->lNrMarkedGeoms < STreeGetDynamic::MAX_MARKED_GEOMS_NR)
+                    pData->pMarkedGeoms[pData->lNrMarkedGeoms++] = pGeom;
+            }
+            return true;
+        }
+
+        struct SOctreeObjectData
+        {
+            uint32_t unk0;
+            ZMat3x3 transform;
+            ZVector3 unkVec3F;
+            ZVector3 unkVec34;
+            ZVector3 position;
+            uint32_t roomREF;
+            uint32_t objectREF;
+        };
+
+        struct SInnerRooms : SRecurseInfoCompiled
+        {
+            char* pRoomTreePtr;
+            ZROOM** pRoomList;
+            ZROOM** pRoomListEnd;
+            uint32_t lNrRooms;
+            ZMat3x3 mat;
+            ZVector3 cen;
+            ZVector3 localSize;
+            ZVector3 globalSize;
+        };
+
+        bool InnerRoomFuncBox(uint32_t lID, SOctreeChk* pDat)
+        {
+            auto* pData = reinterpret_cast<SInnerRooms*>(pDat);
+            auto* pObject = reinterpret_cast<SOctreeObjectData*>(static_cast<char*>(pData->pUserData) + lID);
+            auto* pRoomBase = ZGeomBuffer::Instance().GeomRefToBasePtr(pObject->roomREF);
+            if (!pRoomBase || !pRoomBase->IsDerivedFrom<ZROOM>())
+                return false;
+
+            auto* pRoom = geom_cast<ZROOM>(pRoomBase->GetGeom());
+            if ((pRoom->RoomControl() & 1) != 0)
+                return false;
+
+            ZVector3 vDelta;
+            vsub(vDelta, pData->cen, pObject->unkVec3F);
+            if (!pObject->unk0)
+                vmtmul(vDelta, pObject->transform.data);
+            if (std::fabs(vDelta.x) > pObject->position.x ||
+                std::fabs(vDelta.y) > pObject->position.y ||
+                std::fabs(vDelta.z) > pObject->position.z)
+                return false;
+
+            if (pObject->objectREF)
+            {
+                auto* pGeom = ZGeomBuffer::Instance().GeomRefToBasePtr(pObject->objectREF);
+                if (pGeom)
+                {
+                    ZVector3 vPoint;
+                    vsub(vPoint, pData->cen, pObject->unkVec34);
+                    vmtmul(vPoint, pObject->transform.data);
+                    if (!ZPrimControlBase::Instance()->CheckPointInsidePrim(pGeom->Prim(), vPoint, 0))
+                        return false;
+                }
+            }
+
+            if (pData->lNrRooms >= static_cast<uint32_t>(pData->pRoomListEnd - pData->pRoomList))
+                return false;
+            pRoom->SetRoomControl(1u, 0u);
+            pData->pRoomList[pData->lNrRooms++] = pRoom;
+            return true;
+        }
+
+        bool InnerRoomFuncPoint(uint32_t lID, SOctreeChk* pDat)
+        {
+            auto* pData = reinterpret_cast<SInnerRooms*>(pDat);
+            auto* pObject = reinterpret_cast<SOctreeObjectData*>(static_cast<char*>(pData->pUserData) + lID);
+            auto* pRoomBase = ZGeomBuffer::Instance().GeomRefToBasePtr(pObject->roomREF);
+            if (!pRoomBase || !pRoomBase->IsDerivedFrom<ZROOM>())
+                return false;
+            auto* pRoom = geom_cast<ZROOM>(pRoomBase->GetGeom());
+            if ((pRoom->RoomControl() & 1) != 0)
+                return false;
+            ZVector3 delta;
+            vsub(delta, pData->cen, pObject->unkVec3F);
+            if (!pObject->unk0)
+                vmtmul(delta, pObject->transform.data);
+            if (std::fabs(delta.x) > pObject->position.x || std::fabs(delta.y) > pObject->position.y || std::fabs(delta.z) > pObject->position.z)
+                return false;
+            if (pData->lNrRooms >= static_cast<uint32_t>(pData->pRoomListEnd - pData->pRoomList))
+                return false;
+            pRoom->SetRoomControl(1u, 0u);
+            pData->pRoomList[pData->lNrRooms++] = pRoom;
+            return true;
+        }
     }
 
     STreeGetRightType::STreeGetRightType()
@@ -298,32 +413,68 @@ namespace Glacier
 
     uint32_t ZCollisionBase::GetRoomsLst(ZROOM** pRoomList, ZROOM** pRoomListEnd, ZOctreeCompiled* pRoomTree, const float* Mat1, const float* Cen1, const float* Size1)
     {
-        // TODO: Finish me
-        return 0;
+        ZASSERT(pRoomTree);
+        ZASSERT(pRoomList < pRoomListEnd);
+        SInnerRooms info {};
+        info.pChkFunc = InnerRoomFuncBox;
+        info.pUserData = pRoomTree->GetBasePtrObjects();
+        info.pRoomList = pRoomList;
+        info.pRoomListEnd = pRoomListEnd;
+        info.cen = { Cen1 };
+        ZVector3 size { Size1 };
+        TransformBox(Mat1, size);
+        info.globalSize = size;
+        pRoomTree->CheckCube(&info, info.cen - size, info.cen + size);
+        for (uint32_t i = 0; i < info.lNrRooms; ++i)
+            pRoomList[i]->SetRoomControl(0, 1u);
+        return info.lNrRooms;
     }
 
     uint32_t ZCollisionBase::GetRoomsLst(ZROOM** pRoomList, ZROOM** pRoomListEnd, ZOctreeCompiled* pRoomTree, const float* vPos)
     {
-        // TODO: Finish me
-        return 0;
+        ZASSERT(pRoomTree);
+        ZASSERT(pRoomList < pRoomListEnd);
+        SInnerRooms info {};
+        info.pChkFunc = InnerRoomFuncBox;
+        info.pUserData = pRoomTree->GetBasePtrObjects();
+        info.pRoomList = pRoomList;
+        info.pRoomListEnd = pRoomListEnd;
+        info.cen = { vPos };
+        pRoomTree->GetEverything(&info);
+        for (uint32_t i = 0; i < info.lNrRooms; ++i)
+            pRoomList[i]->SetRoomControl(0, 1u);
+        return info.lNrRooms;
     }
 
     uint32_t ZCollisionBase::GetInsideRoomsLst(ZROOM** pRoomList, ZROOM** pRoomListEnd, const float* Mat1, const float* Cen1, const float* Size1)
     {
-        // TODO: Finish me
-        return 0;
+        ZASSERT(m_pRoomInsideTree);
+        ZASSERT(pRoomList < pRoomListEnd);
+        return GetRoomsLst(pRoomList, pRoomListEnd, m_pRoomInsideTree, Mat1, Cen1, Size1);
     }
 
     uint32_t ZCollisionBase::GetColiRoomsLst(ZROOM** pRoomList, ZROOM** pRoomListEnd, const float* Mat1, const float* Cen1, const float* Size1)
     {
-        // TODO: Finish me
-        return 0;
+        ZASSERT(m_pRoomColiTree);
+        ZASSERT(pRoomList < pRoomListEnd);
+        return GetRoomsLst(pRoomList, pRoomListEnd, m_pRoomColiTree, Mat1, Cen1, Size1);
     }
 
     uint32_t ZCollisionBase::GetInnerRoomsLst(ZROOM** pRoomList, ZROOM** pRoomListEnd, const float* Mat1, const float* Cen1, const float* Size1, bool bIncludeBackdrop)
     {
-        // TODO: Finish me
-        return 0;
+        if (!m_pRoomInsideTree)
+            return 0;
+        ZASSERT(pRoomList < pRoomListEnd);
+        uint32_t count = GetRoomsLst(pRoomList, pRoomListEnd, m_pRoomInsideTree, Cen1);
+        if (!count)
+            count = GetRoomsLst(pRoomList, pRoomListEnd, m_pRoomInsideTree, Mat1, Cen1, Size1);
+        uint32_t result = 0;
+        for (uint32_t i = 0; i < count; ++i)
+        {
+            if (pRoomList[i] && (bIncludeBackdrop || !pRoomList[i]->IsDerivedFrom<ZBackdrop>()))
+                pRoomList[result++] = pRoomList[i];
+        }
+        return result;
     }
 
     bool ZCollisionBase::CalcLineColi(SExtendedImpactInfo* pImpact, ZROOM* pRoom, eGlobalTreeType eGTT, const float* vPos, float* const vVect, bool bBothSides, uint32_t GeomConMask)
@@ -476,8 +627,37 @@ namespace Glacier
 
     bool ZCollisionBase::CalcColiLort(SExtendedImpactInfo* Impact, ZBaseGeom* pDynBaseGeom, eGlobalTreeType eGTT, const float* vLineStart, const float* vLineDirection, uint32_t GeomConMask, bool bBothSides)
     {
-        // TODO: Finish me
-        return false;
+        ZVector3 localPoint { vLineStart };
+        ZVector3 localVect { vLineDirection };
+        pDynBaseGeom->GetLocalPointVect(localPoint, localVect);
+        ZVector3 relativePoint;
+        vsub(relativePoint, localPoint, pDynBaseGeom->Cen());
+        float fPercent = 0.0f;
+        const float* size = pDynBaseGeom->Size();
+        if (!ZCommonAlgorithms::LineVS_AABB(-size[0], -size[1], -size[2], size[0], size[1], size[2],
+            relativePoint.x, relativePoint.y, relativePoint.z, localVect.x, localVect.y, localVect.z, &fPercent) ||
+            fPercent >= Impact->fPercent)
+            return false;
+        if ((pDynBaseGeom->Control() & GeomConMask) == 0 || pDynBaseGeom->GetBoundTreeType() != eGTT)
+            return false;
+        Impact->m_HitCache.___u0.__s0.lIdLo = 0;
+        if (pDynBaseGeom->IsDerivedFrom<ZLNKOBJ>())
+        {
+            auto* pLnkObj = geom_cast<ZLNKOBJ>(pDynBaseGeom->GetGeom());
+            const uint32_t boneId = pLnkObj->CheckLineCollision(&Impact->fPercent, localPoint, localVect);
+            if (!boneId)
+                return false;
+
+            Impact->m_BoneId = boneId;
+            Impact->vPosition = localPoint + localVect * Impact->fPercent;
+            Impact->m_HitCache.___u0.__s0.lIdHi = pDynBaseGeom->Prim();
+            Impact->pBaseGeom = pDynBaseGeom;
+            return true;
+        }
+        if (!CalcLineCollision(Impact, pDynBaseGeom, localPoint, localVect, bBothSides, GeomConMask))
+            return false;
+        Impact->pBaseGeom = pDynBaseGeom;
+        return true;
     }
 
     bool ZCollisionBase::CalcDynamicLineCollision(SExtendedImpactInfo* Impact, const ZTreeGroup* pTreeGroup, eGlobalTreeType eGTT, const float* vP, const float* vD, bool bBothSides, int GeomConMask)
@@ -556,8 +736,29 @@ namespace Glacier
 
     bool ZCollisionBase::CalcLineCollision(SExtendedImpactInfo* pImpact, ZBaseGeom* pBaseGeom, float* vLineStart, float* vLineDirection, bool bTwoSided, uint32_t lColiMask)
     {
-        // TODO: Finish me
-        return false;
+        if (!pBaseGeom || !pBaseGeom->Prim())
+            return false;
+        const auto* hdr = ZPrimControlBase::GetPrimitive<const SPrimHeader>(pBaseGeom->Prim());
+        ZOctree* octree = nullptr;
+        if (hdr->lType == EPrimType::PTSTRIP || hdr->lType == EPrimType::PTDOT3STRIP)
+            octree = GetOctreePtr(reinterpret_cast<const SPrimStrips*>(hdr)->lColiId);
+        else if (hdr->lType == EPrimType::PTOBJECTHEADER)
+            octree = GetOctreePtr(reinterpret_cast<const SPrimObjectHeader*>(hdr)->lColiId);
+        if (!octree)
+            return false;
+        SStripLineChk info {};
+        info.pImpact = pImpact;
+        info.pUniqueSubStripInfo = reinterpret_cast<char*>(m_pUniqueSubStripInfo);
+        vcpy(info.vStart, vLineStart);
+        vcpy(info.vVect, vLineDirection);
+        info.bBothSides = bTwoSided;
+        info.ColiMask = lColiMask;
+        info.pChkFunc = CalcStripLineCallBack;
+        ZVector3 end = ZVector3(info.vStart) + ZVector3(info.vVect);
+        if (!octree->CheckLinesegment(&info, info.vStart, end))
+            return false;
+        pImpact->pBaseGeom = pBaseGeom;
+        return true;
     }
 
     uint32_t ZCollisionBase::FindMaterialDescriptor(uint32_t lPrim)
@@ -603,33 +804,159 @@ namespace Glacier
 
     uint32_t ZCollisionBase::GetDynamicGeomsInBox(ZBaseGeom** pGeomList, ZBaseGeom** pGeomListEnd, eGlobalTreeType eGTT, const float* mMat, const float* vCen, const float* vSize, uint32_t lGeomConMask, bool bExact)
     {
-        // TODO: Finish me
-        return 0;
+        auto* pRoot = g_pEngineData->m_pRoot;
+        ZASSERT(pRoot->IsDynamicContainer());
+        auto* pTree = pRoot->GetDynamicTreePtr();
+        if (!pTree)
+            return 0;
+
+        STreeGetDynamic info {};
+        info.pChkFunc = TreeGetDynamicCallBack;
+        info.pGeomList = pGeomList;
+        info.pGeomListEnd = pGeomListEnd;
+        info.lGeomConMask = lGeomConMask;
+        info.eGTT = eGTT;
+        ZVector3 size { vSize };
+        TransformBox(mMat, size);
+        ZVector3 center { vCen };
+        pTree->CheckCube(&info, center - size, center + size);
+        info.ClearMarks();
+
+        if (bExact)
+        {
+            uint32_t count = info.lNrGeomsInList;
+            ZVector3 localCenter { vCen };
+            ZMat3x3 localMatrix { mMat };
+            for (uint32_t i = 0; i < count; ++i)
+            {
+                ZVector3 geomCenter;
+                ZMat3x3 geomMatrix;
+                pGeomList[i]->GetCen(geomCenter);
+                mreset(geomMatrix);
+                pGeomList[i]->GetRootMatPos(geomMatrix, geomCenter);
+                if (!rectBoxColi(localMatrix, localCenter, vSize, geomMatrix, geomCenter, pGeomList[i]->Size()))
+                    pGeomList[i--] = pGeomList[--count];
+            }
+            return count;
+        }
+        return info.lNrGeomsInList;
     }
 
     uint32_t ZCollisionBase::GetDynamicGeomsInBoxInRooms(ZBaseGeom** pGeomList, ZBaseGeom** pGeomListEnd, eGlobalTreeType eGTT, ZROOM** pRoomList, uint32_t lNrRooms, const float* mMat, const float* vCen, const float* vSize, uint32_t lGeomConMask, bool bExact)
     {
-        // TODO: Finish me
-        return 0;
+        auto* pRoot = g_pEngineData->m_pRoot;
+        ZASSERT(pRoot->IsDynamicContainer());
+        if (!pRoot->GetDynamicTreePtr() || !lNrRooms)
+            return 0;
+
+        STreeGetDynamic info {};
+        info.pChkFunc = TreeGetDynamicCallBack;
+        info.pGeomList = pGeomList;
+        info.pGeomListEnd = pGeomListEnd;
+        info.lGeomConMask = lGeomConMask;
+        info.eGTT = eGTT;
+        ZVector3 size { vSize };
+        TransformBox(mMat, size);
+        ZVector3 center { vCen };
+        for (uint32_t i = 0; i < lNrRooms; ++i)
+        {
+            info.pRoom = pRoomList[i];
+            pRoot->GetDynamicTreePtr()->CheckCube(&info, center - size, center + size);
+        }
+        info.ClearMarks();
+        if (!bExact)
+            return info.lNrGeomsInList;
+
+        uint32_t count = info.lNrGeomsInList;
+        ZMat3x3 localMatrix { mMat };
+        for (uint32_t i = 0; i < count; ++i)
+        {
+            ZVector3 geomCenter;
+            ZMat3x3 geomMatrix;
+            pGeomList[i]->GetCen(geomCenter);
+            mreset(geomMatrix);
+            pGeomList[i]->GetRootMatPos(geomMatrix, geomCenter);
+            if (!rectBoxColi(localMatrix, vCen, vSize, geomMatrix, geomCenter, pGeomList[i]->Size()))
+                pGeomList[i--] = pGeomList[--count];
+        }
+        return count;
     }
 
     bool ZCollisionBase::GetStripsInsideBox(uint32_t* pNrStrips, char* pMemBuffer, uint32_t lMemBufferSize, const float* mBoxMatrix, const float* vBoxPosition, const float* vBoxDimensions, uint32_t lColiMask, bool bCheckStatic, bool bCheckDynamic, bool bIgnoreActors, eGlobalTreeType eGTT)
     {
-        // TODO: Finish me
-        return false;
+        ZBaseGeom* geoms[MAX_GEOMS_NR] {};
+        const uint32_t count = GetGeomsInBox(geoms, &geoms[MAX_GEOMS_NR], eGTT, mBoxMatrix, vBoxPosition,
+            vBoxDimensions, lColiMask, bCheckStatic, bCheckDynamic, true);
+        SStripInsideBoxCubeChk info {};
+        info.pChkFunc = CallBackStripInsideBox;
+        info.pUniqueSubStripInfo = reinterpret_cast<char*>(m_pUniqueSubStripInfo);
+        info.pMemBuffer = pMemBuffer;
+        info.pMemBufferEnd = pMemBuffer + lMemBufferSize;
+        info.lColiMask = lColiMask;
+        info.pCollisionBase = this;
+        for (uint32_t i = 0; i < count; ++i)
+        {
+            info.pBaseGeom = geoms[i];
+            const auto* hdr = ZPrimControlBase::GetPrimitive<const SPrimHeader>(geoms[i]->Prim());
+            uint32_t id = 0;
+            if (hdr->lType == EPrimType::PTSTRIP || hdr->lType == EPrimType::PTDOT3STRIP)
+                id = reinterpret_cast<const SPrimStrips*>(hdr)->lColiId;
+            else if (hdr->lType == EPrimType::PTOBJECTHEADER)
+                id = reinterpret_cast<const SPrimObjectHeader*>(hdr)->lColiId;
+            auto* tree = GetOctreePtr(id);
+            if (!tree)
+                continue;
+            ZVector3 localPos { vBoxPosition };
+            ZMat3x3 localMat { mBoxMatrix };
+            geoms[i]->GetLocalMatPos(localMat, localPos);
+            vcpy(info.vBaseGeomToBox, localMat.data);
+            vcpy(info.vBaseGeomToBox + 3, localMat.data + 3);
+            vcpy(info.vBaseGeomToBox + 6, localMat.data + 6);
+            vcpy(info.vBoxDimensions, vBoxDimensions);
+            tree->CheckCube(&info, localPos - ZVector3(vBoxDimensions), localPos + ZVector3(vBoxDimensions));
+        }
+        *pNrStrips = info.lNrStrips;
+        return info.pMemBufferEnd - info.pMemBuffer >= 0x498;
     }
 
     bool ZCollisionBase::CalcLineColi_(SExtendedImpactInfo *pImpact, eGlobalTreeType eGTT, const float* vPos, const float* vVect, bool bBothSides, uint32_t GeomConMask, bool bCheckStatic, bool bCheckDynamic)
     {
+        bool bResult = false;
         if (bCheckStatic)
         {
             ZASSERT(m_pRoomColiTree);
 
-            // TODO: Finish me
+            SRoomLineChk roomInfo {};
+            SGeomLineChk geomInfo {};
+            roomInfo.pChkFunc = CalcRoomLineCallBack;
+            roomInfo.eGTT = eGTT;
+            roomInfo.pGeomLineChk = &geomInfo;
+            roomInfo.m_pRoomTreePtr = reinterpret_cast<char*>(m_pRoomColiTree->GetBasePtrObjects());
+            geomInfo.pChkFunc = CalcGeomLineCallBack;
+            geomInfo.GeomConMask = GeomConMask;
+            geomInfo.vStart = vPos;
+            geomInfo.vVect = vVect;
+            geomInfo.pStripLineChk = nullptr;
+            SStripLineChk stripInfo {};
+            stripInfo.pChkFunc = CalcStripLineCallBack;
+            stripInfo.pImpact = pImpact;
+            stripInfo.pUniqueSubStripInfo = reinterpret_cast<char*>(m_pUniqueSubStripInfo);
+            vcpy(stripInfo.vStart, vPos);
+            vcpy(stripInfo.vVect, vVect);
+            stripInfo.bBothSides = bBothSides;
+            stripInfo.ColiMask = GeomConMask;
+            geomInfo.pStripLineChk = &stripInfo;
+            ZVector3 end = ZVector3(vPos) + ZVector3(vVect);
+            bResult = m_pRoomColiTree->CheckLinesegment(&roomInfo, ZVector3(vPos), end);
         }
 
-        // TODO: Finish me
-        return false;
+        if (bCheckDynamic)
+            bResult = CalcDynamicLineCollision(pImpact, g_pEngineData->m_pRoot, eGTT, vPos, vVect, bBothSides, GeomConMask) || bResult;
+        if (!bResult)
+            return false;
+        pImpact->pBaseGeom->GetRootPoint(pImpact->vPosition);
+        pImpact->m_iColiMaterialDescId = FindMaterialDescriptor(pImpact->m_HitCache.___u0.__s0.lIdHi);
+        return true;
     }
 
     ZCollisionBase* ZCollisionBase::GetCollisionInterface()

@@ -1,11 +1,16 @@
 #include <Glacier/Data/ZEngineDataBase.h>
+#include <Glacier/Data/ZStaticGameLevelData.h>
+#include <Glacier/Data/ZGameData.h>
 #include <Glacier/ResourceCollection.h>
 #include <Glacier/Geom/ZEngineGeomControl.h>
 #include <Glacier/ZMessageResolver.h>
 #include <Glacier/System/ZSysInterface.h>
+#include <Glacier/System/ZDllBase.h>
 #include <Glacier/Com/Globals.h>
 #include <Glacier/Com/CCom.h>
 
+#include <Glacier/Render/ZRender.h>
+#include <Glacier/Render/ZRenderBaseDll.h>
 #include <Glacier/ScriptEngine/ScriptEngine.h>
 
 #include <Glacier/Serializer/ZIOInputStream.h>
@@ -17,28 +22,33 @@
 #include <Glacier/EventBase/ZBaseConRout.h>
 
 #include <Glacier/Geom/ZGeomBuffer.h>
+#include <Glacier/Geom/ZTreeGroup.h>
 #include <Glacier/Geom/ZROOM.h>
 #include <Glacier/Geom/ZGEOM.h>
 #include <Glacier/Geom/ZCAMERA.h>
 
 #include <Glacier/Render/ZRender.h>
 
+#include <Glacier/Action/ActionInterface.h>
+
 #include <Glacier/ZSTL/ZPoolAllocRefTab.h>
+
+#include <Glacier/Physics/ZCollisionBase.h>
+
+#include <Glacier/Debug/ZPushMemColor.h>
+#include <Glacier/Debug/ZMemReadOut.h>
 
 #include <Glacier/ZUniMemory.h>
 #include <Glacier/ZUniAssert.h>
-
-#include <G1ConfigurationService.h>
-#include <HF/HackingFramework.hpp>
-#include <cassert>
 #include <cstring>
-#include <new>
 
 
 namespace Glacier
 {
     STATIC_GLOBAL_CLASS_INSTANCE(float, g_fDisplayPercentTarget);
     STATIC_GLOBAL_CLASS_INSTANCE_IMPL(float, g_fDisplayPercentTarget, 0x008BA060, 0.0f);
+    STATIC_GLOBAL_CLASS_INSTANCE(int, DEBUG_WhenToPrintMemory);
+    STATIC_GLOBAL_CLASS_INSTANCE_IMPL(int, DEBUG_WhenToPrintMemory, 0x008BA06C, 0);
 
     namespace
     {
@@ -219,7 +229,87 @@ namespace Glacier
 
     void ZEngineDataBase::MainLoop(bool bUpdateViews)
     {
-        // TODO: Finish me after SysInput, Action:: and ZGameData will be reversed
+        static Action::ZHandle s_PauseAction { "Pause" };
+
+        g_pSysInterface->UnlockRefs();
+        {
+            if (s_PauseAction.Digital())
+            {
+                m_bPause = !m_bPause;
+            }
+
+            if (g_pSysInterface->m_pSoundDll)
+            {
+                // TODO: Finish me after ZSoundDllBase reversed
+            }
+
+            if (!m_bFrozen)
+            {
+                ZEngineGeomControl::GetInstance().UpdateMovedGeoms();
+                m_pSaveObject = nullptr;
+
+                {
+                    PUSH_MEMORY_COLOR(0xFFFFFFu);
+
+                    if (m_pScheduledUpdate)
+                    {
+                        m_pScheduledUpdate->ScheduleEvents();
+                    }
+
+                    if (g_pGameData)
+                    {
+                        g_pGameData->PreFrameUpdate();
+                    }
+
+                    m_EventList.FrameUpdate();
+
+                    if (g_pGameData)
+                    {
+                        g_pGameData->PostFrameUpdate();
+                    }
+                }
+            }
+
+            bool bDoDraw = m_lDontDrawFrame <= 0 ? bUpdateViews : false;
+            if (!m_lDontDrawFrame)
+            {
+                m_lDontDrawFrame = -1;
+                NetworkUpdate();
+            }
+
+            if (bDoDraw)
+            {
+                for (auto* pCurrentRender = g_pSysInterface->WindowFirst; pCurrentRender; pCurrentRender = pCurrentRender->Nxt)
+                {
+                    pCurrentRender->Update();
+                }
+            }
+
+            SoundUpdate();
+        }
+        g_pSysInterface->LockRefs();
+
+        if (m_pLoadCallBack)
+        {
+            m_pLoadCallBack->CallMe();
+            m_pLoadCallBack = nullptr;
+        }
+
+        ControlSceneChange();
+        if (g_pSysInterface->m_fAutoExitTime != 0.0f && static_cast<float>(g_pSysInterface->m_fActualTime) > static_cast<float>(g_pSysInterface->m_fAutoExitTime))
+        {
+            printf("\nAutoExit OK!\n");
+            g_pSysInterface->m_fAutoExitTime = 0.0f;
+            g_pSysInterface->m_bQuit = true;
+        }
+
+        if (g_pSysInterface->m_lFrameCount == DEBUG_WhenToPrintMemory)
+        {
+            if (ZMemReadOut::Exists())
+            {
+                ZMemReadOut::Instance().PrintStatus();
+            }
+        }
     }
 
 
@@ -251,9 +341,11 @@ namespace Glacier
             lExtraGeomsSize += 0x50;
         }
 
-        // TODO: Finish me
+        if (lNrGeomTypes)
+        {
+            // TODO: Finish me
+        }
 
-        // end
         lExtraGeomsSize += 0x7800; // IOI?!
         lNrBaseGeoms += 0x112;
     }
@@ -285,17 +377,80 @@ namespace Glacier
 
     void ZEngineDataBase::CreateBoundTrees()
     {
-        // TODO: Finish me
+        if (!m_pPackedTreeData)
+            return;
+
+        PUSH_MEMORY_COLOR(0x008080FCu);
+
+        if (*reinterpret_cast<uint32_t*>(m_pPackedTreeData))
+        {
+            m_pRoot->MakeStaticContainer(true);
+        }
+
+        char* pBufferStart = reinterpret_cast<char*>(m_pPackedTreeData + 0x10);
+
+        for (auto* pBaseGeom = m_pRoot->BaseGeom(); pBaseGeom; )
+        {
+            auto* pGeom = pBaseGeom->GetGeom();
+            const bool isGroup = pGeom
+                ? (pGeom->GetObjectId() & ZGROUP::m_Mask) == ZGROUP::m_Id
+                : pBaseGeom->IsDerivedFrom<ZGROUP>();
+
+            if (isGroup)
+            {
+                auto* pTreeGroup = pGeom
+                    ? geom_cast<ZTreeGroup>(pGeom)
+                    : static_cast<ZTreeGroup*>(nullptr);
+                if (pTreeGroup && pTreeGroup->IsStaticContainer())
+                {
+                    pBufferStart = pTreeGroup->LoadBoundTrees(pBufferStart);
+                }
+            }
+
+            m_pRoot->RecurGetNext(&pBaseGeom);
+        }
+
+        for (; *reinterpret_cast<int32_t*>(pBufferStart) != -1; pBufferStart = ZCollisionBase::GetCollisionInterface()->LoadInternColiTree(pBufferStart))
+        {
+        }
+
+        const auto* end = m_pPackedTreeData + m_lPackedTreeDataLength;
+        const auto* uniqueInfo = reinterpret_cast<const uint8_t*>(pBufferStart + 4);
+        const uint32_t size = uniqueInfo <= end
+            ? static_cast<uint32_t>(end - uniqueInfo)
+            : 0;
+        ZCollisionBase::GetCollisionInterface()->LoadUniqueSubStripInfo(
+            reinterpret_cast<SUniqueSubStripInfo*>(pBufferStart + 4), size);
     }
 
     void ZEngineDataBase::CreateRoomTrees()
     {
-        // Nothing
+        // Do nothing
     }
 
     void ZEngineDataBase::LoadRoomTrees()
     {
-        // TODO: Finish me after ZCollisionBase will be reversed
+        const uint32_t roomColiTreeSize = GetRoomColiTreeSize();
+        if (roomColiTreeSize != static_cast<uint32_t>(-1))
+        {
+            PUSH_MEMORY_COLOR(0x008080FCu);
+
+            m_pRoomColiTreeData = static_cast<uint8_t*>(ZUniMemory::Allocate(roomColiTreeSize));
+            GetRoomColiTreeData(m_pRoomColiTreeData, roomColiTreeSize);
+            ZCollisionBase::GetCollisionInterface()->InstallCollisionBuffer(
+                reinterpret_cast<char*>(m_pRoomColiTreeData), roomColiTreeSize);
+        }
+
+        const uint32_t roomInsideTreeSize = GetRoomInsideTreeSize();
+        if (roomInsideTreeSize != static_cast<uint32_t>(-1))
+        {
+            PUSH_MEMORY_COLOR(0x008080FCu);
+
+            m_pRoomInsideTreeData = static_cast<uint8_t*>(ZUniMemory::Allocate(roomInsideTreeSize));
+            GetRoomInsideTreeData(m_pRoomInsideTreeData, roomInsideTreeSize);
+            ZCollisionBase::GetCollisionInterface()->InstallInsideBuffer(
+                reinterpret_cast<char*>(m_pRoomInsideTreeData), roomInsideTreeSize);
+        }
     }
 
     void ZEngineDataBase::CreateSoundGraph()
@@ -393,8 +548,13 @@ namespace Glacier
 
         m_lPackedTreeDataLength = 0;
 
+        if (g_pSysInterface->m_pSoundDll)
+            g_pSysInterface->m_pSoundDll->PopScene();
 
-        // TODO: Finish me after ZSoundDllWintel & g_pD3DDll & ZRender will be revered
+        FreeDlcFiles();
+
+        if (g_pRenderDll)
+            g_pRenderDll->PopScene();
     }
 
     void ZEngineDataBase::AddDlc(const char* pDllName)
@@ -509,7 +669,40 @@ namespace Glacier
 
     void ZEngineDataBase::PushValues(ZScene* pNewScene)
     {
-        // TODO: Finish me
+        --m_lSceneDepth;
+        g_pSysInterface->UnlockRefs();
+
+        if (m_pPackedTreeData)
+        {
+            ZUniMemory::Free(m_pPackedTreeData);
+            m_pPackedTreeData = nullptr;
+        }
+        m_lPackedTreeDataLength = 0;
+
+        CloseDown();
+
+        g_pSysInterface->LockRefs();
+        g_pSysFile->RemoveAllBigs();
+
+        m_pPackedAnims = pNewScene->_pPackedAnims;
+        m_lPackedAnimsLength = pNewScene->_lPackedAnimsLength;
+        m_pStaticBuffer = pNewScene->_pStaticBuffer;
+        m_lStaticBufferLength = pNewScene->_lStaticBufferLength;
+        m_pRoot = pNewScene->_pRoot;
+        m_lLockMinMax = pNewScene->_lLockMinMax;
+        m_pPackedTreeData = pNewScene->_pPackedTreeData;
+        m_pGeomBuffer = pNewScene->_pGeomBuffer;
+
+        if (g_pSysInterface->WindowFirst)
+            g_pSysInterface->WindowFirst->RemoveCameras();
+
+        if (pNewScene->_pBigFiles)
+            g_pSysFile->m_pBigFiles = pNewScene->_pBigFiles;
+
+        std::memcpy(&g_pSysInterface->FrameTime.secs, &pNewScene->_FrameTime, sizeof(int32_t));
+        std::memcpy(&g_pSysInterface->PreFrameTime.secs, &pNewScene->_PreFrameTime, sizeof(int32_t));
+        g_pSysInterface->ResetTime();
+        std::memcpy(&g_pSysInterface->m_fActualTime.secs, &pNewScene->_ActTime, sizeof(int32_t));
     }
 
     void ZEngineDataBase::InstallTextureBuffer()
@@ -733,28 +926,16 @@ namespace Glacier
         return &m_SceneCom;
     }
 
-    std::intptr_t ZEngineDataBase::GetSceneVar(const char* varname)
+    ZREF ZEngineDataBase::GetSceneVar(const char* varname) const
     {
-        using CCom_t = int;
-
-        auto ccom = (CCom_t*)GetSceneCom();
-        if (!ccom) {
-            return 0;
-        }
-
-        return HF::Hook::VFHook<CCom_t>::invoke<std::intptr_t, const char*, int>(ccom, 36, varname, 2);
+        // TODO: Finish me
+        return 0;
     }
 
     ZSoundObject* ZEngineDataBase::SRefToPtr(Glacier::ZREF sref)
     {
-        // TODO: Reverse me after ZSoundDllWintel will be reversed
-        assert(G1ConfigurationService::G1API_FunctionAddress_ZEngineDataBase_SRefToPtr != G1ConfigurationService::kNotConfiguredOption);
-        if (G1ConfigurationService::G1API_FunctionAddress_ZEngineDataBase_SRefToPtr != G1ConfigurationService::kNotConfiguredOption)
-        {
-            return ((ZSoundObject*(__thiscall*)(ZEngineDataBase*, Glacier::ZREF))(G1ConfigurationService::G1API_FunctionAddress_ZEngineDataBase_SRefToPtr))(this, sref);
-        }
-
-        return 0;
+        // TODO: Finish me
+        return nullptr;
     }
 
 	ZGEOMCLASSINFO* ZEngineDataBase::GetGeomClassInfo(uint32_t typeId)
@@ -807,6 +988,18 @@ namespace Glacier
     {
         MYSTR sOctFile = CalcCacheFileName(m_FileName, "oct");
         g_pSysFile->Load(sOctFile, pData, lSize, 0, false);
+    }
+
+    uint32_t ZEngineDataBase::GetStaticGameLevelDataSize()
+    {
+        MYSTR sStaticGameLevelFile = CalcCacheFileName(m_FileName, "sgd");
+        return g_pSysFile->GetSize(sStaticGameLevelFile, false);
+    }
+
+    void ZEngineDataBase::GetStaticGameLevelData(void* pData, unsigned int lSize)
+    {
+        MYSTR sStaticGameLevelFile = CalcCacheFileName(m_FileName, "sgd");
+        g_pSysFile->Load(sStaticGameLevelFile, pData, lSize, 0, false);
     }
 
     void ZEngineDataBase::DoLoadScene()
@@ -1127,6 +1320,22 @@ namespace Glacier
 
     void ZEngineDataBase::LoadPackedStaticGameLevelData()
     {
-        // TODO: Finish me
+        PUSH_MEMORY_COLOR(0xFFFF40u);
+        ZStaticGameLevelData::Create();
+
+        const uint32_t dataSize = GetStaticGameLevelDataSize();
+        if (dataSize == static_cast<uint32_t>(-1))
+            return;
+
+        void* data = ZUniMemory::Allocate(dataSize);
+        GetStaticGameLevelData(data, dataSize);
+
+        if (auto* staticData = ZStaticGameLevelData::Instance())
+            staticData->Load(data);
+    }
+
+    void ZEngineDataBase::NetworkUpdate()
+    {
+        // TODO: Finish me (sub_69D620)
     }
 }

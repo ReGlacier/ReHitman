@@ -29,10 +29,14 @@ namespace Glacier
         static constexpr const char* Name = "QRigidBody";
         static constexpr const char* ClassName = "ZGEOM_QRigidBody";
 
-        //vftable
+        // vtbl
+        // RTP::cBase
+        // ZEventBase
+        // ZBaseConRout
+        // CRigidBody
         virtual void SetVelocity(const SRigidBodyVelocity& velocity);
 
-        //api
+        // methods
         void Enable();
         void Disable();
         void DisableRemove(bool);
@@ -45,7 +49,7 @@ namespace Glacier
         void CheckCollision4a(ZCollisionBox* collisionBox);
         void CheckCollision4b(ZCollisionBox* collisionBox);
 
-        //data (total size is 0xF4, ZEventBase size is 0x30)
+        // members
         uint16_t m_id;
         RE_ADD_PADDING(2);
         ConstrainedParticleSystem m_Particles { 3, 5 };

@@ -350,7 +350,100 @@ namespace Glacier
 
         void CalculateLookAtMatrix(ZMat3x3& m0, const ZBone* pBones, const ZBoneConstraintLookAt* pBoneConstraintLookAt)
         {
-            // TODO: Finish me (PC at 0058DD00)
+            const ZVector3& vSource = pBones[pBoneConstraintLookAt->m_lBoneIndex]._Pos;
+
+            ZVector3 vTarget;
+            GetTargetPosition(vTarget, pBones, pBoneConstraintLookAt);
+
+            ZVector3 vLookAt;
+            vsub(vLookAt, vTarget, vSource);
+            vnorm(vLookAt);
+            if (pBoneConstraintLookAt->m_lLookAtFlip)
+                vneg(vLookAt);
+
+            const auto& upNode = pBones[pBoneConstraintLookAt->m_UpNodeParentIdx];
+
+            ZVector3 vUpNodePosition;
+            vmmul(vUpNodePosition, pBoneConstraintLookAt->m_UpPos, upNode._Mat);
+            vadd(vUpNodePosition, upNode._Pos);
+
+            ZVector3 vSourceToUpNode;
+            vsub(vSourceToUpNode, vUpNodePosition, vSource);
+            if (vSourceToUpNode.x == 0.0f && vSourceToUpNode.y == 0.0f && vSourceToUpNode.z == 0.0f)
+                vSourceToUpNode = { 1.0f, 0.0f, 0.0f };
+            vnorm(vSourceToUpNode);
+
+            ZVector3 vLocalUpPosition;
+            if (pBoneConstraintLookAt->m_UpnodeControl)
+                vmmul(vLocalUpPosition, pBoneConstraintLookAt->m_UpPos, upNode._Mat);
+
+            auto projectUp = [&](ZVector3& vResult, const ZVector3& vAxis, bool bLocalFlip, bool bUpNodeFlip)
+            {
+                if (pBoneConstraintLookAt->m_UpnodeControl == 1)
+                    ProjectionOnPerpPlane(vResult, vLocalUpPosition, vAxis, bLocalFlip);
+                else
+                    ProjectionOnPerpPlane(vResult, vSourceToUpNode, vAxis, bUpNodeFlip);
+            };
+
+            if (pBoneConstraintLookAt->m_lLookAtAxis == 0)
+            {
+                m0.ZAxis() = vLookAt;
+
+                if (pBoneConstraintLookAt->m_lUpBoneAlignmentAxis == 6)
+                {
+                    projectUp(m0.XAxis(), m0.ZAxis(), false, pBoneConstraintLookAt->m_lUpFlip != 0);
+                    vneg(m0.ZAxis());
+                    vcross(m0.YAxis(), m0.ZAxis(), m0.XAxis());
+                    vnorm(m0.YAxis());
+                }
+                else if (pBoneConstraintLookAt->m_lUpBoneAlignmentAxis == 3)
+                {
+                    projectUp(m0.YAxis(), m0.ZAxis(), false, pBoneConstraintLookAt->m_lUpFlip != 0);
+                    vcross(m0.XAxis(), m0.YAxis(), m0.ZAxis());
+                    vnorm(m0.XAxis());
+                    vneg(m0.ZAxis());
+                    vneg(m0.XAxis());
+                }
+            }
+            else if (pBoneConstraintLookAt->m_lLookAtAxis == 3)
+            {
+                m0.YAxis() = vLookAt;
+
+                if (pBoneConstraintLookAt->m_lUpBoneAlignmentAxis == 6)
+                {
+                    projectUp(m0.XAxis(), m0.YAxis(), false, pBoneConstraintLookAt->m_lUpFlip != 0);
+                    vcross(m0.ZAxis(), m0.XAxis(), m0.YAxis());
+                    vnorm(m0.ZAxis());
+                }
+                else if (pBoneConstraintLookAt->m_lUpBoneAlignmentAxis == 0)
+                {
+                    projectUp(m0.ZAxis(), m0.YAxis(), true, pBoneConstraintLookAt->m_lUpFlip == 0);
+                    vcross(m0.XAxis(), m0.YAxis(), m0.ZAxis());
+                    vnorm(m0.XAxis());
+                }
+            }
+            else if (pBoneConstraintLookAt->m_lLookAtAxis == 6)
+            {
+                m0.XAxis() = vLookAt;
+
+                if (pBoneConstraintLookAt->m_lUpBoneAlignmentAxis == 3)
+                {
+                    projectUp(m0.YAxis(), m0.XAxis(), false, pBoneConstraintLookAt->m_lUpFlip != 0);
+                    vcross(m0.ZAxis(), m0.XAxis(), m0.YAxis());
+                    vnorm(m0.ZAxis());
+                }
+                else if (pBoneConstraintLookAt->m_lUpBoneAlignmentAxis == 0)
+                {
+                    projectUp(m0.ZAxis(), m0.XAxis(), true, pBoneConstraintLookAt->m_lUpFlip == 0);
+                    vcross(m0.YAxis(), m0.ZAxis(), m0.XAxis());
+                    vnorm(m0.YAxis());
+                }
+            }
+
+            const ZVector3 vOldZ = m0.ZAxis();
+            m0.ZAxis() = m0.YAxis();
+            m0.YAxis() = vOldZ;
+            vneg(m0.YAxis());
         }
     }
 

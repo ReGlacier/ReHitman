@@ -301,8 +301,8 @@ namespace Glacier
         virtual void StopAudio();
         virtual void StopAnimSound(bool, int, bool);
         virtual void StopAllAnimSounds(void);
-        virtual void CheckLineCollision(float *,float const*,float const*);
-        virtual void CheckLineCollision(float *,float const*,float const*,float *);
+         virtual int CheckLineCollision(float *,float const*,float const*) const;
+         virtual int CheckLineCollision(float *,float const*,float const*,float *) const;
         virtual void CheckBoxCollision(float const*,float const*,float const*);
         virtual void Use2Skeletons(void);
         virtual void LocalStateIK(void);

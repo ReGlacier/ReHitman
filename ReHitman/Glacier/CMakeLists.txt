@@ -2,6 +2,25 @@ cmake_minimum_required(VERSION 4.0)
 project(BloodMoney LANGUAGES C CXX ASM_MASM)
 set(CMAKE_CXX_STANDARD 20)
 
+if(NOT TARGET Ogg::ogg)
+    set(INSTALL_DOCS OFF CACHE BOOL "" FORCE)
+    set(INSTALL_PKG_CONFIG_MODULE OFF CACHE BOOL "" FORCE)
+    set(INSTALL_CMAKE_PACKAGE_MODULE OFF CACHE BOOL "" FORCE)
+    add_subdirectory(
+        ${CMAKE_CURRENT_SOURCE_DIR}/../Modules/libogg-1.3.6
+        ${CMAKE_CURRENT_BINARY_DIR}/libogg
+    )
+endif()
+
+if(NOT TARGET vorbis)
+    set(OGG_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../Modules/libogg-1.3.6/include CACHE PATH "" FORCE)
+    set(OGG_LIBRARY ogg CACHE STRING "" FORCE)
+    add_subdirectory(
+        ${CMAKE_CURRENT_SOURCE_DIR}/../Modules/libvorbis-1.3.7
+        ${CMAKE_CURRENT_BINARY_DIR}/libvorbis
+    )
+endif()
+
 file(GLOB_RECURSE GLACIER_SOURCES 
     ${CMAKE_CURRENT_SOURCE_DIR}/source/*.cpp 
     ${CMAKE_CURRENT_SOURCE_DIR}/source/*.h
@@ -16,6 +35,7 @@ set(GLACIER_COMMON_LIBS
     PRIVATE 
         zlib
         jpeg
+        vorbis
     PUBLIC
         HF::Core
         stlport
