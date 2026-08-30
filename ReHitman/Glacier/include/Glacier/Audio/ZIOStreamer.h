@@ -36,7 +36,7 @@ namespace Glacier
 
         void SetMetaMem(char* _metaMemory);
         ZIOStream* AddAudioStream(int _latency, uint32_t _fileOffset, uint32_t _streamSize, bool _loop,
-            uint32_t _waveChunkSize, int _metaChunkSize, int _numMetaChunks, int _startOffset, bool _localized);
+            uint32_t _startOffset, int _metaChunkSize, int _waveChunkSize, int _numMetaChunks, bool _localized);
         void RemoveStream(ZIOStream* _stream);
         void SetupRead();
         bool Update();

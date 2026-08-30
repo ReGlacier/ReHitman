@@ -1,5 +1,6 @@
 #include <Glacier/System/ZSysInterface.h>
 #include <Glacier/Data/ZEngineDataBase.h>
+#include <Glacier/Audio/ZSoundObject.h>
 #include <Glacier/Audio/ZSDOwner.h>
 
 
@@ -35,8 +36,7 @@ namespace Glacier
                 auto* pLastPlayed = g_pEngineData->SRefToPtr(m_rLastPlayed);
                 if (pLastPlayed)
                 {
-                    // TODO: Uncomment after ZSoundObject reversed
-                    // ZUniMemory::Delete(pLastPlayed);
+                    ZUniMemory::Delete(pLastPlayed);
                 }
 
                 m_rLastPlayed = 0;

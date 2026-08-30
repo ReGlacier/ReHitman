@@ -12,6 +12,8 @@ namespace Glacier
         , m_lBufferId(0)
         , m_bWaitingForMetaSync(false)
         , m_lBufferIndex(0)
+        , m_bFrameClaimed(false)
+        , m_lGroupType(0)
         , m_bLowpassEnabled(false)
         , m_bAddIdCmd(false)
         , m_VoiceState(VS_READY)
@@ -27,13 +29,13 @@ namespace Glacier
         , m_lPrio(0)
         , m_dwBufferType(0)
         , m_lDopplerPitch(0)
-        , m_field5C(0)
-        , m_field60(0)
-        , m_field64(0)
-        , m_field68(0)
-        , m_field6C(0)
-        , m_field70(0)
-        , m_field74(0)
+        , m_lVolume(0)
+        , m_lVolumeL(0)
+        , m_lVolumeR(0)
+        , m_lVolumeS(0)
+        , m_lPitch(0)
+        , m_lVolumeLS(0)
+        , m_lVolumeRS(0)
         , m_rWave(nullptr)
         , m_rSndObj(0)
         , m_dwWriteOffset(0)
@@ -65,7 +67,7 @@ namespace Glacier
         m_bAddIdCmd = false;
         m_lBufferId = 0;
         Free();
-        m_field4C = 0;
+        m_lGroupType = 0;
         m_bPause = false;
         m_bFinished = false;
         m_rWave = _wave;
@@ -124,21 +126,21 @@ namespace Glacier
         if ((_command->m_lFlags & 2) != 0)
             m_bWaitingForMetaSync = false;
 
-        m_lChainIdx = static_cast<int32_t>(_command->m_lPrio);
-        m_lPrio = _command->m_lSndRef;
-        m_bLooping = _command->m_lHeaderOffset != 0;
-        m_rSndObj = static_cast<uint32_t>(_command->m_lPitch);
+        m_lChainIdx = _command->m_lPathIdx;
+        m_lPrio = _command->m_lPrio;
+        m_bLooping = _command->m_bLooping != 0;
+        m_rSndObj = _command->m_lSndRef;
         m_bLowpassEnabled = _command->m_lLowpassEnabled != 0;
 
         if (m_VoiceState != VS_STARTFADE && m_VoiceState != VS_FADING)
         {
-            m_field5C = _command->m_field38;
-            m_field60 = _command->m_field3C;
-            m_field64 = _command->m_field40;
-            m_field68 = _command->m_field44;
-            m_field6C = static_cast<int32_t>(_command->m_lBufferType);
-            m_field70 = _command->m_field48;
-            m_field74 = _command->m_field4C;
+            m_lVolume = _command->m_lVolume;
+            m_lVolumeL = _command->m_lVolumeL;
+            m_lVolumeR = _command->m_lVolumeR;
+            m_lVolumeS = _command->m_lVolumeS;
+            m_lPitch = _command->m_lPitch;
+            m_lVolumeLS = _command->m_lVolumeLS;
+            m_lVolumeRS = _command->m_lVolumeRS;
         }
 
         if (m_bPause)
@@ -181,7 +183,7 @@ namespace Glacier
 
     int _ZSoundBuffer::CopyWaveData()
     {
-        return 0;
+        return 3;
     }
 
     int _ZSoundBuffer::GetPlayCursor()
@@ -242,11 +244,6 @@ namespace Glacier
         m_eBufferType = SBT_NORMAL;
         m_pStream = nullptr;
         m_lBufferSize = 0;
-        m_lBufferId = 0;
-        m_VoiceState = VS_READY;
-        m_lPlayCursor = 0;
-        m_lPrevPlayCursor = 0;
-        m_lPrio = 0;
         std::memset(&m_Inf, 0, sizeof(m_Inf));
         m_pPoseData = nullptr;
     }
@@ -304,6 +301,99 @@ namespace Glacier
                 _minimum = sampleRate;
             if (sampleRate > _maximum)
                 _maximum = sampleRate;
+        }
+        return true;
+    }
+
+    bool _ZSoundBuffer::AllocateWaveResource(ZIOStream* _stream, SStartSoundBase* _command)
+    {
+        if (m_eBufferType != SBT_DISCSTREAM)
+            return true;
+        if (_stream)
+        {
+            m_pStream = _stream;
+            ++m_pStream->m_lReferenceCount;
+            if (m_bLooping)
+                m_pStream->m_bLoopStream = true;
+            return true;
+        }
+
+        const SWaveHeader* firstLayer = m_rWave;
+        if (m_rWave->m_iLayerInfo && static_cast<int8_t>(m_rWave->m_iLayerInfo) >= 0)
+            firstLayer -= m_rWave->m_iLayerInfo;
+        const uint32_t layerCount = m_rWave->m_iLayerInfo ? firstLayer->m_iLayerInfo & 0x7F : 1;
+
+        uint32_t streamRate = m_rWave->m_lNumChannels * m_rWave->m_lSampleRate *
+            m_rWave->m_lBitsPerSample / 8;
+        if (m_rWave->m_iDataType == 4096)
+        {
+            const uint32_t ratio = m_rWave->m_lDataSize / m_rWave->m_lPackedSize;
+            streamRate = 2 * ((2 * m_rWave->m_lNumChannels * m_rWave->m_lSampleRate) / ratio);
+        }
+
+        uint32_t streamSize = 0;
+        for (uint32_t i = 0; i < layerCount; ++i)
+            streamSize += firstLayer[i].m_lPackedSize;
+        const uint32_t metaChunkSize = static_cast<uint32_t>(m_rWave->m_iPosChunkSize) << 10;
+        const uint32_t waveChunkSize = static_cast<uint32_t>(m_rWave->m_iSoundChunkSize) << 10;
+        uint32_t numMetaChunks = 0;
+        if (waveChunkSize)
+        {
+            numMetaChunks = (streamSize + waveChunkSize - 1) / waveChunkSize;
+            streamSize += numMetaChunks * metaChunkSize;
+        }
+        else if (metaChunkSize)
+        {
+            numMetaChunks = 1;
+            streamSize += metaChunkSize;
+        }
+
+        if (!streamRate)
+            streamRate = 0x8000;
+        m_pStream = m_pSoundCon->m_pStreamer->AddAudioStream(streamRate, m_rWave->m_lDataOffset,
+            streamSize, m_bLooping, 0, metaChunkSize, waveChunkSize, numMetaChunks, false);
+        if (!m_pStream)
+        {
+            m_bInUse = false;
+            m_bReady = false;
+            return false;
+        }
+
+        ++m_pStream->m_lReferenceCount;
+        auto* group = m_pStream->m_pUserData;
+        group->m_pFirstHeader = m_rWave->m_iLayerInfo ? firstLayer : nullptr;
+        if (m_rWave->m_iLayerInfo)
+        {
+            uint32_t minimumRate = 0x40000000;
+            for (uint32_t i = 0; i < layerCount; ++i)
+                minimumRate = (std::min)(minimumRate, firstLayer[i].m_lSampleRate);
+            group->m_lSamples = (2 * (minimumRate / 10) + 1) & ~1u;
+            group->m_lSampleSize = 0;
+            for (uint32_t i = 0; i < layerCount; ++i)
+            {
+                auto& layer = group->m_Layers[i];
+                layer.m_lByteOffset = group->m_lSampleSize;
+                layer.m_lBytesPerSample = 2 * (firstLayer[i].m_lSampleRate / minimumRate) *
+                    firstLayer[i].m_lNumChannels;
+                group->m_lSampleSize += layer.m_lBytesPerSample;
+            }
+        }
+        std::memset(&group->m_DecodeInfo, 0, sizeof(group->m_DecodeInfo));
+
+        if (m_rWave->m_iDataType == 1 && _command->m_lStartOffset)
+        {
+            uint32_t byteOffset = streamRate * (_command->m_lStartOffset >> 8) +
+                ((streamRate * static_cast<uint8_t>(_command->m_lStartOffset)) >> 8);
+            if (byteOffset >= m_rWave->m_lDataSize)
+                byteOffset %= m_rWave->m_lDataSize;
+            const uint32_t frameSize = m_rWave->m_iLayerInfo ? group->m_lSampleSize :
+                (m_rWave->m_lBitsPerSample >> 3) * m_rWave->m_lNumChannels;
+            byteOffset -= byteOffset % frameSize;
+            if (byteOffset)
+            {
+                m_pStream->SetStartOffset(byteOffset, waveChunkSize, metaChunkSize, numMetaChunks);
+                m_bWaitingForMetaSync = false;
+            }
         }
         return true;
     }

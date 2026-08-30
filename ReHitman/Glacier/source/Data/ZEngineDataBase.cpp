@@ -11,9 +11,11 @@
 
 #include <Glacier/Render/ZRender.h>
 #include <Glacier/Render/ZRenderBaseDll.h>
+#include <Glacier/Render/Debug/Globals.h>
 #include <Glacier/ScriptEngine/ScriptEngine.h>
 
 #include <Glacier/Serializer/ZIOInputStream.h>
+#include <Glacier/Serializer/ISerializerStream.h>
 #include <Glacier/Filesystem/IOFilesystem_t.h>
 #include <Glacier/Filesystem/ZSysFile.h>
 
@@ -27,11 +29,15 @@
 #include <Glacier/Geom/ZGEOM.h>
 #include <Glacier/Geom/ZCAMERA.h>
 
+#include <Glacier/Audio/ZSoundDllBase.h>
+#include <Glacier/Audio/ZSoundObject.h>
+
 #include <Glacier/Render/ZRender.h>
 
 #include <Glacier/Action/ActionInterface.h>
 
 #include <Glacier/ZSTL/ZPoolAllocRefTab.h>
+#include <Glacier/ZSTL/REFTAB32.h>
 
 #include <Glacier/Physics/ZCollisionBase.h>
 
@@ -219,12 +225,14 @@ namespace Glacier
         if (!g_pSysInterface->m_pSoundDll)
             return;
 
+        auto* pSoundDll = g_pSysInterface->GetSoundDll();
+
         if (!IsPaused() && GetOnlyEventUpdate() == nullptr)
         {
-            // TODO: Finish after ZSoundDllWintel reversed
+            pSoundDll->DispatchSoundEvents();
         }
 
-        // TODO: Finish after ZSoundDllWintel reversed
+        pSoundDll->RenderFrame();
     }
 
     void ZEngineDataBase::MainLoop(bool bUpdateViews)
@@ -240,34 +248,15 @@ namespace Glacier
 
             if (g_pSysInterface->m_pSoundDll)
             {
-                // TODO: Finish me after ZSoundDllBase reversed
+                g_pSysInterface->GetSoundDll()->InitFrame();
             }
 
-            if (!m_bFrozen)
+            if (!IsFrozen())
             {
                 ZEngineGeomControl::GetInstance().UpdateMovedGeoms();
                 m_pSaveObject = nullptr;
 
-                {
-                    PUSH_MEMORY_COLOR(0xFFFFFFu);
-
-                    if (m_pScheduledUpdate)
-                    {
-                        m_pScheduledUpdate->ScheduleEvents();
-                    }
-
-                    if (g_pGameData)
-                    {
-                        g_pGameData->PreFrameUpdate();
-                    }
-
-                    m_EventList.FrameUpdate();
-
-                    if (g_pGameData)
-                    {
-                        g_pGameData->PostFrameUpdate();
-                    }
-                }
+                FrameUpdate();
             }
 
             bool bDoDraw = m_lDontDrawFrame <= 0 ? bUpdateViews : false;
@@ -665,6 +654,48 @@ namespace Glacier
     void ZEngineDataBase::FreeSceneMemory()
     {
         // TODO: Finish me
+        if (m_pEntityTracker)
+        {
+            ZUniMemory::Delete(m_pEntityTracker);
+            m_pEntityTracker = nullptr;
+        }
+
+        // TODO: Finish me
+        if (m_AnimationManager)
+        {
+            ZUniMemory::Delete(m_AnimationManager);
+        }
+
+        m_AnimationManager = nullptr;
+        DeleteBoundTrees();
+
+        // TODO: Finish me
+
+        FreeRoutsLists();
+        FreeScheduledUpdate();
+        if (auto* pSGD = ZStaticGameLevelData::Instance())
+        {
+            pSGD->Destroy();
+        }
+        ZEngineGeomControl::GetInstance().Clear();
+        FreeLightTable();
+        m_SceneCom.Clear();
+        if (m_pStaticBuffer)
+        {
+            ZUniMemory::Free(m_pStaticBuffer);
+            m_pStaticBuffer = nullptr;
+            m_lStaticBufferLength = 0;
+        }
+        if (m_pPackedAnims)
+        {
+            ZUniMemory::Free(m_pPackedAnims);
+            m_pPackedAnims = nullptr;
+            m_lPackedAnimsLength = 0;
+        }
+        g_pSysInterface->FreeActionMap();
+        FreeMsgValues();
+        UnlockMinMax();
+        // TODO: Finish me after g_pGameDataFactory reversed
     }
 
     void ZEngineDataBase::PushValues(ZScene* pNewScene)
@@ -934,8 +965,10 @@ namespace Glacier
 
     ZSoundObject* ZEngineDataBase::SRefToPtr(Glacier::ZREF sref)
     {
-        // TODO: Finish me
-        return nullptr;
+        if (!g_pSysInterface->m_pSoundDll)
+            return nullptr;
+
+        return g_pSysInterface->GetSoundDll()->SRefToPtr(sref);
     }
 
 	ZGEOMCLASSINFO* ZEngineDataBase::GetGeomClassInfo(uint32_t typeId)
@@ -1167,9 +1200,14 @@ namespace Glacier
         return m_bPause;
     }
 
-    bool ZEngineDataBase::CheckInPackBuffer(void* ptr) const
+    bool ZEngineDataBase::CheckInPackBuffer(const void* ptr) const
     {
         return m_pStaticBuffer && ptr >= m_pStaticBuffer && ptr < &m_pStaticBuffer[m_lStaticBufferLength];
+    }
+
+    bool ZEngineDataBase::CheckInAnimBuffer(const void* ptr) const
+    {
+        return m_pPackedAnims && ptr >= m_pPackedAnims && ptr < reinterpret_cast<const uint8_t*>(&m_pPackedAnims) + m_lPackedAnimsLength;
     }
 
     ZEventBase* ZEngineDataBase::AllocGeomCallEvent(ZGEOM* pGeom)
@@ -1337,5 +1375,298 @@ namespace Glacier
     void ZEngineDataBase::NetworkUpdate()
     {
         // TODO: Finish me (sub_69D620)
+    }
+
+    uint32_t ZEngineDataBase::GetNextAnimId()
+    {
+        ++m_AnimIdCount;
+        if (m_AnimIdCount == -1)
+        {
+            ++m_AnimIdCount;
+        }
+
+        return m_AnimIdCount;
+    }
+
+    void ZEngineDataBase::SetLoadCallBack(ILoadCallBack* pCallBack)
+    {
+        m_pLoadCallBack = pCallBack;
+    }
+
+    bool ZEngineDataBase::IsLoadingGame() const
+    {
+        return m_LoadingGame;
+    }
+
+    bool ZEngineDataBase::IsSavingGame() const
+    {
+        return m_SavingGame;
+    }
+
+    void ZEngineDataBase::ScheduledUpdate()
+    {
+        if (m_pScheduledUpdate)
+        {
+            m_pScheduledUpdate->ScheduleEvents();
+        }
+    }
+
+    void ZEngineDataBase::FrameUpdate()
+    {
+        PUSH_MEMORY_COLOR(0xFFFFFFu);
+
+        if (g_pGameData)
+        {
+            g_pGameData->PreFrameUpdate();
+        }
+
+        // TODO: Uncomment me after ZDrawDebugTimer reversed
+        // if (g_pDrawDebugTimer)
+        // {
+        //     g_pDrawDebugTimer->StartFastTimer();
+        // }
+
+        m_EventList.FrameUpdate();
+
+        // TODO: Uncomment me after ZDrawDebugTimer reversed
+        // if (g_pDrawDebugTimer)
+        // {
+        //     g_pDrawDebugTimer->EndFastTimer();
+        // }
+
+        if (g_pGameData)
+        {
+            g_pGameData->PostFrameUpdate();
+        }
+    }
+
+    bool ZEngineDataBase::IsFrozen() const
+    {
+        return m_bFrozen;
+    }
+
+    void ZEngineDataBase::PauseScene(bool bPause)
+    {
+        if (m_bPause != bPause)
+        {
+            // DronCode: I'm not sure about this part. In PS2 used time save/update in this case, but in PC nothing
+            m_bPause = bPause;
+        }
+    }
+
+    void ZEngineDataBase::FreezeScene(bool bFreeze)
+    {
+        PauseScene(bFreeze);
+        m_bFrozen = bFreeze;
+    }
+
+    ZREF ZEngineDataBase::SPtrToRef(ZSoundObject* pSoundObject) const
+    {
+        if (!pSoundObject)
+            return 0;
+
+        if (auto* pSoundDll = g_pSysInterface->GetSoundDll())
+            return pSoundDll->SPtrToRef(pSoundObject);
+
+        return 0;
+    }
+
+    void ZEngineDataBase::PurgePrimBuffer()
+    {
+        // TODO: Finish me (PC 0045CB20)
+    }
+
+    void ZEngineDataBase::InitPathfinder4Data(const char* pBuffer)
+    {
+        const auto lDataSize = *reinterpret_cast<const uint32_t*>(pBuffer);
+        if (*pBuffer != 0xFFFFFFFCu && lDataSize > 0)
+        {
+            auto* pPathFinderMemBlock = ZUniMemory::Allocate(lDataSize);
+            memcpy(pPathFinderMemBlock, pBuffer + 4, lDataSize);
+            // TODO: Finish me m_pPathfinder4Data = PF4::CreatePathFinder(pPathFinderMemBlock);
+            m_pEntityTracker = ZUniMemory::New<ZEntityTracker>(m_pPathfinder4Data);
+        }
+    }
+
+    bool ZEngineDataBase::InitPhysicsData(const char* pBuffer)
+    {
+        // NOTE: In PC this method to nothing, but in beta PS2 this method do
+        // return ZDynamicsExtendRuntime::ReadDataBuffer(pBuffer);
+        //
+        // DronCode: PC will ignore all things here, I'm not sure about this code.
+        return true;
+    }
+
+    bool ZEngineDataBase::IsDrawGizmoEnabled(EGizmoType eType) const
+    {
+        return m_bDrawGizmoEnabled[eType];
+    }
+
+    void ZEngineDataBase::EnableDrawGizmo(EGizmoType eType, bool bEnabled)
+    {
+        m_bDrawGizmoEnabled[eType] = bEnabled;
+    }
+
+    void ZEngineDataBase::FreeRoutsLists()
+    {
+        m_EventList.Clear();
+    }
+
+    void ZEngineDataBase::FreeScheduledUpdate()
+    {
+        if (!m_pScheduledUpdate)
+            return;
+
+        ZUniMemory::Delete(m_pScheduledUpdate);
+        m_pScheduledUpdate = nullptr;
+    }
+
+    void ZEngineDataBase::FreeLightTable()
+    {
+        if (m_pListUser)
+        {
+            ZUniMemory::Free(m_pListUser);
+            m_pListUser = nullptr;
+        }
+    }
+
+    void ZEngineDataBase::DeleteBoundTrees()
+    {
+        if (m_pPackedTreeData)
+        {
+            ZUniMemory::Free(m_pPackedTreeData);
+        }
+
+        m_pPackedTreeData = nullptr;
+    }
+
+    char* ZEngineDataBase::GetStaticBuffer()
+    {
+        return reinterpret_cast<char*>(m_pStaticBuffer);
+    }
+
+    char* ZEngineDataBase::GetAnimBuffer()
+    {
+        return reinterpret_cast<char*>(m_pPackedAnims);
+    }
+
+    void ZEngineDataBase::CreateGeoms(REFTAB* prtCreatedGeoms, ZStackArray<1000, SMakeGeomDynamic>* pMakeDynArray, const char* pGeomsData, const char* pStaticBuffer, IInputStream& property_in_stream)
+    {
+        if (RunTime())
+        {
+            m_bRunTime = false;
+        }
+
+        // TODO: Finish me
+    }
+
+    void ZEngineDataBase::LoadProperties(uint32_t lNrPackedGeoms, ZBaseGeom** BaseGeoms, IInputSerializerStream& in)
+    {
+        if (lNrPackedGeoms)
+        {
+            // TODO: Finish me
+        }
+    }
+
+    void ZEngineDataBase::LoadPropertiesRecursive(IInputSerializerStream& in, ZBaseGeom**& BaseGeoms, ZBaseGeom& object)
+    {
+        // TODO: Finish me
+    }
+
+    void ZEngineDataBase::SetSaveObject(ZSaveClass* pSaveObj)
+    {
+        m_pSaveObject = pSaveObj;
+    }
+
+    void ZEngineDataBase::LoadZDefines(IInputSerializerStream& stream)
+    {
+        uint32_t lDefinesNr;
+        stream.ExchangeContainer("ZDefines", lDefinesNr);
+
+        for (int i = 0; i < lDefinesNr; ++i)
+        {
+            const char* pszName;
+            uint32_t lType;
+
+            stream.Exchange("Name", pszName);
+            stream.Exchange("Type", lType);
+
+            switch (lType)
+            {
+                case 2: // INT32
+                {
+                    int lSize;
+                    int lData;
+
+                    stream.Exchange("Size", lSize);
+                    stream.Exchange("Data", lData);
+
+                    m_SceneCom.SetVal(pszName, &lData, lSize, CCOMType::CCOM_TYPE_INT32);
+                }
+                break;
+
+                case 3: // FLOAT
+                {
+                    int lSize;
+                    int lData;
+
+                    stream.Exchange("Size", lSize);
+                    stream.Exchange("Data", lData);
+
+                    m_SceneCom.SetVal(pszName, &lData, lSize, CCOMType::CCOM_TYPE_FLOAT);
+                }
+                break;
+
+                case 12: // STRING
+                {
+                    int lData;
+                    stream.Exchange("Data", lData);
+
+                    m_SceneCom.SetVal(pszName, &lData, CCOMType::CCOM_TYPE_STRING);
+                }
+                break;
+
+                case 14: // FILE
+                {
+                    int lData;
+                    stream.Exchange("Data", lData);
+
+                    m_SceneCom.SetVal(pszName, &lData, CCOMType::CCOM_TYPE_FILE);
+                }
+                break;
+
+                case 16: // GEOMREF
+                {
+                    int lData;
+                    stream.Exchange("Data", lData);
+
+                    m_SceneCom.SetVal(pszName, &lData, CCOMType::CCOM_TYPE_GEOMREF);
+                }
+                break;
+
+                case 17: // GEOMREFTAB
+                {
+                    REFTAB32 aCollected;
+                    uint32_t lEntriesNr = 0;
+
+                    stream.ExchangeContainer(pszName, lEntriesNr);
+                    for (int j = 0; j < lEntriesNr; ++j)
+                    {
+                        const char* pszGeomName;
+                        stream.ExchangeData(pszGeomName);
+
+                        ZREF rGeom = GetREFByName(pszGeomName);
+                        aCollected.Add(rGeom);
+                    }
+
+                    m_SceneCom.SetVal(pszName, &aCollected, CCOMType::CCOM_TYPE_GEOMREFTAB);
+                }
+                break;
+
+                default:
+                    ZASSERT(false);
+                    break;
+            }
+        }
     }
 }

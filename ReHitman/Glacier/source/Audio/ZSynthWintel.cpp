@@ -1,5 +1,8 @@
 #include <Glacier/Audio/GlobalsWintel.h>
+#include <Glacier/Audio/ZIOStreamerWintel.h>
 #include <Glacier/Audio/ZSynthWintel.h>
+#include <Glacier/Audio/Eax3.h>
+#include <Glacier/Audio/ZWintelRoomReverb.h>
 #include <Glacier/Filesystem/ZSysFile.h>
 #include <Glacier/Render/ZRenderX86.h>
 #include <Glacier/System/ZSysInterface.h>
@@ -13,6 +16,58 @@
 
 namespace Glacier
 {
+    void ZSynthWintel::GetEaxProps(EaxListenerProperties* _eax, const ZWintelRoomReverb* _environment)
+    {
+        _eax->m_lEnvironment = _environment->m_lEnvironment;
+        _eax->m_fEnvironmentSize = _environment->m_fEnvironmentSize;
+        _eax->m_fEnvironmentDiffusion = _environment->m_fEnvironmentDiffusion;
+        _eax->m_lRoom = _environment->m_lRoom;
+        _eax->m_lRoomHF = _environment->m_lRoomHF;
+        _eax->m_lRoomLF = _environment->m_lRoomLF;
+        _eax->m_fDecayTime = _environment->m_fDecayTime;
+        _eax->m_fDecayHFRatio = _environment->m_fDecayHFRatio;
+        _eax->m_fDecayLFRatio = _environment->m_fDecayLFRatio;
+        _eax->m_lReflections = _environment->m_lReflections;
+        _eax->m_fReflectionsDelay = _environment->m_fReflectionsDelay;
+        _eax->m_lReverb = _environment->m_lReverb;
+        _eax->m_fReverbDelay = _environment->m_fReverbDelay;
+        _eax->m_fEchoTime = _environment->m_fEchoTime;
+        _eax->m_fEchoDepth = _environment->m_fEchoDepth;
+        _eax->m_fModulationTime = _environment->m_fModulationTime;
+        _eax->m_fModulationDepth = _environment->m_fModulationDepth;
+        _eax->m_fAirAbsorptionHF = _environment->m_fAirAbsorptionHF;
+        _eax->m_fHFReference = _environment->m_fHFReference;
+        _eax->m_fLFReference = _environment->m_fLFReference;
+        _eax->m_fRoomRolloffFactor = _environment->m_fRoomRolloffFactor;
+        _eax->m_lFlags = _environment->m_lFlags;
+    }
+
+    void ZSynthWintel::GetEnvProps(ZWintelRoomReverb* _environment, const EaxListenerProperties* _eax)
+    {
+        _environment->m_lEnvironment = _eax->m_lEnvironment;
+        _environment->m_fEnvironmentSize = _eax->m_fEnvironmentSize;
+        _environment->m_fEnvironmentDiffusion = _eax->m_fEnvironmentDiffusion;
+        _environment->m_lRoom = _eax->m_lRoom;
+        _environment->m_lRoomHF = _eax->m_lRoomHF;
+        _environment->m_lRoomLF = _eax->m_lRoomLF;
+        _environment->m_fDecayTime = _eax->m_fDecayTime;
+        _environment->m_fDecayHFRatio = _eax->m_fDecayHFRatio;
+        _environment->m_fDecayLFRatio = _eax->m_fDecayLFRatio;
+        _environment->m_lReflections = _eax->m_lReflections;
+        _environment->m_fReflectionsDelay = _eax->m_fReflectionsDelay;
+        _environment->m_lReverb = _eax->m_lReverb;
+        _environment->m_fReverbDelay = _eax->m_fReverbDelay;
+        _environment->m_fEchoTime = _eax->m_fEchoTime;
+        _environment->m_fEchoDepth = _eax->m_fEchoDepth;
+        _environment->m_fModulationTime = _eax->m_fModulationTime;
+        _environment->m_fModulationDepth = _eax->m_fModulationDepth;
+        _environment->m_fAirAbsorptionHF = _eax->m_fAirAbsorptionHF;
+        _environment->m_fHFReference = _eax->m_fHFReference;
+        _environment->m_fLFReference = _eax->m_fLFReference;
+        _environment->m_fRoomRolloffFactor = _eax->m_fRoomRolloffFactor;
+        _environment->m_lFlags = _eax->m_lFlags;
+    }
+
     ZSynthWintel::ZSynthWintel()
         : m_field1BB1C(0)
         , m_field1BB28(false)
@@ -53,8 +108,10 @@ namespace Glacier
 
     bool ZSynthWintel::CreateSoundStreamer()
     {
-        // TODO: Finish this place after ZIOStreamerWintel will be reversed
-        return false;
+        m_pStreamer = ZUniMemory::New<ZIOStreamerWintel>();
+        m_pStreamer->Create(128, 0x4000, 300);
+        m_pStreamer->SetMetaMem(m_pPoseDestAddr);
+        return true;
     }
 
     void ZSynthWintel::InstallWaveHeaders(int _size, const char* _fileName)
@@ -114,7 +171,7 @@ namespace Glacier
         }
     }
 
-    void ZSynthWintel::CreateChain(void*, int)
+    void ZSynthWintel::CreateChain(SChain*, int)
     {
     }
 
@@ -183,9 +240,9 @@ namespace Glacier
 
     int ZSynthWintel::SetNumBuffers(int _count)
     {
-        void* caps = GetCaps();
+        SSynthCaps* caps = GetCaps();
         ZASSERT(caps != nullptr);
-        const int maximum = *reinterpret_cast<int*>(static_cast<char*>(caps) + 196);
+        const int maximum = caps->m_lMaxBuffers;
         m_lNumBuffers = _count <= maximum ? _count : maximum;
         m_lMaxNumPlaying = m_lNumBuffers;
         return m_lNumBuffers;
@@ -193,13 +250,13 @@ namespace Glacier
 
     bool ZSynthWintel::SetUseEAX(bool _enabled)
     {
-        void* caps = GetCaps();
+        SSynthCaps* caps = GetCaps();
         ZASSERT(caps != nullptr);
-        m_bUseEAX = _enabled && *reinterpret_cast<bool*>(static_cast<char*>(caps) + 200);
+        m_bUseEAX = _enabled && caps->m_bEAX;
         return m_bUseEAX;
     }
 
-    void* ZSynthWintel::GetCaps()
+    SSynthCaps* ZSynthWintel::GetCaps()
     {
         return nullptr;
     }

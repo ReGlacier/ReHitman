@@ -12,7 +12,8 @@
 #include <Glacier/Animation/Model.h>
 #include <Glacier/Animation/ZBone.h>
 #include <Glacier/IK/ZLNKOBJ.h>
-#include <limits>
+#include <Glacier/Geom/ZGeomBuffer.h>
+#include <cstring>
 
 
 
@@ -31,7 +32,7 @@ namespace Glacier
         }
     }
 
-    ZBoneModifyBase::ZBoneModifyBase(uint16_t lNrBones)
+    ZBoneModifyBase::ZBoneModifyBase(uint32_t lNrBones)
     {
         m_lDecalLookup = lDecalLookup++;
         m_fLastUpdateTime = {};
@@ -127,12 +128,10 @@ namespace Glacier
         return m_pRagdoll ? &m_pRagdoll->m_ColiInfo : nullptr;
     }
 
-    void ZBoneModifyBase::GetBoneMatPos(ZMat3x3& mMat, ZVector3& vPos, uint32_t lBoneIdx, const ZLNKOBJ* pLnkObj) const
+    void ZBoneModifyBase::GetBoneMatPos(ZMat3x3& mMat, ZVector3& vPos, uint32_t lBoneIdx, const ZLNKOBJ* pLnkObj, ZBone* pBone) const
     {
-        ZBone bone {};
-
         const auto* pLUT = ZPrimControlBase::Instance()->GetBoneIdToIndexLookup(pLnkObj->Prim());
-        if (!GetIKBoneMatPos(mMat, vPos, pLUT[lBoneIdx], pLnkObj, &bone))
+        if (!GetIKBoneMatPos(mMat, vPos, pLUT[lBoneIdx], pLnkObj, pBone))
         {
             mMat.Reset();
             vPos.Reset();
@@ -173,6 +172,87 @@ namespace Glacier
         pLnkObj->GetDefaultBones(aBones, 0);
         GetIKBone(aBones, pConvBones, lIndex, mMat, vPos);
 
+        return true;
+    }
+
+    bool ZBoneModifyBase::AttachBaseGeomToBone(const ZBaseGeom* pBaseGeom, uint32_t lBoneId, const float* pMat, const float* pPos)
+    {
+        const ZREF rBaseGeom = pBaseGeom ? ZGeomBuffer::Instance().GeomPtrToRef(pBaseGeom) : 0;
+        if (m_AttachedGeoms.Count() >= m_AttachedGeoms.TotalNrEntries())
+            return false;
+
+        for (uint32_t i = 0; i < m_AttachedGeoms.Count(); ++i)
+        {
+            if (m_AttachedGeoms.Get(i)->m_rBaseGeom == rBaseGeom)
+                return false;
+        }
+
+        ZAttachGeom attached {};
+        attached.m_rBaseGeom = rBaseGeom;
+        attached.m_lBoneId = lBoneId;
+        if (pMat)
+            std::memcpy(attached.m_mOffset.data, pMat, sizeof(attached.m_mOffset));
+        else
+            attached.m_mOffset.Reset();
+        if (pPos)
+            std::memcpy(&attached.m_vOffset, pPos, sizeof(attached.m_vOffset));
+        else
+            attached.m_vOffset.Reset();
+
+        m_AttachedGeoms.Add(&attached);
+        IDraw::Instance()->EnableOwnerDraw(pBaseGeom);
+        return true;
+    }
+
+    void ZBoneModifyBase::DetachBaseGeomFromBone(const ZBaseGeom* pBaseGeom, uint32_t lBoneId)
+    {
+        const ZREF rBaseGeom = pBaseGeom ? ZGeomBuffer::Instance().GeomPtrToRef(pBaseGeom) : 0;
+        for (uint32_t i = 0; i < m_AttachedGeoms.Count(); ++i)
+        {
+            const auto* pAttached = m_AttachedGeoms.Get(i);
+            if (pAttached->m_rBaseGeom == rBaseGeom && pAttached->m_lBoneId == lBoneId)
+            {
+                IDraw::Instance()->DisableOwnerDraw(pBaseGeom);
+                m_AttachedGeoms.Remove(i);
+                return;
+            }
+        }
+    }
+
+    uint32_t ZBoneModifyBase::GetAttachedBaseGeomBoneId(const ZBaseGeom* pBaseGeom) const
+    {
+        const ZREF rBaseGeom = pBaseGeom ? ZGeomBuffer::Instance().GeomPtrToRef(pBaseGeom) : 0;
+        for (uint32_t i = 0; i < m_AttachedGeoms.Count(); ++i)
+        {
+            const auto* pAttached = m_AttachedGeoms.Get(i);
+            if (pAttached->m_rBaseGeom == rBaseGeom)
+                return pAttached->m_lBoneId;
+        }
+        return 0;
+    }
+
+    bool ZBoneModifyBase::FindAttachedGeomMatPos(ZMat3x3& mMat, ZVector3& vPos, const ZBaseGeom* pBaseGeom, const ZLNKOBJ* pLnkObj) const
+    {
+        const ZREF rBaseGeom = pBaseGeom ? ZGeomBuffer::Instance().GeomPtrToRef(pBaseGeom) : 0;
+        const ZAttachGeom* pAttached = nullptr;
+        for (uint32_t i = 0; i < m_AttachedGeoms.Count(); ++i)
+        {
+            if (m_AttachedGeoms.Get(i)->m_rBaseGeom == rBaseGeom)
+            {
+                pAttached = m_AttachedGeoms.Get(i);
+                break;
+            }
+        }
+        if (!pAttached)
+            return false;
+
+        GetBoneMatPos(mMat, vPos, pAttached->m_lBoneId, pLnkObj);
+        ZVector3 offset;
+        vmmul(offset, pAttached->m_vOffset, mMat);
+        vPos += offset;
+        ZMat3x3 result;
+        mmmul(result, pAttached->m_mOffset, mMat);
+        mMat = result;
         return true;
     }
 
@@ -228,7 +308,6 @@ namespace Glacier
     {
         if (m_lLastUpdateFrameCount == g_pSysInterface->m_lFrameCount)
         {
-            ZERROR("ZBoneModifyBase::Update twice in same frame");
             return false;
         }
 
@@ -236,9 +315,12 @@ namespace Glacier
         m_lLastUpdateFrameCount = g_pSysInterface->m_lFrameCount;
         m_fLastUpdateTime = g_pSysInterface->FrameTime;
 
-        if (m_pRagdoll && m_pRagdoll->IsActive())
+        if (m_pRagdoll)
         {
-            m_bPassive = false;
+            if (m_pRagdoll->IsActive())
+            {
+                m_bPassive = false;
+            }
         }
         else if (!m_pDynamicsExt)
         {
@@ -267,16 +349,17 @@ namespace Glacier
                     pLnkObj->SetDefaultBones(pBones, pBoneDefs);
                     pLnkObj->OnMoved();
                     m_bPassive = true;
-                    return true;
                 }
 
-                if (!m_pRagdoll || !m_pRagdoll->IsActive() || m_pRagdoll->Move(mMat, vPos, fDt))
-                {
-                    return true;
-                }
-
-                ForceRagdollDeactivation(pLnkObj);
+                return true;
             }
+
+            if (!m_pRagdoll || !m_pRagdoll->IsActive() || m_pRagdoll->Move(mMat, vPos, fDt))
+            {
+                return true;
+            }
+
+            ForceRagdollDeactivation(pLnkObj);
         }
 
         return false;
@@ -307,7 +390,7 @@ namespace Glacier
                 fWeightsSum += fWeight;
             }
 
-            if(fWeightsSum > 0.0f)
+            if (fWeightsSum >= 0.0f)
             {
                 const float fInvWeightSum = 1.0f / fWeightsSum;
                 vscalar(vTarget, fInvWeightSum);
@@ -320,7 +403,7 @@ namespace Glacier
             vcross(vCross, vOnPlatePerpTo, vProjectionOf);
 
             // Are they parallel?
-            if (vlen2(vCross) < std::numeric_limits<float>::epsilon())
+            if (vlen2(vCross) < 1.4901161e-8f)
             {
                 // Find index of lower component of vectors
                 int lMinIndex = 0;
@@ -447,6 +530,11 @@ namespace Glacier
         }
     }
 
+    void ZBoneModifyBase::LoadSave(ISerializerStream& stream, bool bSaving)
+    {
+        // TODO: Finish me
+    }
+
     void ZBoneModifyBase::UpdateGlobalIK(ZBone* pBones, uint32_t lPrim, ZLNKOBJ* pLnkObj)
     {
         if (m_fGlobalScale != 1.0f && m_lNumActiveBones > 1)
@@ -490,12 +578,11 @@ namespace Glacier
             return;
 
         const auto lTotalConstraints = pBoneConstraintsHeader->m_lNrConstraints;
-        uint8_t lTargetsNr = 0;
+        auto* pConstraint = pBoneConstraintsHeader->Get();
 
         for (int lConstraintIndex = 0; lConstraintIndex < lTotalConstraints; ++lConstraintIndex)
         {
-            auto* pConstraint = pBoneConstraintsHeader->Get();
-            if (pConstraint->m_lBoneIndex >= m_lNumActiveBones)
+            if (pConstraint->m_lBoneIndex < m_lNumActiveBones)
             {
                 if (pConstraint->m_lType != ZBoneConstraintLookAt::Type)
                 {
@@ -504,14 +591,7 @@ namespace Glacier
                 else
                 {
                     auto* pLookAt = pConstraint->As<ZBoneConstraintLookAt>();
-
-                    if (pLookAt->m_lNrTargets)
-                        lTargetsNr = pLookAt->m_lNrTargets;
-
-                    if (lTargetsNr == pLookAt->m_lNrTargets)
-                    {
-                        CalculateLookAtMatrix(pBones[pConstraint->m_lBoneIndex]._Mat, pBones, pLookAt);
-                    }
+                    CalculateLookAtMatrix(pBones[pConstraint->m_lBoneIndex]._Mat, pBones, pLookAt);
                 }
             }
 
@@ -521,7 +601,7 @@ namespace Glacier
 
     bool ZBoneModifyBase::DoAnimations() const
     {
-        return !m_pDynamicsExt && (!m_pRagdoll || m_pRagdoll->IsActive()) && !m_bPassive;
+        return !m_pDynamicsExt && (!m_pRagdoll || !m_pRagdoll->IsActive()) && !m_bPassive;
     }
 
     STATIC_GLOBAL_CLASS_INSTANCE_IMPL(int32_t, lDecalLookup, 0x008EBE58, 0);

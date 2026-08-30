@@ -17,7 +17,7 @@ namespace Glacier
         return m_pBuffer != nullptr;
     }
 
-    bool ZAnimVariationBuffer::GetAnimVariation(ZAnimVariation& variation, ZAnimVariationHandle& handle)
+    bool ZAnimVariationBuffer::GetAnimVariation(ZAnimVariation& variation, ZAnimVariationHandle& handle) const
     {
         if (IsValid() && m_AnimList && handle.IsValid() && handle.iIndex < *m_AnimList)
         {

@@ -6,6 +6,19 @@
 
 namespace Glacier
 {
+    struct EaxListenerProperties;
+    struct ZWintelRoomReverb;
+
+    struct SSynthCaps
+    {
+        int32_t m_lIndex;
+        char m_szName[64];
+        char m_szDescription[128];
+        int32_t m_lMaxBuffers;
+        bool m_bEAX;
+        RE_ADD_PADDING(3);
+    };
+
     class ZSynthWintel : public ZSynth3D
     {
     public:
@@ -21,7 +34,7 @@ namespace Glacier
         void CommitFrame() override;
         void Render() override;
         void CreateFilterChains() override;
-        void CreateChain(void* _chain, int _index) override;
+        void CreateChain(SChain* _chain, int _index) override;
         void CreateChainsEnd() override;
         void RemoveChains(int* _chains, int _count) override;
         void RemoveChain(int _chain) override;
@@ -36,8 +49,11 @@ namespace Glacier
         virtual void DisplayStatus();
         virtual int SetNumBuffers(int _count);
         virtual bool SetUseEAX(bool _enabled);
-        virtual void* GetCaps();
+        virtual SSynthCaps* GetCaps();
         virtual int Probe();
+
+        static void GetEaxProps(EaxListenerProperties* _eax, const ZWintelRoomReverb* _environment);
+        static void GetEnvProps(ZWintelRoomReverb* _environment, const EaxListenerProperties* _eax);
 
         int32_t m_field1BB1C;
         char m_padding1BB20[8];
@@ -53,4 +69,9 @@ namespace Glacier
     RE_VERIFY_OFFSET(ZSynthWintel, m_pWaveData, 0x1BB2C);
     RE_VERIFY_OFFSET(ZSynthWintel, m_bDisplayStatus, 0x1BB30);
     RE_VERIFY_SIZE(ZSynthWintel, 0x1BB34);
+    RE_VERIFY_OFFSET(SSynthCaps, m_szName, 0x04);
+    RE_VERIFY_OFFSET(SSynthCaps, m_szDescription, 0x44);
+    RE_VERIFY_OFFSET(SSynthCaps, m_lMaxBuffers, 0xC4);
+    RE_VERIFY_OFFSET(SSynthCaps, m_bEAX, 0xC8);
+    RE_VERIFY_SIZE(SSynthCaps, 0xCC);
 }

@@ -1,12 +1,12 @@
 #pragma once
 
 #include <Glacier/ReGlacier.h>
-#include <Glacier/Physics/ZCloth.h>
+#include <BloodMoney/Game/Physics/ZCloth.h>
 
 
 namespace Hitman::BloodMoney
 {
-    class ZTie : public Glacier::ZCloth
+    class ZTie : public ZCloth
     {
     public:
         // vftable (no changes)

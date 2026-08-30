@@ -6,6 +6,7 @@
 #include <Glacier/ZSTL/ZRTStringObject.h>
 #include <Glacier/ZSTL/ZMath.h>
 #include <Glacier/Animation/ZBone.h>
+#include <Glacier/RTP/PropertyTypes.h>
 
 #include <tuple>
 #include <bit>
@@ -186,7 +187,7 @@ namespace Glacier
         ZAnimVariationBuffer();
         void SetBuffer(const char* pBuffer);
         bool IsValid() const;
-        bool GetAnimVariation(ZAnimVariation& variation, ZAnimVariationHandle& handle);
+        bool GetAnimVariation(ZAnimVariation& variation, ZAnimVariationHandle& handle) const;
         void FindAnimListStart();
         const char* GetBuffer() const;
 
@@ -244,7 +245,7 @@ namespace Glacier
         // types
         struct SAnimSound
         {
-            unsigned int m_rAnimationSound;
+            ZREF m_rAnimationSound;
             int m_lSequenceID;
         };
         RE_VERIFY_SIZE(SAnimSound, 0x8);
@@ -283,77 +284,77 @@ namespace Glacier
         // ZLNKOBJ
         virtual void InitObjMatBone();
         virtual void CloseObjMatBone();
-        virtual void* GetAnim(const char*);
+        virtual Animation::Header* GetAnim(const char*);
         virtual void StopAllAnims(bool);
         virtual void StopUBAnims();
         virtual void StopAnim(Animation::ActiveAnimation *);
-        virtual void ActivateAnimSegment(Animation::Header*, int, float, float, float);
-        virtual void ActivateAnimSegment(ZAnimVariationHandle, int, float, float, float);
-        virtual void ActivateAnim(Animation::Header*, int);
-        virtual void SetActiveAnimDestination(float const*, float const*, float);
+        virtual Animation::ActiveAnimation* ActivateAnimSegment(Animation::Header*, int, float, float, float);
+        virtual Animation::ActiveAnimation* ActivateAnimSegment(ZAnimVariationHandle, int, float, float, float);
+        virtual Animation::ActiveAnimation* ActivateAnim(Animation::Header*, int);
+        virtual bool SetActiveAnimDestination(float const*, float const*, float);
         virtual bool CheckActiveAnim(Animation::Header*, int);
-        virtual void SetBoneFrameBlend(Animation::Header*, float, float, bool, unsigned int);
+        virtual Animation::ActiveAnimation* SetBoneFrameBlend(Animation::Header*, float, float, bool, unsigned int);
         virtual void SetDualFrame(Animation::Header*, float, Animation::Header*, float, float, float);
         virtual bool GroundAnimated();
         virtual void OnMetaKey(Animation::ActiveAnimation*, Animation::ZMetaKey*, char const*);
-        virtual void ActivatePoseAnim(char*, float, unsigned int, float);
-        virtual void StopPoseAnim(unsigned int, bool);
+        virtual ZPoseAnim* ActivatePoseAnim(char*, float, unsigned int, float);
+        virtual bool StopPoseAnim(unsigned int, bool);
         virtual void StopAudio();
-        virtual void StopAnimSound(bool, int, bool);
-        virtual void StopAllAnimSounds(void);
-         virtual int CheckLineCollision(float *,float const*,float const*) const;
-         virtual int CheckLineCollision(float *,float const*,float const*,float *) const;
-        virtual void CheckBoxCollision(float const*,float const*,float const*);
-        virtual void Use2Skeletons(void);
+        virtual bool StopAnimSound(bool upperBody, int sequenceId, bool force);
+        virtual void StopAllAnimSounds();
+        virtual uint32_t CheckLineCollision(float*, float const*, float const*) const;
+        virtual uint32_t CheckLineCollision(float*, float const*, float const*, float*) const;
+        virtual uint32_t CheckBoxCollision(float const*, float const*, float const*) const;
+        virtual bool Use2Skeletons(void);
         virtual void LocalStateIK(void);
         virtual void GetDefaultBones(ZBone *pBones, uint32_t lFirstBoneNum) const;
         virtual void SetDefaultBones(ZBone const*,SBoneDefinition const*);
-        virtual void GetAnimDeltaBones(Animation::Header *);
-        virtual void GetBoneMatPos(Glacier::ZMat3x3*,Glacier::ZVector3*, unsigned int);
-        virtual void AttachBaseGeomToBone(ZBaseGeom const*,unsigned int,float const*,float const*);
+        virtual ZDeltaBone* GetAnimDeltaBones(Animation::Header*);
+        virtual void GetBoneMatPos(Glacier::ZMat3x3*, Glacier::ZVector3*, unsigned int) const;
+        virtual bool AttachBaseGeomToBone(ZBaseGeom const*,unsigned int,float const*,float const*);
         virtual void DetachBaseGeomFromBone(ZBaseGeom const*,unsigned int);
-        virtual void GetAttachedBaseGeomBoneId(ZBaseGeom const*);
+        virtual uint32_t GetAttachedBaseGeomBoneId(ZBaseGeom const*);
         virtual void GetGroundBoneAnimMatPos(ZMat3x3*, ZVector3*, Animation::Header *,float,bool);
         virtual void GetGroundBoneDeltaMatPos(ZMat3x3*, ZVector3*, Animation::Header *,float,float);
-        virtual void GetAttachedGeomMatPos(ZBaseGeom const*,float *,float *);
-        virtual void DisplayBone(unsigned int,bool);
-        virtual void GetFocusMatPos(float *,float *);
+        virtual bool GetAttachedGeomMatPos(ZBaseGeom const*,float *,float *) const;
+        virtual bool DisplayBone(unsigned int,bool);
+        virtual void GetFocusMatPos(float *,float *) const;
         virtual void DisplayAllBones(bool);
         virtual void GetRootFocusMatPos(float *,float *);
-        virtual uint16_t GetBoneNrFromId(uint8_t lBoneId) const;
-        virtual void GetBoneFromPoint(float const*);
-        virtual uint16_t GetBoneNrFromName(char const* pszName) const;
-        virtual const char* GetBoneName(int);
-        virtual void GetOrigLocalBones(void);
+        virtual int32_t GetBoneNrFromId(uint8_t lBoneId) const;
+        virtual int32_t GetBoneFromPoint(float const*) const;
+        virtual int32_t GetBoneNrFromName(char const* pszName) const;
+        virtual const char* GetBoneName(int) const;
+        virtual const ZBone* GetOrigLocalBones(void) const;
         virtual const SBoneDefinition* GetBoneDefinitions() const;
         virtual void CopyGeometryFrom(ZGEOM *);
         virtual void CopyGeometryFrom(unsigned int);
         virtual void CopyPoseFrom(ZLNKOBJ*);
-        virtual void ChangeMesh(ZGROUP *);
-        virtual void PrintAllBoneNames(void);
+        virtual bool ChangeMesh(ZGROUP *);
+        virtual void PrintAllBoneNames(void) const;
         virtual void SetCutSequence(bool);
         virtual void MoveToMatPos(float const*,float const*);
         virtual void SetRootTMParent(float *,float *);
-        virtual void EventCallBack(Animation::ActiveAnimation *,float,float,void *);
+        virtual bool EventCallBack(Animation::ActiveAnimation *,float,float,void *);
         virtual void OnMoving(void);
         virtual void OnMoved(void);
-        virtual void CalcTightCenSize(float *,float *);
-        virtual void CalcShadowProjectPlane(float *,float const*,float const*);
-        virtual void GetBoneControl(int);
+        virtual void CalcTightCenSize(float *,float *) const;
+        virtual void CalcShadowProjectPlane(float *,float const*,float const*) const;
+        virtual int32_t GetBoneControl(int) const;
         virtual void UpdateGeometry(bool);
         virtual void ResetAllAnimBones(void);
         virtual void ResetInactiveBones(void);
         virtual void ExecuteCallBack(char const*);
-        virtual void GetBoneVolume(int);
+        virtual float GetBoneVolume(int);
         virtual void GetBoneSize(int, Glacier::Vector3*);
         virtual void GetBoneCenter(int, Glacier::Vector3*);
         virtual void AnimEnd(Animation::ActiveAnimation *,int);
-        virtual void UpdateAnimationsAndGroundLink(float);
-        virtual void UpdatePoseAnimation();
-        virtual void StartAnim(Animation::ActiveAnimation*, int);
+        virtual bool UpdateAnimationsAndGroundLink(float);
+        virtual bool UpdatePoseAnimation();
+        virtual bool StartAnim(Animation::ActiveAnimation*, int);
         virtual bool IsInElevator() const;
         virtual float GetElevatorDeltaY() const;
-        virtual bool WantBloodOnHit();
+        virtual bool WantBloodOnHit() const;
         virtual void LoadSaveAnimations(ISerializerStream& stream, bool bSaving);
 
         // methods
@@ -362,13 +363,18 @@ namespace Glacier
         const ZBoneModifyBase* GetBoneModifier() const { return m_pBoneModify; }
         const ZBone* GetBones() const;
         const ZBone* GetGlobalPrimBones() const;
+        uint32_t NumActiveBones() const;
+        Animation::ActiveAnimation* GetGroundAnimation() const;
+        Animation::Header* GetAnimHeaderFromVariation(ZAnimVariationHandle handle, int flags, float random) const;
+        bool MetaKeyCallBack(Animation::ActiveAnimation* pAnimation, float frame, float deltaFrame, uint32_t metaKeyOffset);
+        bool AnimSoundCallback(Animation::ActiveAnimation* pAnimation, float frame, float deltaFrame, uint32_t soundRef);
         const char* LoadAnimVariationsBuffer(const char* pszFileName);
         Animation::Model* Model();
         const Animation::Model* Model() const;
 
 #       pragma region " --- RTTI Methods --- "
-        void GetAnimCollectionProperty(ZRTString& anim_collection_name);
-        void SetAnimCollectionProperty(const ZRTString& anim_collection_name);
+        void GetAnimCollectionProperty(ZANIM& anim_collection_name);
+        void SetAnimCollectionProperty(const ZANIM& anim_collection_name);
 #       pragma endregion
 
         // members
@@ -397,7 +403,7 @@ namespace Glacier
         float m_GroundAnimDestStartFrame;
         float m_GroundAnimDestEndFrame;
         float m_fPelvisBoneOffset;
-        struct ZLNKOBJ* m_pAttachedTo;
+        ZREF m_pAttachedTo;
         uint8_t m_LODMask;
         bool m_bUseLODMASK;
         bool m_FramesReset;

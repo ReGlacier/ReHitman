@@ -2,6 +2,7 @@
 
 #include <Glacier/Audio/ZIOStream.h>
 #include <Glacier/ReGlacier.h>
+#include <Glacier/ZSTL/ZMath.h>
 
 #include <cstdint>
 
@@ -19,23 +20,71 @@ namespace Glacier
     {
         int32_t m_lLowpassEnabled;
         int32_t m_lFlags;
+        int32_t m_lPause;
         int32_t m_lPathIdx;
         uint32_t m_lPrio;
+        int32_t m_bLooping;
         uint32_t m_lSndRef;
         uint32_t m_lHeaderOffset;
+        uint32_t m_lBufferType;
         int32_t m_lPitch;
         int32_t m_lBufferId;
         uint32_t m_lStartOffset;
-        uint32_t m_lBufferType;
-        bool m_bLooping;
-        char m_padding31[3];
-        const char* m_pDebugSoundName;
-        int32_t m_field38;
-        int32_t m_field3C;
-        int32_t m_field40;
-        int32_t m_field44;
-        int32_t m_field48;
-        int32_t m_field4C;
+        int32_t m_lVolume;
+        int32_t m_lVolumeL;
+        int32_t m_lVolumeR;
+        int32_t m_lVolumeS;
+        int32_t m_lVolumeLS;
+        int32_t m_lVolumeRS;
+        int32_t m_lAngleH;
+    };
+
+    struct SStartSound : SStartSoundBase
+    {
+        RE_ADD_PADDING(4);
+        float m_fVolume;
+        RE_ADD_PADDING(0x20);
+    };
+
+    struct SStartSound2D : SStartSound
+    {
+        int32_t m_lPan;
+    };
+
+    struct SStartSoundBFormat : SStartSound
+    {
+        float m_fW;
+        float m_fX;
+        float m_fY;
+        float m_fZ;
+    };
+
+    struct SStartSound3D : SStartSound
+    {
+        ZVector3 m_vConeOrientation;
+        RE_ADD_PADDING(0x18);
+        ZVector3 m_vPosition;
+        ZVector3 m_vVelocity;
+        float m_fMinDistance;
+        float m_fMaxDistance;
+        float m_fInnerConeAngle;
+        float m_fOuterConeAngle;
+        float m_fOuterConeVolume;
+    };
+
+    struct SSynthFilterBase : SSynthCmdBase
+    {
+        int32_t m_lNextFilter;
+    };
+
+    struct SCmdOcclusionBase : SSynthFilterBase
+    {
+        float m_fOpenness;
+    };
+
+    struct SCmdOcclusionWintel : SCmdOcclusionBase
+    {
+        int32_t m_lExclusion;
     };
 
     struct SWaveHeader
@@ -120,6 +169,7 @@ namespace Glacier
         virtual void ResetVolume();
 
         bool GetLayerSampleRates(uint32_t& _minimum, uint32_t& _maximum) const;
+        bool AllocateWaveResource(ZIOStream* _stream, SStartSoundBase* _command);
 
         ZSynth* m_pSoundCon;
         uint32_t m_lBufferSize;
@@ -128,7 +178,9 @@ namespace Glacier
         bool m_bWaitingForMetaSync;
         char m_padding15[3];
         int32_t m_lBufferIndex;
-        char m_padding1C[8];
+        bool m_bFrameClaimed;
+        RE_ADD_PADDING(3);
+        int32_t m_lGroupType;
         bool m_bLowpassEnabled;
         bool m_bAddIdCmd;
         char m_padding26[2];
@@ -146,13 +198,13 @@ namespace Glacier
         uint32_t m_lPrio;
         uint32_t m_dwBufferType;
         int32_t m_lDopplerPitch;
-        int32_t m_field5C;
-        int32_t m_field60;
-        int32_t m_field64;
-        int32_t m_field68;
-        int32_t m_field6C;
-        int32_t m_field70;
-        int32_t m_field74;
+        int32_t m_lVolume;
+        int32_t m_lVolumeL;
+        int32_t m_lVolumeR;
+        int32_t m_lVolumeS;
+        int32_t m_lPitch;
+        int32_t m_lVolumeLS;
+        int32_t m_lVolumeRS;
         const SWaveHeader* m_rWave;
         uint32_t m_rSndObj;
         int32_t m_dwWriteOffset;
@@ -171,10 +223,24 @@ namespace Glacier
     };
 
     RE_VERIFY_SIZE(SSynthCmdBase, 0x08);
-    RE_VERIFY_SIZE(SStartSoundBase, 0x50);
+    RE_VERIFY_SIZE(SStartSoundBase, 0x54);
+    RE_VERIFY_OFFSET(SStartSound, m_fVolume, 0x58);
+    RE_VERIFY_SIZE(SStartSound, 0x7C);
+    RE_VERIFY_OFFSET(SStartSound2D, m_lPan, 0x7C);
+    RE_VERIFY_SIZE(SStartSound2D, 0x80);
+    RE_VERIFY_OFFSET(SStartSoundBFormat, m_fW, 0x7C);
+    RE_VERIFY_SIZE(SStartSoundBFormat, 0x8C);
+    RE_VERIFY_OFFSET(SStartSound3D, m_vPosition, 0xA0);
+    RE_VERIFY_OFFSET(SStartSound3D, m_fMinDistance, 0xB8);
+    RE_VERIFY_SIZE(SStartSound3D, 0xCC);
+    RE_VERIFY_SIZE(SSynthFilterBase, 0x0C);
+    RE_VERIFY_OFFSET(SCmdOcclusionBase, m_fOpenness, 0x0C);
+    RE_VERIFY_SIZE(SCmdOcclusionWintel, 0x14);
     RE_VERIFY_SIZE(SWaveHeader, 0x34);
     RE_VERIFY_SIZE(SDecodeInfo, 0x4028);
     RE_VERIFY_OFFSET(_ZSoundBuffer, m_bLowpassEnabled, 0x24);
+    RE_VERIFY_OFFSET(_ZSoundBuffer, m_lGroupType, 0x20);
+    RE_VERIFY_OFFSET(_ZSoundBuffer, m_bFrameClaimed, 0x1C);
     RE_VERIFY_OFFSET(_ZSoundBuffer, m_lBufferIndex, 0x18);
     RE_VERIFY_OFFSET(_ZSoundBuffer, m_VoiceState, 0x28);
     RE_VERIFY_OFFSET(_ZSoundBuffer, m_pStream, 0x44);

@@ -971,6 +971,11 @@ namespace Glacier
         return m_fTimeMultiplier;
     }
 
+    ZSoundDllBase* ZSysInterface::GetSoundDll() const
+    {
+        return reinterpret_cast<ZSoundDllBase*>(m_pSoundDll);
+    }
+
     // Statics
     STATIC_GLOBAL_CLASS_INSTANCE_IMPL(ZSysInterface*, g_pSysInterface, 0x00820820, nullptr);
 }

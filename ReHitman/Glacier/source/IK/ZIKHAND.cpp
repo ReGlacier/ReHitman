@@ -23,6 +23,8 @@ namespace Glacier
         , m_vItemOffset(0.f)
         , m_lBoneId(lBoneId)
         , m_HandInfo()
+        , m_msgInventorySetActive(g_pEngineData->RegisterZMsg(
+            lBoneId == 20 ? "MSG_INVERTORYSETACTIVELEFT" : "MSG_INVERTORYSETACTIVERIGHT", 0, __FILE__, __LINE__))
     {
     }
 
@@ -49,8 +51,7 @@ namespace Glacier
             ZASSERT(!pItem->IsNew());
 
             m_HandInfo.m_bIKItemEnabled = true;
-            const ZREF rRootRef = g_pEngineData->m_pRoot->GetRef();
-            pItem->SetItemOwner(rRootRef, g_pEngineData->m_pRoot, true, true);
+            pItem->SetItemOwner(pLnkObj->GetRef(), g_pEngineData->m_pRoot, true, true);
 
             ZMat3x3 mItemMat;
             ZVector3 vItemPos;

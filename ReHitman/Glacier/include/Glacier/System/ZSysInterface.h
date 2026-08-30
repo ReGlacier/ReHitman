@@ -16,6 +16,7 @@ namespace Glacier
     class ZDllBase;
     class CConfiguration;
     class ZEngineDataBase;
+    class ZSoundDllBase;
     struct ISerializerStream;
 
     using SETUPWINDOW = ZRender*(*)(void);
@@ -153,6 +154,7 @@ namespace Glacier
         void SetRunMode(ERunModes eRunMode);
         void NormalizePath(MYSTR* pStr) const;
         float GetTimeMultiplier() const;
+        ZSoundDllBase* GetSoundDll() const;
 
         // members
         alignas(8) bool m_bDebugActive; // It's really weird, but it is

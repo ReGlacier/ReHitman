@@ -37,6 +37,97 @@ namespace Glacier::Animation
             }
         }
 
+        void RestrictToEllipse(float& x, float& y, float radiusX, float radiusY)
+        {
+            x /= radiusX;
+            y /= radiusY;
+
+            const float lLengthSq = x * x + y * y;
+            if (lLengthSq > 1.0f)
+            {
+                const float lInvLength = 1.0f / std::sqrt(lLengthSq);
+                x *= lInvLength;
+                y *= lInvLength;
+            }
+
+            x *= radiusX;
+            y *= radiusY;
+        }
+
+        void PositionJointQuat(ZBone& first, ZBone& second, float angle, const ZVector3& direction,
+            const ZVector3& lengths, const ZVector3& lengthsSq)
+        {
+            const float lInvTargetLength = 1.0f / lengths.x;
+            float lBendSin = 0.0f;
+            float lBendCos = 1.0f;
+
+            if (lengths.y + lengths.z >= lengths.x)
+            {
+                const float lLongest = std::max(lengths.x, std::max(lengths.y, lengths.z));
+                const float lProjection = (lengthsSq.x + lengthsSq.y - lengthsSq.z) * lInvTargetLength * 0.5f;
+                const float lHeightSq = lengthsSq.y - lProjection * lProjection;
+
+                if (lLongest * 2.0f <= lengths.x + lengths.y + lengths.z && lHeightSq >= 0.0f)
+                {
+                    const float lHeight = std::sqrt(lHeightSq) * 0.70710677f;
+                    const float lFirstScale = std::sqrt(lProjection / lengths.y + 1.0f);
+                    const float lSecondScale = std::sqrt((lengths.x - lProjection) / lengths.z + 1.0f);
+                    const float lFirstSin = lHeight / (lengths.y * lFirstScale);
+                    const float lFirstCos = lFirstScale * 0.70710677f;
+                    const float lSecondSin = -lHeight / (lengths.z * lSecondScale);
+                    const float lSecondCos = lSecondScale * 0.70710677f;
+
+                    second._Quat = { 0.0f,
+                        lSecondCos * lFirstSin - lSecondSin * lFirstCos,
+                        0.0f,
+                        lSecondCos * lFirstCos + lSecondSin * lFirstSin };
+                    lBendSin = lFirstSin;
+                    lBendCos = lFirstCos;
+                }
+                else
+                {
+                    second._Quat = { 0.0f, 1.0f, 0.0f, 0.0f };
+                    lBendSin = 0.0f;
+                    lBendCos = 1.0f;
+                }
+            }
+            else
+            {
+                second._Quat = { 0.0f, 0.0f, 0.0f, 1.0f };
+            }
+
+            const float lDirectionCos = std::sqrt(direction.x * lInvTargetLength + 1.0f) * 0.70710677f;
+            const float lDirectionScale = lInvTargetLength * 0.5f / lDirectionCos;
+            const float lDirectionY = -direction.z * lDirectionScale;
+            const float lDirectionZ = direction.y * lDirectionScale;
+            const float lSin = std::sin(angle * 0.5f);
+            const float lCos = std::cos(angle * 0.5f);
+            const float lTwistX = lSin * lBendCos;
+            const float lTwistY = -lCos * lBendSin;
+            const float lTwistZ = -lSin * lBendSin;
+            const float lTwistW = lCos * lBendCos;
+
+            first._Quat.i = lTwistZ * lDirectionY + lTwistX * lDirectionCos - lTwistY * lDirectionZ;
+            first._Quat.j = lDirectionY * lTwistW + lTwistX * lDirectionZ + lTwistY * lDirectionCos;
+            first._Quat.k = lTwistZ * lDirectionCos - lTwistX * lDirectionY + lTwistW * lDirectionZ;
+            first._Quat.w = lTwistW * lDirectionCos - lTwistY * lDirectionY - lTwistZ * lDirectionZ;
+        }
+
+        void GetQuatFromAngles021(const float* angles, ZQuat& quat)
+        {
+            const float lSin0 = std::sin(angles[0] * -0.5f);
+            const float lCos0 = std::cos(angles[0] * -0.5f);
+            const float lSin1 = std::sin(angles[1] * -0.5f);
+            const float lCos1 = std::cos(angles[1] * -0.5f);
+            const float lSin2 = std::sin(angles[2] * -0.5f);
+            const float lCos2 = std::cos(angles[2] * -0.5f);
+
+            quat.i = lSin1 * lSin2 * lCos0 + lCos1 * lCos2 * lSin0;
+            quat.j = lCos0 * lSin1 * lCos2 - lSin0 * lCos1 * lSin2;
+            quat.k = lSin0 * lSin1 * lCos2 + lCos0 * lCos1 * lSin2;
+            quat.w = lSin1 * lSin2 * -lSin0 + lCos1 * lCos2 * lCos0;
+        }
+
         // Swaps the left/right hand-attacher bones (58/59) and mirrors them.
         void MirrorHandBones(Model* pModel)
         {
@@ -79,12 +170,9 @@ namespace Glacier::Animation
     // flt_9ACB68 / flt_9AC9C8 / stru_9ACB78).
     ZHumanState g_StateScratch;
     ZHumanState g_StateScratch2;
-    ZQuat g_AimQuat;
 
-    // Aim IK arm-base data. Per arm: {pos.x, pos.y, pos.z, factor}; left arm at
-    // float offset 16, right arm at float offset 20.
-    // TODO: Find where these arm-base positions are populated (the attacker/aim setup).
-    float g_AimArmBase[64] = {};
+    // dword_9ACC08 aliases g_StateScratch.m_Floats; each arm stores
+    // {pos.x, pos.y, pos.z, factor} at its corresponding state offset.
     const int g_AimArmBaseOffsets[2] = { 16, 20 }; // dword_7832E0
 
     Model::Model()
@@ -673,14 +761,14 @@ namespace Glacier::Animation
                                 lRotY1.w = std::cos(h);
                             }
 
-                            const ZQuat lOldAimQuat = g_AimQuat;
+                            const ZQuat lOldAimQuat = g_StateScratch.m_Quats[1];
 
                             ZQuat lCombined;
                             qmul(lCombined, lRotX, lRotY1);
 
                             ZQuat lAimQuat;
                             qmul(lAimQuat, lCombined, lOldAimQuat);
-                            qmul(g_AimQuat, lBaseQuat, lAimQuat);
+                            qmul(g_StateScratch.m_Quats[1], lBaseQuat, lAimQuat);
 
                             ZQuat lRotY2;
                             {
@@ -710,15 +798,15 @@ namespace Glacier::Animation
                                 const int lOff = g_AimArmBaseOffsets[j];
 
                                 ZVector3 lPos;
-                                vcpy(&lPos.x, &g_AimArmBase[lOff]);
+                                vcpy(&lPos.x, &g_StateScratch.m_Floats[lOff]);
                                 vsub(&lPos.x, &lPivot.x);
 
                                 ZVector3 lRotated;
                                 qtran(&lRotated.x, &lPivotQuat.i, &lPos.x);
                                 vadd(&lRotated.x, &lPivot.x);
 
-                                vcpy(&g_AimArmBase[lOff], &lRotated.x);
-                                g_AimArmBase[lOff + 3] -= lArmFac * _g_AimArmFac;
+                                vcpy(&g_StateScratch.m_Floats[lOff], &lRotated.x);
+                                g_StateScratch.m_Floats[lOff + 3] -= lArmFac * _g_AimArmFac;
                             }
                         }
                     }
@@ -826,7 +914,302 @@ namespace Glacier::Animation
 
     void Model::StateFit(ZAngelBone* pAngelBone)
     {
-        // TODO: Finish me
+        if (!m_State)
+            return;
+
+        const uint8_t lRootIndex = m_BoneIdToIndexLookup[Pelvis];
+        const uint8_t lSpine0Index = m_BoneIdToIndexLookup[Spine0];
+        const uint8_t lSpine1Index = m_BoneIdToIndexLookup[Spine1];
+        const uint8_t lSpine2Index = m_BoneIdToIndexLookup[Spine2];
+        const uint8_t lGroundIndex = m_BoneIdToIndexLookup[Ground];
+
+        if (lSpine2Index == 0xFF)
+            return;
+
+        ZASSERT(lGroundIndex != 0xFF);
+        ZASSERT(lRootIndex != 0xFF);
+        ZASSERT(lSpine0Index != 0xFF);
+        ZASSERT(lSpine1Index != 0xFF);
+
+        ZBone& lRoot = m_Bones[lRootIndex];
+        ZBone& lSpine0 = m_Bones[lSpine0Index];
+        ZBone& lSpine1 = m_Bones[lSpine1Index];
+        ZBone& lSpine2 = m_Bones[lSpine2Index];
+
+        lRoot._Quat = m_State->m_Quats[0];
+        lRoot._Pos = { m_State->m_Floats[0], m_State->m_Floats[1], m_State->m_Floats[2] };
+        vscalar(&lRoot._Pos.x, m_ScaleInfo.m_HipScale);
+
+        if (m_PelvisPlacementWeight <= 0.0f)
+        {
+            lSpine2._Quat = m_State->m_Quats[1];
+            lSpine2._Pos = { m_State->m_Floats[3], m_State->m_Floats[4], m_State->m_Floats[5] };
+        }
+        else
+        {
+            ZQuat lInverseRoot{ -lRoot._Quat.i, -lRoot._Quat.j, -lRoot._Quat.k, lRoot._Quat.w };
+
+            if (m_PelvisPlacement.m_Quat.i == -2.0f)
+            {
+                lSpine2._Quat = m_State->m_Quats[1];
+            }
+            else
+            {
+                ZQuat lPlacementQuat;
+                qmul(lPlacementQuat, lInverseRoot, m_PelvisPlacement.m_Quat);
+                qpul(&lSpine2._Quat.i, &m_State->m_Quats[1].i, &lPlacementQuat.i, m_PelvisPlacementWeight);
+            }
+
+            if (m_PelvisPlacement.m_Pos.x == -2.0f)
+            {
+                lSpine2._Pos = { m_State->m_Floats[3], m_State->m_Floats[4], m_State->m_Floats[5] };
+            }
+            else
+            {
+                ZVector3 lPlacementPos;
+                vsub(&lPlacementPos.x, &m_PelvisPlacement.m_Pos.x, &lRoot._Pos.x);
+                qtran(&lPlacementPos.x, &lInverseRoot.i, &lPlacementPos.x);
+                lSpine2._Pos.x = m_State->m_Floats[3] + (lPlacementPos.x - m_State->m_Floats[3]) * m_PelvisPlacementWeight;
+                lSpine2._Pos.y = m_State->m_Floats[4] + (lPlacementPos.y - m_State->m_Floats[4]) * m_PelvisPlacementWeight;
+                lSpine2._Pos.z = m_State->m_Floats[5] + (lPlacementPos.z - m_State->m_Floats[5]) * m_PelvisPlacementWeight;
+            }
+        }
+
+        const float lSpine0Length = vlen(&m_AngelPose[lSpine0Index].m_Pos.x);
+        const float lSpine1Length = vlen(&m_AngelPose[lSpine1Index].m_Pos.x);
+        const float lSpine2Length = vlen(&m_AngelPose[lSpine2Index].m_Pos.x);
+        const float lSpineLength = lSpine0Length + lSpine1Length + lSpine2Length;
+        const float lSpine0Part = lSpine0Length / lSpineLength;
+        const float lSpine1Part = (lSpine0Length + lSpine1Length) / lSpineLength;
+
+        const ZVector3 lSpinePosition = lSpine2._Pos;
+        ZVector3 lSpineDirection{ lSpineLength, 0.0f, 0.0f };
+        qtran(&lSpineDirection.x, &lSpine2._Quat.i, &lSpineDirection.x);
+        vscalar(&lSpineDirection.x, 0.3f);
+
+        vaddscalar(&lSpine0._Pos.x, &lSpinePosition.x, &lSpineDirection.x, lSpine0Part - 1.0f);
+        lSpine0._Pos.x += (1.0f - lSpine0Part) * lSpineLength * 0.3f;
+        vscalar(&lSpine0._Pos.x, lSpine0Part);
+
+        vaddscalar(&lSpine1._Pos.x, &lSpinePosition.x, &lSpineDirection.x, lSpine1Part - 1.0f);
+        lSpine1._Pos.x += (1.0f - lSpine1Part) * lSpineLength * 0.3f;
+        vscalar(&lSpine1._Pos.x, lSpine1Part);
+        lSpine2._Pos = lSpinePosition;
+
+        const float lSpineAngle = std::acos(std::clamp(lSpine2._Quat.w, -1.0f, 1.0f));
+        const float lSpineSin = std::sin(lSpineAngle);
+        ZVector3 lSpineAxis{ lSpine2._Quat.i, lSpine2._Quat.j, lSpine2._Quat.k };
+        if (lSpineSin != 0.0f)
+            vscalar(&lSpineAxis.x, 1.0f / lSpineSin);
+
+        lSpine0._Quat = { lSpineAxis.x, lSpineAxis.y, lSpineAxis.z, 0.0f };
+        lSpine1._Quat = lSpine0._Quat;
+        vscalar(&lSpine0._Quat.i, std::sin(lSpineAngle * 0.33333334f));
+        vscalar(&lSpine1._Quat.i, std::sin(lSpineAngle * 0.66666669f));
+        lSpine0._Quat.w = std::cos(lSpineAngle * 0.33333334f);
+        lSpine1._Quat.w = std::cos(lSpineAngle * 0.66666669f);
+
+        qtran(&pAngelBone->m_Pos.x, &lRoot._Quat.i, &lSpine2._Pos.x);
+        vadd(&pAngelBone->m_Pos.x, &lRoot._Pos.x);
+        qmul(pAngelBone->m_Quat, lRoot._Quat, lSpine2._Quat);
+
+        vsub(&lSpine2._Pos.x, &lSpine1._Pos.x);
+        vsub(&lSpine1._Pos.x, &lSpine0._Pos.x);
+        ZQuat lInverse{ -lSpine0._Quat.i, -lSpine0._Quat.j, -lSpine0._Quat.k, lSpine0._Quat.w };
+        qtran(&lSpine1._Pos.x, &lInverse.i, &lSpine1._Pos.x);
+        lInverse = { -lSpine1._Quat.i, -lSpine1._Quat.j, -lSpine1._Quat.k, lSpine1._Quat.w };
+        qtran(&lSpine2._Pos.x, &lInverse.i, &lSpine2._Pos.x);
+        qmul(lSpine2._Quat, lSpine2._Quat, lInverse);
+        lInverse = { -lSpine0._Quat.i, -lSpine0._Quat.j, -lSpine0._Quat.k, lSpine0._Quat.w };
+        qmul(lSpine1._Quat, lSpine1._Quat, lInverse);
+
+        m_Bones[m_BoneIdToIndexLookup[Neck]]._Quat = m_State->m_Quats[2];
+        m_Bones[m_BoneIdToIndexLookup[Head]]._Quat = m_State->m_Quats[3];
+
+        const EBoneID lLegIds[2][4] = {
+            { LULeg, LLLeg, LAnkle, LToe },
+            { RULeg, RLLeg, RAnkle, RToe }
+        };
+        const ZQuat lLegAxis{ 0.0f, 0.0f, 1.0f, 0.0f };
+
+        for (int i = 0; i < 2; ++i)
+        {
+            ZBone& lUpper = m_Bones[m_BoneIdToIndexLookup[lLegIds[i][0]]];
+            ZBone& lLower = m_Bones[m_BoneIdToIndexLookup[lLegIds[i][1]]];
+            ZBone& lAnkle = m_Bones[m_BoneIdToIndexLookup[lLegIds[i][2]]];
+            ZBone& lToe = m_Bones[m_BoneIdToIndexLookup[lLegIds[i][3]]];
+
+            ZVector3 lHipPosition;
+            qtran(&lHipPosition.x, &lRoot._Quat.i, &lUpper._Pos.x);
+            vadd(&lHipPosition.x, &lRoot._Pos.x);
+
+            const int lFloat = 6 + i * 5;
+            ZVector3 lDirection{
+                m_State->m_Floats[lFloat] - lHipPosition.x,
+                m_State->m_Floats[lFloat + 1] - lHipPosition.y,
+                m_State->m_Floats[lFloat + 2] - lHipPosition.z
+            };
+            ZVector3 lLengths{ vlen(&lDirection.x), vlen(&lLower._Pos.x), vlen(&lAnkle._Pos.x) };
+            ZVector3 lLengthsSq{ lLengths.x * lLengths.x, lLengths.y * lLengths.y, lLengths.z * lLengths.z };
+
+            ZQuat lLegSpace;
+            qmul(lLegSpace, lRoot._Quat, lLegAxis);
+            lInverse = { -lLegSpace.i, -lLegSpace.j, -lLegSpace.k, lLegSpace.w };
+            qtran(&lDirection.x, &lInverse.i, &lDirection.x);
+            PositionJointQuat(lUpper, lLower, m_State->m_Floats[lFloat + 3], lDirection, lLengths, lLengthsSq);
+
+            ZQuat lUpperQuat = lUpper._Quat;
+            qmul(lUpper._Quat, lLegAxis, lUpperQuat);
+            lAnkle._Quat = m_State->m_Quats[4 + i];
+
+            const float lToeAngle = m_State->m_Floats[lFloat + 4] * -0.5f - 0.78539819f;
+            lToe._Quat = { 0.0f, std::sin(lToeAngle), 0.0f, std::cos(lToeAngle) };
+        }
+
+        const EBoneID lArmIds[2][6] = {
+            { LClavicle, LUArm, LLArm, LHand, LForeTwist0, LForeTwist1 },
+            { RClavicle, RUArm, RLArm, RHand, RForeTwist0, RForeTwist1 }
+        };
+        const ZQuat lNeutralDir[2] = {
+            { 0.52651721f, 0.85016382f, 0.000634241f, -0.000861121f },
+            { -0.52651721f, 0.85016382f, 0.000634241f, 0.000861121f }
+        };
+
+        for (int i = 1; i >= 0; --i)
+        {
+            const uint8_t lClavicleIndex = m_BoneIdToIndexLookup[lArmIds[i][0]];
+            const uint8_t lUpperIndex = m_BoneIdToIndexLookup[lArmIds[i][1]];
+            const uint8_t lLowerIndex = m_BoneIdToIndexLookup[lArmIds[i][2]];
+            const uint8_t lHandIndex = m_BoneIdToIndexLookup[lArmIds[i][3]];
+            ZBone& lClavicle = m_Bones[lClavicleIndex];
+            ZBone& lUpper = m_Bones[lUpperIndex];
+            ZBone& lLower = m_Bones[lLowerIndex];
+            ZBone& lHand = m_Bones[lHandIndex];
+
+            const int lFloat = 16 + i * 4;
+            ZVector3 lTarget{
+                m_State->m_Floats[lFloat] * 100.0f,
+                m_State->m_Floats[lFloat + 2] * 100.0f,
+                m_State->m_Floats[lFloat + 1] * 100.0f
+            };
+            qtran(&lTarget.x, &pAngelBone->m_Quat.i, &lTarget.x);
+            vadd(&lTarget.x, &pAngelBone->m_Pos.x);
+
+            ZVector3 lClaviclePosition;
+            qtran(&lClaviclePosition.x, &pAngelBone->m_Quat.i, &lClavicle._Pos.x);
+            vadd(&lClaviclePosition.x, &pAngelBone->m_Pos.x);
+
+            IKTarget& lIkTarget = m_Targets[i + 3];
+            ZQuat lArmStateQuat = m_State->m_Quats[7 + i * 2];
+            if (lIkTarget.m_Weight2 > 0.0f && lGroundIndex != 0xFF)
+            {
+                ZVector3 lIkPosition;
+                vsub(&lIkPosition.x, &lIkTarget.m_Pos2.x, &m_Bones[lGroundIndex]._Pos.x);
+                vmtmul(&lIkPosition.x, m_Bones[lGroundIndex]._Mat.data);
+                vscalar(&lTarget.x, 1.0f - lIkTarget.m_Weight2);
+                vaddscalar(&lTarget.x, &lTarget.x, &lIkPosition.x, lIkTarget.m_Weight2);
+
+                ZVector3 lAimDirection;
+                vsub(&lAimDirection.x, &lTarget.x, &lClaviclePosition.x);
+                ZQuat lAimSpace;
+                qmul(lAimSpace, pAngelBone->m_Quat, lNeutralDir[i]);
+                lInverse = { -lAimSpace.i, -lAimSpace.j, -lAimSpace.k, lAimSpace.w };
+                qtran(&lAimDirection.x, &lInverse.i, &lAimDirection.x);
+                if ((i == 0 && lAimDirection.y < 0.0f) || (i == 1 && lAimDirection.y > 0.0f))
+                    lAimDirection.y = 0.0f;
+                vnorm(&lAimDirection.x);
+
+                ZQuat lAimQuat;
+                minTransformQuat(&lAimQuat.i, &lAimDirection.x);
+                ZQuat lOldQuat = lArmStateQuat;
+                qpul(&lArmStateQuat.i, &lOldQuat.i, &lAimQuat.i, lIkTarget.m_Weight2 * 0.5f);
+                qnorm(&lArmStateQuat.i);
+            }
+
+            qmul(lClavicle._Quat, m_AngelPose[lClavicleIndex].m_Quat, lArmStateQuat);
+            ZQuat lWorldClavicle;
+            qmul(lWorldClavicle, pAngelBone->m_Quat, lClavicle._Quat);
+
+            ZVector3 lUpperPosition;
+            qtran(&lUpperPosition.x, &lWorldClavicle.i, &m_AngelPose[lUpperIndex].m_Pos.x);
+            vadd(&lUpperPosition.x, &lClaviclePosition.x);
+
+            ZVector3 lDirection;
+            vsub(&lDirection.x, &lTarget.x, &lUpperPosition.x);
+            ZVector3 lLengths{ vlen(&lDirection.x), vlen(&m_AngelPose[lLowerIndex].m_Pos.x), vlen(&m_AngelPose[lHandIndex].m_Pos.x) };
+            ZVector3 lLengthsSq{ lLengths.x * lLengths.x, lLengths.y * lLengths.y, lLengths.z * lLengths.z };
+            lInverse = { -lWorldClavicle.i, -lWorldClavicle.j, -lWorldClavicle.k, lWorldClavicle.w };
+            qtran(&lDirection.x, &lInverse.i, &lDirection.x);
+
+            float lTurn = m_State->m_Floats[lFloat + 3] + 1.5707964f;
+            if (i == 1)
+                lTurn = -lTurn;
+            if (lTurn < -3.1415927f)
+                lTurn += 6.2831855f;
+            else if (lTurn > 3.1415927f)
+                lTurn -= 6.2831855f;
+            PositionJointQuat(lUpper, lLower, lTurn, lDirection, lLengths, lLengthsSq);
+
+            lHand._Quat = m_State->m_Quats[6 + i * 2];
+
+            const uint8_t lTwist0Index = m_BoneIdToIndexLookup[lArmIds[i][4]];
+            const uint8_t lTwist1Index = m_BoneIdToIndexLookup[lArmIds[i][5]];
+            if (lTwist0Index < m_BoneCount)
+            {
+                const ZQuat lSideQuat{ i == 1 ? -0.70710677f : 0.70710677f, 0.0f, 0.0f, 0.70710677f };
+                ZVector3 lForward{ 1.0f, 0.0f, 0.0f };
+                qtran(&lForward.x, &lHand._Quat.i, &lForward.x);
+
+                ZQuat lAlignQuat{ 0.0f, 0.0f, 0.0f, 1.0f };
+                if (lForward.x > -1.0f)
+                    minTransformQuat(&lAlignQuat.i, &lForward.x);
+                lAlignQuat.i = -lAlignQuat.i;
+                lAlignQuat.j = -lAlignQuat.j;
+                lAlignQuat.k = -lAlignQuat.k;
+
+                ZQuat lTwistQuat;
+                qmul(lTwistQuat, lAlignQuat, lHand._Quat);
+                qmul(lTwistQuat, lTwistQuat, ZQuat{ -lSideQuat.i, -lSideQuat.j, -lSideQuat.k, lSideQuat.w });
+                ZVector3 lUp{ 0.0f, 1.0f, 0.0f };
+                qtran(&lUp.x, &lTwistQuat.i, &lUp.x);
+                float lTwist = GetAngle(lUp.y, lUp.z);
+                if (lTwist > 3.1415927f)
+                    lTwist -= 6.2831855f;
+                lTwist *= -0.16f;
+
+                ZQuat lForeTwist{ -std::sin(lTwist), 0.0f, 0.0f, std::cos(lTwist) };
+                m_Bones[lTwist0Index]._Quat = lForeTwist;
+                if (lTwist1Index < m_BoneCount)
+                    m_Bones[lTwist1Index]._Quat = lForeTwist;
+                qmul(m_Bones[lTwist0Index]._Quat, lLower._Quat, lForeTwist);
+            }
+        }
+
+        if (m_BoneCount < m_BoneIdToIndexLookup[LFinger10])
+            return;
+
+        for (int hand = 0; hand < 2; ++hand)
+        {
+            if (m_BoneIdToIndexLookup[hand == 0 ? LHand : RHand] == 0xFF)
+                break;
+
+            int lBoneId = hand == 0 ? LFinger10 : RFinger10;
+            const float* lFingerState = &m_State->m_Floats[24 + hand * 20];
+            for (int finger = 0; finger < 5; ++finger)
+            {
+                ZBone& lBase = m_Bones[m_BoneIdToIndexLookup[lBoneId]];
+                ZBone& lMiddle = m_Bones[m_BoneIdToIndexLookup[lBoneId + 1]];
+                ZBone& lTip = m_Bones[m_BoneIdToIndexLookup[lBoneId + 2]];
+                GetQuatFromAngles021(lFingerState, lBase._Quat);
+
+                const float lHalfCurl = lFingerState[3] * 0.5f;
+                lMiddle._Quat = { 0.0f, -std::sin(lHalfCurl), 0.0f, std::cos(lHalfCurl) };
+                lTip._Quat = lMiddle._Quat;
+
+                lFingerState += 4;
+                lBoneId += 3;
+            }
+        }
     }
 
     void Model::BlendOutPoseWeights()
@@ -1046,12 +1429,318 @@ namespace Glacier::Animation
 
     void Model::LookAt(ZAngelBone* pAngelBone, Manager* pManager, float fDt)
     {
-        // TODO: Finish me
+        (void)pAngelBone;
+        (void)pManager;
+
+        const uint8_t lSpine2Index = m_BoneIdToIndexLookup[Spine2];
+        if (lSpine2Index == 0xFF)
+            return;
+
+        IKTarget& lTarget = m_Targets[0];
+        if (lTarget.m_Weight2 == 0.0f)
+        {
+            lTarget.m_Data[0] = 0.0f;
+            lTarget.m_Data[1] = 0.0f;
+            return;
+        }
+
+        const int lMode = lTarget.m_LookAt2.m_Mode;
+        float lHorizontal;
+        float lVertical;
+
+        if ((lMode & 0x80) != 0)
+        {
+            lHorizontal = lTarget.m_Pos2.x * lTarget.m_Pos2.z;
+            lVertical = lTarget.m_Pos2.y * lTarget.m_Pos2.z;
+        }
+        else
+        {
+            const uint8_t lGroundIndex = m_BoneIdToIndexLookup[Ground];
+            ZVector3 lDirection;
+
+            if ((lMode & 8) != 0)
+            {
+                lDirection = lTarget.m_Pos2;
+            }
+            else
+            {
+                vsub(&lDirection.x, &lTarget.m_Pos2.x, &m_Bones[lGroundIndex]._Pos.x);
+                vmtmul(&lDirection.x, m_Bones[lGroundIndex]._Mat.data);
+            }
+
+            if ((lMode & 0x20) != 0)
+            {
+                const uint8_t lPelvisIndex = m_BoneIdToIndexLookup[Pelvis];
+                const uint8_t lNeckIndex = m_BoneIdToIndexLookup[Neck];
+                const uint8_t lHeadIndex = m_BoneIdToIndexLookup[Head];
+
+                ZBone& lPelvis = m_Bones[lPelvisIndex];
+                ZBone& lSpine2 = m_Bones[lSpine2Index];
+                ZBone& lNeck = m_Bones[lNeckIndex];
+                ZBone& lHead = m_Bones[lHeadIndex];
+
+                lPelvis._Quat = m_State->m_Quats[0];
+                lPelvis._Pos.x = m_State->m_Floats[0];
+                lPelvis._Pos.y = m_State->m_Floats[1];
+                lPelvis._Pos.z = m_State->m_Floats[2];
+                vscalar(&lPelvis._Pos.x, m_ScaleInfo.m_HipScale);
+
+                lSpine2._Quat = m_State->m_Quats[1];
+                lSpine2._Pos.x = m_State->m_Floats[3];
+                lSpine2._Pos.y = m_State->m_Floats[4];
+                lSpine2._Pos.z = m_State->m_Floats[5];
+
+                lNeck._Quat = m_State->m_Quats[3];
+                lHead._Quat = m_State->m_Quats[3];
+
+                ZVector3 lHeadPosition;
+                qtran(&lHeadPosition.x, &lPelvis._Quat.i, &lSpine2._Pos.x);
+                vadd(&lHeadPosition.x, &lPelvis._Pos.x);
+
+                ZQuat lWorldQuat;
+                qmul(lWorldQuat, lPelvis._Quat, lSpine2._Quat);
+
+                ZVector3 lOffset;
+                qtran(&lOffset.x, &lWorldQuat.i, &lNeck._Pos.x);
+                vadd(&lHeadPosition.x, &lOffset.x);
+                qmul(lWorldQuat, lWorldQuat, lNeck._Quat);
+
+                qtran(&lOffset.x, &lWorldQuat.i, &lHead._Pos.x);
+                vadd(&lHeadPosition.x, &lOffset.x);
+                qmul(lWorldQuat, lWorldQuat, lHead._Quat);
+
+                if ((lMode & 4) == 0)
+                    vsub(&lDirection.x, &lHeadPosition.x);
+
+                lHead._Pos = m_AngelPose[lHeadIndex].m_Pos;
+
+                ZQuat lInverseWorld{ -lWorldQuat.i, -lWorldQuat.j, -lWorldQuat.k, lWorldQuat.w };
+                qtran(&lDirection.x, &lInverseWorld.i, &lDirection.x);
+                vnorm(&lDirection.x);
+
+                lHorizontal = GetAngle(-lDirection.z, -lDirection.y) - 3.1415927f;
+                lVertical = 1.5707964f - std::acos(std::clamp(lDirection.x, -1.0f, 1.0f));
+            }
+            else
+            {
+                if ((lMode & 4) == 0)
+                    vaddscalar(&lDirection.x, &lDirection.x, m_State->m_Floats, m_ScaleInfo.m_HipScale * -1.7f);
+
+                vnorm(&lDirection.x);
+                lHorizontal = 3.1415927f - GetAngle(lDirection.z, lDirection.x);
+                lVertical = 1.5707964f - std::acos(std::clamp(lDirection.y, -1.0f, 1.0f));
+            }
+        }
+
+        switch (lMode & 3)
+        {
+        case 0:
+        case 1:
+            RestrictToEllipse(lHorizontal, lVertical, 2.1816616f, 0.87266463f);
+            break;
+        case 2:
+            RestrictToEllipse(lHorizontal, lVertical, 1.4835298f, 0.61086524f);
+            break;
+        default:
+            break;
+        }
+
+        const float lRate = fDt * lTarget.m_Data[3];
+        PullToValue(lTarget.m_Data[0], lHorizontal, lRate);
+        PullToValue(lTarget.m_Data[1], lVertical, lRate);
+
+        lHorizontal = lTarget.m_Data[0];
+        lVertical = lTarget.m_Data[1];
+
+        if ((lMode & 0x20) == 0)
+        {
+            lHorizontal *= lTarget.m_Weight2;
+            lVertical *= lTarget.m_Weight2;
+        }
+
+        lHorizontal = std::clamp(lHorizontal, -3.1415927f, 3.1415927f);
+
+        if ((lMode & 3) <= 1)
+        {
+            float lHeadHorizontal = lHorizontal * 0.5f;
+            float lHeadVertical = lVertical * 0.5f;
+
+            PullToValue(lHeadHorizontal, 0.0f, std::fabs(lHeadHorizontal * 0.13600001f));
+            PullToValue(lHeadVertical, 0.0f, std::fabs(lHeadVertical * 0.14f));
+
+            float lSpineHorizontal = 0.0f;
+            PullToValue(lSpineHorizontal, lHeadHorizontal, 0.29670596f);
+            PullToValue(lHeadHorizontal, 0.0f, 0.29670596f);
+            const float lHorizontalAdjustment = lHeadHorizontal * 0.27200001f;
+            lSpineHorizontal += lHorizontalAdjustment;
+            PullToValue(lHeadHorizontal, 0.0f, std::fabs(lHorizontalAdjustment));
+
+            float lSpineVertical = 0.0f;
+            PullToValue(lSpineVertical, lHeadVertical, 0.29670596f);
+            PullToValue(lHeadVertical, 0.0f, 0.29670596f);
+            const float lVerticalAdjustment = lHeadVertical * 0.28f;
+            lSpineVertical += lVerticalAdjustment;
+            PullToValue(lHeadVertical, 0.0f, std::fabs(lVerticalAdjustment));
+
+            ZQuat lHorizontalQuat{ -std::sin(lSpineHorizontal), 0.0f, 0.0f, std::cos(lSpineHorizontal) };
+            ZQuat lVerticalQuat{ 0.0f, std::sin(lSpineVertical), 0.0f, std::cos(lSpineVertical) };
+            ZQuat lLookQuat;
+            qmul(lLookQuat, lHorizontalQuat, lVerticalQuat);
+
+            ZQuat lOldQuat = m_State->m_Quats[3];
+            qpul(&m_State->m_Quats[3].i, &lOldQuat.i, &lLookQuat.i, lTarget.m_Weight2);
+
+            lHorizontalQuat.i = -std::sin(lHeadHorizontal);
+            lHorizontalQuat.w = std::cos(lHeadHorizontal);
+            lVerticalQuat.j = std::sin(lHeadVertical);
+            lVerticalQuat.w = std::cos(lHeadVertical);
+            qmul(lLookQuat, lHorizontalQuat, lVerticalQuat);
+
+            lOldQuat = m_State->m_Quats[1];
+            qpul(&m_State->m_Quats[1].i, &lOldQuat.i, &lLookQuat.i, lTarget.m_Weight2);
+        }
+        else if ((lMode & 3) == 2)
+        {
+            const float lLength = std::sqrt(lHorizontal * lHorizontal + lVertical * lVertical);
+            if (lLength > 0.0001f)
+            {
+                const float lSinOverLength = std::sin(lLength * 0.2f) / lLength;
+                const ZQuat lLookQuat{
+                    -lHorizontal * lSinOverLength,
+                    lVertical * lSinOverLength,
+                    0.0f,
+                    std::cos(lLength * 0.2f)
+                };
+
+                ZQuat lOldQuat = m_State->m_Quats[3];
+                qpul(&m_State->m_Quats[3].i, &lOldQuat.i, &lLookQuat.i, lTarget.m_Weight2);
+
+                lOldQuat = m_State->m_Quats[2];
+                qpul(&m_State->m_Quats[2].i, &lOldQuat.i, &lLookQuat.i, lTarget.m_Weight2);
+            }
+        }
+
+        lTarget.m_Data[0] = lHorizontal;
+        lTarget.m_Data[1] = lVertical;
     }
 
     void Model::EyeLookAt(ZAngelBone* pAngelBone, Manager* pManager, float fDt)
     {
-        // TODO: Finish me
+        (void)pManager;
+        (void)fDt;
+
+        const IKTarget& lTarget = m_Targets[0];
+        const int lMode = lTarget.m_LookAt2.m_Mode;
+
+        if (lTarget.m_Weight2 == 0.0f || (lMode & 0x40) != 0 || !m_EyePoseIdOk)
+            return;
+
+        float lHorizontal[2];
+        float lVertical[2];
+
+        if ((lMode & 0x80) != 0)
+        {
+            const float lScale = 1.0f - lTarget.m_Pos2.z;
+            lHorizontal[0] = lHorizontal[1] = lTarget.m_Pos2.x * lScale;
+            lVertical[0] = lVertical[1] = lTarget.m_Pos2.y * lScale;
+        }
+        else
+        {
+            const uint8_t lNeckIndex = m_BoneIdToIndexLookup[Neck];
+            const uint8_t lHeadIndex = m_BoneIdToIndexLookup[Head];
+            if (lNeckIndex == 0xFF || lHeadIndex == 0xFF)
+                return;
+
+            const ZBone& lNeck = m_Bones[lNeckIndex];
+            const ZBone& lHead = m_Bones[lHeadIndex];
+
+            ZVector3 lHeadPosition;
+            qtran(&lHeadPosition.x, &pAngelBone->m_Quat.i, &lNeck._Pos.x);
+            vadd(&lHeadPosition.x, &pAngelBone->m_Pos.x);
+
+            ZQuat lHeadQuat;
+            qmul(lHeadQuat, pAngelBone->m_Quat, lNeck._Quat);
+
+            ZVector3 lOffset;
+            qtran(&lOffset.x, &lHeadQuat.i, &lHead._Pos.x);
+            vadd(&lHeadPosition.x, &lOffset.x);
+            qmul(lHeadQuat, lHeadQuat, lHead._Quat);
+
+            ZVector3 lTargetPosition;
+            if ((lMode & 8) != 0)
+            {
+                lTargetPosition = lTarget.m_Pos2;
+            }
+            else
+            {
+                const uint8_t lGroundIndex = m_BoneIdToIndexLookup[Ground];
+                vsub(&lTargetPosition.x, &lTarget.m_Pos2.x, &m_Bones[lGroundIndex]._Pos.x);
+                vmtmul(&lTargetPosition.x, m_Bones[lGroundIndex]._Mat.data);
+            }
+
+            ZVector3 lDirection;
+            if ((lMode & 4) != 0)
+                lDirection = lTargetPosition;
+            else
+                vsub(&lDirection.x, &lTargetPosition.x, &lHeadPosition.x);
+
+            ZMat3x3 lHeadMat;
+            quattomat(lHeadMat, lHeadQuat);
+            vmtmul(&lDirection.x, lHeadMat.data);
+
+            const float lLengthSq = lDirection.x * lDirection.x
+                + lDirection.y * lDirection.y
+                + lDirection.z * lDirection.z;
+
+            if (lLengthSq < 900.0f)
+            {
+                if (lLengthSq == 0.0f)
+                    return;
+
+                vscalar(&lDirection.x, 30.0f / std::sqrt(lLengthSq));
+            }
+
+            RestrictToCone(&lDirection.x, 44.444443f, 11.428572f);
+
+            for (int i = 0; i < 2; ++i)
+            {
+                ZVector3 lEyeDirection = lDirection;
+                lEyeDirection.y += i == 0 ? -3.0f : 3.0f;
+                vnorm(&lEyeDirection.x);
+
+                float lHorizontalAngle = GetAngle(lEyeDirection.z, lEyeDirection.y);
+                float lVerticalAngle = GetAngle(
+                    std::sqrt(lEyeDirection.y * lEyeDirection.y + lEyeDirection.z * lEyeDirection.z),
+                    lEyeDirection.x);
+
+                if (lHorizontalAngle > 3.1415927f)
+                    lHorizontalAngle -= 6.2831855f;
+                if (lVerticalAngle > 3.1415927f)
+                    lVerticalAngle -= 6.2831855f;
+
+                lHorizontal[i] = lHorizontalAngle / (g_EyeLookAtHor * 0.017453292f);
+                lVertical[i] = lVerticalAngle >= 0.0f
+                    ? lVerticalAngle / (g_EyeLookAtVer * 0.017453292f)
+                    : lVerticalAngle * 1.2732395f;
+            }
+        }
+
+        if (m_EyePoseId[0] == ePoseIDNA)
+            return;
+
+        int16_t* lPoseIdToPos = m_Poses.idToPosLookup();
+        for (int i = 0; i < 2; ++i)
+        {
+            const int lPoseOffset = i * 4;
+
+            const int16_t lHorizontalPos = lPoseIdToPos[m_EyePoseId[lPoseOffset + (lHorizontal[i] <= 0.0f ? 1 : 0)]];
+            if (lHorizontalPos != ePoseIDNA)
+                m_PoseWeights[lHorizontalPos] = std::fabs(lHorizontal[i]);
+
+            const int16_t lVerticalPos = lPoseIdToPos[m_EyePoseId[lPoseOffset + (lVertical[i] >= 0.0f ? 3 : 2)]];
+            if (lVerticalPos != ePoseIDNA)
+                m_PoseWeights[lVerticalPos] = std::fabs(lVertical[i]);
+        }
     }
 
     void Model::Bank(float fDt)

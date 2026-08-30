@@ -27,7 +27,7 @@ namespace Glacier
         void CallBackIfTime(ZIKLNKOBJ* pIkLnkObj);
         void CallBackAndRemove(ZIKLNKOBJ* pDest);
         void Clear();
-        void Enable(bool bEnabled);
+        bool Enable(bool bEnabled);
         bool IsEnabled() const;
         bool Removing() const;
         void SetMatPosGeom(const ZMat3x3* pMat, const ZVector3* pPos, ZREF rGeom);

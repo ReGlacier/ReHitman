@@ -1,11 +1,13 @@
-#include <Glacier/Physics/ZCloth.h>
+#include <BloodMoney/Game/Physics/ZCloth.h>
 #include <Glacier/Physics/ZCommonAlgorithms.h>
 #include <Glacier/ZUniMemory.h>
 
 
-namespace Glacier
+namespace Hitman::BloodMoney
 {
-    ZCloth::ZCloth(const char* psName, ZBaseGeom* pBaseGeom)
+    using namespace Glacier;
+
+    ZCloth::ZCloth(const char* psName, Glacier::ZBaseGeom* pBaseGeom)
         : ZSTDOBJ(psName, pBaseGeom),
           m_pBoxes(nullptr),
           m_pCollisionPlanes(nullptr)
@@ -19,7 +21,7 @@ namespace Glacier
         ZUniMemory::Delete(m_pCollisionPlanes2);
     }
 
-    bool ZCloth::PostLoad(ISerializerStream& stream)
+    bool ZCloth::PostLoad(Glacier::ISerializerStream& stream)
     {
         if (!m_iActorCollision)
             m_iActorCollision = HERO;

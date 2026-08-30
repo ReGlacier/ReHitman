@@ -28,7 +28,7 @@ namespace Glacier
         // types
         struct ZAttachGeom
         {
-            ZBaseGeom* m_pBaseGeom;
+            ZREF m_rBaseGeom;
             uint32_t m_lBoneId;
             ZMat3x3 m_mOffset;
             ZVector3 m_vOffset;
@@ -36,15 +36,19 @@ namespace Glacier
 
         // methods
         ~ZBoneModifyBase();
-        ZBoneModifyBase(uint16_t lNrBones);
+        ZBoneModifyBase(uint32_t lNrBones);
         bool IsRagdollActive() const;
         bool IsRagdollMoving() const;
         uint8_t DecalLookup() const;
         bool HideBone(ZBaseGeom* pBaseGeom, uint8_t lBoneIndex, bool bHide);
         const ZBone* GetBones(const ZLNKOBJ* pLnkObj) const;
         void GetIKBone(const ZBone* pBones, const float* pConvBones, uint32_t lBoneIndex, ZMat3x3& mMat, ZVector3& vPos) const;
-        void GetBoneMatPos(ZMat3x3& mMat, ZVector3& vPos, uint32_t lBoneIdx, const ZLNKOBJ* pLnkObj) const;
+        void GetBoneMatPos(ZMat3x3& mMat, ZVector3& vPos, uint32_t lBoneIdx, const ZLNKOBJ* pLnkObj, ZBone* pBone = nullptr) const;
         bool GetIKBoneMatPos(ZMat3x3& mMat, ZVector3& vPos, uint8_t lIndex, const ZLNKOBJ* pLnkObj, ZBone* pBone) const;
+        bool AttachBaseGeomToBone(const ZBaseGeom* pBaseGeom, uint32_t lBoneId, const float* pMat, const float* pPos);
+        void DetachBaseGeomFromBone(const ZBaseGeom* pBaseGeom, uint32_t lBoneId);
+        uint32_t GetAttachedBaseGeomBoneId(const ZBaseGeom* pBaseGeom) const;
+        bool FindAttachedGeomMatPos(ZMat3x3& mMat, ZVector3& vPos, const ZBaseGeom* pBaseGeom, const ZLNKOBJ* pLnkObj) const;
         void PrimChanged(uint32_t lPrim);
         void ForceRagdollDeactivation(ZLNKOBJ* pLnkObj);
         bool Update(ZLNKOBJ* pLnkObj, ZMat3x3& mMat, ZVector3& vPos);
@@ -52,6 +56,7 @@ namespace Glacier
         void UpdateGlobalIK(ZBone* pBones, uint32_t lPrim, ZLNKOBJ* pLnkObj);
         void UpdateConstraintBones(ZBone* pBones, uint32_t lPrim, ZLNKOBJ* pLnkObj);
         bool DoAnimations() const;
+        void LoadSave(ISerializerStream& stream, bool bSaving);
 
         // members
         bool m_bIsPlayer;

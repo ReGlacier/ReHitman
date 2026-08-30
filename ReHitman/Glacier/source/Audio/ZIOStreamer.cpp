@@ -81,9 +81,11 @@ namespace Glacier
     }
 
     ZIOStream* ZIOStreamer::AddAudioStream(int _latency, uint32_t _fileOffset, uint32_t _streamSize, bool _loop,
-        uint32_t _waveChunkSize, int _metaChunkSize, int _numMetaChunks, int _startOffset, bool)
+        uint32_t _startOffset, int _metaChunkSize, int _waveChunkSize, int _numMetaChunks, bool)
     {
-        const uint32_t requestedBytes = m_lBlockSize + 4 * _latency * m_lMaxLatency / 1000;
+        uint32_t requestedBytes = m_lBlockSize + 4 * _latency * m_lMaxLatency / 1000;
+        if (!_loop && _streamSize < requestedBytes)
+            requestedBytes = _streamSize;
         uint32_t blockCount = (requestedBytes + m_lBlockSize - 1) / m_lBlockSize;
         if (_loop && blockCount == 1)
             blockCount = 2;
@@ -100,17 +102,47 @@ namespace Glacier
         if (!stream)
             return nullptr;
 
+        char* memory = static_cast<char*>(m_Alloc.AllocBlocks(blockCount));
+        if (!memory)
+            return nullptr;
+        const int memoryHandle = static_cast<int>((memory - m_Alloc.m_pBlockMemAligned) / m_lBlockSize);
+
+        ZBufferGroup* userData = stream->m_pUserData;
+        const int streamId = stream->m_lStreamId;
+        *stream = {};
+        stream->m_pUserData = userData;
+        stream->m_lStreamId = streamId;
         stream->m_lReferenceCount = 0;
         stream->m_pAlloc = &m_Alloc;
+        stream->m_lCurrentReadPointer = 0;
+        stream->m_lCurrentReadHandle = memoryHandle;
+        stream->m_lBytesReady = 0;
+        stream->m_lBytesToSkip = 0;
+        stream->m_lCurrentBlockSize = 0;
+        stream->m_lBlocksLeft = static_cast<int32_t>(blockCount);
+        stream->m_lMemHandle = memoryHandle;
+        stream->m_lMemHandleCurrent = memoryHandle;
+        stream->m_lFileHandle = m_lAudioStreamFileHandle;
+        stream->m_lFileOffset = _fileOffset;
         stream->m_bLoopStream = _loop;
         stream->m_lFilePointer = _fileOffset;
-        stream->m_lFileLoopOffset = _fileOffset;
-        stream->m_lBytesLeftInStream = static_cast<int32_t>(_streamSize - _startOffset * _metaChunkSize);
+        stream->m_lFileLoopOffset = _startOffset;
+        stream->m_lBytesLeftInStream = static_cast<int32_t>(_streamSize - _numMetaChunks * _metaChunkSize);
         stream->m_lSizeOfStream = static_cast<int32_t>(_streamSize);
+        stream->m_lBytesLoaded = 0;
+        stream->m_lLastBlock = 0;
+        stream->m_lHandleLastBlock = -1;
         stream->m_lMetaChunkSize = _metaChunkSize;
-        stream->m_lDataChunks = _numMetaChunks;
+        stream->m_lDataChunks = _waveChunkSize / m_lBlockSize;
+        stream->m_lDataChunkCounter = 0;
+        stream->m_lNumMetaChunks = _numMetaChunks;
+        stream->m_lMetaChunkCounter = _numMetaChunks;
+        stream->m_lCurrentMetaSegment = 0;
+        stream->m_pMetaMem = m_pMetaMem + (streamId * m_lMetaBufferSegments << 12);
         stream->m_lNumberOfBlocks = static_cast<int32_t>(blockCount);
+        stream->m_bPreloadReady = false;
         stream->m_bActive = true;
+        stream->m_bMetaDataReady = false;
         ++m_lCurrentNumStreams;
         return stream;
     }

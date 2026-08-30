@@ -2,10 +2,28 @@
 #include <Glacier/System/ZSysInterface.h>
 #include <Glacier/IK/ZLNKWHANDS.h>
 #include <Glacier/IK/ZTARGET.h>
+#include <cstring>
 
 
 namespace Glacier
 {
+    namespace
+    {
+        constexpr uint32_t INVALID_TARGET = 0x7FFFFFFF;
+
+        bool IsInvalidTarget(float value)
+        {
+            uint32_t bits;
+            std::memcpy(&bits, &value, sizeof(bits));
+            return bits == INVALID_TARGET;
+        }
+
+        void SetInvalidTarget(float& value)
+        {
+            std::memcpy(&value, &INVALID_TARGET, sizeof(value));
+        }
+    }
+
     ZTARGET::ZTARGET()
     {
         m_mTarget.Reset();
@@ -28,8 +46,9 @@ namespace Glacier
 
     float ZTARGET::GetTimePrc() const
     {
-        const float fPassedTime = static_cast<float>(g_pSysInterface->GetRealTime()) - m_fStartTime;
-        const bool bCountdown = (m_fStartTime < 0.0);
+        const int32_t lStartTime = static_cast<int32_t>(fabs(m_fStartTime) * TIMETYPE::kTicksPerSecond);
+        const float fPassedTime = static_cast<float>(g_pSysInterface->FrameTime.secs - lStartTime) * TIMETYPE::kInvTPS;
+        const bool bCountdown = m_fStartTime < 0.0f;
 
         if (bCountdown)
         {
@@ -50,24 +69,31 @@ namespace Glacier
     void ZTARGET::SetTime(float fTime, bool bRemove)
     {
         const float fTimePrc = GetTimePrc();
+        m_fTime = fTime;
 
         if (fTimePrc == 1.0f)
         {
-            m_fStartTime = (bRemove ? -1.f : 1.f) * static_cast<float>(g_pSysInterface->GetRealTime());
+            m_fStartTime = (bRemove ? -1.0f : 1.0f) * static_cast<float>(g_pSysInterface->FrameTime);
+
+            if (bRemove)
+                m_rGeom = 0;
         }
         else if (bRemove)
         {
-            // TODO: Finish me
+            const int32_t lRemainingTime = static_cast<int32_t>((1.0f - fTimePrc) * fTime * TIMETYPE::kTicksPerSecond);
+            m_fStartTime = static_cast<float>(-g_pSysInterface->FrameTime.secs - lRemainingTime) * TIMETYPE::kInvTPS;
+            m_rGeom = 0;
         }
         else
         {
-            // TODO: Finish me
+            const int32_t lPassedTime = static_cast<int32_t>(fTimePrc * fTime * TIMETYPE::kTicksPerSecond);
+            m_fStartTime = static_cast<float>(g_pSysInterface->FrameTime.secs - lPassedTime) * TIMETYPE::kInvTPS;
         }
     }
 
     bool ZTARGET::GetPos(ZVector3& vPos) const
     {
-        if (isnan(m_vTarget.x))
+        if (IsInvalidTarget(m_vTarget.x))
         {
             return false;
         }
@@ -102,6 +128,7 @@ namespace Glacier
         {
             int32_t lId = 0;
             stream.Exchange("lCallBackId", lId);
+            ZASSERT(lId >= 0);
 
             if (lId <= 0)
             {
@@ -161,7 +188,7 @@ namespace Glacier
 
     void ZTARGET::CallBackAndRemove(ZIKLNKOBJ* pDest)
     {
-        if (m_CallBack.m_pCallback)
+        while (m_CallBack.m_pCallback)
         {
             IKCallBack_t pFunc = m_CallBack.m_pCallback;
             const int32_t lDelta = m_CallBack.m_delta;
@@ -190,9 +217,11 @@ namespace Glacier
         m_bEnabled = false;
     }
 
-    void ZTARGET::Enable(bool bEnabled)
+    bool ZTARGET::Enable(bool bEnabled)
     {
+        const bool bWasEnabled = m_bEnabled;
         m_bEnabled = bEnabled;
+        return bWasEnabled;
     }
 
     bool ZTARGET::IsEnabled() const
@@ -213,7 +242,7 @@ namespace Glacier
         }
         else
         {
-            m_mTarget.data[0] = NAN;
+            SetInvalidTarget(m_mTarget.data[0]);
         }
 
         if (pPos)
@@ -222,7 +251,7 @@ namespace Glacier
         }
         else
         {
-            m_vTarget.x = NAN;
+            SetInvalidTarget(m_vTarget.x);
         }
 
         m_rGeom = rGeom;

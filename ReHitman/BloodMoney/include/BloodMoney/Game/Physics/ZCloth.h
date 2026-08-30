@@ -5,9 +5,11 @@
 #include <Glacier/ZMessageResolver.h>
 
 
-namespace Glacier
+namespace Hitman::BloodMoney
 {
-    class ZCloth : public ZSTDOBJ
+    using namespace Glacier;
+
+    class ZCloth : public Glacier::ZSTDOBJ
     {
     public:
         // types

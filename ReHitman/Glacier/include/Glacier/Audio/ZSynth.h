@@ -54,6 +54,35 @@ namespace Glacier
         int32_t m_lBufferId;
     };
 
+    struct SCmdChainBegin : SSynthCmdBase
+    {
+        int32_t m_bCreate;
+        int32_t m_lRemapIdx;
+    };
+
+    struct SCmdRemoveChains : SSynthCmdBase
+    {
+        int32_t m_lCount;
+        int32_t m_Chains[1];
+    };
+
+    struct SGroupStart : SSynthCmdBase
+    {
+        int32_t m_lGroupEntries;
+        SBufferId m_Entries[1];
+    };
+
+    struct SCmdSoundRef : SSynthCmdBase
+    {
+        uint32_t m_lSndRef;
+    };
+
+    struct SCmdLPFade : SSynthCmdBase
+    {
+        uint32_t m_lGeomRef;
+        int32_t m_lFadePct;
+    };
+
     class ZSynth
     {
     public:
@@ -105,7 +134,7 @@ namespace Glacier
         virtual bool CopyWaveData(_ZSoundBuffer* _buffer);
         virtual _ZSoundBuffer* Duplicate(_ZSoundBuffer* _buffer);
         virtual void CreateFilterChains() = 0;
-        virtual void CreateChain(void* _chain, int _index) = 0;
+        virtual void CreateChain(SChain* _chain, int _index) = 0;
         virtual void CreateChainsEnd() = 0;
         virtual void RemoveChains(int* _chains, int _count) = 0;
         virtual void RemoveChain(int _chain) = 0;
@@ -178,6 +207,7 @@ namespace Glacier
     RE_VERIFY_SIZE(SFilterCon, 0x08);
     RE_VERIFY_SIZE(SChain, 0x110);
     RE_VERIFY_SIZE(SBufferId, 0x08);
+    RE_VERIFY_SIZE(SCmdChainBegin, 0x10);
     RE_VERIFY_SIZE(ZSynth::STransferRequest, 0x0C);
     RE_VERIFY_SIZE(ZSynth::SVirtualBuffer, 0x08);
     RE_VERIFY_OFFSET(ZSynth, m_BufferGroups, 0x08);

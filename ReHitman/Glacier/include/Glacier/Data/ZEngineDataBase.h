@@ -7,6 +7,7 @@
 #include <Glacier/ZLinkedListHeader.hpp>
 #include <Glacier/ZEntityTracker.h>
 #include <Glacier/Data/ZScene.h>
+#include <Glacier/ZSTL/ZStackArray.h>
 #include <Glacier/ZSTL/CListUser.h>
 #include <Glacier/ZSTL/ZList.h>
 #include <Glacier/Animation/Manager.h>
@@ -25,6 +26,7 @@
 namespace Glacier
 {
     // fwds
+    class ZSaveClass;
     class STRREFTAB;
     class ZGeomBuffer;
     struct IInputStream;
@@ -33,6 +35,16 @@ namespace Glacier
     struct CGlobalCom;
     class ZScheduledUpdate;
     class ZSoundObject;
+
+    enum EGizmoType : uint32_t
+    {
+        eGIZMO_LIGHT = 0,
+        eGIZMO_PRIMITIVE = 1,
+        eGIZMO_STDOBJ = 2,
+        eGIZMO_SNDOBJ = 3,
+        eGIZMO_GATE = 4,
+        eGIZMO__MAX = 5,
+    };
 
     struct SGeomTypeCount
     {
@@ -56,6 +68,12 @@ namespace Glacier
     struct ILoadCallBack
     {
         virtual void CallMe() = 0;
+    };
+
+    struct SMakeGeomDynamic
+    {
+        ZREF rGeom;
+        uint32_t lControl;
     };
 
     class ZEngineDataBase : public ZSerializable
@@ -152,7 +170,8 @@ namespace Glacier
         void SetOnlyEventUpdate(ZEventBase* pEvent);
         ZEventBase* GetOnlyEventUpdate() const;
         bool IsPaused() const;
-        bool CheckInPackBuffer(void* ptr) const;
+        bool CheckInPackBuffer(const void* ptr) const;
+        bool CheckInAnimBuffer(const void* ptr) const;
         ZEventBase* AllocGeomCallEvent(ZGEOM* pGeom);
         bool ResourcesDisabled() const;
         void EnableResources();
@@ -181,73 +200,58 @@ namespace Glacier
         void DoLoadScene();
         MYSTR CalcCacheFileName(MYSTR sFileName, const char* pExt);
         void NetworkUpdate();
+        uint32_t GetNextAnimId();
+        void SetLoadCallBack(ILoadCallBack* pCallBack);
+        bool IsLoadingGame() const;
+        bool IsSavingGame() const;
+        void ScheduledUpdate();
+        void FrameUpdate();
+        bool IsFrozen() const;
+        void PauseScene(bool bPause);
+        void FreezeScene(bool bFreeze);
+        ZREF SPtrToRef(ZSoundObject* pSoundObject) const;
+        void PurgePrimBuffer();
+        void InitPathfinder4Data(const char* pBuffer);
+        bool InitPhysicsData(const char* pBuffer);
+        bool IsDrawGizmoEnabled(EGizmoType eType) const;
+        void EnableDrawGizmo(EGizmoType eType, bool bEnabled);
+        void FreeRoutsLists();
+        void FreeScheduledUpdate();
+        void FreeLightTable();
+        void DeleteBoundTrees();
+        char* GetStaticBuffer();
+        char* GetAnimBuffer();
+        void CreateGeoms(REFTAB* prtCreatedGeoms, ZStackArray<1000, SMakeGeomDynamic>* pMakeDynArray, const char* pGeomsData, const char* pStaticBuffer, IInputStream& property_in_stream);
+        void LoadProperties(uint32_t lNrPackedGeoms, ZBaseGeom** BaseGeoms, IInputSerializerStream& in);
+        void LoadPropertiesRecursive(IInputSerializerStream& in, ZBaseGeom**& BaseGeoms, ZBaseGeom& object);
+        void SetSaveObject(ZSaveClass* pSaveObj);
+        void LoadZDefines(IInputSerializerStream& stream);
 
 #if 0   // TO FILTER & IMPL
-        public: uint16 AddGeomResource(const char*, unsigned int);
-        public: uint32 GetNextAnimId();
-        public: bool IsLoadingGame();
-        public: bool IsSavingGame();
         public: bool SaveGame(unsigned int);
         public: bool LoadGame(unsigned int);
         public: bool SaveGame(IOutputStream&, IOutputStream&);
         public: bool LoadGame();
-        public: void SetLoadCallBack(ILoadCallBack*);
         public: bool DeleteSaveGame(unsigned int);
-        public: void SetSaveObject(ZSaveClass*);
         public: REF GetREFByName(const char*);
         public: REF GeomPtrToRef(const ZBaseGeom*);
         public: REF GeomPtrToRef(const ZGEOM*);
         public: ZBaseGeom* GeomRefToBasePtr(unsigned int);
         public: ZGEOM* GeomRefToPtr(unsigned int);
-        public: ZSoundObject* SRefToPtr(unsigned int);
-        public: SREF SPtrToRef(ZSoundObject*);
         public: void CalcAllMinMax();
         public: void CalcAllMinMax(REFTAB*);
         public: void ClearSaveLoadFlags();
-        public: void ScheduledUpdate();
-        public: void FrameUpdate();
         public: int32 GetSceneDepth();
-        public: void PauseScene(bool);
-        public: void FreezeScene(bool);
-        public: bool IsFrozen();
-        public: void CreateGeomClassInfoData();
-        public: void LoadZDefines(IInputSerializerStream&);
-        public: void CreateGeoms(REFTAB*, MakeDynArray*, const char*, const char*, IInputStream&);
-        public: void LoadProperties(unsigned int, ZBaseGeom**, IInputSerializerStream&);
-        public: void LoadPropertiesRecursive(IInputSerializerStream&, ZBaseGeom**&, ZBaseGeom&);
         public: void MakeDynamicGeomsDynamic(MakeDynArray*);
         public: void MakeAutoAssignGeomsAutoAssign(MakeDynArray*);
-        public: void DeleteBoundTrees();
-        public: void FreeLightTable();
         public: void DumpUsedResources();
         public: void Init();
         public: void PostInit();
         public: void PostInit2();
-        public: char* GetStaticBuffer();
-        public: char* GetAnimBuffer();
-        public: bool CheckInPackBuffer(const void*);
-        public: bool CheckInAnimBuffer(const void*);
-        public: void SetPackTime(bool);
-        public: bool GetPackTime();
-        public: CListUser* GetListUser();
-        public: bool EnableDrawGizmo(unsigned int, bool);
-        public: bool IsDrawGizmoEnabled(unsigned int);
-        public: void SetDrawColiMask(int);
-        public: int GetDrawColiMask();
-        public: void SetStripViewEnabled(bool);
-        public: bool IsStripViewEnabled();
-        public: void SetWaterRenderingEnabled(bool);
-        public: bool IsWaterRenderingEnabled();
-        public: void HandleLoadGameFailure();
-        protected: void InitPathfinder4Data(const char*);
-        protected: bool InitPhysicsData(const uint8*);
-        protected: void FreeRoutsLists();
-        protected: void FreeScheduledUpdate();
         protected: uint32 GetSoundGraphSize();
         protected: void GetSoundGraphData(void*, unsigned int);
         protected: uint32 GetStaticGameLevelDataSize();
         protected: void GetStaticGameLevelData(void*, unsigned int);
-        private: void PurgePrimBuffer();
 #endif
 
         // Static methods
@@ -257,7 +261,7 @@ namespace Glacier
         bool m_SavingGame;
         bool m_LoadingGame;
         ILoadCallBack* m_pLoadCallBack;
-        struct ZSaveClass* m_pSaveObject;
+        ZSaveClass* m_pSaveObject;
         ZGeomBuffer* m_pGeomBuffer;
         PF4::ZInterface* m_pPathfinder4Data;
         Animation::Manager* m_AnimationManager;
