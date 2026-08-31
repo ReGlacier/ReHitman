@@ -16,7 +16,7 @@ namespace Glacier
         ZRagdollContainer();
         ~ZRagdollContainer();
 
-        CRagdoll2* GetRagdoll(bool);
+        CRagdoll2* GetRagdoll(bool bDragRagdoll);
         CRagdoll2* NumToPtr(int32_t lRagdollNum);
         int32_t PtrToNum(CRagdoll2* pRagdoll);
         uint32_t NumberOfAvailableRagdolls() const;

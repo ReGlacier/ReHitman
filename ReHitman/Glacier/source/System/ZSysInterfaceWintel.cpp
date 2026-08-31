@@ -2,6 +2,7 @@
 #include <Glacier/System/CConfigurationWintel.h>
 #include <Glacier/Action/ActionInterface.h>
 #include <Glacier/Action/ZActionManager.h>
+#include <Glacier/Audio/ZDllSoundWintel.h>
 #include <Glacier/Filesystem/ZSysFile.h>
 #include <Glacier/Render/ZRenderBaseDll.h>
 #include <Glacier/Render/ZRender.h>
@@ -1275,8 +1276,14 @@ namespace Glacier
         m_pSoundDll = nullptr;
         if (!GetOption("DisableAudio", nullptr))
         {
-            // TODO: Finish this place after ZDllSoundWintel will be reversed
-            // m_pSoundDll = ZDllSoundWintel::BuildInstance();
+            auto* soundDll = ZDllSoundWintel::BuildInstance();
+            m_pSoundDll = soundDll;
+            soundDll->Initialize();
+            if (!soundDll->InstallSynthesizer())
+            {
+                ZUniMemory::Delete(soundDll);
+                m_pSoundDll = nullptr;
+            }
         }
 
         if (m_pSoundDll)

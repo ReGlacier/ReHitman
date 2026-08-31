@@ -7,6 +7,7 @@ namespace Glacier
 {
     void InitGlacierSystem(int hInstance, bool bEditorMode, char* pszGameName);
     void FreeGlacierSystem();
+    int Glacier_Main(int hInstance, int hPrevInstance, const char* psCmdLine);
 }
 
 extern "C"

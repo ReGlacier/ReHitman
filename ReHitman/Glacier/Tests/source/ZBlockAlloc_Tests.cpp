@@ -89,3 +89,16 @@ TEST(ZBlockAlloc, AllocBlocksReturnsNullWhenRequestExceedsAvailableBlocks)
     ASSERT_NE(alloc.AllocBlocks(2), nullptr);
     EXPECT_EQ(alloc.AllocBlocks(1), nullptr);
 }
+
+TEST(ZBlockAlloc, FreeBlocksReturnsEntireChainToFreeList)
+{
+    ZBlockAlloc alloc;
+    alloc.Create(5, 16);
+
+    ASSERT_NE(alloc.AllocBlocks(3), nullptr);
+    alloc.FreeBlocks(0);
+
+    EXPECT_EQ(alloc.m_lNumAllocated, 0);
+    ASSERT_NE(alloc.AllocBlocks(5), nullptr);
+    EXPECT_EQ(alloc.m_lNumAllocated, 5);
+}

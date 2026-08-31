@@ -57,6 +57,7 @@ namespace Glacier
         void UpdateConstraintBones(ZBone* pBones, uint32_t lPrim, ZLNKOBJ* pLnkObj);
         bool DoAnimations() const;
         void LoadSave(ISerializerStream& stream, bool bSaving);
+        bool ActivateRagdoll(ZLNKOBJ* pLnkObj, bool bActive, bool bEnableTimeout, bool bUseDamping);
 
         // members
         bool m_bIsPlayer;

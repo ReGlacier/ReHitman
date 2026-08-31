@@ -43,6 +43,24 @@ namespace Glacier
         return static_cast<ZLNKWHANDS*>(pObj);
     }
 
+    ZLNKOBJ* GetValidLnkObj(ZREF rObj)
+    {
+        ZGEOM* pObj = ZGEOM::RefToPtr(rObj);
+        if (!pObj)
+        {
+            ZWARN2("WARNING: Unable to locate lnkobj");
+            return nullptr;
+        }
+
+        if (!pObj->IsDerivedFrom<ZLNKOBJ>())
+        {
+            ZWARN2("WARNING: Object %s is not an ZLNKOBJ", pObj->Name());
+            return nullptr;
+        }
+
+        return static_cast<ZLNKOBJ*>(pObj);
+    }
+
     ZItem* GetValidItem(ZREF rItem)
     {
         ZGEOM* pItem = ZGEOM::RefToPtr(rItem);

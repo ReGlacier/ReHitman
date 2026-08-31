@@ -22,6 +22,7 @@ namespace Glacier
 
         void Create(int lNumBlocks, int lBlockSize);
         void* AllocBlocks(int lNumBlocks);
+        void FreeBlocks(int lFirstBlock);
 
         // members
         int m_lNumBlocks{0};

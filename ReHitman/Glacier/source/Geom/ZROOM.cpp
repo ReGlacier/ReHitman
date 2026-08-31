@@ -140,7 +140,7 @@ namespace Glacier
             m_dwRoomRef = pSource->m_dwRoomRef;
             m_lSoundGraphId = pSource->m_lSoundGraphId;
             // DronCode: Next weird code; in PC there are unconditional assertion
-            //           I skipped it due in PS2 it says ZASSERT(false, "INEDITOR")
+            //           I skipped it due in PS2 it says ZASSERT(INEDITOR)
             //           Also, Mini Ninjas does not contains any assertions here
             m_lNrExits = pSource->m_lNrExits;
             m_pExits = pSource->m_pExits;

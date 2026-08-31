@@ -1,5 +1,6 @@
 #include <Glacier/Physics/ZRagdollContainer.h>
 #include <Glacier/Physics/CRagdoll2.h>
+#include <Glacier/IK/ZBoneModifyBase.h>
 #include <Glacier/Debug/ZDebugFloat.h>
 #include <Glacier/Debug/ZDebugInt.h>
 
@@ -25,6 +26,42 @@ namespace Glacier
         ZUniMemory::Delete(m_pRagdolls);
         ZUniMemory::Delete(m_pDragRagdoll);
         ZUniMemory::Delete(m_pUsed);
+    }
+
+    CRagdoll2* ZRagdollContainer::GetRagdoll(bool bDragRagdoll)
+    {
+        if (bDragRagdoll)
+        {
+            if (m_pDragRagdoll->IsMoving())
+            {
+                return nullptr;
+            }
+
+            if (m_pDragRagdoll->m_bActive)
+            {
+                auto* pLnkObj = const_cast<ZLNKOBJ*>(m_pDragRagdoll->m_pLnkObj);
+                pLnkObj->GetBoneModifier()->ForceRagdollDeactivation(pLnkObj);
+            }
+
+            return m_pDragRagdoll;
+        }
+
+        const int32_t lMaxRagdolls = (g_lMaxRagdolls < 12) ? g_lMaxRagdolls : 12;
+        if (lMaxRagdolls <= 0)
+        {
+            return nullptr;
+        }
+
+        for (int32_t i = 0; i < lMaxRagdolls; ++i)
+        {
+            if (!m_pUsed[i])
+            {
+                m_pUsed[i] = true;
+                return &m_pRagdolls[i];
+            }
+        }
+
+        return nullptr;
     }
 
     bool ZRagdollContainer::IsDragdollAvailable() const

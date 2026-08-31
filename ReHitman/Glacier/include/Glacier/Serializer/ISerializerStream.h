@@ -171,6 +171,28 @@ namespace Glacier
 		void Exchange(const char* psName, TIMETYPE& data);
 		void Exchange(const ZToken token, TIMETYPE& data);
 
+		template <typename T>
+		void Exchange(const ZToken token, T& data)
+		{
+			const EPropertyType propertyType = GetPropertyType(static_cast<ZSerializable&>(data));
+			ExchangeHeader(token, propertyType);
+			ExchangeData(&data);
+			ExchangeFooter(propertyType);
+		}
+
+		template <typename T>
+		void Exchange(const ZToken token, T*& data)
+		{
+			ZREFConverter<T> converter(data);
+			ExchangeREF(token, &converter);
+		}
+
+		template <typename T>
+		void Exchange(const char* psName, T& data)
+		{
+			Exchange(GetToken(psName), data);
+		}
+
 		template <size_t N>
 		void Exchange(const ZToken token, int16_t (&data)[N]) { ExchangeArray(token, data, static_cast<uint32_t>(N)); }
 		template <size_t N>

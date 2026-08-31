@@ -4,6 +4,10 @@
 #include <cassert>
 
 #include <Glacier/ReGlacier.h>
+#include <Glacier/GlacierFWD.h>
+#include <Glacier/Materials/ZTypedef.h>
+#include <Glacier/ZUniAssert.h>
+#include <Glacier/ZUniMemory.h>
 
 
 namespace Glacier::BS_Runtime
@@ -19,79 +23,122 @@ namespace Glacier::BS_Runtime
 
     struct ZStream
     {
+        // methods
+        const uint8_t* Get(int lOffset) const;
+
+        // members
         const uint8_t* m_Data;
     };
 
     template <typename T>
     struct ZReference
     {
-        uint32_t Offset;
-
-        T* GetObject(uint8_t* BaseBuffer)
+        // methods
+        const T* GetObject(uint8_t* BaseBuffer)
         {
-            return reinterpret_cast<T*>(BaseBuffer + Offset);
+            return reinterpret_cast<const T*>(BaseBuffer + Offset);
         }
+
+        const T* GetObject(const uint8_t* BaseBuffer) const
+        {
+            return reinterpret_cast<const T*>(BaseBuffer + Offset);
+        }
+
+        // members
+        uint32_t Offset;
     };
 
     template <typename T>
     struct ZArray
     {
-        int m_Size;
-        const T* m_Data;
-
-        T& operator[](size_t index)
+        // methods
+        const T& operator[](size_t index) const
         {
-            assert(index < m_Size);
+            return Get(index);
+        }
+
+        uint32_t GetSize() const { return m_Size; }
+
+        const T& Get(int index) const
+        {
+            ZASSERT(index < m_Size);
             return m_Data[index];
         }
+
+        T* begin() { return &m_Data[0]; }
+        const T* begin() const { return &m_Data[0]; }
+
+        T* end() { return &m_Data[m_Size]; }
+        const T* end() const { return &m_Data[m_Size]; }
+
+        // members
+        int m_Size;
+        const T* m_Data;
     };
 
     struct ZStringDB
     {
+        // methods
+        const char* GetCStr(const uint8_t* pBuffer, int lStringRef);
+
+        // members
         ZArray<ZReference<struct ZStringData>> StringTable;
     };
 
     struct ZString
     {
         // methods
+        ZString() = default;
+
+        ZString(const BS_Runtime::ZString& copy)
+            : ID(copy.ID)
+        {
+        }
+
         const char* GetCStr(const uint8_t* baseptr, const BS_Runtime::ZStringDB* strdb) const
         {
             return reinterpret_cast<const char*>(&baseptr[strdb->StringTable.m_Data[ID].Offset]);
         }
+
         // members
-        int ID;
+        int ID = 0;
     };
 
     struct ZSerializable {};
 
     struct SPropertyDef : ZSerializable
     {
-        ZString m_Name;
-        int m_Type;
-        int m_Offset;
-        int m_EnumIndex;
+        // members
+        ZString m_Name {};
+        int m_Type = -1;
+        int m_Offset = -1;
+        int m_EnumIndex = -1;
     };
 
     struct SMaterialDef : ZSerializable
     {
+        // members
         ZString m_Name;
         int m_ID;
     };
 
     struct SEnumValueDef : ZSerializable
     {
+        // members
         ZString m_Name;
         int m_Index;
     };
 
     struct SEnumDef : ZSerializable
     {
+        // members
         ZString m_Name;
         ZReference<ZArray<SEnumValueDef>> m_Values;
     };
 
     struct SRoot : ZSerializable
     {
+        // members
         ZReference<ZArray<SMaterialDef>> m_MaterialDefinition;
         ZReference<ZArray<SPropertyDef>> m_PropertyDefinition;
         ZReference<ZArray<SEnumDef>> m_EnumDefinition;
@@ -104,13 +151,64 @@ namespace Glacier::BS_Runtime
     class ZMaterialDescriptionDB
     {
     public:
-        uint8_t* m_ByteStream;
-        ZArray<SMaterialDef>* m_MaterialDefinition;
-        ZArray<SPropertyDef>* m_PropertyDefinition;
-        ZArray<SEnumDef>* m_EnumDefinition;
+        // static
+        STATIC_CLASS_VAR(ZMaterialDescriptionDB, ZMaterialDescriptionDB*, m_Instance);
+
+        // methods
+        ZMaterialDescriptionDB();
+        void Init(uint8_t* bytestream);
+        void RemapGeoms(uint32_t* pRemaps);
+        const char* GetCStr(const ZString& str) const;
+        int32_t GetPropertyId(const char* psPropName) const;
+        TMaterialDescID GetMaterialDescriptionId(const char* psPropName);
+        const char* GetMaterialDescriptionName(TMaterialDescID lDescId);
+        TEnumID GetEnumId(const char* enumname, const char* enumvalue);
+        TBoolPropertyID GetBoolPropertyId(const char* psPropName);
+        TIntPropertyID GetIntPropertyId(const char* psPropName);
+        TFloatPropertyID GetFloatPropertyId(const char* psPropName);
+        TStringPropertyID GetStringPropertyId(const char* psPropName);
+        TScenePropertyID GetScenePropertyId(const char* psPropName);
+        TAudioPropertyID GetAudioPropertyId(const char* psPropName);
+        ZREF GetSceneResourceProperty(TMaterialDescID lMaterialDescId, TScenePropertyID lScenePropId, TEnumID lEnumId);
+        int GetAudioResourceProperty(TMaterialDescID lMaterialDescId, TAudioPropertyID lAudioPropId, TEnumID lEnumId);
+
+        template <typename T>
+        const T* GetProperty(EPropertyType eType, int32_t lMaterialId, int32_t lPropertyId)
+        {
+            ZASSERT(m_PropertyDefinition->Get(lPropertyId).m_Type == eType);
+            if (m_PropertyDefinition->Get(lPropertyId).m_EnumIndex == -1)
+                return reinterpret_cast<const T*>(GetProperty_(lMaterialId, lPropertyId));
+
+            ZERROR("ZMaterialDescriptionDB error: Trying to access a non-map, but this is a map (propertyid:%d)", lPropertyId);
+            return reinterpret_cast<const T*>(GetProperty_(lMaterialId, lPropertyId, 0));
+        }
+
+        template <typename T>
+        const T* GetProperty(EPropertyType eType, int32_t lMaterialId, int32_t lPropertyId, int32_t lEnumId)
+        {
+            ZASSERT(m_PropertyDefinition->Get(lPropertyId).m_Type == eType);
+            if (m_PropertyDefinition->Get(lPropertyId).m_EnumIndex != -1)
+                return reinterpret_cast<const T*>(GetProperty_(lMaterialId, lPropertyId, lEnumId));
+
+            ZERROR("ZMaterialDescriptionDB error: Trying to access a map, but this is not a map (propertyid:%d)", lPropertyId);
+            return reinterpret_cast<const T*>(GetProperty_(lMaterialId, lPropertyId, 0));
+        }
+
+        const uint8_t* GetProperty_(int32_t lMaterialId, int32_t lPropertyId);
+        const uint8_t* GetProperty_(int32_t lMaterialId, int32_t lPropertyId, int32_t lEnumId);
+
+        static ZMaterialDescriptionDB& Instance();
+        static void Create();
+        static void Destroy();
+
+        // members
+        const uint8_t* m_ByteStream;
+        const ZArray<SMaterialDef>* m_MaterialDefinition;
+        const ZArray<SPropertyDef>* m_PropertyDefinition;
+        const ZArray<SEnumDef>* m_EnumDefinition;
         int32_t  m_MaterialSize;
-        ZStringDB* m_StringDB;
-        ZStream* m_MaterialData;
+        const ZStringDB* m_StringDB;
+        const ZStream* m_MaterialData;
     };
-    RE_VERIFY_SIZE(ZMaterialDescriptionDB, 0x1C);
+    RE_VERIFY_SIZE(ZMaterialDescriptionDB, 0x1C); // Verified PC alloc at ZEngineDataBase::AllocSequence
 }

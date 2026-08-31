@@ -19,7 +19,7 @@ namespace Glacier
         struct ActiveAnimation;
         struct Manager;
         struct Header;
-        class ZMetaKey;
+        struct ZMetaKey;
     }
 }
 

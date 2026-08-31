@@ -29,7 +29,8 @@ namespace Glacier
         if (!halfSize)
             return false;
 
-        const int segment = GetPlayCursor() / halfSize;
+        const int playCursor = GetPlayCursor();
+        const int segment = playCursor < 0 ? 1 : playCursor / halfSize;
         if (segment == m_lCurPlaySeg)
             return false;
 
@@ -96,6 +97,12 @@ namespace Glacier
         if (!m_pDSBuffer)
             return;
         m_bPlaying = true;
+        if (m_eBufferType == SBT_STREAM || m_eBufferType == SBT_DISCSTREAM)
+        {
+            if (m_lGroupType && m_pStream && m_pStream->m_pUserData)
+                m_lBufferId = m_pStream->m_pUserData->m_lCurPlaySeg;
+            m_bLooping = true;
+        }
         m_pDSBuffer->SetCurrentPosition(m_lBufferId * (m_lBufferSize / 2));
         m_pDSBuffer->Play(0, 0, m_bLooping ? DSBPLAY_LOOPING : 0);
     }
@@ -105,6 +112,7 @@ namespace Glacier
         if (!m_pDSBuffer)
             return;
         m_bPlaying = true;
+        UpdateVolume(true);
         m_pDSBuffer->SetCurrentPosition(0);
         m_pDSBuffer->Play(0, 0, _loop ? DSBPLAY_LOOPING : 0);
     }
@@ -131,6 +139,8 @@ namespace Glacier
 
     void _ZSoundBufferDS::Free()
     {
+        if (m_pDSBuffer)
+            m_pDSBuffer->Stop();
         if (m_pDS3DBuffer)
             m_pDS3DBuffer->Release();
         ZUniMemory::Delete(m_pEaxSource);
@@ -144,8 +154,14 @@ namespace Glacier
 
     void _ZSoundBufferDS::Resume()
     {
-        if (m_pDSBuffer)
-            m_pDSBuffer->Play(0, 0, m_bLooping ? DSBPLAY_LOOPING : 0);
+        if (!m_pDSBuffer)
+            return;
+        const bool loop = m_bLooping || m_eBufferType == SBT_DISCSTREAM;
+        m_pDSBuffer->Play(0, 0, loop ? DSBPLAY_LOOPING : 0);
+
+        LONG volume = 0;
+        m_pDSBuffer->GetVolume(&volume);
+        m_pDSBuffer->SetVolume(volume == DSBVOLUME_MIN ? -9000 : DSBVOLUME_MIN);
     }
 
     void _ZSoundBufferDS::Pause()
@@ -219,7 +235,8 @@ namespace Glacier
     {
         if (m_lChainIdx == -1)
             return;
-        SChain& chain = m_pSoundCon->m_Chains[m_lChainIdx];
+        const bool hasChain = m_pSoundCon->m_lNumChains > 0;
+        SChain* chain = hasChain ? &m_pSoundCon->m_Chains[m_lChainIdx] : nullptr;
 
         if (m_pEaxSource && !m_dwBufferType)
         {
@@ -233,9 +250,9 @@ namespace Glacier
             properties.m_lExclusion = 0;
             properties.m_fExclusionLFRatio = 1.0f;
 
-            for (int i = 0; i < chain.m_lNumFilters; ++i)
+            for (int i = 0; chain && i < chain->m_lNumFilters; ++i)
             {
-                const auto& filter = chain.m_Filters[i];
+                const auto& filter = chain->m_Filters[i];
                 if (filter.m_lType == 1)
                 {
                     const float factor = static_cast<const SCmdOcclusionBase*>(filter.m_pFilter)->m_fOpenness;
@@ -244,14 +261,19 @@ namespace Glacier
                     properties.m_fOcclusionRoomRatio = 2.0f;
                     properties.m_fOcclusionDirectRatio = 1.0f;
                 }
+                else if (filter.m_lType == 8)
+                {
+                    properties.m_lExclusion = 0;
+                    properties.m_fExclusionLFRatio = 1.0f;
+                }
             }
             m_pEaxSource->Update();
             return;
         }
 
-        for (int i = 0; i < chain.m_lNumFilters; ++i)
+        for (int i = 0; chain && i < chain->m_lNumFilters; ++i)
         {
-            const auto& filter = chain.m_Filters[i];
+            const auto& filter = chain->m_Filters[i];
             if (filter.m_lType == 1)
             {
                 const float factor = static_cast<const SCmdOcclusionBase*>(filter.m_pFilter)->m_fOpenness;

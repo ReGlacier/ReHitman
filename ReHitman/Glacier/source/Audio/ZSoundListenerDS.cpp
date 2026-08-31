@@ -10,10 +10,127 @@
 
 #include <dsound.h>
 
+#include <algorithm>
+#include <cmath>
+
 namespace Glacier
 {
+    namespace
+    {
+        struct SInterpolatedRoomReverb : SSynthFilterBase
+        {
+            ZWintelRoomReverb m_From;
+            ZWintelRoomReverb m_To;
+            float m_fFactor;
+        };
+
+        static_assert(sizeof(SInterpolatedRoomReverb) == 0xF0);
+
+        float InterpolateLinear(float _from, float _to, float _factor)
+        {
+            return _from * (1.0f - _factor) + _to * _factor;
+        }
+
+        int32_t InterpolateLinear(int32_t _from, int32_t _to, float _factor)
+        {
+            return static_cast<int32_t>(static_cast<double>(_from) * (1.0 - _factor) +
+                static_cast<double>(_to) * _factor);
+        }
+
+        float InterpolateExponential(float _from, float _to, float _factor, float _offset = 0.0f)
+        {
+            return std::pow(_from + _offset, 1.0f - _factor) * std::pow(_to + _offset, _factor);
+        }
+
+        void Normalize(EaxVector& _vector)
+        {
+            const float length = std::sqrt(_vector.x * _vector.x + _vector.y * _vector.y +
+                _vector.z * _vector.z);
+            if (length > 1.0f)
+            {
+                _vector.x /= length;
+                _vector.y /= length;
+                _vector.z /= length;
+            }
+        }
+
+        void InterpolateEaxProperties(const EaxListenerProperties& _from,
+            const EaxListenerProperties& _to, float _factor, EaxListenerProperties& _result)
+        {
+            if (_factor >= 1.0f)
+            {
+                _result = _from;
+                return;
+            }
+            if (_factor <= 0.0f)
+            {
+                _result = _to;
+                return;
+            }
+
+            _result.m_lEnvironment = 26;
+            _result.m_fEnvironmentSize = InterpolateExponential(
+                _from.m_fEnvironmentSize, _to.m_fEnvironmentSize, _factor);
+            _result.m_fEnvironmentDiffusion = InterpolateLinear(
+                _from.m_fEnvironmentDiffusion, _to.m_fEnvironmentDiffusion, _factor);
+            _result.m_lRoom = InterpolateLinear(_from.m_lRoom, _to.m_lRoom, _factor);
+            _result.m_lRoomHF = InterpolateLinear(_from.m_lRoomHF, _to.m_lRoomHF, _factor);
+            _result.m_lRoomLF = InterpolateLinear(_from.m_lRoomLF, _to.m_lRoomLF, _factor);
+            _result.m_fDecayTime = InterpolateExponential(_from.m_fDecayTime, _to.m_fDecayTime, _factor);
+            _result.m_fDecayHFRatio = InterpolateExponential(
+                _from.m_fDecayHFRatio, _to.m_fDecayHFRatio, _factor);
+            _result.m_fDecayLFRatio = InterpolateExponential(
+                _from.m_fDecayLFRatio, _to.m_fDecayLFRatio, _factor);
+            _result.m_lReflections = InterpolateLinear(
+                _from.m_lReflections, _to.m_lReflections, _factor);
+            _result.m_fReflectionsDelay = InterpolateExponential(
+                _from.m_fReflectionsDelay, _to.m_fReflectionsDelay, _factor, 0.0001f);
+
+            EaxVector reflectionsFrom = _from.m_vReflectionsPan;
+            EaxVector reflectionsTo = _to.m_vReflectionsPan;
+            Normalize(reflectionsFrom);
+            Normalize(reflectionsTo);
+            _result.m_vReflectionsPan = {
+                InterpolateLinear(reflectionsFrom.x, reflectionsTo.x, _factor),
+                InterpolateLinear(reflectionsFrom.y, reflectionsTo.y, _factor),
+                InterpolateLinear(reflectionsFrom.z, reflectionsTo.z, _factor)};
+
+            _result.m_lReverb = InterpolateLinear(_from.m_lReverb, _to.m_lReverb, _factor);
+            _result.m_fReverbDelay = InterpolateExponential(
+                _from.m_fReverbDelay, _to.m_fReverbDelay, _factor, 0.0001f);
+
+            EaxVector reverbFrom = _from.m_vReverbPan;
+            EaxVector reverbTo = _to.m_vReverbPan;
+            Normalize(reverbFrom);
+            Normalize(reverbTo);
+            _result.m_vReverbPan = {
+                InterpolateLinear(reverbFrom.x, reverbTo.x, _factor),
+                InterpolateLinear(reverbFrom.y, reverbTo.y, _factor),
+                InterpolateLinear(reverbFrom.z, reverbTo.z, _factor)};
+
+            _result.m_fEchoTime = InterpolateExponential(_from.m_fEchoTime, _to.m_fEchoTime, _factor);
+            _result.m_fEchoDepth = InterpolateLinear(_from.m_fEchoDepth, _to.m_fEchoDepth, _factor);
+            _result.m_fModulationTime = InterpolateExponential(
+                _from.m_fModulationTime, _to.m_fModulationTime, _factor);
+            _result.m_fModulationDepth = InterpolateLinear(
+                _from.m_fModulationDepth, _to.m_fModulationDepth, _factor);
+            _result.m_fAirAbsorptionHF = InterpolateLinear(
+                _from.m_fAirAbsorptionHF, _to.m_fAirAbsorptionHF, _factor);
+            _result.m_fHFReference = InterpolateExponential(
+                _from.m_fHFReference, _to.m_fHFReference, _factor);
+            _result.m_fLFReference = InterpolateExponential(
+                _from.m_fLFReference, _to.m_fLFReference, _factor);
+            _result.m_fRoomRolloffFactor = InterpolateLinear(
+                _from.m_fRoomRolloffFactor, _to.m_fRoomRolloffFactor, _factor);
+            _result.m_lFlags = _from.m_lFlags & _to.m_lFlags;
+            _result.m_fReflectionsDelay = (std::min)(_result.m_fReflectionsDelay, 0.3f);
+            _result.m_fReverbDelay = (std::min)(_result.m_fReverbDelay, 0.1f);
+        }
+    }
+
     ZSoundListenerDS::ZSoundListenerDS()
         : m_pDSListener(nullptr)
+        , m_pPrimary(nullptr)
         , m_pEaxBuffer(nullptr)
         , m_pEaxListener(nullptr)
     {
@@ -140,7 +257,16 @@ namespace Glacier
                 }
                 else if (filter.m_lType == 5)
                 {
-                    ZASSERT(false);
+                    const auto* reverb = static_cast<const SInterpolatedRoomReverb*>(filter.m_pFilter);
+                    if (reverb && m_pEaxListener)
+                    {
+                        EaxListenerProperties from{};
+                        EaxListenerProperties to{};
+                        ZSynthWintel::GetEaxProps(&from, &reverb->m_From);
+                        ZSynthWintel::GetEaxProps(&to, &reverb->m_To);
+                        InterpolateEaxProperties(from, to, reverb->m_fFactor,
+                            m_pEaxListener->m_Properties);
+                    }
                 }
             }
             m_pEaxListener->Update();

@@ -648,6 +648,91 @@ namespace Glacier
         }
     }
 
+    void ConstrainedParticleSystem::ComputeDistances()
+    {
+        for (int i = 0; i < m_iNumConstraints; ++i)
+        {
+            m_pConstraints[i].ComputeDistance();
+        }
+
+        const float fChestDist = (vdist(m_pParticles[2].x, m_pParticles[8].x) + vdist(m_pParticles[3].x, m_pParticles[9].x)) * 0.5f * 0.95f;
+
+        m_pSpecialConstraints[0].m_pPar1 = &m_pParticles[2];
+        m_pSpecialConstraints[0].m_pPar2 = &m_pParticles[8];
+        m_pSpecialConstraints[0].m_fDist = fChestDist;
+
+        m_pSpecialConstraints[1].m_pPar1 = &m_pParticles[3];
+        m_pSpecialConstraints[1].m_pPar2 = &m_pParticles[9];
+        m_pSpecialConstraints[1].m_fDist = fChestDist;
+
+        m_pSpecialConstraints[2].m_pPar1 = &m_pParticles[5];
+        m_pSpecialConstraints[2].m_pPar2 = &m_pParticles[11];
+        m_pSpecialConstraints[2].m_fDist = vdist(m_pParticles[5].x, m_pParticles[9].x) * 1.5f;
+
+        m_pSpecialConstraints[3].m_pPar1 = &m_pParticles[6];
+        m_pSpecialConstraints[3].m_pPar2 = &m_pParticles[10];
+        m_pSpecialConstraints[3].m_fDist = vdist(m_pParticles[6].x, m_pParticles[8].x) * 1.5f;
+
+        m_pSpecialConstraints[4].m_pPar1 = &m_pParticles[2];
+        m_pSpecialConstraints[4].m_pPar2 = &m_pParticles[11];
+        m_pSpecialConstraints[4].m_fDist = vdist(m_pParticles[2].x, m_pParticles[6].x);
+
+        m_pSpecialConstraints[5].m_pPar1 = &m_pParticles[3];
+        m_pSpecialConstraints[5].m_pPar2 = &m_pParticles[10];
+        m_pSpecialConstraints[5].m_fDist = vdist(m_pParticles[3].x, m_pParticles[5].x);
+
+        m_pSpecialConstraints[6].m_pPar1 = &m_pParticles[8];
+        m_pSpecialConstraints[6].m_pPar2 = &m_pParticles[14];
+        m_pSpecialConstraints[6].m_fDist = vdist(m_pParticles[8].x, m_pParticles[14].x) * 0.1f;
+
+        m_pSpecialConstraints[7].m_pPar1 = &m_pParticles[9];
+        m_pSpecialConstraints[7].m_pPar2 = &m_pParticles[15];
+        m_pSpecialConstraints[7].m_fDist = vdist(m_pParticles[9].x, m_pParticles[15].x) * 0.1f;
+
+        const float fLeftLegDist = vdist(m_pParticles[8].x, m_pParticles[12].x);
+
+        m_pSpecialConstraints[8].m_pPar1 = &m_pParticles[8];
+        m_pSpecialConstraints[8].m_pPar2 = &m_pParticles[15];
+        m_pSpecialConstraints[8].m_fDist = fLeftLegDist;
+
+        m_pSpecialConstraints[9].m_pPar1 = &m_pParticles[2];
+        m_pSpecialConstraints[9].m_pPar2 = &m_pParticles[15];
+        m_pSpecialConstraints[9].m_fDist = fLeftLegDist + fLeftLegDist;
+
+        const float fRightLegDist = vdist(m_pParticles[9].x, m_pParticles[13].x);
+
+        m_pSpecialConstraints[10].m_pPar1 = &m_pParticles[9];
+        m_pSpecialConstraints[10].m_pPar2 = &m_pParticles[14];
+        m_pSpecialConstraints[10].m_fDist = fRightLegDist;
+
+        m_pSpecialConstraints[11].m_pPar1 = &m_pParticles[3];
+        m_pSpecialConstraints[11].m_pPar2 = &m_pParticles[14];
+        m_pSpecialConstraints[11].m_fDist = fRightLegDist + fRightLegDist;
+
+        m_pSpecialConstraints[12].m_pPar1 = &m_pParticles[2];
+        m_pSpecialConstraints[12].m_pPar2 = &m_pParticles[10];
+        m_pSpecialConstraints[12].m_fDist = -vdist(m_pParticles[2].x, m_pParticles[10].x);
+
+        m_pSpecialConstraints[13].m_pPar1 = &m_pParticles[3];
+        m_pSpecialConstraints[13].m_pPar2 = &m_pParticles[11];
+        m_pSpecialConstraints[13].m_fDist = -vdist(m_pParticles[3].x, m_pParticles[11].x);
+
+        if (g_pSysInterface->FRand(nullptr, 0) >= 0.5f)
+        {
+            m_pSpecialConstraints[14].m_pPar1 = &m_pParticles[2];
+            m_pSpecialConstraints[14].m_pPar2 = &m_pParticles[14];
+            m_pSpecialConstraints[14].m_fDist = vdist(m_pParticles[2].x, m_pParticles[14].x) * 0.8f;
+        }
+        else
+        {
+            m_pSpecialConstraints[14].m_pPar1 = &m_pParticles[3];
+            m_pSpecialConstraints[14].m_pPar2 = &m_pParticles[15];
+            m_pSpecialConstraints[14].m_fDist = vdist(m_pParticles[3].x, m_pParticles[15].x) * 0.8f;
+        }
+
+        m_iNumSpecialConstraints = 15;
+    }
+
     ConstrainedParticleSystem::ConstrainedParticleSystem(int iType, int nMaxNumPartices)
     {
         m_bReallyInWater = false;

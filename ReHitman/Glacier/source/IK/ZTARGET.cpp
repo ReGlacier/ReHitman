@@ -118,7 +118,7 @@ namespace Glacier
 
             if (m_CallBack.m_pCallback)
             {
-                lId = static_cast<ZLNKWHANDS*>(pLnkObj)->IKCallBackToId(&m_CallBack.m_pCallback);
+                lId = static_cast<ZLNKWHANDS*>(pLnkObj)->IKCallBackToId(&m_CallBack);
                 ZASSERT(lId >= 0);
             }
 

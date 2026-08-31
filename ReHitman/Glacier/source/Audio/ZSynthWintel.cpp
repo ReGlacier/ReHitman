@@ -216,9 +216,11 @@ namespace Glacier
 
     void* ZSynthWintel::GetWindowHandle()
     {
+        if (!g_pSysInterface)
+            return GetDesktopWindow();
         if (g_pSysInterface->WindowFirst)
             return static_cast<ZRenderX86*>(g_pSysInterface->WindowFirst)->m_hWnd;
-        return g_pSysInterface->MainhWnd;
+        return g_pSysInterface->MainhWnd ? g_pSysInterface->MainhWnd : GetDesktopWindow();
     }
 
     char* ZSynthWintel::GetWaveform(int _offset)

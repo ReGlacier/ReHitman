@@ -305,6 +305,24 @@ namespace Glacier
         return true;
     }
 
+    bool _ZSoundBuffer::WaitingForMetaSync() const
+    {
+        if (!m_pStream)
+            return false;
+        if (!m_rWave->m_iLayerInfo)
+            return m_bWaitingForMetaSync;
+
+        const ZBufferGroup* group = m_pStream->m_pUserData;
+        if (!group)
+            return false;
+        for (int i = 0; i < group->m_lNumGrouped; ++i)
+        {
+            if (group->m_Buffers[i]->m_bWaitingForMetaSync)
+                return true;
+        }
+        return false;
+    }
+
     bool _ZSoundBuffer::AllocateWaveResource(ZIOStream* _stream, SStartSoundBase* _command)
     {
         if (m_eBufferType != SBT_DISCSTREAM)
@@ -334,8 +352,26 @@ namespace Glacier
         uint32_t streamSize = 0;
         for (uint32_t i = 0; i < layerCount; ++i)
             streamSize += firstLayer[i].m_lPackedSize;
-        const uint32_t metaChunkSize = static_cast<uint32_t>(m_rWave->m_iPosChunkSize) << 10;
-        const uint32_t waveChunkSize = static_cast<uint32_t>(m_rWave->m_iSoundChunkSize) << 10;
+        if (m_rWave->m_iLayerInfo)
+        {
+            streamRate = 0;
+            for (uint32_t i = 0; i < layerCount; ++i)
+            {
+                const SWaveHeader& layer = firstLayer[i];
+                if (layer.m_iDataType == 4096)
+                {
+                    const uint32_t ratio = layer.m_lDataSize / layer.m_lPackedSize;
+                    streamRate += 2 * ((2 * layer.m_lNumChannels * layer.m_lSampleRate) / ratio);
+                }
+                else
+                {
+                    streamRate += layer.m_lNumChannels * layer.m_lSampleRate *
+                        layer.m_lBitsPerSample / 8;
+                }
+            }
+        }
+        const uint32_t metaChunkSize = static_cast<uint32_t>(firstLayer->m_iPosChunkSize) << 10;
+        const uint32_t waveChunkSize = static_cast<uint32_t>(firstLayer->m_iSoundChunkSize) << 10;
         uint32_t numMetaChunks = 0;
         if (waveChunkSize)
         {
@@ -351,7 +387,8 @@ namespace Glacier
         if (!streamRate)
             streamRate = 0x8000;
         m_pStream = m_pSoundCon->m_pStreamer->AddAudioStream(streamRate, m_rWave->m_lDataOffset,
-            streamSize, m_bLooping, 0, metaChunkSize, waveChunkSize, numMetaChunks, false);
+            streamSize, m_bLooping, 0, metaChunkSize, waveChunkSize, numMetaChunks,
+            (m_rWave->m_iFlags & 0x40) != 0);
         if (!m_pStream)
         {
             m_bInUse = false;
@@ -384,8 +421,9 @@ namespace Glacier
         {
             uint32_t byteOffset = streamRate * (_command->m_lStartOffset >> 8) +
                 ((streamRate * static_cast<uint8_t>(_command->m_lStartOffset)) >> 8);
-            if (byteOffset >= m_rWave->m_lDataSize)
-                byteOffset %= m_rWave->m_lDataSize;
+            const uint32_t dataSize = layerCount * firstLayer->m_lDataSize;
+            if (byteOffset >= dataSize)
+                byteOffset %= dataSize;
             const uint32_t frameSize = m_rWave->m_iLayerInfo ? group->m_lSampleSize :
                 (m_rWave->m_lBitsPerSample >> 3) * m_rWave->m_lNumChannels;
             byteOffset -= byteOffset % frameSize;

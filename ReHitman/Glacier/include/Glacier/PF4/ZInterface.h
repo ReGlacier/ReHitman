@@ -15,7 +15,7 @@ namespace Glacier::PF4
     struct ZInterface;
     struct ZPath;
 
-    struct ZDataRef 
+    struct ZDataRef
     {
         unsigned int m_Id   : 14;
         unsigned int m_Type : 2;
@@ -23,7 +23,7 @@ namespace Glacier::PF4
     };
     RE_VERIFY_SIZE(ZDataRef, 0xC);
 
-    struct ZPathRequest 
+    struct ZPathRequest
     {
         const PF4::ZLocation* m_Source;
         const PF4::ZLocation* m_Dest;
@@ -82,4 +82,6 @@ namespace Glacier::PF4
         virtual int FindObstacles(const ZLocation&, ZDynamicObstacle**, int);
         virtual void RemapDoorRefs(unsigned int*, unsigned int);
     };
+
+    ZInterface* CreatePathFinder(void* data);
 }

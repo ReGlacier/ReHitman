@@ -151,6 +151,12 @@ namespace Glacier
     {
         if (!_stream)
             return;
+        if (m_CurrentStream.m_lStreamId == _stream->m_lStreamId)
+        {
+            m_CurrentStream.m_bUpdateStream = false;
+            m_lCurrentStream = (m_lCurrentStream + 1) % 4;
+        }
+        m_Alloc.FreeBlocks(_stream->m_lMemHandle);
         _stream->m_bActive = false;
         _stream->m_lMemHandle = -1;
         --m_lCurrentNumStreams;
@@ -252,7 +258,7 @@ namespace Glacier
             stream.m_lBytesLoaded += m_CurrentStream.m_lLoadSize;
             if (stream.m_lBytesLoaded == stream.m_lSizeOfStream && stream.m_bLoopStream)
             {
-                stream.m_lBytesLoaded = stream.m_lFileOffset;
+                stream.m_lBytesLoaded = stream.m_lFileLoopOffset;
                 stream.m_lFilePointer = stream.m_lFileLoopOffset + stream.m_lFileOffset;
                 stream.m_lDataChunkCounter = 0;
                 stream.m_lMetaChunkCounter = stream.m_lNumMetaChunks;

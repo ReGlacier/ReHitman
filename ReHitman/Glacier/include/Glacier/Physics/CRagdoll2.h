@@ -74,7 +74,7 @@ namespace Glacier
         // methods
         CRagdoll2(bool bRagdoll);
         void LoadSave(ISerializerStream& stream, bool bSaving);
-        void Setup(ZLNKOBJ* pLnkObj);
+        bool Setup(ZLNKOBJ* pLnkObj);
         void Hit(const float*, const float*, float);
         void InitIndices();
         void CreateParticles();
@@ -89,6 +89,7 @@ namespace Glacier
         void Deactivate();
         void SetDamping(float fDamping);
         void GetLocalPelvis(ZVector3& vDir, ZVector3& vPos);
+        void ComputeParticlePositions(int lBoneCount, const ZBone* pBones);
         void ComputeParticlePositionsSub(const ZBone* pBones, bool bCalcVelocity);
         bool GetLinkMatPos_global(uint16_t lBoneIndex, ZMat3x3& mMat, ZVector3& vPos, ZVector3* vCenter, ZVector3* vSize, const ZBone* pBones);
         void End();
@@ -99,6 +100,7 @@ namespace Glacier
         void LinkMats(int lBoneIndex, ZBone* pBones);
         void CopyBone(int lDstBoneIdx, int lSrcBoneIdx, ZBone* pBones);
         const ZLNKOBJ* LnkObj() const;
+        void Init(ZLNKOBJ* pLnkObj, const ZBone* pBones, int lBoneCount);
 
         // members
         ParticleProperty m_aParticleProperty[MAX_PARTICLE_PROPS_NR];

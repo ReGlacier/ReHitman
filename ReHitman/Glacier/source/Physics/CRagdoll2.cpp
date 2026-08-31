@@ -12,6 +12,7 @@
 #include <Glacier/IK/ZBoneModifyBase.h>
 #include <Glacier/IK/ZLNKOBJ.h>
 #include <Glacier/Animation/Model.h>
+#include <cstring>
 
 
 namespace Glacier
@@ -71,11 +72,11 @@ namespace Glacier
         }
     }
 
-    void CRagdoll2::Setup(ZLNKOBJ* pLnkObj)
+    bool CRagdoll2::Setup(ZLNKOBJ* pLnkObj)
     {
         if (!pLnkObj)
         {
-            return;
+            return false;
         }
 
         for (int i = 0; i < MAX_PARTICLE_PROPS_NR; ++i)
@@ -93,6 +94,7 @@ namespace Glacier
 
         m_ColiInfo.bInWater = false;
         m_ColiInfo.bCollision = false;
+        return true;
     }
 
     void CRagdoll2::InitIndices()
@@ -824,6 +826,22 @@ namespace Glacier
         return m_pLnkObj;
     }
 
+    void CRagdoll2::Init(ZLNKOBJ* pLnkObj, const ZBone* pBones, int lBoneCount)
+    {
+        if (Setup(pLnkObj))
+        {
+            if (pLnkObj->Model()->m_Valid)
+            {
+                ComputeParticlePositions(lBoneCount, pBones);
+            }
+            else
+            {
+                auto lNrBones = ZPrimControlBase::Instance()->GetNrBones(pLnkObj->Prim());
+                ComputeParticlePositions(lNrBones, pBones);
+            }
+        }
+    }
+
     void CRagdoll2::CopyBone(int lDstBoneIdx, int lSrcBoneIdx, ZBone* pBones)
     {
         if (lDstBoneIdx != -1 && lSrcBoneIdx != -1)
@@ -952,6 +970,45 @@ namespace Glacier
         vDir.x = vDir.x * (1.0f - fFactor);
         vDir.y = vDir.y * (1.0f - fFactor);
         vDir.z = (1.0f - vDir.z) * fFactor + vDir.z;
+    }
+
+    void CRagdoll2::ComputeParticlePositions(int lBoneCount, const ZBone* pBones)
+    {
+        ZASSERT(lBoneCount < 0x100);
+
+        const int32_t lRHandIx = m_pLnkObj->GetBoneNrFromId(eBoneID::RIGHT_HAND);
+        const int32_t lLFootIx = m_pLnkObj->GetBoneNrFromId(eBoneID::LEFT_FOOT);
+
+        if (m_nRHandIx != static_cast<uint16_t>(lRHandIx > 0 ? lRHandIx : 0)
+            || m_nLFootIx != static_cast<uint16_t>(lLFootIx > 0 ? lLFootIx : 0))
+        {
+            InitIndices();
+        }
+
+        ZBone aLocalBones[0x100];
+        std::memcpy(aLocalBones, m_pJesusLocalBones, sizeof(ZBone) * lBoneCount);
+
+        const auto* pBoneDefs = ZPrimControlBase::Instance()->GetBoneDefinitions(m_pLnkObj->Prim());
+
+        for (int i = 1; i < lBoneCount; ++i)
+        {
+            auto* pBone = &aLocalBones[i];
+            const auto* pPrevBone = &aLocalBones[pBoneDefs[i].lPrevBoneNr];
+
+            mmmul(pBone->_Mat, pPrevBone->_Mat);
+            TransformRootVector(pBone->_Pos, pPrevBone->_Mat);
+            vadd(pBone->_Pos, pPrevBone->_Pos);
+        }
+
+        ComputeParticlePositionsSub(aLocalBones, false);
+        m_pParticles->ComputeDistances();
+        ComputeParticlePositionsSub(pBones, false);
+        m_pParticles->InitOkX();
+        m_pParticles->FindFaces();
+        m_pParticles->ZeroOut(10);
+
+        ZVector3 vPelvisDir;
+        GetLocalPelvis(vPelvisDir, m_vGroundToPelvis);
     }
 
     void CRagdoll2::ComputeParticlePositionsSub(const ZBone* pBones, bool bCalcVelocity)

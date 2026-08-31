@@ -159,6 +159,7 @@ namespace Glacier
 
         // methods
         ZDllSound();
+        void AppendSourceCommand(ZSoundObject* _object, ZREF _soundRef, SWave* _wave);
 
         // members
         ZSoundObjectManager m_ObjectManager;
@@ -166,13 +167,36 @@ namespace Glacier
         SListener m_Listeners[4];
         ZRefAlloc m_AllocRef;
         MYSTR m_sCurrentScene;
-        RE_ADD_PADDING(0xBC);
+        RE_ADD_PADDING(0x04);
+        bool m_bMultiListeners;
+        RE_ADD_PADDING(3);
+        ZMat3x3 m_ListenerMatrix;
+        ZVector3 m_ListenerPosition;
+        ZVector3 m_ListenerVelocity;
+        ZGEOM* m_pPlayerListener;
+        ZGEOM* m_pCameraListener;
+        EListenerMode m_eListenerMode;
+        void* m_pMemStream;
+        RE_ADD_PADDING(0x08);
+        int32_t m_lSynthCmdBufferSize;
+        bool m_bStartMemStream;
+        RE_ADD_PADDING(1);
+        bool m_bStopMemStream;
+        RE_ADD_PADDING(0x19);
+        int32_t m_lFmvVolume;
+        RE_ADD_PADDING(0x14);
+        bool m_bSoundInitialized;
+        RE_ADD_PADDING(0x0B);
+        char* m_pSynthCmdBuffer;
+        char* m_pSynthCmd;
+        RE_ADD_PADDING(0x14);
         CEVENTCONTROLLER* m_pEventController;
         ZSoundGraph* m_pSoundGraph;
         ZMusicControllerBase* m_pMusicController;
         REFTAB32 m_RefTabA;
         REFTAB32 m_RefTabB;
-        RE_ADD_PADDING(0x8);
+        char* m_pPackedData;
+        uint32_t m_lPackedDataSize;
         int32_t m_lPackedLookupCapacity;
         RE_ADD_PADDING(0x3E80);
         bool m_bPackedLookupReady;
@@ -184,8 +208,24 @@ namespace Glacier
     RE_VERIFY_OFFSET(ZDllSound, m_Listeners, 0x904);
     RE_VERIFY_OFFSET(ZDllSound, m_AllocRef, 0x944);
     RE_VERIFY_OFFSET(ZDllSound, m_sCurrentScene, 0x4F8C);
+    RE_VERIFY_OFFSET(ZDllSound, m_bMultiListeners, 0x5010);
+    RE_VERIFY_OFFSET(ZDllSound, m_ListenerMatrix, 0x5014);
+    RE_VERIFY_OFFSET(ZDllSound, m_ListenerPosition, 0x5038);
+    RE_VERIFY_OFFSET(ZDllSound, m_pPlayerListener, 0x5050);
+    RE_VERIFY_OFFSET(ZDllSound, m_pCameraListener, 0x5054);
+    RE_VERIFY_OFFSET(ZDllSound, m_eListenerMode, 0x5058);
+    RE_VERIFY_OFFSET(ZDllSound, m_pMemStream, 0x505C);
+    RE_VERIFY_OFFSET(ZDllSound, m_lSynthCmdBufferSize, 0x5068);
+    RE_VERIFY_OFFSET(ZDllSound, m_bStartMemStream, 0x506C);
+    RE_VERIFY_OFFSET(ZDllSound, m_bStopMemStream, 0x506E);
+    RE_VERIFY_OFFSET(ZDllSound, m_lFmvVolume, 0x5088);
+    RE_VERIFY_OFFSET(ZDllSound, m_bSoundInitialized, 0x50A0);
+    RE_VERIFY_OFFSET(ZDllSound, m_pSynthCmdBuffer, 0x50AC);
+    RE_VERIFY_OFFSET(ZDllSound, m_pSynthCmd, 0x50B0);
     RE_VERIFY_OFFSET(ZDllSound, m_pEventController, 0x50C8);
     RE_VERIFY_OFFSET(ZDllSound, m_RefTabA, 0x50D4);
+    RE_VERIFY_OFFSET(ZDllSound, m_pPackedData, 0x522C);
+    RE_VERIFY_OFFSET(ZDllSound, m_lPackedDataSize, 0x5230);
     RE_VERIFY_OFFSET(ZDllSound, m_lPackedLookupCapacity, 0x5234);
     RE_VERIFY_OFFSET(ZDllSound, m_bPackedLookupReady, 0x90B8);
     RE_VERIFY_SIZE(ZDllSound, 0x90C8);

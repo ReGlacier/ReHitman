@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 4.0)
 project(BloodMoney LANGUAGES C CXX ASM_MASM)
 set(CMAKE_CXX_STANDARD 20)
 
+# Glacier options
+option(GLACIER_IN_EDITOR "Enable editor mode" OFF)
+
 if(NOT TARGET Ogg::ogg)
     set(INSTALL_DOCS OFF CACHE BOOL "" FORCE)
     set(INSTALL_PKG_CONFIG_MODULE OFF CACHE BOOL "" FORCE)
@@ -21,8 +24,8 @@ if(NOT TARGET vorbis)
     )
 endif()
 
-file(GLOB_RECURSE GLACIER_SOURCES 
-    ${CMAKE_CURRENT_SOURCE_DIR}/source/*.cpp 
+file(GLOB_RECURSE GLACIER_SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/source/*.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/source/*.h
 )
 
@@ -31,8 +34,8 @@ set(GLACIER_ASM_SOURCES
 )
 
 # Common dependencies (put all dependencies here!)
-set(GLACIER_COMMON_LIBS 
-    PRIVATE 
+set(GLACIER_COMMON_LIBS
+    PRIVATE
         zlib
         jpeg
         vorbis
@@ -47,9 +50,9 @@ set(GLACIER_COMMON_INCLUDE_DIRS)
 if(WIN32)
     if(DEFINED ENV{DXSDK_DIR})
         file(TO_CMAKE_PATH "$ENV{DXSDK_DIR}" DXSDK_DIR_PATH)
-        
+
         set(DXSDK_INCLUDE_DIR "${DXSDK_DIR_PATH}/Include")
-        
+
         if(CMAKE_CL_64)
             set(DXSDK_LIB_DIR "${DXSDK_DIR_PATH}/Lib/x64")
         else()
@@ -80,15 +83,16 @@ if(WIN32)
     endif()
 
     list(
-        APPEND GLACIER_COMMON_LIBS 
-        PUBLIC 
+        APPEND GLACIER_COMMON_LIBS
+        PUBLIC
             # DirectX 9
             d3d9
             $<$<CONFIG:Debug>:d3dx9d>$<$<NOT:$<CONFIG:Debug>>:d3dx9>
             # DirectInput8
-            dinput8 
+            dinput8
             dxguid
             # DirectSound
+            dsound
     )
 
     message(STATUS "[Glacier] DXSDK_DIR from ENV: $ENV{DXSDK_DIR}")
@@ -108,10 +112,12 @@ option(REHITMAN_BUILD_TESTS "Build ReHitman tests" ON)
 add_library(Glacier STATIC ${GLACIER_ALL_SOURCES})
 add_library(G1::Core ALIAS Glacier)
 
-target_include_directories(Glacier PUBLIC 
-    ${CMAKE_CURRENT_SOURCE_DIR}/include 
+target_include_directories(Glacier PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
     $<$<BOOL:${DXSDK_INCLUDE_DIR}>:${DXSDK_INCLUDE_DIR}>
 )
+
+target_compile_definitions(Glacier PUBLIC INEDITOR=$<IF:$<BOOL:${GLACIER_IN_EDITOR}>,1,0>)
 
 if(DXSDK_LIB_DIR)
     target_link_directories(Glacier PUBLIC ${DXSDK_LIB_DIR})
@@ -125,8 +131,8 @@ if(REHITMAN_BUILD_TESTS)
     add_library(GlacierTest STATIC ${GLACIER_ALL_SOURCES})
     add_library(G1::TestCore ALIAS GlacierTest)
 
-    target_include_directories(GlacierTest PUBLIC 
-        ${CMAKE_CURRENT_SOURCE_DIR}/include 
+    target_include_directories(GlacierTest PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
         $<$<BOOL:${DXSDK_INCLUDE_DIR}>:${DXSDK_INCLUDE_DIR}>
     )
 
@@ -136,6 +142,7 @@ if(REHITMAN_BUILD_TESTS)
 
     target_link_libraries(GlacierTest ${GLACIER_COMMON_LIBS})
     target_compile_definitions(GlacierTest PUBLIC REHITMAN_TESTS DIRECTINPUT_VERSION=0x0800)
+    target_compile_definitions(GlacierTest PUBLIC INEDITOR=$<IF:$<BOOL:${GLACIER_IN_EDITOR}>,1,0>)
 endif()
 
 # Fixes for raw asm
@@ -156,10 +163,11 @@ endif()
 
 foreach(asm_file ${GLACIER_ASM_SOURCES})
     get_filename_component(asm_name ${asm_file} NAME_WE)
-    set_source_files_properties(${asm_file} PROPERTIES 
+    set_source_files_properties(${asm_file} PROPERTIES
         COMPILE_FLAGS "/Fo\"$(IntDir)${asm_name}.obj\""
     )
 endforeach()
+
 
 if(REHITMAN_BUILD_TESTS)
     add_subdirectory(Tests)

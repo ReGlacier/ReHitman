@@ -8,6 +8,22 @@
 
 namespace Glacier
 {
+    enum ESoundObject_State : uint32_t
+    {
+        STATE_PLAYING = 1,
+        STATE_SUSPENDED = 2,
+        STATE_IDLE = 3,
+        STATE_STOPPED = 4,
+        STATE_STARTPLAY = 5,
+        STATE_REMOVE = 6,
+        STATE_DISABLED = 7,
+        STATE_LOOPING = 8,
+        STATE_RESUME = 9,
+        STATE_PENDING = 10,
+        STATE_DEPRICATED = 11,
+        STATE_DELETEME = 12
+    };
+
     namespace SoundObject
     {
         class ZControllers;
@@ -21,7 +37,18 @@ namespace Glacier
     public:
         enum ESourceType : uint32_t
         {
-            SOURCE_2D = 3
+            SOURCE_3D = 0,
+            SOURCE_2D_CULLED = 1,
+            SOURCE_2D = 2,
+            SOURCE_2D_PURE = 3,
+            SOURCE_MUSIC = 4,
+            SOURCE_AMBIENT = 5,
+            SOURCE_FRONT = 6,
+            SOURCE_CENTER = 7,
+            SOURCE_BACK = 8,
+            SOURCE_SUB = 9,
+            SOURCE_3DPAN = 10,
+            SOURCE_BFORMAT = 11
         };
 
         // methods
@@ -61,7 +88,7 @@ namespace Glacier
         int GetDeltaPitch() const { return m_lDeltaPitch; }
         ESourceType GetSourceType() const { return m_eSourceType; }
         void SetSourceType(ESourceType _type) { m_eSourceType = _type; }
-        bool IsSource2D() const { return m_eSourceType == SOURCE_2D; }
+        bool IsSource2D() const { return m_eSourceType >= SOURCE_2D_CULLED && m_eSourceType <= SOURCE_SUB; }
         uint32_t GetPriority() const { return m_dwPriority; }
         void SetPriority(uint32_t _priority) { m_dwPriority = static_cast<uint8_t>(_priority); }
         float GetCalculatedPriority() const { return m_fPrio; }
@@ -93,6 +120,11 @@ namespace Glacier
         void ClearBufferId() { m_lBufferId = -1; }
         bool BufferIdValid() const { return m_lBufferId >= 0; }
         void SetFadeOut(float _fInterval, float _fWait, float _destination);
+        const SSound* GetPackedSound() const;
+        const SWave* GetWave() const;
+        void Update();
+        void Stopped();
+        void NotifyStarted();
 
         // members
         RE_ADD_PADDING(0x24);
@@ -142,7 +174,7 @@ namespace Glacier
         float m_fPrio;
         uint32_t m_lChainIdxGroup;
         ESourceType m_eSourceType;
-        uint32_t m_eState;
+        ESoundObject_State m_eState;
         uint8_t m_dwPriority;
         uint8_t m_iMaxDistModel;
         int8_t m_OuterConeVolume;

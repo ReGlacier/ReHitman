@@ -8,42 +8,35 @@
 #include <Glacier/System/ZDllBase.h>
 #include <Glacier/Com/Globals.h>
 #include <Glacier/Com/CCom.h>
-
 #include <Glacier/Render/ZRender.h>
 #include <Glacier/Render/ZRenderBaseDll.h>
 #include <Glacier/Render/Debug/Globals.h>
 #include <Glacier/ScriptEngine/ScriptEngine.h>
-
-#include <Glacier/Serializer/ZIOInputStream.h>
 #include <Glacier/Serializer/ISerializerStream.h>
+#include <Glacier/Serializer/ZIOInputStream.h>
+#include <Glacier/Serializer/ZTokenCache.h>
 #include <Glacier/Filesystem/IOFilesystem_t.h>
 #include <Glacier/Filesystem/ZSysFile.h>
-
+#include <Glacier/EventBase/ZBaseConRout.h>
 #include <Glacier/EventBase/ZScheduledUpdate.h>
 #include <Glacier/EventBase/ZEventBase.h>
 #include <Glacier/EventBase/ZBaseConRout.h>
-
 #include <Glacier/Geom/ZGeomBuffer.h>
 #include <Glacier/Geom/ZTreeGroup.h>
 #include <Glacier/Geom/ZROOM.h>
 #include <Glacier/Geom/ZGEOM.h>
 #include <Glacier/Geom/ZCAMERA.h>
-
 #include <Glacier/Audio/ZSoundDllBase.h>
 #include <Glacier/Audio/ZSoundObject.h>
-
 #include <Glacier/Render/ZRender.h>
-
 #include <Glacier/Action/ActionInterface.h>
-
 #include <Glacier/ZSTL/ZPoolAllocRefTab.h>
 #include <Glacier/ZSTL/REFTAB32.h>
-
+#include <Glacier/PF4/ZData.h>
 #include <Glacier/Physics/ZCollisionBase.h>
-
+#include <Glacier/Materials/BS_Runtime.h>
 #include <Glacier/Debug/ZPushMemColor.h>
 #include <Glacier/Debug/ZMemReadOut.h>
-
 #include <Glacier/ZUniMemory.h>
 #include <Glacier/ZUniAssert.h>
 #include <cstring>
@@ -55,6 +48,10 @@ namespace Glacier
     STATIC_GLOBAL_CLASS_INSTANCE_IMPL(float, g_fDisplayPercentTarget, 0x008BA060, 0.0f);
     STATIC_GLOBAL_CLASS_INSTANCE(int, DEBUG_WhenToPrintMemory);
     STATIC_GLOBAL_CLASS_INSTANCE_IMPL(int, DEBUG_WhenToPrintMemory, 0x008BA06C, 0);
+    STATIC_GLOBAL_CLASS_INSTANCE(int, g_iLoadPropertiesProgress);
+    STATIC_GLOBAL_CLASS_INSTANCE_IMPL(int, g_iLoadPropertiesProgress, 0x008BA064, 0);
+    STATIC_GLOBAL_CLASS_INSTANCE(int, g_iLoadPropertiesTotal);
+    STATIC_GLOBAL_CLASS_INSTANCE_IMPL(int, g_iLoadPropertiesTotal, 0x008BA068, 0);
 
     namespace
     {
@@ -453,7 +450,16 @@ namespace Glacier
     {
         if (!g_pSysInterface->m_pSoundDll) return;
 
-        // TODO: Finish me after ZSoundDllWintel reversed
+        PUSH_MEMORY_COLOR(0x7777u);
+
+        uint32_t lSize = GetSoundGraphSize();
+        if (lSize > 0)
+        {
+            void* pData = ZUniMemory::Allocate(lSize);
+            GetSoundGraphData(pData, lSize);
+
+            // TODO: Finish me after ZSoundDllWintel reversed
+        }
     }
 
     void ZEngineDataBase::RegisterZDefine(char const* pName, char*, int)
@@ -738,7 +744,14 @@ namespace Glacier
 
     void ZEngineDataBase::InstallTextureBuffer()
     {
-        // TODO: Finish me
+        PUSH_MEMORY_COLOR(0xE0E0u);
+
+        uint32_t lTextureSize = GetTextureSize();
+        auto* pTextureData = ZUniMemory::Allocate(lTextureSize);
+
+        GetTextureData(pTextureData, lTextureSize);
+
+        g_pRenderDll->InstallTextureBuffer(pTextureData, lTextureSize);
     }
 
     uint32_t ZEngineDataBase::GetPrimsSize()
@@ -1483,7 +1496,7 @@ namespace Glacier
         {
             auto* pPathFinderMemBlock = ZUniMemory::Allocate(lDataSize);
             memcpy(pPathFinderMemBlock, pBuffer + 4, lDataSize);
-            // TODO: Finish me m_pPathfinder4Data = PF4::CreatePathFinder(pPathFinderMemBlock);
+            m_pPathfinder4Data = PF4::CreatePathFinder(pPathFinderMemBlock);
             m_pEntityTracker = ZUniMemory::New<ZEntityTracker>(m_pPathfinder4Data);
         }
     }
@@ -1552,25 +1565,137 @@ namespace Glacier
 
     void ZEngineDataBase::CreateGeoms(REFTAB* prtCreatedGeoms, ZStackArray<1000, SMakeGeomDynamic>* pMakeDynArray, const char* pGeomsData, const char* pStaticBuffer, IInputStream& property_in_stream)
     {
-        if (RunTime())
+        int32_t lNumberOfPackedGeoms = 0;
+
+        PUSH_MEMORY_COLOR(0x606060u);
+        MarkNonRunTime();
+
+        // TODO: Finish me
+
+        if (g_pSysInterface->GetOption("PrintEngineInfo", nullptr))
         {
-            m_bRunTime = false;
+            ZINFO("Number of Packed Geoms: %d", lNumberOfPackedGeoms);
         }
 
         // TODO: Finish me
+
+        if (g_pSysInterface->GetOption("PrintEngineInfo", nullptr))
+        {
+            ZINFO("Highest used geomnumber: %d", 123); // TODO: Replace '123' to struct read
+        }
+
+        // TODO: Finish me
+
+        if (!m_pRoot)
+        {
+            m_pRoot = AllocRootGroup();
+            m_pRoot->MakeDynamicContainer(true);
+        }
+        ZASSERT(m_pRoot);
+
+        // TODO: Finish me
+
+        ZMessageResolver::ResolveAll();
+
+        // TODO: Finish me
+
+        if (!g_pSysInterface->m_bDisableLight)
+        {
+            // TODO: Finish me
+        }
+
+        // TODO: Finish me
+        // InitResourceGeoms(...);
+        // BS_Runtime::ZMaterialDescriptionDB::m_Instance->RemapGeoms(...);
     }
 
     void ZEngineDataBase::LoadProperties(uint32_t lNrPackedGeoms, ZBaseGeom** BaseGeoms, IInputSerializerStream& in)
     {
         if (lNrPackedGeoms)
         {
-            // TODO: Finish me
+            ZBaseGeom** pBegin = BaseGeoms;
+            ZBaseGeom** pEnd = BaseGeoms;
+
+            LoadPropertiesRecursive(in, pBegin, m_pRoot->BaseGeom());
+            const auto n_geoms = pBegin - pEnd;
+            ZASSERT(n_geoms == lNrPackedGeoms); // Check count of visited objects
         }
     }
 
-    void ZEngineDataBase::LoadPropertiesRecursive(IInputSerializerStream& in, ZBaseGeom**& BaseGeoms, ZBaseGeom& object)
+    void ZEngineDataBase::LoadPropertiesRecursive(IInputSerializerStream& in, ZBaseGeom**& BaseGeoms, ZBaseGeom* pObject)
     {
-        // TODO: Finish me
+        ++g_iLoadPropertiesProgress;
+
+        if (!(g_iLoadPropertiesProgress % 32))
+        {
+            ZASSERT(g_iLoadPropertiesTotal > 0);
+
+            if (g_iLoadPropertiesTotal > 0)
+            {
+                // Recalc fake progress
+                float fNewProgress = (g_iLoadPropertiesProgress * 0.7f) / (g_iLoadPropertiesTotal + 0.2f);
+                if (fNewProgress >= 1.0f)
+                {
+                    fNewProgress = 1.0f;
+                }
+
+                SetAllocSequencePercent(ALLOCSEQUENCESTATUS::AS_GEOMS, nullptr, fNewProgress);
+            }
+        }
+
+
+        const char* pszName = pObject->Name();
+        in.Exchange<ZGEOM>(pszName, *pObject->GetGeom());
+
+        static ZTokenCache ControllerToken { "Controllers" };
+        in.GetToken(&ControllerToken);
+
+        uint32_t lControllersNr = 0;
+        in.ExchangeContainer(ControllerToken, lControllersNr);
+
+        for (int i = 0; i < lControllersNr; ++i)
+        {
+            static ZTokenCache ControllerNameToken { "ControllerName" };
+
+            in.GetToken(&ControllerNameToken);
+            const char* pszEventName;
+            in.ExchangeData(pszEventName);
+
+            auto* pEvent = pObject->GetGeom()->AddEvent(pszEventName);
+            if (pEvent)
+            {
+                ZASSERT(pEvent->m_pBaseGeom);
+                in.Exchange<ZBaseConRout>(ZToken::Void, *pEvent);
+                ZASSERT(pEvent->m_pBaseGeom);
+
+                auto* pRout = static_cast<ZBaseConRout*>(pEvent);
+                ++const_cast<ZROUTCLASSINFO*>(pRout->m_pRoutClassInfo)->m_lSceneInstanceCount;
+                pEvent->RegisterInstance();
+
+                ZASSERT(pEvent->m_pBaseGeom);
+            }
+            else
+            {
+                ZWARN2("ZEngineDataBase::LoadProperiesRecursive: Skipped event '%s' of object '%s' due required event not found", pszEventName, pszName);
+                in.SkipObject();
+            }
+        }
+
+        uint32_t lChildNr = 0;
+        in.ExchangeContainer("Children", lChildNr);
+
+        if (lChildNr > 0)
+        {
+            ZASSERT(pObject->IsDerivedFrom<ZGROUP>());
+
+            for (int i = 0; i < lChildNr; ++i)
+            {
+                auto* pChild = BaseGeoms[i + 1];
+                ZASSERT(INEDITOR || pChild->Parent() == pObject);
+
+                LoadPropertiesRecursive(in, BaseGeoms, pChild);
+            }
+        }
     }
 
     void ZEngineDataBase::SetSaveObject(ZSaveClass* pSaveObj)
@@ -1668,5 +1793,17 @@ namespace Glacier
                     break;
             }
         }
+    }
+
+    uint32_t ZEngineDataBase::GetSoundGraphSize()
+    {
+        MYSTR sGeomsFile = CalcCacheFileName(m_FileName, "sgp");
+        return g_pSysFile->GetSize(sGeomsFile, false);
+    }
+
+    void ZEngineDataBase::GetSoundGraphData(void* pData, uint32_t lSize)
+    {
+        MYSTR sGeomsFile = CalcCacheFileName(m_FileName, "sgp");
+        g_pSysFile->Load(sGeomsFile, pData, lSize, 0, false);
     }
 }

@@ -272,6 +272,45 @@ namespace Glacier
         return m_Model;
     }
 
+    ZAnimVariationHandle ZLNKOBJ::GetAnimVariationHandle(const char* pszName)
+    {
+        ZAnimVariationHandle hAnim;
+        m_TemplateNames.FindAnimVariationHandle(hAnim, pszName);
+        return hAnim;
+    }
+
+    Animation::ActiveAnimation* ZLNKOBJ::IsAnimationRunning(int hAnim)
+    {
+        if (!m_Model)
+            return nullptr;
+
+        for (auto& animation : m_Model->m_ActiveAnims)
+        {
+            const int mode = animation.mode & 7;
+            if (mode != 0 && mode != 2 && animation.sequenceId == hAnim)
+                return &animation;
+        }
+        return nullptr;
+    }
+
+    int ZLNKOBJ::PlayAnimSegment(Animation::Header* pAnimHeader, int32_t dwMode, float fFrom, float fTo, float fSpeed)
+    {
+        if (pAnimHeader)
+        {
+            auto* pActiveAnim = ActivateAnimSegment(pAnimHeader, dwMode, fFrom, fTo, fSpeed);
+            if (pActiveAnim)
+            {
+                return pActiveAnim->sequenceId;
+            }
+        }
+        else
+        {
+            SendCommand(0x803u, &pAnimHeader, 0);
+        }
+
+        return 0;
+    }
+
     void ZLNKOBJ::InitObjMatBone()
     {
         const auto lNrBones = ZPrimControlBase::Instance()->GetNrBones(Prim());
@@ -857,7 +896,7 @@ namespace Glacier
             || (!(pAnimation->header->m_Mask & 8) && pAnimation->header->HasBone(Animation::instance, Ground)));
     }
 
-    void ZLNKOBJ::OnMetaKey(Animation::ActiveAnimation*, Animation::ZMetaKey*, char const*)
+    void ZLNKOBJ::OnMetaKey(Animation::ActiveAnimation*, Animation::ZMetaKey*, const char*)
     {
     }
 
@@ -1581,12 +1620,6 @@ namespace Glacier
         }
     }
 
-#   pragma region " --- ZGEOM RTTI --- "
-    STATIC_CLASS_VAR_IMPL(ZLNKOBJ, const char*, FactoryName, 0x0077037C, "ZLNKOBJ");
-    DECLARE_ID_AND_MASK_IMPL(ZLNKOBJ, 0x0099C488, 0x0099C48C);
-    REGISTER_GLACIER_GEOM_CLASS(ZLNKOBJ, ZSTDOBJ, 0x200006u, 0x0099C4F8);
-#   pragma endregion
-
 #   pragma region "RTTI"
     namespace cProperties
     {
@@ -1651,11 +1684,16 @@ namespace Glacier
         };
     }
 
-    // Entry
-    STATIC_CLASS_VAR_IMPL(ZLNKOBJ, RTP::ZPropertyInfo, Info, 0x00806A54, (RTP::ZPropertyInfo {
-        .First = cProperties::NamespaceItem_3340,
-        .Super = &ZSTDOBJ::Info,
-        .Name = ZLNKOBJ::FactoryName
-    }));
+    DECLARE_GEOM_CLASS_IMPL(
+        ZLNKOBJ,
+        ZSTDOBJ,
+        0x0099C4F8,
+        "ZLNKOBJ",
+        0x0077037C,
+        cProperties::NamespaceItem_3340,
+        0x00806A54,
+        0x0099C488,
+        0x0099C48C
+    );
 #   pragma endregion
 }

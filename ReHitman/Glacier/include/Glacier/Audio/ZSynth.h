@@ -145,6 +145,11 @@ namespace Glacier
         // methods
         ZSynth();
         void RemoveFromMetaTab(_ZSoundBuffer* _buffer);
+        void RenderBuffer(_ZSoundBuffer* _buffer);
+        char* GetInputFrameBuffer() const;
+        char* GetResultFrameBuffer() const;
+        static char* GetSharedInputFrameBuffer();
+        void ExecuteTransferRequests();
 
         int32_t m_lMaxNumGroupedPlaying;
         ZBufferGroup m_BufferGroups[4];

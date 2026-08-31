@@ -25,6 +25,34 @@ namespace Glacier
             uint32_t m_lGeomRef;
             int32_t m_lBufferId;
         };
+
+        struct SResultPose : SSynthCmdBase
+        {
+            uint32_t m_lSndRef;
+            int32_t m_lPoseSegment;
+        };
+
+        struct SCmdInstallFile : SSynthCmdBase
+        {
+            int32_t m_lDataSize;
+            char m_szFileName[128];
+        };
+
+        struct SCmdInstallStreamFiles : SSynthCmdBase
+        {
+            int32_t m_lDataSize;
+            char m_szFileName[128];
+            char m_szLocalizedFileName[128];
+        };
+
+        struct SCmdFadeAllBuffers : SSynthCmdBase
+        {
+            float m_fTime;
+        };
+
+        static_assert(sizeof(SCmdInstallFile) == 0x8C);
+        static_assert(sizeof(SCmdInstallStreamFiles) == 0x10C);
+        static_assert(sizeof(SCmdFadeAllBuffers) == 0x0C);
     }
 
     ZSynth::ZSynth()
@@ -81,6 +109,32 @@ namespace Glacier
         std::memset(m_StoppedBuffers, 0, sizeof(m_StoppedBuffers));
         std::memset(m_DelayedBuffers, 0, sizeof(m_DelayedBuffers));
         std::memset(m_PosesBuffers, 0, sizeof(m_PosesBuffers));
+    }
+
+    char* ZSynth::GetInputFrameBuffer() const
+    {
+        return g_SynthFrameBuffer;
+    }
+
+    char* ZSynth::GetSharedInputFrameBuffer()
+    {
+        return g_SynthFrameBuffer;
+    }
+
+    char* ZSynth::GetResultFrameBuffer() const
+    {
+        return g_SynthCommandBuffer;
+    }
+
+    void ZSynth::ExecuteTransferRequests()
+    {
+        for (uint32_t i = 0; i < m_lTransferRequestCnt; ++i)
+        {
+            const STransferRequest& request = m_TransferRequests[i];
+            if (request.m_pDestAddr && request.m_pSourceAddr && request.m_lSize)
+                std::memcpy(request.m_pDestAddr, request.m_pSourceAddr, request.m_lSize);
+        }
+        m_lTransferRequestCnt = 0;
     }
 
     void ZSynth::AllocateBuffers()
@@ -141,7 +195,24 @@ namespace Glacier
             }
         }
         if (static_cast<int8_t>(_wave->m_iFlags) < 0 && streamCount == 4)
-            return lowestStream && lowestStream->m_lPrio < _priority ? lowestStream : freeBuffer;
+        {
+            if (!lowestStream || lowestStream->m_lPrio >= _priority)
+                return freeBuffer;
+            if (lowestStream->m_lGroupType == 1 && lowestStream->m_pStream)
+            {
+                ZBufferGroup* group = lowestStream->m_pStream->m_pUserData;
+                if (group)
+                {
+                    for (int i = 0; i < group->m_lNumGrouped; ++i)
+                    {
+                        group->m_Buffers[i]->Stop();
+                        group->m_Buffers[i]->Free();
+                    }
+                    group->m_lNumGrouped = 0;
+                }
+            }
+            return lowestStream;
+        }
         if (m_lNumUsedBuffers == m_lNumBuffers && lowestResident && lowestResident->m_lPrio < _priority)
             return lowestResident;
         return freeBuffer;
@@ -186,10 +257,82 @@ namespace Glacier
 
     void ZSynth::RenderBuffers()
     {
+        if (!m_pBuffers)
+            return;
+
         for (int i = 0; i < m_lNumBuffers; ++i)
         {
-            if (m_pBuffers[i] && m_pBuffers[i]->m_bInUse)
-                m_pBuffers[i]->Render();
+            _ZSoundBuffer* buffer = m_pBuffers[i];
+            if (!buffer || !buffer->m_bInUse)
+                continue;
+
+            if (!buffer->m_lGroupType)
+            {
+                RenderBuffer(buffer);
+                continue;
+            }
+            if (buffer->m_lGroupType != 1 || !buffer->m_pStream)
+                continue;
+
+            ZBufferGroup* group = buffer->m_pStream->m_pUserData;
+            if (!group)
+                continue;
+
+            bool groupReady = true;
+            for (int grouped = 0; grouped < group->m_lNumGrouped; ++grouped)
+            {
+                _ZSoundBuffer* groupedBuffer = group->m_Buffers[grouped];
+                if (groupedBuffer->m_bPlaying &&
+                    groupedBuffer->GetPlayCursor() / (groupedBuffer->m_lBufferSize / 2) ==
+                        groupedBuffer->m_lBufferId)
+                {
+                    groupReady = false;
+                }
+            }
+            if (!groupReady)
+                continue;
+
+            for (int grouped = 0; grouped < group->m_lNumGrouped; ++grouped)
+            {
+                _ZSoundBuffer* groupedBuffer = group->m_Buffers[grouped];
+                if (groupedBuffer->m_bInUse)
+                    RenderBuffer(groupedBuffer);
+            }
+        }
+    }
+
+    void ZSynth::RenderBuffer(_ZSoundBuffer* _buffer)
+    {
+        _buffer->Render();
+        if (!_buffer->m_bPlaying)
+        {
+            if (_buffer->m_bPause)
+                return;
+
+            if (_buffer->m_bReady)
+            {
+                if (!_buffer->WaitingForMetaSync())
+                {
+                    _buffer->Start();
+                    if (_buffer->m_eBufferType == SBT_DISCSTREAM)
+                        m_StartedBuffers[m_lStartedBuffersCnt++] = _buffer->m_rSndObj;
+                }
+            }
+            else if (_buffer->m_eBufferType == SBT_DISCSTREAM && !_buffer->m_bAddIdCmd)
+            {
+                m_DelayedBuffers[m_lDelayedBuffersCnt++] = _buffer->m_rSndObj;
+                _buffer->m_bAddIdCmd = true;
+            }
+        }
+
+        if (!_buffer->m_bPause && _buffer->m_rWave->m_iPosChunkSize && _buffer->m_pStream)
+        {
+            const char* poseData = _buffer->m_pStream->GetMetaData();
+            if (poseData)
+            {
+                _buffer->m_pPoseData = const_cast<char*>(poseData);
+                m_PosesBuffers[m_lPosesLoadedCnt++] = _buffer;
+            }
         }
     }
 
@@ -210,6 +353,38 @@ namespace Glacier
         };
 
         appendIds(0x1003, m_DelayedBuffers, m_lDelayedBuffersCnt);
+
+        for (int i = 0; i < m_lPosesLoadedCnt; ++i)
+        {
+            _ZSoundBuffer* buffer = m_PosesBuffers[i];
+            if (!buffer || !buffer->m_pStream)
+                continue;
+
+            ZIOStream* stream = buffer->m_pStream;
+            const int streamSegment = stream->m_lCurrentMetaSegment;
+            const int poseSegment = streamSegment + m_pStreamer->m_lMetaBufferSegments * stream->m_lStreamId;
+
+            auto* command = reinterpret_cast<SResultPose*>(m_pCmd);
+            command->m_lType = 0x1008;
+            command->m_lSize = sizeof(SResultPose);
+            command->m_lSndRef = buffer->m_rSndObj;
+            command->m_lPoseSegment = poseSegment;
+            m_pCmd += sizeof(SResultPose);
+
+            stream->m_lCurrentMetaSegment = streamSegment + 1;
+            if (stream->m_lCurrentMetaSegment == m_pStreamer->m_lMetaBufferSegments)
+                stream->m_lCurrentMetaSegment = 0;
+
+            if (m_lTransferRequestCnt < 8)
+            {
+                STransferRequest& transfer = m_TransferRequests[m_lTransferRequestCnt++];
+                transfer.m_pDestAddr = m_pPoseDestAddr + (poseSegment << 12);
+                transfer.m_pSourceAddr = buffer->m_pPoseData + (streamSegment << 12);
+                transfer.m_lSize = 0x1000;
+            }
+            m_PosesBuffers[i] = nullptr;
+        }
+
         appendIds(0x1001, m_StartedBuffers, m_lStartedBuffersCnt);
         appendIds(0x1002, m_StoppedBuffers, m_lStoppedBuffersCnt);
 
@@ -357,21 +532,37 @@ namespace Glacier
         bool groupMode = false;
         ZIOStream* sharedGroupStream = nullptr;
         ZBufferGroup* group = nullptr;
-        int groupCount = 0;
+        _ZSoundBuffer* existingGroupBuffers[4]{};
+        int existingGroupCount = 0;
+        int groupedThisFrame = 0;
         while (command->m_lType != 0x10000)
         {
             if (command->m_lType == 1 || command->m_lType == 2 || command->m_lType == 9)
             {
                 auto* start = reinterpret_cast<SStartSoundBase*>(command);
                 SWaveHeader* wave = GetWaveHeader(start->m_lHeaderOffset);
-                if (wave && wave->m_lDataOffset && (!groupMode || groupCount < m_lMaxNumGroupedPlaying))
+                const bool autoGroup = wave && wave->m_iLayerInfo && !groupMode;
+                if (autoGroup)
+                {
+                    groupMode = true;
+                    sharedGroupStream = nullptr;
+                    group = nullptr;
+                    existingGroupCount = 0;
+                    groupedThisFrame = 0;
+                }
+
+                if (wave && wave->m_lDataOffset && (!groupMode || groupedThisFrame < m_lMaxNumGroupedPlaying))
                 {
                     _ZSoundBuffer* buffer = nullptr;
-                    if (start->m_lBufferId > 0 && start->m_lBufferId < m_lNumBuffers)
+                    if (start->m_lBufferId > 0 && start->m_lBufferId < 127)
                     {
-                        auto* candidate = m_pBuffers[start->m_lBufferId];
-                        if (candidate->m_bInUse && candidate->m_rSndObj == start->m_lSndRef)
-                            buffer = candidate;
+                        ZASSERT(start->m_lBufferId < m_lNumBuffers);
+                        if (start->m_lBufferId < m_lNumBuffers)
+                        {
+                            auto* candidate = m_pBuffers[start->m_lBufferId];
+                            if (candidate->m_bInUse && candidate->m_rSndObj == start->m_lSndRef)
+                                buffer = candidate;
+                        }
                     }
                     if (!buffer)
                     {
@@ -383,6 +574,25 @@ namespace Glacier
                                 break;
                             }
                         }
+                    }
+                    if (!buffer && groupMode && groupedThisFrame < existingGroupCount)
+                    {
+                        int replacement = 0;
+                        int reference = 0;
+                        for (int i = 0; i < existingGroupCount; ++i)
+                        {
+                            if (existingGroupBuffers[i]->m_lPrio < 0x40000000u)
+                                replacement = i;
+                            if (existingGroupBuffers[i]->m_lPrio)
+                                reference = i;
+                        }
+                        if (existingGroupCount == m_lMaxNumGroupedPlaying)
+                        {
+                            buffer = existingGroupBuffers[replacement];
+                            buffer->m_bFrameClaimed = true;
+                        }
+                        if (group)
+                            group->m_pReferenceBuffer = existingGroupBuffers[reference];
                     }
                     if (!buffer && ((start->m_lFlags & 1) || start->m_bLooping))
                     {
@@ -421,10 +631,12 @@ namespace Glacier
                         if (groupMode && group)
                         {
                             group->m_Buffers[group->m_lNumGrouped++] = buffer;
-                            buffer->m_lGroupType = groupCount++ ? 2 : 1;
+                            buffer->m_lGroupType = groupedThisFrame++ ? 2 : 1;
                         }
                     }
                 }
+                if (autoGroup)
+                    groupMode = false;
             }
             else if (command->m_lType == 4 || command->m_lType == 0x50)
             {
@@ -456,30 +668,37 @@ namespace Glacier
                 groupMode = true;
                 sharedGroupStream = nullptr;
                 group = nullptr;
-                groupCount = 0;
-                for (int entry = 0; entry < begin->m_lGroupEntries && groupCount < m_lMaxNumGroupedPlaying; ++entry)
+                existingGroupCount = 0;
+                groupedThisFrame = 0;
+                for (int entry = 0;
+                    entry < begin->m_lGroupEntries && existingGroupCount < m_lMaxNumGroupedPlaying;
+                    ++entry)
                 {
                     const auto& id = begin->m_Entries[entry];
                     for (int i = 0; i < m_lNumBuffers; ++i)
                     {
                         auto* buffer = m_pBuffers[i];
-                        if (buffer->m_bInUse && buffer->m_rSndObj == id.m_lGeomRef)
+                        if (buffer->m_bInUse && buffer->m_rSndObj == id.m_lGeomRef &&
+                            buffer->m_lBufferIndex == id.m_lBufferId)
                         {
+                            existingGroupBuffers[existingGroupCount++] = buffer;
                             if (!sharedGroupStream)
                             {
                                 sharedGroupStream = buffer->m_pStream;
-                                group = sharedGroupStream->m_pUserData;
-                                group->m_lPlayCursor = buffer->GetPlayCursor();
-                                group->m_lCurPlaySeg = buffer->m_lBufferId;
-                                group->m_lNumGrouped = 0;
+                                if (sharedGroupStream)
+                                {
+                                    group = sharedGroupStream->m_pUserData;
+                                    group->m_lPlayCursor = buffer->GetPlayCursor();
+                                    group->m_lCurPlaySeg = buffer->m_lBufferId;
+                                    group->m_lNumGrouped = 0;
+                                }
                             }
-                            ++groupCount;
                             break;
                         }
                     }
                 }
                 if (group)
-                    group->m_bNewBuffers = groupCount != begin->m_lGroupEntries;
+                    group->m_bNewBuffers = existingGroupCount != begin->m_lGroupEntries;
             }
             else if (command->m_lType == 0x0B)
                 groupMode = false;
@@ -551,12 +770,49 @@ namespace Glacier
                 PushScene();
             else if (command->m_lType == 0x81)
                 PopScene();
+            else if (command->m_lType == 0x100)
+            {
+                const auto* install = reinterpret_cast<const SCmdInstallFile*>(command);
+                InstallWaves(install->m_lDataSize, install->m_szFileName);
+            }
+            else if (command->m_lType == 0x101)
+            {
+                const auto* install = reinterpret_cast<const SCmdInstallFile*>(command);
+                if (install->m_szFileName[0])
+                {
+                    m_lWaveHeadersSize = install->m_lDataSize;
+                    InstallWaveHeaders(install->m_lDataSize, install->m_szFileName);
+                }
+            }
+            else if (command->m_lType == 0x102)
+            {
+                const auto* install = reinterpret_cast<const SCmdInstallStreamFiles*>(command);
+                InstallStreamWaves(install->m_lDataSize, install->m_szFileName,
+                    install->m_szLocalizedFileName);
+            }
+            else if (command->m_lType == 0x200)
+            {
+                const auto* fade = reinterpret_cast<const SCmdFadeAllBuffers*>(command);
+                m_lMuteAllFadeTime = 187;
+                FadeAllBuffers(fade->m_fTime);
+            }
             else if (command->m_lType == 0x300)
                 StartMemStream();
             else if (command->m_lType == 0x301)
                 StopMemStream();
             else if (command->m_lType == 0x1000)
                 m_bRunning = false;
+            else if (command->m_lType == 0x1110)
+            {
+                m_bDriveReadyRequest = true;
+                m_bDriveReady = false;
+                m_bDriveLocked = true;
+            }
+            else if (command->m_lType == 0x1111)
+            {
+                m_bDriveReady = false;
+                m_bDriveLocked = false;
+            }
             else if (command->m_lType == 0x1200 || command->m_lType == 0x1201)
             {
                 for (int i = 0; i < m_lNumBuffers; ++i)
@@ -580,7 +836,6 @@ namespace Glacier
             ZASSERT(m_lBufferIdCnt < 128);
             m_tBufferId[m_lBufferIdCnt++] = {buffer->m_rSndObj, buffer->m_lBufferIndex};
         }
-        SignalCmdFrameProcessed();
     }
 
     void ZSynth::Render()
@@ -595,8 +850,8 @@ namespace Glacier
         end->m_lType = 0x10000;
         end->m_lSize = sizeof(SSynthCmdBase);
         m_pCmd += sizeof(SSynthCmdBase);
+        ExecuteTransferRequests();
         SendFrame();
-        m_lTransferRequestCnt = 0;
     }
 
     bool ZSynth::CopyWaveData(_ZSoundBuffer*)

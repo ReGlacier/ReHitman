@@ -170,6 +170,7 @@ namespace Glacier
 
         bool GetLayerSampleRates(uint32_t& _minimum, uint32_t& _maximum) const;
         bool AllocateWaveResource(ZIOStream* _stream, SStartSoundBase* _command);
+        bool WaitingForMetaSync() const;
 
         ZSynth* m_pSoundCon;
         uint32_t m_lBufferSize;

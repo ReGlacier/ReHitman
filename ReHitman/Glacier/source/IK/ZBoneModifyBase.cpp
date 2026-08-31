@@ -6,6 +6,7 @@
 #include <Glacier/Render/Prim/ZBoneConstraintsHeader.h>
 #include <Glacier/Render/Prim/ZBoneConstraintLookAt.h>
 #include <Glacier/IK/ZBoneModifyBase.h>
+#include <Glacier/IK/ZLNKOBJ.h>
 #include <Glacier/Physics/ZRagdollContainer.h>
 #include <Glacier/Physics/ZDynamicsExtend.h>
 #include <Glacier/Physics/CRagdoll2.h>
@@ -533,6 +534,83 @@ namespace Glacier
     void ZBoneModifyBase::LoadSave(ISerializerStream& stream, bool bSaving)
     {
         // TODO: Finish me
+    }
+
+    bool ZBoneModifyBase::ActivateRagdoll(ZLNKOBJ* pLnkObj, bool bActive, bool bEnableTimeout, bool bUseDamping)
+    {
+        if (m_lNumActiveBones > 0x100u)
+            return false;
+
+        if (!bActive)
+        {
+            if ((m_pRagdoll && m_pRagdoll->IsActive()) || m_bPassive)
+            {
+                pLnkObj->ResetInactiveBones();
+                if (pLnkObj->BaseGeom()->m_lDrawId)
+                {
+                    auto* pBones = const_cast<ZBone*>(reinterpret_cast<const ZBone*>(pLnkObj->GetBones()));
+                    IDraw::Instance()->CreateDefaultBones(pBones, pLnkObj);
+                }
+            }
+
+            if (m_pRagdoll)
+            {
+                g_pRenderDll->GetRagdollContainer()->DeactivateRagdoll(m_pRagdoll);
+                m_pRagdoll = nullptr;
+            }
+
+            m_bPassive = true;
+            return true;
+        }
+
+        if (m_pRagdoll)
+        {
+            m_pRagdoll->EnableTimeOut(bEnableTimeout);
+
+            const float fDamp = bUseDamping ? 0.15f : 0.009f;
+            m_pRagdoll->SetDamping(fDamp);
+            if (!m_pRagdoll->IsActive())
+            {
+                m_pRagdoll->Activate(GetBones(pLnkObj), true);
+            }
+            return true;
+        }
+        else
+        {
+            auto* pRagdollContainer = g_pRenderDll->GetRagdollContainer();
+            m_pRagdoll = pRagdollContainer->GetRagdoll(bUseDamping);
+
+            if (!m_pRagdoll)
+            {
+                return false;
+            }
+
+            if (GetBones(pLnkObj) && (pLnkObj->Model() && pLnkObj->Model()->m_Valid))
+            {
+                auto lBoneCount = pLnkObj->Model()->m_BoneCount;
+                const ZBone* pBones = GetBones(pLnkObj);
+
+                m_pRagdoll->Init(pLnkObj, pBones, lBoneCount);
+            }
+            else
+            {
+                const auto* pBones = reinterpret_cast<const ZBone*>(ZPrimControlBase::Instance()->GetGlobalPrimBones(pLnkObj->Prim()));
+                auto lNrBones = ZPrimControlBase::Instance()->GetNrBones(pLnkObj->Prim());
+                m_pRagdoll->Init(pLnkObj, pBones, lNrBones);
+            }
+
+            auto* pBones = GetBones(pLnkObj);
+            m_pRagdoll->Activate(pBones, false);
+            pLnkObj->OnMoving();
+            m_pRagdoll->EnableTimeOut(bEnableTimeout);
+            m_bPassive = false;
+
+            const float fDamp = bUseDamping ? 0.15f : 0.009f;
+            m_pRagdoll->SetDamping(fDamp);
+            return true;
+        }
+
+        return false;
     }
 
     void ZBoneModifyBase::UpdateGlobalIK(ZBone* pBones, uint32_t lPrim, ZLNKOBJ* pLnkObj)

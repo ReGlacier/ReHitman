@@ -90,8 +90,8 @@
 #include <Glacier/GameBase/CInventory.h>
 #include <Glacier/GameBase/ZPlayer.h>
 #include <Glacier/Geom/ZEngineGeomControl.h>
-#include <Glacier/ZLnkActionQueue.h>
-#include <Glacier/ZLnkAction.h>
+#include <Glacier/IK/ZLnkActionQueue.h>
+#include <Glacier/IK/ZLnkAction.h>
 #include <Glacier/Component/ZComponentBase.h>
 #include <Glacier/System/ZSysMem.h>
 // Materials

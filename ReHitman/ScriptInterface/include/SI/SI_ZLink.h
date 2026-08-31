@@ -11,7 +11,7 @@ namespace Glacier
     anim Zlink__Getanim(ZREF rLink, const char* name);
     bool Zlink__Checkanimrunning(ZREF rLink, int animId);
     int Zlink__Getnumberofframes(ZREF rLink, anim animId);
-    int Zlink__Playanimsegment(ZREF rLink, anim animId, int segment, float start, float end, float blendTime);
+    int Zlink__Playanimsegment(ZREF rLink, anim animId, int dwmode, float start, float end, float speed);
     bool Zlink__Canplayanim(ZREF rLink, anim animId, int segment);
     bool Zlink__Canplayanimsegment(ZREF rLink, anim animId, float start, float end, float blendIn, float blendOut);
     int Zlink__Playaniminterpolated(ZREF rLink, anim animId, v3 position, v3 direction, float start, float end, float blendIn, float blendOut, int flags);

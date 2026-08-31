@@ -5,6 +5,7 @@
 #include <Glacier/ReGlacier.h>
 #include <Glacier/ZSTL/ZRTStringObject.h>
 #include <Glacier/ZSTL/ZMath.h>
+#include <Glacier/Runtime/Macro.h>
 #include <Glacier/Animation/ZBone.h>
 #include <Glacier/RTP/PropertyTypes.h>
 
@@ -230,17 +231,8 @@ namespace Glacier
     class ZLNKOBJ : public ZSTDOBJ
     {
     public:
-        // constants
-        static constexpr uint32_t m_TypeId = 0x200006u;
-        // types
-
-        // static
-#       pragma region " --- Static members --- "
-        STATIC_CLASS_VAR(ZLNKOBJ, const char*, FactoryName);
-        STATIC_CLASS_VAR(ZLNKOBJ, RTP::ZPropertyInfo, Info);
-        STATIC_CLASS_VAR(ZLNKOBJ, ZGEOMCLASSINFO*, m_OldClassInfo);
-        DECLARE_ID_AND_MASK(ZLNKOBJ);
-#       pragma endregion
+        // RTTI
+        DECLARE_GEOM_CLASS(ZSHAPE, 0x200006u);
 
         // types
         struct SAnimSound
@@ -296,7 +288,7 @@ namespace Glacier
         virtual Animation::ActiveAnimation* SetBoneFrameBlend(Animation::Header*, float, float, bool, unsigned int);
         virtual void SetDualFrame(Animation::Header*, float, Animation::Header*, float, float, float);
         virtual bool GroundAnimated();
-        virtual void OnMetaKey(Animation::ActiveAnimation*, Animation::ZMetaKey*, char const*);
+        virtual void OnMetaKey(Animation::ActiveAnimation*, Animation::ZMetaKey*, const char*);
         virtual ZPoseAnim* ActivatePoseAnim(char*, float, unsigned int, float);
         virtual bool StopPoseAnim(unsigned int, bool);
         virtual void StopAudio();
@@ -308,7 +300,7 @@ namespace Glacier
         virtual bool Use2Skeletons(void);
         virtual void LocalStateIK(void);
         virtual void GetDefaultBones(ZBone *pBones, uint32_t lFirstBoneNum) const;
-        virtual void SetDefaultBones(ZBone const*,SBoneDefinition const*);
+        virtual void SetDefaultBones(const ZBone* pBones, const SBoneDefinition* pDef);
         virtual ZDeltaBone* GetAnimDeltaBones(Animation::Header*);
         virtual void GetBoneMatPos(Glacier::ZMat3x3*, Glacier::ZVector3*, unsigned int) const;
         virtual bool AttachBaseGeomToBone(ZBaseGeom const*,unsigned int,float const*,float const*);
@@ -371,6 +363,9 @@ namespace Glacier
         const char* LoadAnimVariationsBuffer(const char* pszFileName);
         Animation::Model* Model();
         const Animation::Model* Model() const;
+        ZAnimVariationHandle GetAnimVariationHandle(const char* pszName);
+        Animation::ActiveAnimation* IsAnimationRunning(int hAnim);
+        int PlayAnimSegment(Animation::Header* pAnimHeader, int32_t dwMode, float fFrom, float fTo, float fSpeed);
 
 #       pragma region " --- RTTI Methods --- "
         void GetAnimCollectionProperty(ZANIM& anim_collection_name);

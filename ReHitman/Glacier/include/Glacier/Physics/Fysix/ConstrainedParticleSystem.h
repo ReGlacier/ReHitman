@@ -96,6 +96,7 @@ namespace Glacier
         void GetVelocity(int lIndex, ZVector3& vVelocity) const;
         void HandleCollision(SRagdollCollisionInfo& sCollisionInfo);
         void CollideLineBetweenParticles3(SRagdollCollisionInfo& sCollisionInfo);
+        void ComputeDistances();
 
         // members
         Particle* m_pParticles;                          // +0x04

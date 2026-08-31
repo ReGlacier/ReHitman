@@ -21,6 +21,7 @@ namespace Glacier
 
     ZSynthDS::ZSynthDS()
         : m_pDirectSound(nullptr)
+        , m_pPrimaryBuffer(nullptr)
         , m_bProbeActive(false)
         , m_bEnableHardware(true)
     {
@@ -229,7 +230,11 @@ namespace Glacier
     bool ZSynthDS::EndInit(void*) { return true; }
     bool ZSynthDS::SetMasterPan(int) { return true; }
     bool ZSynthDS::SetMasterVolume(float) { return true; }
-    void ZSynthDS::PrintStatus() {}
+    void ZSynthDS::PrintStatus()
+    {
+        m_DSCaps.dwSize = sizeof(m_DSCaps);
+        m_pDirectSound->GetCaps(&m_DSCaps);
+    }
     IDirectSound8* ZSynthDS::GetDS() { return m_pDirectSound; }
     bool ZSynthDS::EaxEnabled() { return m_bUseEAX; }
     bool ZSynthDS::EnableHardWare(bool _enabled) { return m_bEnableHardware = _enabled; }

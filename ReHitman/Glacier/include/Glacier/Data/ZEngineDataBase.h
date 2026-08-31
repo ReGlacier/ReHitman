@@ -223,9 +223,11 @@ namespace Glacier
         char* GetAnimBuffer();
         void CreateGeoms(REFTAB* prtCreatedGeoms, ZStackArray<1000, SMakeGeomDynamic>* pMakeDynArray, const char* pGeomsData, const char* pStaticBuffer, IInputStream& property_in_stream);
         void LoadProperties(uint32_t lNrPackedGeoms, ZBaseGeom** BaseGeoms, IInputSerializerStream& in);
-        void LoadPropertiesRecursive(IInputSerializerStream& in, ZBaseGeom**& BaseGeoms, ZBaseGeom& object);
+        void LoadPropertiesRecursive(IInputSerializerStream& in, ZBaseGeom**& BaseGeoms, ZBaseGeom* pObject);
         void SetSaveObject(ZSaveClass* pSaveObj);
         void LoadZDefines(IInputSerializerStream& stream);
+        uint32_t GetSoundGraphSize();
+        void GetSoundGraphData(void* pData, uint32_t lSize);
 
 #if 0   // TO FILTER & IMPL
         public: bool SaveGame(unsigned int);
@@ -248,8 +250,6 @@ namespace Glacier
         public: void Init();
         public: void PostInit();
         public: void PostInit2();
-        protected: uint32 GetSoundGraphSize();
-        protected: void GetSoundGraphData(void*, unsigned int);
         protected: uint32 GetStaticGameLevelDataSize();
         protected: void GetStaticGameLevelData(void*, unsigned int);
 #endif

@@ -107,4 +107,17 @@ namespace Glacier
 
         return m_pBlockMemAligned + (firstAllocatedIdx * m_lBlockSize);
     }
+
+    void ZBlockAlloc::FreeBlocks(int lFirstBlock)
+    {
+        int block = lFirstBlock;
+        while (block != -1)
+        {
+            const int nextBlock = m_pFreeMemTab[block];
+            m_pFreeMemTab[block] = m_lNextFree;
+            m_lNextFree = block;
+            --m_lNumAllocated;
+            block = nextBlock;
+        }
+    }
 }

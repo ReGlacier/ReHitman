@@ -1,12 +1,15 @@
 #include <Glacier/Audio/ZSoundObject.h>
 #include <Glacier/Audio/ZSoundObjectControllers.h>
+#include <Glacier/Audio/ZDllSound.h>
+#include <Glacier/System/ZSysInterface.h>
 
 #include <cstring>
 
 namespace Glacier
 {
     ZSoundObject::ZSoundObject()
-        : m_vBFormat{}
+        : m_pControllers(nullptr)
+        , m_vBFormat{}
         , m_vLocalPos{}
         , m_vLocalOrient{}
         , m_vPosition{}
@@ -36,7 +39,7 @@ namespace Glacier
         , m_fPrio(0.0f)
         , m_lChainIdxGroup(0)
         , m_eSourceType(SOURCE_2D)
-        , m_eState(0)
+        , m_eState(STATE_PLAYING)
         , m_dwPriority(2)
         , m_lNumPathes(0)
     {
@@ -104,5 +107,63 @@ namespace Glacier
     void ZSoundObject::SetFadeOut(float _fInterval, float _fWait, float _destination)
     {
         // TODO: Finish me
+    }
+
+    const SSound* ZSoundObject::GetPackedSound() const
+    {
+        if (!g_pSysInterface || !g_pSysInterface->m_pSoundDll)
+            return nullptr;
+        auto* soundDll = static_cast<ZDllSound*>(g_pSysInterface->m_pSoundDll);
+        ZAudioTypeBase::ZPackedBase* packed = soundDll->GetPackedObject(m_rSound);
+        return packed && packed->m_Type == ZAudioTypes::Sound ? static_cast<SSound*>(packed) : nullptr;
+    }
+
+    const SWave* ZSoundObject::GetWave() const
+    {
+        if (!g_pSysInterface || !g_pSysInterface->m_pSoundDll)
+            return nullptr;
+        auto* soundDll = static_cast<ZDllSound*>(g_pSysInterface->m_pSoundDll);
+        const SSound* sound = GetPackedSound();
+        if (!sound)
+            return nullptr;
+        ZAudioTypeBase::ZPackedBase* packed = soundDll->GetPackedObject(sound->m_lWaveOffset);
+        return packed && packed->m_Type == ZAudioTypes::Wave ? static_cast<SWave*>(packed) : nullptr;
+    }
+
+    void ZSoundObject::Update()
+    {
+        // TODO: Finish this place after SoundObject::ZControllers will be reversed
+        if (m_lLoops > 1)
+        {
+            const SWave* wave = GetWave();
+            if (wave && m_fTimeLeft < wave->m_fDuration)
+                SetLooping(false);
+        }
+    }
+
+    void ZSoundObject::Stopped()
+    {
+        auto* soundDll = g_pSysInterface ? static_cast<ZDllSound*>(g_pSysInterface->m_pSoundDll) : nullptr;
+        if (soundDll && m_lChainIdxSlaves)
+        {
+            soundDll->FreeRefChain(m_lChainIdxSlaves);
+            m_lChainIdxSlaves = 0;
+        }
+
+        // TODO: Finish this place after SoundObject::ZControllers will be reversed
+        // Controllers receive the Stopped event and retain only the original sound owner.
+        m_rSound = m_lOrigSound;
+        m_lSoundFlags &= ~0x180000u;
+        m_fTimeLeft = 0.0f;
+        m_fFadeStartTime = 0.0f;
+        m_fFadeInterval = 0.0f;
+        m_fFadeDestination = 0.0f;
+    }
+
+    void ZSoundObject::NotifyStarted()
+    {
+        if (!m_lChainIdxNotifyStarted || !m_rSound)
+            return;
+        // TODO: Finish this place after ZDllSound::NotifyStarted message resolver will be reversed
     }
 }

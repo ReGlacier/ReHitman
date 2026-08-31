@@ -194,7 +194,6 @@ namespace Glacier
         {
             residentSource = static_cast<ZSynthWintel*>(m_pSoundCon)->GetWaveform(m_rWave->m_lDataOffset);
             residentSize = m_rWave->m_lPackedSize;
-            requestedSize = residentSize;
         }
 
         if (m_rWave->m_iDataType == 4096)
@@ -210,7 +209,7 @@ namespace Glacier
         int size1 = 0;
         int size2 = 0;
         if (!LockBuffer(lockOffset, requestedSize, &buffer1, &size1, &buffer2, &size2))
-            return 0;
+            return 1;
 
         switch (m_rWave->m_iDataType)
         {
@@ -317,7 +316,8 @@ namespace Glacier
                 }
                 if (m_dwBufferType == 1 || m_dwBufferType == 2)
                 {
-                    const int layerIndex = m_rWave->m_iLayerInfo < 0 ? 0 : m_rWave->m_iLayerInfo & 0x7F;
+                    const int8_t layerInfo = static_cast<int8_t>(m_rWave->m_iLayerInfo);
+                    const int layerIndex = layerInfo < 0 ? 0 : layerInfo & 0x7F;
                     std::memcpy(buffer1, group->m_Layers[layerIndex].m_pLayerData, requestedSize);
                     ApplyLowpass(static_cast<int16_t*>(buffer1), requestedSize);
                 }

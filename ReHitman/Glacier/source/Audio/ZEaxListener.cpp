@@ -26,6 +26,9 @@ namespace Glacier
 
     void ZEaxListener::GetDefaultValues()
     {
+        if (!m_pPropertySet)
+            return;
+
         m_Properties = {};
         m_Properties.m_fEnvironmentSize = 7.5f;
         m_Properties.m_fEnvironmentDiffusion = 1.0f;
@@ -44,9 +47,8 @@ namespace Glacier
         m_Properties.m_fHFReference = 5000.0f;
         m_Properties.m_fLFReference = 250.0f;
         m_Properties.m_lFlags = 0x3F;
-        if (m_pPropertySet)
-            m_pPropertySet->Set(GetEAXListenerPropertiesGuid(), 0x80000001, nullptr, 0,
-                &m_Properties, sizeof(m_Properties));
+        m_pPropertySet->Set(GetEAXListenerPropertiesGuid(), 0x80000001, nullptr, 0,
+            &m_Properties, sizeof(m_Properties));
     }
 
     bool ZEaxListener::Init(IDirectSound* _directSound, IDirectSoundBuffer* _buffer, bool _setDefaults)

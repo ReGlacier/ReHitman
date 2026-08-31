@@ -24,6 +24,9 @@ namespace Glacier
 
     void ZEaxSource::GetDefaultValues()
     {
+        if (!m_pPropertySet)
+            return;
+
         m_Properties = {};
         m_Properties.m_fOcclusionLFRatio = 0.25f;
         m_Properties.m_fOcclusionRoomRatio = 1.5f;
