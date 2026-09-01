@@ -166,4 +166,16 @@ namespace Glacier
             return;
         // TODO: Finish this place after ZDllSound::NotifyStarted message resolver will be reversed
     }
+
+    void ZSoundObject::AddNotifyTarget(ZREF rTarget)
+    {
+        if (rTarget)
+            m_lChainIdxNotifyTab = g_pSysInterface->GetSoundDll()->AddToRefChain(m_lChainIdxNotifyTab, rTarget);
+    }
+
+    void ZSoundObject::AddNotifyStarted(ZREF rTarget)
+    {
+        if (rTarget)
+            m_lChainIdxNotifyStarted = g_pSysInterface->GetSoundDll()->AddToRefChain(m_lChainIdxNotifyStarted, rTarget);
+    }
 }

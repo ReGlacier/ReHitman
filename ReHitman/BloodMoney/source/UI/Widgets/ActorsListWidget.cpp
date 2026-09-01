@@ -21,6 +21,7 @@
 #include <Glacier/EventBase/ZEventBuffer.h>
 #include <Glacier/Geom/ZGeomBuffer.h>
 #include <Glacier/GameBase/ZActorCommunication.h>
+#include <Glacier/GameBase/ZActor.h>
 #include <Glacier/ScriptEngine/ZScriptC.h>
 
 #include <Glacier/Physics/CRigidBody.h>
@@ -146,7 +147,7 @@ namespace ImGui
             if (gameData && gameData->m_Hitman3 && ImGui::Button("Run to player"))
             {
                 Glacier::ZVector3 pos;
-                reinterpret_cast<Glacier::ZCTRLIKLNKOBJ*>(gameData->m_Hitman3)->GetVisionPos(&pos);
+                reinterpret_cast<Glacier::ZCTRLIKLNKOBJ*>(gameData->m_Hitman3)->GetVisionPos(pos);
 
                 actor->SetMoveSpeedMultiplier(15.f);
                 actor->MoveToPosition(&pos, &pos);
@@ -210,7 +211,7 @@ namespace ImGui
                 ((void(__cdecl*)(Glacier::ZREF, int))0x006AA2B0)(reinterpret_cast<Glacier::ZGEOM*>(clonedActor)->GetRef(), 0);
 
                 spdlog::info("<< SetActorState");
-                clonedActor->SetActorState(Hitman::BloodMoney::ZActor::ACTORSTATE::ACTORSTATE_SLEEPING);
+                clonedActor->SetActorState(Glacier::ZActor::ACTORSTATE_SLEEPING);
 
                 // ----------- PRETTY PRINT SOME INFOS -------------
                 spdlog::info("TRK: {:08X}", (int)pTrackLinkObjects);
@@ -218,7 +219,7 @@ namespace ImGui
                 spdlog::info("Dup: {:08X} / ADup: {:08X}", (int)duplicateGroup, (int)clonedActor);
 
                 // Just for debug (copy state from original actor)
-                clonedActor->SetActorState(((Hitman::BloodMoney::ZActor::ACTORSTATE(__thiscall*)(Hitman::BloodMoney::ZHM3Actor*))0x005029A0)(actor)); // ZActor::GetActorState
+                clonedActor->SetActorState(((Glacier::ZActor::ACTORSTATE(__thiscall*)(Hitman::BloodMoney::ZHM3Actor*))0x005029A0)(actor)); // ZActor::GetActorState
 
                 spdlog::info("Cloned actor ptr is {:08X}", reinterpret_cast<std::intptr_t>(clonedActor));
 
@@ -342,7 +343,7 @@ namespace Hitman::BloodMoney
             for (int actorIndex = 0; actorIndex < gameData->m_ActorsPool.m_iSize; actorIndex++)
             {
                 auto entityName = fmt::format("#{:2d} {}",
-                                              (actorIndex + 1), gameData->m_ActorsPool.m_Data[actorIndex]->m_baseGeom->ParentGroup()->m_baseGeom->m_Name);
+                                               (actorIndex + 1), reinterpret_cast<Hitman::BloodMoney::ZHM3Actor*>(gameData->m_ActorsPool.m_Data[actorIndex])->m_baseGeom->ParentGroup()->m_baseGeom->m_Name);
                 if (ImGui::Selectable(entityName.data(), selectedIndex == actorIndex))
                 {
                     selectedIndex = actorIndex;
@@ -352,7 +353,7 @@ namespace Hitman::BloodMoney
             ImGui::SameLine();
 
             //Right side
-            Hitman::BloodMoney::ZHM3Actor* currentActor = gameData->m_ActorsPool.m_Data[selectedIndex];
+            auto* currentActor = reinterpret_cast<Hitman::BloodMoney::ZHM3Actor*>(gameData->m_ActorsPool.m_Data[selectedIndex]);
 
             ImGui::BeginGroup();
             ImGui::BeginChild("$itemview", ImVec2(0, -ImGui::GetFrameHeightWithSpacing()));

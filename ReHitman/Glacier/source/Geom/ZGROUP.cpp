@@ -15,11 +15,39 @@
 #include <Glacier/Runtime/Macro.h>
 #include <Glacier/Render/ZRender.h>
 #include <Glacier/ZSTL/StringUtils.h> // striwcmp
+#include <Glacier/Audio/ZSoundDllBase.h>
+#include <Glacier/Audio/ZSoundObject.h>
 #include <cstring>
 
 
 namespace Glacier
 {
+    SREF ZGROUP::AddSound3d(float* pDirection, float* pPosition, int lSoundIndex, int lSoundEvent, uint32_t lEventArgument, uint32_t lExtraArgument)
+    {
+        auto* pSoundDll = g_pSysInterface->GetSoundDll();
+        if (!pSoundDll)
+            return 0;
+
+        auto* pOwnerRoom = BaseGeom()->GetOwnerRoom();
+        if (pOwnerRoom && !(pOwnerRoom->RoomControl() & 8) && lSoundEvent)
+        {
+            ZVector3 eventPosition(pPosition);
+            GetRootPoint(eventPosition);
+            pSoundDll->AddEvent(this, eventPosition.Get(), lSoundEvent, lSoundIndex, lEventArgument, lExtraArgument);
+        }
+
+        if (!lSoundIndex)
+            return 0;
+
+        const SREF rSound = pSoundDll->AddSound3d(this, lSoundIndex, pDirection, pPosition);
+        if (auto* pSound = g_pEngineData->SRefToPtr(rSound))
+        {
+            if (const auto* pPackedSound = pSound->GetPackedSound())
+                pSound->SetMinDistance(pPackedSound->m_fMinDist);
+        }
+        return rSound;
+    }
+
     ZGROUP::ZGROUP(const char* psName, ZBaseGeom* pBaseGeom)
         : ZGEOM(psName, pBaseGeom)
     {

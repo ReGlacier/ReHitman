@@ -325,7 +325,7 @@ namespace Glacier
         virtual bool ChangeMesh(ZGROUP *);
         virtual void PrintAllBoneNames(void) const;
         virtual void SetCutSequence(bool);
-        virtual void MoveToMatPos(float const*,float const*);
+        virtual void MoveToMatPos(const float*, const float*);
         virtual void SetRootTMParent(float *,float *);
         virtual bool EventCallBack(Animation::ActiveAnimation *,float,float,void *);
         virtual void OnMoving(void);
@@ -351,6 +351,8 @@ namespace Glacier
 
         // methods
         ZLNKOBJ(const char* psName, ZBaseGeom* pBaseGeom);
+        uint8_t GetVisionID() const { return m_iVisionID; }
+        void SetVisionID(uint8_t lID) { m_iVisionID = lID; }
         ZBoneModifyBase* GetBoneModifier() { return m_pBoneModify; }
         const ZBoneModifyBase* GetBoneModifier() const { return m_pBoneModify; }
         const ZBone* GetBones() const;

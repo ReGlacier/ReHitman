@@ -5,7 +5,9 @@
 #include <Glacier/System/ZSysInterface.h>
 #include <Glacier/Render/Prim/ZBoneConstraintsHeader.h>
 #include <Glacier/Render/Prim/ZBoneConstraintLookAt.h>
+#include <Glacier/Render/Prim/SBoneDefinition.h>
 #include <Glacier/IK/ZBoneModifyBase.h>
+#include <Glacier/Serializer/ISerializerStream.h>
 #include <Glacier/IK/ZLNKOBJ.h>
 #include <Glacier/Physics/ZRagdollContainer.h>
 #include <Glacier/Physics/ZDynamicsExtend.h>
@@ -254,6 +256,88 @@ namespace Glacier
         ZMat3x3 result;
         mmmul(result, pAttached->m_mOffset, mMat);
         mMat = result;
+        return true;
+    }
+
+    bool ZBoneModifyBase::CalcShadowProjectPlane(const ZLNKOBJ* pLnkObj, float* vTans, const float* mObjectToLight, const float* pObjectToLight) const
+    {
+        const uint32_t prim = pLnkObj->Prim();
+        if (!ZPrimControlBase::Instance()->GetConvBones(prim))
+            return false;
+
+        const auto* lookup = ZPrimControlBase::Instance()->GetBoneIdToIndexLookup(prim);
+        const auto* definitions = ZPrimControlBase::Instance()->GetBoneDefinitions(prim);
+        const ZBone* bones = GetBones(pLnkObj);
+        const auto& lightMat = *reinterpret_cast<const ZMat3x3*>(mObjectToLight);
+        const auto& lightPos = *reinterpret_cast<const ZVector3*>(pObjectToLight);
+
+        float minX = 9.9999997e37f;
+        float maxX = -9.9999997e37f;
+        float minY = 9.9999997e37f;
+        float maxY = -9.9999997e37f;
+
+        const auto addBox = [&](const ZMat3x3& mat, const ZVector3& pos, const ZVector3& center, const ZVector3& size)
+        {
+            ZVector3 localCenter;
+            vmmul(localCenter, center, mat);
+            localCenter += pos;
+
+            ZMat3x3 projectedMat;
+            mmmul(projectedMat, mat, lightMat);
+            ZVector3 projectedCenter;
+            vmmul(projectedCenter, localCenter, lightMat);
+            projectedCenter += lightPos;
+
+            for (uint32_t corner = 0; corner < 8; ++corner)
+            {
+                ZVector3 point(
+                    (corner & 1) ? size.x : -size.x,
+                    (corner & 2) ? size.y : -size.y,
+                    (corner & 4) ? size.z : -size.z);
+                TransformRootVector(point, projectedMat);
+                point += projectedCenter;
+                if (point.z > 0.0f)
+                {
+                    const float inverseZ = 1.0f / point.z;
+                    minX = std::min(minX, point.x * inverseZ);
+                    maxX = std::max(maxX, point.x * inverseZ);
+                    minY = std::min(minY, point.y * inverseZ);
+                    maxY = std::max(maxY, point.y * inverseZ);
+                }
+            }
+        };
+
+        constexpr uint8_t shadowBoneIds[10] = { 23, 24, 21, 22, 18, 17, 14, 13, 2, 1 };
+        for (uint8_t boneId : shadowBoneIds)
+        {
+            const uint8_t boneIndex = lookup[boneId];
+            ZASSERT(boneIndex != 0xFF);
+            addBox(bones[boneIndex]._Mat, bones[boneIndex]._Pos, definitions[boneIndex].Center, definitions[boneIndex].Size);
+        }
+
+        for (uint32_t i = 0; i < m_AttachedGeoms.Count(); ++i)
+        {
+            const ZAttachGeom* attached = m_AttachedGeoms.Get(i);
+            ZGEOM* geom = ZGEOM::RefToPtr(attached->m_rBaseGeom);
+            if (!geom)
+                continue;
+
+            ZMat3x3 mat;
+            ZVector3 pos;
+            if (!pLnkObj->GetAttachedGeomMatPos(geom->BaseGeom(), mat, pos))
+                continue;
+
+            ZVector3 center;
+            ZVector3 size;
+            geom->GetCen(center);
+            geom->GetSize(size);
+            addBox(mat, pos, center, size);
+        }
+
+        vTans[0] = std::min(minX, 0.0f);
+        vTans[1] = std::max(maxX, 0.0f);
+        vTans[2] = std::min(minY, 0.0f);
+        vTans[3] = std::max(maxY, 0.0f);
         return true;
     }
 
@@ -533,7 +617,52 @@ namespace Glacier
 
     void ZBoneModifyBase::LoadSave(ISerializerStream& stream, bool bSaving)
     {
-        // TODO: Finish me
+        stream.Exchange("m_lNumActiveBones", m_lNumActiveBones);
+
+        uint32_t attachedGeomCount = m_AttachedGeoms.Count();
+        stream.Exchange("lNrAttachedGeoms", attachedGeomCount);
+        stream.Exchange("m_bPassive", m_bPassive);
+        stream.Exchange("m_bIsPlayer", m_bIsPlayer);
+        stream.Exchange("m_lHiddenBoneIds", m_lHiddenBoneIds);
+        stream.Exchange("m_fGlobalScale", m_fGlobalScale);
+
+        if (bSaving)
+        {
+            for (uint32_t i = 0; i < m_AttachedGeoms.Count(); ++i)
+            {
+                ZAttachGeom& attachGeom = *m_AttachedGeoms.Get(i);
+                stream.Exchange("m_rBaseGeom", attachGeom.m_rBaseGeom);
+                stream.Exchange("m_lBoneId", attachGeom.m_lBoneId);
+                stream.ExchangeArray("m_vOffset", attachGeom.m_vOffset, 3);
+                stream.ExchangeArray("m_mOffset", attachGeom.m_mOffset, 9);
+            }
+        }
+        else
+        {
+            m_AttachedGeoms.Clear();
+            for (uint32_t i = 0; i < attachedGeomCount; ++i)
+            {
+                ZAttachGeom attachGeom{};
+                stream.Exchange("m_rBaseGeom", attachGeom.m_rBaseGeom);
+                stream.Exchange("m_lBoneId", attachGeom.m_lBoneId);
+                stream.ExchangeArray("m_vOffset", attachGeom.m_vOffset, 3);
+                stream.ExchangeArray("m_mOffset", attachGeom.m_mOffset, 9);
+                m_AttachedGeoms.Add(&attachGeom);
+            }
+        }
+
+        bool useRagdoll = m_pRagdoll && m_pRagdoll->m_bActive;
+        stream.Exchange("bUseRagdoll", useRagdoll);
+        if (useRagdoll)
+        {
+            bool isDragdoll = m_pRagdoll && m_pRagdoll->m_bRagdoll;
+            stream.Exchange("bIsDragdoll", isDragdoll);
+            if (!bSaving)
+                m_pRagdoll = g_pRenderDll->GetRagdollContainer()->GetRagdoll(isDragdoll);
+            m_pRagdoll->LoadSave(stream, bSaving);
+        }
+
+        stream.Exchange("m_fAimBlendSpeed", m_fAimBlendSpeed);
     }
 
     bool ZBoneModifyBase::ActivateRagdoll(ZLNKOBJ* pLnkObj, bool bActive, bool bEnableTimeout, bool bUseDamping)

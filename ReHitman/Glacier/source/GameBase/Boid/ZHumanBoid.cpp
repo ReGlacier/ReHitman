@@ -178,18 +178,69 @@ namespace Glacier
         m_PathEndsInObstacle = false;
     }
 
-    void ZHumanBoid::GetLocomotionInfo(float& fSpeed, float* pPosition, float* pTracker, float& fTrackerDistance, float& fRemaining, float* pDirection)
+    void ZHumanBoid::GetLocomotionInfo(float& currentSpeed, float* pCurrentDirection,
+        float* pWantedDirection, float& distanceToMotionChange,
+        float& nextSpeed, float* pNextDirection)
     {
-        fSpeed = m_ActualSpeed;
-        pPosition[0] = m_kPosition.x;
-        pPosition[1] = m_kPosition.y;
-        pPosition[2] = m_kPosition.z;
-        pTracker[0] = m_Tracker.x;
-        pTracker[1] = m_Tracker.y;
-        pTracker[2] = m_Tracker.z;
-        fTrackerDistance = TrackerDistance();
-        fRemaining = Remaining();
-        TargetDirection(pDirection);
+        currentSpeed = m_ActualSpeed;
+        pCurrentDirection[0] = m_Tracker.x - m_kPosition.x;
+        pCurrentDirection[1] = m_Tracker.z - m_kPosition.z;
+        const float currentLength = std::sqrt(pCurrentDirection[0] * pCurrentDirection[0]
+            + pCurrentDirection[1] * pCurrentDirection[1]);
+        if (currentLength > 0.0f)
+        {
+            pCurrentDirection[0] /= currentLength;
+            pCurrentDirection[1] /= currentLength;
+        }
+
+        if (m_fRemaining <= 0.0f || m_eState != eFollowPath)
+        {
+            pWantedDirection[0] = m_kPosition.x - m_Tracker.x;
+            pWantedDirection[1] = m_kPosition.z - m_Tracker.z;
+            const float wantedLength = std::sqrt(pWantedDirection[0] * pWantedDirection[0]
+                + pWantedDirection[1] * pWantedDirection[1]);
+            if (wantedLength > 0.0f)
+            {
+                pWantedDirection[0] /= wantedLength;
+                pWantedDirection[1] /= wantedLength;
+            }
+            distanceToMotionChange = wantedLength;
+            nextSpeed = 0.0f;
+            pNextDirection[0] = 0.0f;
+            pNextDirection[1] = 0.0f;
+            return;
+        }
+
+        const ZVector3& target = IsFollowingSubTarget() ? m_SubTarget : m_Targets[0].m_vPos;
+        pWantedDirection[0] = target.x - m_kPosition.x;
+        pWantedDirection[1] = target.z - m_kPosition.z;
+        if (pWantedDirection[0] * pWantedDirection[0]
+            + pWantedDirection[1] * pWantedDirection[1] <= 1.0f)
+        {
+            pWantedDirection[0] = m_kPosition.x - m_Tracker.x;
+            pWantedDirection[1] = m_kPosition.z - m_Tracker.z;
+        }
+        const float wantedLength = std::sqrt(pWantedDirection[0] * pWantedDirection[0]
+            + pWantedDirection[1] * pWantedDirection[1]);
+        if (wantedLength > 0.0f)
+        {
+            pWantedDirection[0] /= wantedLength;
+            pWantedDirection[1] /= wantedLength;
+        }
+
+        distanceToMotionChange = Remaining();
+        nextSpeed = m_fEndSpeed;
+        pNextDirection[0] = m_vEndDir.x;
+        pNextDirection[1] = m_vEndDir.y;
+        if (m_fPauseMovementAtDistanc >= 0.0f)
+        {
+            const float pauseDistance = TrackerDistance() + m_fPauseMovementAtDistanc;
+            if (pauseDistance <= distanceToMotionChange)
+            {
+                distanceToMotionChange = pauseDistance;
+                nextSpeed = 0.0f;
+            }
+        }
     }
 
     void ZHumanBoid::Collision(const stlp::vector<ZBoid*>&, float)

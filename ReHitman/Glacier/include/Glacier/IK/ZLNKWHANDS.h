@@ -9,31 +9,41 @@
 #include <Glacier/Items/ITEMSTATE.h>
 #include <Glacier/Animation/ZBlendBone.h>
 #include <Glacier/Animation/ZAnimVariationHandle.h>
+#include <Glacier/Materials/ZTypedef.h>
+#include <Glacier/Runtime/Macro.h>
+#include <Glacier/Materials/ZTypedef.h>
+#include <Glacier/ZMessageResolver.h>
+#include <Glacier/ZUniMemory.h>
+
 
 namespace Glacier
 {
     struct SIKBoneCollision;
 
-    enum EWHandsActionType : int {
-        ZActionPickupItem_7 = 7,
-        ZActionPickupItem_8 = 8,
-        ZActionPickupItem_3 = 3,
-        ZActionPickupItem_4 = 4,
-        Type5 = 5,
-        Type6 = 6,
-        Type9 = 9,
-        Type10 = 10,
-        Type11 = 11,
-        Type12 = 12,
-        Type13 = 13,
-        Type14 = 14,
-        Type15 = 15,
-        Unknown = 0xFF // default
+    enum HANDSPICKUP
+    {
+        BP_NONE = 0,
+        BP_LEFT = 1,
+        BP_RIGHT = 2,
+        BP_LEFTRIGHT = 3,
+        BP_LEFT_HIDE = 4,
+        BP_RIGHT_HIDE = 5,
+        BP_RIGHT_SWAP = 6,
+    };
+
+    enum HANDPICKUP
+    {
+        HP_NONE = 0,
+        HP_DROP = 1,
+        HP_HIDE = 2
     };
 
     class ZLNKWHANDS : public ZCTRLIKLNKOBJ
     {
     public:
+        // RTTI
+        DECLARE_GEOM_CLASS(ZLNKWHANDS, 0x200073u);
+
         // types
         enum EFootSide : int
         {
@@ -42,97 +52,171 @@ namespace Glacier
             CENTER = 2
         };
 
-        //vftable
-        virtual void AddNearItem(Glacier::ZREF);
-        virtual void RemoveNearItem(Glacier::ZREF);
-        virtual void OnBoidPushing(ZLNKWHANDS*);
-        virtual void OnBoidPushed(ZLNKWHANDS*);
-        virtual void CheckRHandFireTarget();
-        virtual void GetRHandFireTarget();
-        virtual void SetAimInPosition(bool);
-        virtual void AddAction(EWHandsActionType, Glacier::ZREF);
-        virtual const char* GetAnimNameFromCollision(SIKBoneCollision*, bool, ZItemTemplateWeapon*);
-        virtual void ReloadItem(ZItem*);
-        virtual void LetItemFall(ZItem*);
-        virtual void ShowReloadAnim(ZItemWeapon*);
-        virtual void ShowChamberAnim(ZItemWeapon*);
-        virtual void ControlPickup(ZItem*);
-        virtual void ControlUseOneExtra(Glacier::ZREF);
-        virtual void ControlUseOneAlone(Glacier::ZREF);
-        virtual void ControlUseTwo(Glacier::ZREF, Glacier::ZREF);
-        virtual void ControlDrop(ZItem*);
-        virtual ZLnkAction* GetPickupAction(int&, int&, int&, int, int, int, bool); //unused
-        virtual void ModifyPickupAction(int&, int&, int&, ZItemTemplate*); //unused
-        virtual bool OnlyVerticalAim();
-        virtual void GetAimAnim(Animation::Header **, unsigned int &);
-        virtual void GetPoseEffects(float *,short *);
-        virtual void SetHandTarget(int handIndex, Glacier::ZVector3* position, float unk);
-        virtual void DontAnimateAttachers(); //Do nothing
-        virtual void RemoveLHandIKTarget(float a1, IKCallBack_t callback, int a3, int a4, int a5); //a3, a4, a5 will be ignores, pass zeroes
-        virtual void RemoveRHandIKTarget(float a1, IKCallBack_t callback, int a3, int a4, int a5); //a3, a4, a5 will be ignores, pass zeroes
-        virtual void UpdateAimTarget();
-        virtual void SetAimTarget(Glacier::ZREF, float const*, float, IKCallBack_t callBack, int);
-        virtual void SetAimTarget(float const*, float, IKCallBack_t callBack);
-        virtual void RemoveAimTarget(float, IKCallBack_t callBack);
+        // static
+        STATIC_CLASS_VAR(ZLNKWHANDS, ZMSGID, s_msgCutSequenceEnd);
+        STATIC_CLASS_VAR(ZLNKWHANDS, ZMessageResolver, m_msgCalcMats);
+        STATIC_CLASS_VAR(ZLNKWHANDS, ZMessageResolver, m_msgDropItem);
+        STATIC_CLASS_VAR(ZLNKWHANDS, ZMessageResolver, m_msgUseItem);
+        STATIC_CLASS_VAR(ZLNKWHANDS, ZMessageResolver, m_msgCanPickupItem);
+        STATIC_CLASS_VAR(ZLNKWHANDS, ZMessageResolver, m_msgPickupItem);
+        STATIC_CLASS_VAR(ZLNKWHANDS, ZMessageResolver, m_msgReloadWeapon);
+        STATIC_CLASS_VAR(ZLNKWHANDS, ZMessageResolver, m_msgEnterItemRange);
+        STATIC_CLASS_VAR(ZLNKWHANDS, ZMessageResolver, m_msgLeaveItemRange);
+        STATIC_CLASS_VAR(ZLNKWHANDS, ZMessageResolver, m_msgSoundStartet);
+        STATIC_CLASS_VAR(ZLNKWHANDS, ZMessageResolver, m_msgSoundStopped);
+        STATIC_CLASS_VAR(ZLNKWHANDS, float, m_fDmgMultDefault);
+        STATIC_CLASS_VAR(ZLNKWHANDS, float, m_fDmgMultLeftArm);
+        STATIC_CLASS_VAR(ZLNKWHANDS, float, m_fDmgMultRightArm);
+        STATIC_CLASS_VAR(ZLNKWHANDS, float, m_fDmgMultLeftLeg);
+        STATIC_CLASS_VAR(ZLNKWHANDS, float, m_fDmgMultRightLeg);
+        STATIC_CLASS_VAR(ZLNKWHANDS, float, m_fDmgMultTorso);
+        STATIC_CLASS_VAR(ZLNKWHANDS, float, m_fDmgMultHead);
+        STATIC_CLASS_VAR(ZLNKWHANDS, float, m_fDmgMultFace);
+        STATIC_CLASS_VAR(ZLNKWHANDS, float, m_fDmgMultLeftHand);
+        STATIC_CLASS_VAR(ZLNKWHANDS, float, m_fDmgMultRightHand);
+        STATIC_CLASS_VAR(ZLNKWHANDS, bool, bInitializedStaticAnimsZLNKWHANDS);
+        STATIC_CLASS_VAR(ZLNKWHANDS, ZAnimVariationHandle, m_pPullGunRight);
+        STATIC_CLASS_VAR(ZLNKWHANDS, ZAnimVariationHandle, m_pPutItemLeft);
+        STATIC_CLASS_VAR(ZLNKWHANDS, ZAnimVariationHandle, m_pPutItemRight);
+        STATIC_CLASS_VAR(ZLNKWHANDS, ZAnimVariationHandle, m_pPutGunLeft);
+        STATIC_CLASS_VAR(ZLNKWHANDS, ZAnimVariationHandle, m_pPutGunRight);
+        STATIC_CLASS_VAR(ZLNKWHANDS, ZAnimVariationHandle, m_pDropItemLeft);
+        STATIC_CLASS_VAR(ZLNKWHANDS, ZAnimVariationHandle, m_pDropItemRight);
+        STATIC_CLASS_VAR(ZLNKWHANDS, ZAnimVariationHandle, m_pAimRHandGuns);
+        STATIC_CLASS_VAR(ZLNKWHANDS, ZAnimVariationHandle, m_pChamberGunLeft);
+        STATIC_CLASS_VAR(ZLNKWHANDS, ZAnimVariationHandle, m_pChamberGunRight);
+        STATIC_CLASS_VAR(ZLNKWHANDS, ZAnimVariationHandle, m_pChamberRifle);
+        STATIC_CLASS_VAR(ZLNKWHANDS, ZAnimVariationHandle, m_pChamberShotgun);
+        STATIC_CLASS_VAR(ZLNKWHANDS, ZAnimVariationHandle, m_pChamberPumpgun);
+        STATIC_CLASS_VAR(ZLNKWHANDS, ZAnimVariationHandle, m_pChamberRPG);
+        STATIC_CLASS_VAR(ZLNKWHANDS, ZAnimVariationHandle, m_pChamberGrenade);
+        STATIC_CLASS_VAR(ZLNKWHANDS, TAudioPropertyID, m_MaterialProperty_SoundContact);
+        STATIC_CLASS_VAR(ZLNKWHANDS, TAudioPropertyID, m_MaterialProperty_SoundMaterial);
+        STATIC_CLASS_VAR_ARRAY(ZLNKWHANDS, ZAnimVariationHandle, m_pTalk, 2);
+        STATIC_CLASS_VAR_ARRAY(ZLNKWHANDS, ZAnimVariationHandle, m_pListen, 2);
+
+        // vtbl
+        ~ZLNKWHANDS() override;
+
+        // ZSerializable
+        void LoadSave(ISerializerStream& stream, bool bSaving) override;
+
+        // RTP::cBase
+        const RTP::ZPropertyInfo& GetProperties() const override;
+
+        // ZGEOM
+        uint32_t GetObjectId() const override;
+        void GetObjectIdAndMask(uint32_t& id, uint32_t& mask) const override;
+        ZGEOMCLASSINFO* GetOldClassInfo() const override;
+        void ClassInit() override;
+        void ClassInit2() override;
+        int32_t ClassCommand(ZMSGID Msg, void* pData) override;
+        void OnMoving() override;
+        void OnMoved() override;
+
+        // ZIKLNKOBJ
+        void CalcAnimRemapNames() override;
+        void Reset() override;
+        ZLnkAction* CreateLnkAction(uint32_t lActionId) override;
+        void UpdateTargets() override;
+        void ResetTargets() override;
+        void RemoveTargets() override;
+
+        // ZLNKWHANDS
+        virtual void AddNearItem(ZREF rItem);
+        virtual void RemoveNearItem(ZREF rItem);
+        virtual void OnBoidPushing(ZLNKWHANDS* pBoid);
+        virtual void OnBoidPushed(ZLNKWHANDS* pBoid);
+        virtual bool CheckRHandFireTarget();
+        virtual ZREF GetRHandFireTarget();
+        virtual void SetAimInPosition(bool bValue);
+        virtual void AddAction(int lType, ZREF rTarget);
+        virtual const char* GetAnimNameFromCollision(SIKBoneCollision* pCol, bool bBigForce, ZItemTemplateWeapon* pITW);
+        virtual void ReloadItem(ZItem* pItem);
+        virtual void LetItemFall(ZItem* pItem);
+        virtual bool ShowReloadAnim(ZItemWeapon* pWeapon) const;
+        virtual bool ShowChamberAnim(ZItemWeapon* pWeapon) const;
+        virtual HANDSPICKUP ControlPickup(ZItem* pItem);
+        virtual void ControlUseOneExtra(ZREF rRef);
+        virtual void ControlUseOneAlone(ZREF rRef);
+        virtual void ControlUseTwo(ZREF rFirst, ZREF rSecond);
+        virtual void ControlDrop(ZItem* pItem);
+        virtual void ControlPushButton(ZGEOM* pGeom);
+        virtual int32_t GetPickupAction(HANDPICKUP& lResLHand, HANDPICKUP& lResRHand, HANDSPICKUP& lResBoth, ITEMHANDS lLHand, ITEMHANDS lRHand, ITEMHANDS lPickup, bool bPickupFit) const;
+        virtual void ModifyPickupAction(ITEMHANDS& lLHand, ITEMHANDS& lRHand, ITEMHANDS& lPickup, ZItemTemplate* pItemTemplate) const;
+        virtual Animation::Header* GetAimAnim(Animation::Header** pRecoil, uint32_t& lExtraFlags) const;
+        virtual void GetPoseEffects(float* poseWeights, int16_t* poseIdToIndex);
+        virtual void SetHandTarget(int handIndex, Glacier::ZVector3& vWorldPos, float fWeight);
+        virtual int DontAnimateAttachers();
+        virtual void RemoveLHandIKTarget(float fTime, ZIKCALLBACK cb);
+        virtual void RemoveRHandIKTarget(float fTime, ZIKCALLBACK cb);
+        virtual bool UpdateAimTarget();
+        virtual void SetAimTarget(ZREF rGeom, const ZVector3& vP0, float fTime, ZIKCALLBACK cb, int lBoneId);
+        virtual void SetAimTarget(const ZVector3& vP0, float fTime, ZIKCALLBACK cb);
+        virtual void RemoveAimTarget(float fTime, ZIKCALLBACK cb);
         virtual void FreezeAimTarget();
         virtual void DisableAim();
         virtual void EnableAim();
-        virtual void* GetAimTarget();
-        virtual void GetAimTarget(Glacier::ZREF*);
-        virtual void GetAimTarget(Glacier::ZVector3*);
+        virtual bool GetAimTarget(ZVector3& vTarget);
+        virtual bool GetAimTarget(ZREF& rRef) const;
+        virtual ZREF GetAimTarget() const;
         virtual float GetDrawWeaponSpeed();
-        virtual bool IsAiming();
-        virtual float SetAimAnimPrc(float, float, float); //do nothing
+        virtual bool IsAiming() const;
+        virtual void SetAimAnimPrc(float, float, float);
         virtual void FireShotNotify();
-        virtual void SetHitAnimation(char const* animName);
-        virtual void SetHitAnimHandle(ZAnimVariationHandle&);
-        virtual void UseItem(ZItem *, int);
-        virtual void DropItem(ZItem *);
-        virtual void PickupItem(ZItem *);
-        virtual void Reload(ZItem *);
-        virtual void Chamber(ZItem *);
-        virtual void PerformDrop(ZItem *,bool,bool);
+        virtual void SetHitAnimation(char const* szAnimName);
+        virtual void SetHitAnimHandle(ZAnimVariationHandle& hAnim);
+        virtual void UseItem(ZItem* pItem, int lType);
+        virtual void DropItem(ZItem* pItem);
+        virtual void PickupItem(ZItem* pItem);
+        virtual void Reload(ZItem* pItem);
+        virtual void Chamber(ZItem* pItem);
+        virtual void PerformDrop(ZItem* pItem, bool bAddRigidBody, bool bSilent);
         virtual ZIKHAND* GetRHand();
         virtual ZIKHAND* GetLHand();
-        virtual ZItem* GetLHandItem();
-        virtual ZItem* GetRHandItem();
-        virtual ZItemWeapon* GetLHandWeapon();
-        virtual ZItemWeapon* GetRHandWeapon();
-        virtual ZItemTemplate* GetRHandItemType();
-        virtual ZItemTemplate* GetLHandItemType();
-        virtual void SetRHandItemState(ITEMSTATE);
-        virtual void SetLHandItemState(ITEMSTATE);
-        virtual void AttachItemToHand(ZIKHAND*, Glacier::ZREF);
-        virtual void AttachRHandItem(Glacier::ZREF);
-        virtual void AttachLHandItem(Glacier::ZREF);
-        virtual void* GetNearItems();  //
-        virtual void* GetNearItems2(); //Dup, in PC only
-        virtual void SetDialog(bool);
-        virtual bool GetDialog();
-        virtual void DialogListen(int variant); //1 or 0
-        virtual void DialogTalk(int variant); //1 or 0
+        virtual ZItem* GetLHandItem() const;
+        virtual ZItem* GetRHandItem() const;
+        virtual ZItemWeapon* GetLHandWeapon() const;
+        virtual ZItemWeapon* GetRHandWeapon() const;
+        virtual ITEMHANDS GetRHandItemType() const;
+        virtual ITEMHANDS GetLHandItemType() const;
+        virtual void SetRHandItemState(ITEMSTATE lState);
+        virtual void SetLHandItemState(ITEMSTATE lState);
+        virtual ZREF AttachItemToHand(ZIKHAND* pHand, ZREF rItem);
+        virtual ZREF AttachRHandItem(ZREF rItem);
+        virtual ZREF AttachLHandItem(ZREF rItem);
+        virtual REFTAB* GetNearItems() const;
+        virtual REFTAB* GetNearItems();
+        virtual void SetDialog(bool bEnable);
+        virtual bool GetDialog() const;
+        virtual void DialogListen(int lType);
+        virtual void DialogTalk(int lType);
         virtual void SlipRHandItem();
         virtual void SlipLHandItem();
-        virtual void ForceLHandItem(ZItem*, bool);
-        virtual void ForceRHandItem(ZItem*, bool);
+        virtual void ForceLHandItem(ZItem* pZItem, bool bBruteForce);
+        virtual void ForceRHandItem(ZItem* pZItem, bool bBruteForce);
         virtual void DestroyRHandItem();
         virtual void DestroyLHandItem();
-        virtual bool EmptyHands();
-        virtual int GetAmmoFor(ZItemWeapon*); //Do nothing
-        virtual void SetAmmoFor(ZItemWeapon*, int); //Do nothing
-        virtual void SetLHandIKTarget(float const*, float const*, float, IKCallBack_t callBack, int a6, int a7, int a8); //a6, a7, a8 will be ignored, pass zeroes
-        virtual void SetRHandIKTarget(float const*, float const*, float, IKCallBack_t callBack, int a6, int a7, int a8); //a6, a7, a8 will be ignored, pass zeroes
+        virtual void EmptyHands();
+        virtual int32_t GetAmmoFor(ZItemWeapon* pWeapon);
+        virtual void SetAmmoFor(ZItemWeapon* pWeapon, int lAmount);
+        virtual void SetLHandIKTarget(const ZMat3x3& m0, const ZVector3& v0, float fTime, ZIKCALLBACK cb);
+        virtual void SetRHandIKTarget(const ZMat3x3& m0, const ZVector3& v0, float fTime, ZIKCALLBACK cb);
         virtual void UpdateItemActions();
-        virtual void CallBackItemAction(); //Do Nothing
-        virtual void PlaySpeech(unsigned int speedSoundIndex, int unk, bool unused);
-        virtual void PlayFootStep(EFootSide);
-        virtual bool IsFirstPersonCamera();
+        virtual void CallBackItemAction();
+        virtual SREF PlaySpeech(uint32_t lDefinitionIndex, int lSoundEvent, bool bUseFilter);
+        virtual SREF PlayFootStep(EFootSide PlayFootStep);
+        virtual bool IsFirstPersonCamera() const;
         virtual float GetCombatStrength();
 
-        //data (total size is 0x3D0, base size is 0x1A0)
+        // methods
+        ZLNKWHANDS(const char* psName, ZBaseGeom* pBaseGeom);
+        SREF PlaySpeechResource(uint32_t lSoundIndex, int lSoundEvent);
+
+        // members
         float m_fLastUpdatedPosition;
         bool m_bInMotion;
-        bool m_pad1E5[3];
+        RE_ADD_PADDING(3);
         Animation::ZBlendBone m_AttachBones[2]; // I'm not sure, but looks right
         unsigned int m_rSpeechSound;
         ZSDOwner m_SoundDef;
@@ -142,7 +226,7 @@ namespace Glacier
         bool m_bFootStepEventsEnabled;
         bool m_padding[2];
         int m_lFootStepEvent;
-        int m_ContactMaterialDescID; //  ZTypedef<int,enum EHardTypedef_TMaterialDescID>
+        TMaterialDescID m_ContactMaterialDescID;
         int m_rMaterial;
         int m_rCutSequence;
         float m_fRecoil;
@@ -174,7 +258,7 @@ namespace Glacier
                 bool m_bAimInPosition : 1;
             };
         };
-        uint8_t m_pad[3];
+        RE_ADD_PADDING(3);;
     };
     RE_VERIFY_SIZE(ZLNKWHANDS, 0x3D0); // Verified
     RE_VERIFY_OFFSET(ZLNKWHANDS, m_SoundDef, 0x20C);

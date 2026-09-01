@@ -69,10 +69,9 @@
 #define DECLARE_ROUT_CLASS(Class, BaseClass, _FactoryName, RoutCases, Prio) \
     static const Glacier::ZROUTCLASSINFO _##_FactoryName##_ClassInfo; \
     static Glacier::ZFactoryProducer<Glacier::ZBaseConRout, Class> Class##_Producer; \
-    static Glacier::ZFactoryProducer<Glacier::ZBaseConRout, Class> Class##_Producer2; \
     STATIC_CLASS_VAR(ClassName, Glacier::RTP::ZPropertyInfo, Info);
 
-#define DEFINE_ROUT_CLASS(Class, BaseClass, _FactoryName, RoutCases, Prio, PropertiesAddr, FirstProperty) \
+#define DEFINE_ROUT_CLASS(Class, BaseClass, _FactoryName, RoutCases, Prio, PropertiesAddr, FirstProperty, SuperClass) \
     const Glacier::ZROUTCLASSINFO Class::_##_FactoryName##_ClassInfo(\
         #BaseClass "_" #_FactoryName, \
         sizeof(Class), \
@@ -86,11 +85,8 @@
     Glacier::ZFactoryProducer<Glacier::ZBaseConRout, Class> Class::Class##_Producer { \
         #_FactoryName, Class::_##_FactoryName##_ClassInfo \
     }; \
-    Glacier::ZFactoryProducer<Glacier::ZBaseConRout, Class> Class::Class##_Producer2 { \
-        #_FactoryName, Class::_##_FactoryName##_ClassInfo \
-    }; \
     STATIC_CLASS_VAR_IMPL(Class, Glacier::RTP::ZPropertyInfo, Info, PropertiesAddr, (Glacier::RTP::ZPropertyInfo { \
         .First = FirstProperty, \
-        .Super = &BaseClass::Info, \
+        .Super = &SuperClass::Info, \
         .Name = #_FactoryName \
     }));

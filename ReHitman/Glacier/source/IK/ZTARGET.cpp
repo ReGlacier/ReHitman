@@ -44,6 +44,11 @@ namespace Glacier
         m_lBoneId = lBoneId;
     }
 
+    int ZTARGET::BoneId() const
+    {
+        return m_lBoneId;
+    }
+
     float ZTARGET::GetTimePrc() const
     {
         const int32_t lStartTime = static_cast<int32_t>(fabs(m_fStartTime) * TIMETYPE::kTicksPerSecond);
@@ -260,5 +265,37 @@ namespace Glacier
     void ZTARGET::SetCallBack(ZIKCALLBACK cb)
     {
         m_CallBack = cb;
+    }
+
+    IKCallBack_t ZTARGET::GetCallBack() const
+    {
+        return m_CallBack.m_pCallback;
+    }
+
+    void ZTARGET::Update(ZIKLNKOBJ* pIkLnkObj)
+    {
+        if (m_bEnabled)
+            CallBackIfTime(pIkLnkObj);
+    }
+
+    void ZTARGET::Remove(ZIKLNKOBJ* pIkLnkObj, float fTime, ZIKCALLBACK cb)
+    {
+        CallBackAndRemove(pIkLnkObj);
+        SetCallBack(cb);
+
+        if (fTime == 0.0f)
+        {
+            SetTime(0.0f, true);
+            CallBackIfTime(pIkLnkObj);
+        }
+        else if (!Removing())
+        {
+            SetTime(fTime, true);
+        }
+    }
+
+    ZREF ZTARGET::Geom() const
+    {
+        return m_rGeom;
     }
 }

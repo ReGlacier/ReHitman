@@ -90,7 +90,9 @@ namespace Glacier
 
         TIMETYPE operator-(const TIMETYPE& rhs) const
         {
-            return { secs - rhs.secs };
+            TIMETYPE result;
+            result.secs = secs - rhs.secs;
+            return result;
         }
 
         void LoadSave(ISerializerStream& stream);

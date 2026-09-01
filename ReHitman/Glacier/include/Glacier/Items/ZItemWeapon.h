@@ -20,9 +20,9 @@ namespace Glacier
         virtual void SetWeaponOperation(WEAPONOPERATION weaponOperation);
         virtual void SelectNextWeaponOperation();
         virtual void GetFirePosition(ZMat3x3* mat, ZVector3* pos); //TODO: Recognize math types here
-        virtual void* GetMuzzleExitPos();
+        virtual ZGEOM* GetMuzzleExitPos();
         virtual void GetRootMuzzleExitPos(const Glacier::ZVector3* result);
-        virtual ZItemWeaponTemplate* GetWeaponTemplate();
+        virtual ZItemTemplateWeapon* GetWeaponTemplate();
         virtual bool GetBulletInChamber();
         virtual void SetBulletInChamber(bool value);
         virtual int GetProjectilesInMagazine(); //Could be overridden by cheat 'Inf Ammo'

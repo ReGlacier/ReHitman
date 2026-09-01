@@ -7,6 +7,7 @@
 #include <BloodMoney/Game/UI/ZOSD.h>
 
 #include <Glacier/Data/ZGameData.h>
+#include <Glacier/Data/ZGameStats.h>
 #include <Glacier/ZSTL/ZArray.h>
 #include <Glacier/ZSTL/REFTAB.h>
 #include <Glacier/ZSTL/ZStaticVector.h>
@@ -21,30 +22,6 @@ namespace Glacier
     class ZWINDOW;
     class ZPlayer;
 
-    class ZGameDataFactoryBase
-    {
-    public:
-        virtual void CreateGameData();
-        virtual void DestroyGameData();
-    };
-
-    class ZGameDataFactory : ZGameDataFactoryBase
-    {
-    };
-
-    class ZGameStats
-    {
-    public:
-        virtual ~ZGameStats();
-
-    public: // members
-        short m_iStats_CurrentShotCount; // +0x4 [Fiberwire and all attacks counted here]
-        short m_Padding[1];              // +0x6
-        float m_iStats_LastShotTime;     // +0x8
-    };
-
-    VERIFY_FIELD_POS(ZGameStats, m_iStats_CurrentShotCount, 0x4);
-    VERIFY_FIELD_POS(ZGameStats, m_iStats_LastShotTime, 0x8);
 }
 
 namespace Hitman::BloodMoney
@@ -272,24 +249,9 @@ namespace Hitman::BloodMoney
     class ZHM3GameData final : public Glacier::ZGameData
     {
     public:
-        // >>>>>>>>>>> ZGameData <<<<<<<<<<<
-        // DronCode: Need to move that members to Glacier::ZGameData but it refs to HM3 stuff, need reverse base classes, will do it later
-        ZBoidSystem* m_BoidSystem; //0x0004
-        Glacier::ZStaticVector<ZHM3Actor*, 512> m_ActorsPool;
-        Glacier::ZLIST* m_AllActorsAndPlayerList; //0x080C
-        Glacier::ZStaticVector<Glacier::ZGEOM*, 128> m_ItemsPool;
-        bool m_bDisableDust;
-        RE_ADD_PADDING(3);
-        Glacier::REFTAB* m_ParticleTemplatesList; //0x0A18
-        ZHM3MenuElements* m_MenuElements; //0x0A1C
-        Glacier::ZPlayer* m_apPlayers[4];
-        ZHM3GameStats* m_GameStats; //0x0A30
-        int m_pSoundDef_OSD; //0x0A34 ZSDOwner* m_pSOund
-        int m_pSoundDef_Effects; //0x0A38
-        bool m_bGameJustLoaded;
-        RE_ADD_PADDING(3);
+        ZHM3GameData();
+        Glacier::TEnumID GetAmmoEnumId(const char* psName) override;
 
-        // >>>>>>>>>>> ZHM3GameData <<<<<<<<<<<
         ZHitman3* m_Hitman3; //0x0A40
         Glacier::ZREF m_rPlayer; //0x0A44
         ZHM3LevelControl* m_LevelControl; //0x0A48
@@ -354,8 +316,6 @@ namespace Hitman::BloodMoney
     }; // Total size is 0x6A88 (27272)
 
     RE_VERIFY_SIZE(ZHM3GameData, 0x6A88);
-    RE_VERIFY_OFFSET(ZHM3GameData, m_apPlayers, 0x0A20);
-    RE_VERIFY_OFFSET(ZHM3GameData, m_ParticleTemplatesList, 0x0A18);
     RE_VERIFY_OFFSET(ZHM3GameData, m_Hitman3, 0x0A40);
     RE_VERIFY_OFFSET(ZHM3GameData, m_Gui, 0x0A50);
     RE_VERIFY_OFFSET(ZHM3GameData, m_rActorCommunication, 0x6990);

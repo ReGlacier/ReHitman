@@ -9,6 +9,10 @@ namespace Glacier::PF4
 {
 	struct ZPath
 	{
+		void GetPosition(int iPathEntryIndex, ZVector3& vPosition) const;
+		bool GetNormal(int iPathEntryIndex, ZVector3& vNormal) const;
+		float GetDistanceFromStart(int iPathEntryIndex) const;
+
 		ZDataRef* m_pathIdx;
 		int m_iMaxSize;
 		ZVector3 m_Vertices[4];

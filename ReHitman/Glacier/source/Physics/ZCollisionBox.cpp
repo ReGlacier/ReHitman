@@ -1,5 +1,7 @@
 #include <Glacier/Physics/ZCollisionBox.h>
 #include <Glacier/Physics/ZCollisionBase.h>
+#include <Glacier/Physics/ZCommonAlgorithms.h>
+#include <Glacier/Physics/SExtendedImpactInfo.h>
 #include <Glacier/System/ZSysInterface.h>
 #include <Glacier/ZUniAssert.h>
 #include <cmath>
@@ -83,15 +85,18 @@ namespace Glacier
 
     void ZCollisionBox::GetStrips(uint32_t uiFlags)
     {
-        // TODO: Finish this place after ZCollisionBase will be reversed
-        // Expected decompiled call (PS2 0x1BC70C):
-        // if (!ZCollisionBase::GetCollisionInterface()->GetStripsInsideBox(
-        //         &m_lNrStrips, m_pMemBuffer, m_lMemBufferSize,
-        //         m_mBoxMatrix.data, m_vBoxPosition.Get(), m_vBoxDimensions.Get(),
-        //         uiFlags, true, true, false, GT_StdObjs))
-        // {
-        //     ZERROR("ERROR: Stack buffer size %d too small for amount of strips within box!", m_lMemBufferSize);
-        // }
+        ZCollisionBase::GetCollisionInterface()->GetStripsInsideBox(
+            &m_lNrStrips,
+            m_pMemBuffer,
+            m_lMemBufferSize,
+            m_mBoxMatrix,
+            m_vBoxPosition,
+            m_vBoxDimensions,
+            uiFlags,
+            true,
+            true,
+            false,
+            GT_StdObjs);
     }
 
     uint32_t ZCollisionBox::StripCount() const
@@ -179,18 +184,101 @@ namespace Glacier
 
     bool ZCollisionBox::CheckSphereCollisionLocal(const float* pfInvMat, const float* pfPos, const float* pfRadius) const
     {
-        // TODO: Finish this place after PolySphColl will be reversed
-        // Expected decompiled code (PS2 0x1C071C):
-        // ++m_lNrCheckSphereCollisions;
-        // float vAxis0[3], vAxis1[3], vAxis2[3];
-        // if (pfRadius[0] != 0.0f) vscalar(vAxis2, pfInvMat + 6, 1.0f / pfRadius[0]);
-        // if (pfRadius[1] != 0.0f) vscalar(vAxis1, pfInvMat + 3, 1.0f / pfRadius[1]);
-        // if (pfRadius[2] != 0.0f) vscalar(vAxis0, pfInvMat + 0, 1.0f / pfRadius[2]);
-        // for each strip/triangle:
-        //     if (PolySphColl(pfPos, vAxis0, vVert0, vVert1, vVert2))
-        //         return true;
-        // return false;
+        float sphereMatrix[9]{};
+        if (pfRadius[0] != 0.0f)
+            vscalar(sphereMatrix + 6, pfInvMat + 6, 1.0f / pfRadius[0]);
+        if (pfRadius[1] != 0.0f)
+            vscalar(sphereMatrix + 3, pfInvMat + 3, 1.0f / pfRadius[1]);
+        if (pfRadius[2] != 0.0f)
+            vscalar(sphereMatrix, pfInvMat, 1.0f / pfRadius[2]);
+
+        const auto* strip = reinterpret_cast<const ZRawStrip*>(m_pMemBuffer);
+        for (uint32_t i = 0; i < m_lNrStrips; ++i)
+        {
+            uint32_t length = strip->m_lLength;
+            const float* vertices = reinterpret_cast<const float*>(strip + 1);
+            if ((length & 0x80000000u) != 0)
+            {
+                length &= 0x7FFFFFFFu;
+                for (uint32_t j = 0; j < length; ++j, vertices += 9)
+                {
+                    if (ZCommonAlgorithms::PolySphColl(pfPos, sphereMatrix, vertices, vertices + 3, vertices + 6))
+                        return true;
+                }
+            }
+            else
+            {
+                for (uint32_t j = 0; j + 2 < length; ++j, vertices += 3)
+                {
+                    if (ZCommonAlgorithms::PolySphColl(pfPos, sphereMatrix, vertices, vertices + 3, vertices + 6))
+                        return true;
+                }
+                vertices += 6;
+            }
+            strip = reinterpret_cast<const ZRawStrip*>(vertices);
+        }
         return false;
+    }
+
+    bool ZCollisionBox::CalcLineCollision(SExtendedImpactInfo* pImpactInfo, const float* pfFrom, const float* pfDir, bool bBothSides) const
+    {
+        ZVector3 from;
+        ZVector3 direction;
+        GetLocalPoint(from, pfFrom);
+        GetLocalVect(direction, pfDir);
+        return CalcLineCollisionLocal(pImpactInfo, from, direction, bBothSides);
+    }
+
+    bool ZCollisionBox::CalcLineCollisionLocal(SExtendedImpactInfo* pImpactInfo, const float* pfFrom, const float* pfDir, bool bBothSides) const
+    {
+        bool hit = false;
+        const auto* strip = reinterpret_cast<const ZRawStrip*>(m_pMemBuffer);
+        for (uint32_t i = 0; i < m_lNrStrips; ++i)
+        {
+            uint32_t length = strip->m_lLength;
+            const float* vertices = reinterpret_cast<const float*>(strip + 1);
+            const uint32_t triangleCount = (length & 0x80000000u) ? (length & 0x7FFFFFFFu) : (length > 2 ? length - 2 : 0);
+            for (uint32_t triangle = 0; triangle < triangleCount; ++triangle)
+            {
+                const float* a = vertices;
+                const float* b = vertices + 3;
+                const float* c = vertices + 6;
+                ZVector3 edge1 = ZVector3(b) - ZVector3(a);
+                ZVector3 edge2 = ZVector3(c) - ZVector3(a);
+                ZVector3 normal;
+                vcross(normal, edge1, edge2);
+                const float denominator = vdot(normal, pfDir);
+                if ((bBothSides || denominator < 0.0f) && std::fabs(denominator) > 0.000001f)
+                {
+                    const float t = vdot(normal, ZVector3(a) - ZVector3(pfFrom)) / denominator;
+                    if (t >= 0.0f && t <= pImpactInfo->fPercent)
+                    {
+                        ZVector3 point = ZVector3(pfFrom) + ZVector3(pfDir) * t;
+                        ZVector3 c0, c1, c2;
+                        vcross(c0, ZVector3(b) - ZVector3(a), point - ZVector3(a));
+                        vcross(c1, ZVector3(c) - ZVector3(b), point - ZVector3(b));
+                        vcross(c2, ZVector3(a) - ZVector3(c), point - ZVector3(c));
+                        if (vdot(c0, normal) >= 0.0f && vdot(c1, normal) >= 0.0f && vdot(c2, normal) >= 0.0f)
+                        {
+                            pImpactInfo->fPercent = t;
+                            pImpactInfo->vPosition = point;
+                            pImpactInfo->vP1 = a;
+                            pImpactInfo->vP2 = b;
+                            pImpactInfo->vP3 = c;
+                            pImpactInfo->lTriangleNr = strip->m_lTriangleStartNr + triangle;
+                            pImpactInfo->m_HitCache = strip->m_HitCache;
+                            pImpactInfo->pBaseGeom = strip->m_pBaseGeom;
+                            hit = true;
+                        }
+                    }
+                }
+                vertices += (length & 0x80000000u) ? 9 : 3;
+            }
+            if ((length & 0x80000000u) == 0)
+                vertices += 6;
+            strip = reinterpret_cast<const ZRawStrip*>(vertices);
+        }
+        return hit;
     }
 
     void ZCollisionBox::AddActiveImpact(ZSphereImpact* pSphereImpact, ZRawStrip* pStrip, uint32_t uiImpactType, uint32_t uiTriangleNr) const

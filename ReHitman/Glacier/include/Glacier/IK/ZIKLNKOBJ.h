@@ -59,7 +59,7 @@ namespace Glacier
         void AnimEnd(Animation::ActiveAnimation* pAnim, int lControl) override;
 
         // ZIKLNKOBJ
-        virtual void ActivateRagdoll(bool bActive, bool bEnableTimeout, bool bUseDamping);
+        virtual bool ActivateRagdoll(bool bActive, bool bEnableTimeout, bool bUseDamping);
         virtual void CalcAnimRemapNames();
         virtual void EnableIK();
         virtual void DisableIK();
@@ -68,21 +68,21 @@ namespace Glacier
         virtual void ForceFacing(const ZVector3& vFacing);
         virtual void GetFocalPoint(ZVector3& vPoint);
         virtual void Reset();
-        virtual void GetRootCenter(ZMat3x3& mMat, ZVector3& vPos);
-        virtual void GetBoneCollision(ZMat3x3& mMat, ZVector3& vPos);
-        virtual void GetOwnerMoveSpeed();
-        virtual void GetIKBoneMatPos(int lBoneNr, ZMat3x3& mMat, ZVector3& vPos);
-        virtual void GetIKBoneMat(int lBoneNr, ZMat3x3& mMat);
-        virtual void GetIKBonePos(int lBoneNr, ZVector3& vPos);
+        virtual void GetRootCenter(ZMat3x3& mMat, ZVector3& vPos) const;
+        virtual SIKBoneCollision GetBoneCollision(const ZVector3& vPoint, const ZVector3& vDirection);
+        virtual float GetOwnerMoveSpeed() const;
+        virtual bool GetIKBoneMatPos(int lBoneNr, ZMat3x3& mMat, ZVector3& vPos) const;
+        virtual bool GetIKBoneMat(int lBoneNr, ZMat3x3& mMat) const;
+        virtual bool GetIKBonePos(int lBoneNr, ZVector3& vPos) const;
         virtual void SetHeadTarget(const ZVector3& vPos, float fSpeedScaleFactor);
         virtual void ResetHeadTarget();
-        virtual uint32_t HeadBoneIndex();
-        virtual uint32_t NeckBoneIndex();
-        virtual uint32_t PelvisBoneIndex();
-        virtual uint32_t LHandBoneIndex();
-        virtual uint32_t RHandBoneIndex();
-        virtual uint32_t LToeBoneIndex();
-        virtual uint32_t RToeBoneIndex();
+        virtual int32_t HeadBoneIndex() const;
+        virtual int32_t NeckBoneIndex() const;
+        virtual int32_t PelvisBoneIndex() const;
+        virtual int32_t LHandBoneIndex() const;
+        virtual int32_t RHandBoneIndex() const;
+        virtual int32_t LToeBoneIndex() const;
+        virtual int32_t RToeBoneIndex() const;
         virtual int32_t IKCallBackToId(ZIKCALLBACK* pCallBack);
         virtual ZIKCALLBACK* IKCallBackFromId(int);
         virtual void SetFacingTarget(ZREF rGeom, float fTime, ZIKCALLBACK cb);
@@ -90,15 +90,15 @@ namespace Glacier
         virtual void DisableFacing();
         virtual void EnableFacing();
         virtual void CreateActionDispatcher();
-        virtual void RunLnkAction(ZLnkAction* pAction);
+        virtual bool RunLnkAction(ZLnkAction* pAction);
         virtual void RemoveCurrentLnkAction();
         virtual void UpdateCurrentLnkAction();
         virtual void CallBackLnkActionTarget();
-        virtual void CallBackLnkActionBone(Animation::ActiveAnimation* pZBoneAnim, float fCallBackStartFrame, float fFrame, ZREF rGeomRef);
+        virtual bool CallBackLnkActionBone(Animation::ActiveAnimation* pZBoneAnim, float fCallBackStartFrame, float fFrame, ZREF rGeomRef);
         virtual ZLnkAction* CreateLnkAction(uint32_t lActionId);
         virtual uint32_t CurrentLnkActionId() const;
         virtual ZLnkAction* GetCurrentLnkAction() const;
-        virtual void DisplayGround(bool bDisplay);
+        virtual bool DisplayGround(bool bDisplay);
         virtual void EmitFootDustParticle(float fStartTime, int lBoneIndex);
         virtual void MakeFootPrint(bool bMake);
         virtual void UpdateHead();
@@ -110,7 +110,8 @@ namespace Glacier
         // methods
         ZIKLNKOBJ(const char* psName, ZBaseGeom* pBaseGeom);
 
-        bool CanPlayAnimSegment(Animation::Header* pAnimHeader, float fFrom, float fTo, bool bMirror) const;
+        bool CanPlayAnimSegment(Animation::Header* pAnimHeader, float fFrom, float fTo, bool bMirror);
+        bool CanPlayAnimSegment(Animation::Header* pAnimHeader, float fFrom, float fTo, const float* pRootMat, const float* pRootPos, bool bMirror, float fHeight, float fDepth);
 
         // members
         uint32_t m_Active;

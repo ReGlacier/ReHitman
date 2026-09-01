@@ -21,7 +21,7 @@ struct ZUniMemory
     static T* New(TArgs&&... args)
     {
         void* ptr = Allocate(sizeof(T));
-        new (ptr) T(std::forward<TArgs>(args)...);
+        ::new (ptr) T(std::forward<TArgs>(args)...);
         return reinterpret_cast<T*>(ptr);
     }
 
@@ -31,7 +31,7 @@ struct ZUniMemory
         T* ptr = static_cast<T*>(Allocate(sizeof(T) * count));
         for (int i = 0; i < count; ++i)
         {
-            new (&ptr[i]) T(std::forward<TArgs>(args)...);
+            ::new (&ptr[i]) T(std::forward<TArgs>(args)...);
         }
 
         return ptr;

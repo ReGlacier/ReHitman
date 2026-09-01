@@ -1,4 +1,5 @@
 #include <Glacier/Geom/ZAllocMany.h>
+#include <Glacier/RTP/VirtualTables.h>
 #include <Glacier/Serializer/ISerializerStream.h>
 #include <cstring>
 
@@ -198,6 +199,104 @@ namespace Glacier
 #   pragma region " --- RTTI --- "
     namespace cProperties
     {
+        static RTP::ZDataProperty<bool> NamespaceItem_3133
+        {
+            .m_Node = {
+                .m_Next = nullptr,
+                .m_Name = "m_bInitClones",
+                .m_Filter = 2
+            },
+            .m_VirtualTable = VirtualTable_DP__1,
+            .m_Offset = CLASS_PROPERTY(ZAllocMany, m_bInitClones)
+        };
+
+        static RTP::ZDataProperty<ZGEOMREF> NamespaceItem_3132
+        {
+            .m_Node = {
+                .m_Next = NamespaceItem_3133,
+                .m_Name = "m_rCloneGroup",
+                .m_Filter = 1
+            },
+            .m_VirtualTable = VirtualTable_DP__5,
+            .m_Offset = reinterpret_cast<ZGEOMREF*>(CLASS_PROPERTY(ZAllocMany, m_rCloneGroup))
+        };
+
+        static RTP::ZDataProperty<bool> NamespaceItem_3131
+        {
+            .m_Node = {
+                .m_Next = NamespaceItem_3132,
+                .m_Name = "m_bClone",
+                .m_Filter = 1
+            },
+            .m_VirtualTable = VirtualTable_DP__1,
+            .m_Offset = CLASS_PROPERTY(ZAllocMany, m_bClone)
+        };
+
+        static RTP::ZDataProperty<ZMsg> NamespaceItem_3130
+        {
+            .m_Node = {
+                .m_Next = NamespaceItem_3131,
+                .m_Name = "m_msgActivate",
+                .m_Filter = 1
+            },
+            .m_VirtualTable = VirtualTable_DP__15,
+            .m_Offset = reinterpret_cast<ZMsg*>(CLASS_PROPERTY(ZAllocMany, m_msgActivate))
+        };
+
+        static RTP::ZDataProperty<ZAllocMany*> NamespaceItem_3129
+        {
+            .m_Node = {
+                .m_Next = NamespaceItem_3130,
+                .m_Name = "m_pOriginal",
+                .m_Filter = 2
+            },
+            .m_VirtualTable = VirtualTable_DP__178,
+            .m_Offset = CLASS_PROPERTY(ZAllocMany, m_pOriginal)
+        };
+
+        static RTP::ZDataProperty<bool> NamespaceItem_3128
+        {
+            .m_Node = {
+                .m_Next = NamespaceItem_3129,
+                .m_Name = "m_bNeedClean",
+                .m_Filter = 2
+            },
+            .m_VirtualTable = VirtualTable_DP__1,
+            .m_Offset = CLASS_PROPERTY(ZAllocMany, m_bNeedClean)
+        };
+
+        static RTP::ZDataProperty<short> NamespaceItem_3127
+        {
+            .m_Node = {
+                .m_Next = NamespaceItem_3128,
+                .m_Name = "m_iFreeIndex",
+                .m_Filter = 2
+            },
+            .m_VirtualTable = VirtualTable_DP__13,
+            .m_Offset = CLASS_PROPERTY(ZAllocMany, m_iFreeIndex)
+        };
+
+        static RTP::ZDataProperty<short> NamespaceItem_3126
+        {
+            .m_Node = {
+                .m_Next = NamespaceItem_3127,
+                .m_Name = "m_iNumFree",
+                .m_Filter = 2
+            },
+            .m_VirtualTable = VirtualTable_DP__13,
+            .m_Offset = CLASS_PROPERTY(ZAllocMany, m_iNumFree)
+        };
+
+        static RTP::ZDataProperty<short> NamespaceItem_3125
+        {
+            .m_Node = {
+                .m_Next = NamespaceItem_3126,
+                .m_Name = "m_iNumObjects",
+                .m_Filter = 1
+            },
+            .m_VirtualTable = VirtualTable_DP__13,
+            .m_Offset = CLASS_PROPERTY(ZAllocMany, m_iNumObjects)
+        };
     }
 
     DECLARE_GEOM_CLASS_IMPL(
@@ -206,7 +305,7 @@ namespace Glacier
         0x0097B9B8,
         "ZAllocMany",
         0x007701FC,
-        nullptr, // TODO: Finish me (property chain decoded; blocked on ZDataProperty<ZAllocMany*> VirtualTable_DP__178)
+        cProperties::NamespaceItem_3125,
         0x0080F1FC,
         0x0097B968,
         0x0097B96C

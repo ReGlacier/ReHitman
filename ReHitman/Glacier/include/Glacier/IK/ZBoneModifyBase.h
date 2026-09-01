@@ -49,6 +49,7 @@ namespace Glacier
         void DetachBaseGeomFromBone(const ZBaseGeom* pBaseGeom, uint32_t lBoneId);
         uint32_t GetAttachedBaseGeomBoneId(const ZBaseGeom* pBaseGeom) const;
         bool FindAttachedGeomMatPos(ZMat3x3& mMat, ZVector3& vPos, const ZBaseGeom* pBaseGeom, const ZLNKOBJ* pLnkObj) const;
+        bool CalcShadowProjectPlane(const ZLNKOBJ* pLnkObj, float* vTans, const float* mObjectToLight, const float* pObjectToLight) const;
         void PrimChanged(uint32_t lPrim);
         void ForceRagdollDeactivation(ZLNKOBJ* pLnkObj);
         bool Update(ZLNKOBJ* pLnkObj, ZMat3x3& mMat, ZVector3& vPos);

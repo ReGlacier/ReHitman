@@ -1,23 +1,27 @@
 #pragma once
 
-#include <Glacier/Glacier.h>
+#include <Glacier/ReGlacier.h>
+#include <cstdint>
+
 
 namespace Glacier
 {
     class ZGameStats
     {
     public:
-        //vftable
-        virtual void Release(bool);
-        virtual float GetIntensity();
+        ZGameStats();
+        virtual ~ZGameStats();
+        virtual uint8_t GetIntensity() const;
 
-        //api
         void IncreaseCurrentShotCount();
         void DecreaseCurrentShotCount();
+        int16_t GetCurrentShotCount() const { return m_iStats_CurrentShotCount; }
 
-        //data (total size is 0xC)
-        unsigned short m_iShootCount;
-        unsigned short m_field6;
-        float m_fIntensity;
+        int16_t m_iStats_CurrentShotCount;
+        uint16_t m_pad06;
+        float m_iStats_LastShotTime;
     };
+    RE_VERIFY_SIZE(ZGameStats, 0xC);
+    RE_VERIFY_OFFSET(ZGameStats, m_iStats_CurrentShotCount, 0x4);
+    RE_VERIFY_OFFSET(ZGameStats, m_iStats_LastShotTime, 0x8);
 }

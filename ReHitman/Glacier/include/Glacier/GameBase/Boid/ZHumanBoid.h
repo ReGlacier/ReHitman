@@ -49,7 +49,9 @@ namespace Glacier
         void Initialize(int lID, PF4::ZInterface* pPathFinder, PF4::ZMetaNode* pMetaNode, ZLNKWHANDS* pActor);
         void SetTarget(ZVector3& vPosition, Vector3& vRotation, float a4, bool bForced);
         void SetTarget();
-        void GetLocomotionInfo(float& fSpeed, float* pPosition, float* pTracker, float& fTrackerDistance, float& fRemaining, float* pDirection);
+        void GetLocomotionInfo(float& currentSpeed, float* pCurrentDirection,
+            float* pWantedDirection, float& distanceToMotionChange,
+            float& nextSpeed, float* pNextDirection);
         void Collision(const stlp::vector<ZBoid*>&, float);
         ZVector3 AvoidWallIntersections(const ZVector3& vPosition, float fDistance, float& fResult);
         uint32_t AvoidDynamicObstacles();
@@ -112,7 +114,7 @@ namespace Glacier
         ZVector2 m_vEndDir;
         float m_fRemaining;
         float m_fPauseMovementAtDistanc;
-        bool m_bFollowSubTarget;
+        uint8_t m_bFollowSubTarget;
         bool m_bSkipTargets;
         bool m_PathEndsInObstacle;
         int8_t m_AvoidSide;

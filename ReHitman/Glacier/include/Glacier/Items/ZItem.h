@@ -45,6 +45,9 @@ namespace Glacier
         // methods
         bool IsNew() const { return m_NewItem; }
 
+        uint8_t GetVisionID() const { return static_cast<uint8_t>(m_iVisionID); }
+        void SetVisionID(uint8_t lID) { m_iVisionID = lID; }
+
         // members
         ITEMSTATE m_lCurrentState;
         uint32_t m_rItemTemplate;

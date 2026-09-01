@@ -37,12 +37,12 @@ namespace Glacier
 			// vtbl
 			ZREF GetRef() override
 			{
-				return T::GetRef(m_Object);
+				return m_Object ? m_Object->GetRef() : 0;
 			}
 
 			void SetRef(ZREF ref) override
 			{
-				m_Object = T::RefToPtr(ref);
+				m_Object = reinterpret_cast<T*>(T::RefToPtr(ref));
 			}
 
 			// members

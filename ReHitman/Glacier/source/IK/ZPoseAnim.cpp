@@ -1,12 +1,14 @@
 #include <Glacier/IK/ZLNKOBJ.h>
 #include <Glacier/System/ZSysInterface.h>
+#include <Glacier/Data/ZEngineDataBase.h>
+#include <Glacier/Audio/ZSoundObject.h>
 #include <Glacier/ZUniMemory.h>
 
 
 namespace Glacier
 {
     ZPoseAnim::ZPoseAnim() : ZPoseAnim(0u) {}
-    
+
     ZPoseAnim::ZPoseAnim(uint32_t rHost)
     {
         m_rHost = rHost;
@@ -24,7 +26,7 @@ namespace Glacier
             m_pPoseList = nullptr;
         }
     }
-    
+
     void ZPoseAnim::SetID(uint32_t lId)
     {
         m_dwID = lId;
@@ -59,7 +61,7 @@ namespace Glacier
     {
         return m_fStartTime;
     }
-    
+
     float ZPoseAnim::TimeMultiplier() const
     {
         return m_fTimeMultiplier;
@@ -69,7 +71,7 @@ namespace Glacier
     {
         return m_fEndTime;
     }
-    
+
     float ZPoseAnim::FrameTime() const
     {
         return m_fFrameTime;
@@ -237,14 +239,14 @@ namespace Glacier
             return;
         }
 
-        // TODO: Finish this place after ZEngineDataBase will be reversed.
-        // ZSoundObject* pSoundObject = g_pEngineData->SRefToPtr(m_rHost);
-        // if (pSoundObject && pSoundObject->GetPoseData())
-        // {
-        //     UpdateData(static_cast<char*>(pSoundObject->GetPoseData()));
-        //     SetFrameStartTime(static_cast<float>(g_pSysInterface->GetRealTime()));
-        //     ++m_iUpdate;
-        // }
+        ZSoundObject* pSoundObject = g_pEngineData->SRefToPtr(m_rHost);
+
+        if (pSoundObject && pSoundObject->GetPoseData())
+        {
+            UpdateData(pSoundObject->GetPoseData());
+            SetFrameStartTime(g_pSysInterface->GetRealTime());
+            ++m_iUpdate;
+        }
     }
 
     float ZPoseAnim::GetPoseWeight(int lIdx, float fWeight)

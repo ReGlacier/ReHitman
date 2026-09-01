@@ -113,6 +113,6 @@ namespace Glacier
         };
     }
 
-    DEFINE_ROUT_CLASS(ZActorCommunication, ZBoxPrimitive, ActorCommunication, 0, 0, 0x00814A70, cProperties::NamespaceItem_1337);
+    DEFINE_ROUT_CLASS(ZActorCommunication, ZBoxPrimitive, ActorCommunication, 0, 0, 0x00814A70, cProperties::NamespaceItem_1337, ZBoxPrimitive);
 #   pragma endregion
 }

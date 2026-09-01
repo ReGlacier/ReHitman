@@ -18,6 +18,12 @@ namespace Glacier
     };
     RE_VERIFY_SIZE(ZGEOMREF, 0x4);
 
+    struct ZMsg
+    {
+        uint16_t m_Value{};
+    };
+    RE_VERIFY_SIZE(ZMsg, 0x2);
+
     struct ZANIM : ZRTString
     {
     };

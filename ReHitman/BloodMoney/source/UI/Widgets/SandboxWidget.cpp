@@ -234,7 +234,7 @@ namespace Hitman::BloodMoney
             Glacier::ZMat3x3 mat;
             Glacier::ZVector3 pos;
 
-            gameData->m_ActorsPool[0]->GetRootMatPos(mat, pos);
+            reinterpret_cast<Glacier::ZGEOM*>(gameData->m_ActorsPool[0])->GetRootMatPos(mat, pos);
 
             spdlog::info("Actor #0: ");
             spdlog::info("Pos     : {};{};{}", pos.x, pos.y, pos.z);

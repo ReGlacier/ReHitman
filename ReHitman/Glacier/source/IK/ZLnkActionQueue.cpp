@@ -74,7 +74,7 @@ namespace Glacier
 		    pAction->Terminate();
 			m_pActor->m_Active &= ~pAction->GetActionId();
 			it.Erase();
-			ZUniMemory::Delete(pAction);
+			delete pAction;
 		}
 	}
 

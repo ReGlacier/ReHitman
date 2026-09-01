@@ -1,6 +1,7 @@
 #define GLACIER_RTP_VIRTUALTABLES_NO_XEXE_ALIASES
 #include <Glacier/RTP/VirtualTables.h>
 #include <Glacier/Geom/ZGEOM.h>
+#include <Glacier/Geom/ZAllocMany.h>
 #include <Glacier/Serializer/ISerializerStream.h>
 #include <Glacier/System/ZSysInterface.h>
 #include <Glacier/Data/ZEngineDataBase.h>
@@ -48,12 +49,17 @@ namespace Glacier::RTP
 
         void ExchangeValue(ISerializerStream& stream, const char* name, ZRTString& value);
         void ExchangeValue(ISerializerStream& stream, const char* name, ZGEOMREF& value);
+        void ExchangeValue(ISerializerStream& stream, const char* name, ZMsg& value);
+        void ExchangeValue(ISerializerStream& stream, const char* name, ZAllocMany*& value);
         void ExchangeValue(ISerializerStream& stream, const char* name, ZCOLOR& value);
         void ExchangeValue(ISerializerStream& stream, const char* name, ZANIM& value);
         void ExchangeValue(ISerializerStream& stream, const char* name, ZFILENAME& value);
         void ExchangeValue(ISerializerStream& stream, const char* name, ZRawData& value);
         void ExchangeValue(ISerializerStream& stream, const char* name, TIMETYPE& value);
+        void ExchangeValue(ISerializerStream& stream, const char* name, ZSDOwner& value);
+        void ExchangeValue(ISerializerStream& stream, const char* name, ZAnimVariationHandle& value);
         void ExchangeValue(ISerializerStream& stream, const char* name, REFTAB& value);
+        void ExchangeValue(ISerializerStream& stream, const char* name, REFTAB*& value);
         void ExchangeValue(ISerializerStream& stream, const char* name, REFTAB32& value);
 
         template <typename T>
@@ -114,6 +120,40 @@ namespace Glacier::RTP
             value.m_Value = g_pEngineData->GetREFByName(refName);
         }
 
+        void ExchangeValue(ISerializerStream& stream, const char* name, ZMsg& value)
+        {
+            if (stream.TestStreamFilter(1u << ISerializerStream::CONTENT_LevelFile))
+            {
+                if (stream.IsSaving())
+                {
+                    ZASSERT(false);
+                    return;
+                }
+
+                const char* messageName = nullptr;
+                stream.Exchange(name, messageName);
+                value.m_Value = messageName && *messageName
+                    ? g_pEngineData->RegisterZMsg(messageName, 0, __FILE__, __LINE__)
+                    : 0;
+                return;
+            }
+
+            if (stream.TestStreamFilter(1u << ISerializerStream::CONTENT_SavedGame))
+            {
+                stream.Exchange(name, value.m_Value);
+            }
+        }
+
+        void ExchangeValue(ISerializerStream& stream, const char* name, ZAllocMany*& value)
+        {
+            ZGEOMREF ref { value ? value->GetRef() : 0 };
+            ExchangeValue(stream, name, ref);
+            if (stream.IsLoading())
+            {
+                value = static_cast<ZAllocMany*>(ZGEOM::RefToPtr(ref.m_Value));
+            }
+        }
+
         void ExchangeValue(ISerializerStream& stream, const char* name, ZCOLOR& value)
         {
             stream.Exchange(name, value.m_Value);
@@ -122,6 +162,16 @@ namespace Glacier::RTP
         void ExchangeValue(ISerializerStream& stream, const char* name, ZANIM& value)
         {
             ExchangeValue(stream, name, static_cast<ZRTString&>(value));
+        }
+
+        void ExchangeValue(ISerializerStream& stream, const char* name, ZSDOwner& value)
+        {
+            stream.Exchange(name, value.m_iSoundDefinitionIndex);
+        }
+
+        void ExchangeValue(ISerializerStream& stream, const char* name, ZAnimVariationHandle& value)
+        {
+            stream.Exchange(name, value.iIndex);
         }
 
         void ExchangeValue(ISerializerStream& stream, const char* name, ZFILENAME& value)
@@ -155,6 +205,60 @@ namespace Glacier::RTP
         void ExchangeValue(ISerializerStream& stream, const char* name, REFTAB& value)
         {
             stream.ExchangeArray(stream.GetToken(name), &value, 1);
+        }
+
+        void ExchangeValue(ISerializerStream& stream, const char* name, REFTAB*& value)
+        {
+            uint32_t count = value ? static_cast<uint32_t>(value->Count()) : 0;
+            stream.ExchangeContainer(name, count);
+
+            const bool savedGame = stream.TestStreamFilter(1u << ISerializerStream::CONTENT_SavedGame);
+            if (stream.IsSaving())
+            {
+                ZASSERT(savedGame);
+                if (!count)
+                    return;
+
+                uint32_t poolSize = value->PoolSize();
+                uint32_t itemSize = value->Size();
+                stream.Exchange("PoolSize", poolSize);
+                stream.Exchange("ItemSize", itemSize);
+
+                RefRun run;
+                value->RunInitNxtRef(&run);
+                while (const uint32_t* pItem = value->RunNxtRefPtr(&run))
+                    stream.ExchangeRaw(ZToken::Void, const_cast<uint32_t*>(pItem), itemSize * sizeof(uint32_t));
+                return;
+            }
+
+            REFTAB::DeleteReftab(value);
+            value = nullptr;
+            if (!count)
+                return;
+
+            if (savedGame)
+            {
+                uint32_t poolSize = 0;
+                uint32_t itemSize = 0;
+                stream.Exchange("PoolSize", poolSize);
+                stream.Exchange("ItemSize", itemSize);
+                value = REFTAB::MakeReftab(poolSize, itemSize - 1);
+
+                for (uint32_t i = 0; i < count; ++i)
+                {
+                    uint32_t* pItemEnd = value->Add(0);
+                    stream.ExchangeRaw(ZToken::Void, pItemEnd - 1, itemSize * sizeof(uint32_t));
+                }
+                return;
+            }
+
+            value = REFTAB::MakeReftab(count, 0);
+            for (uint32_t i = 0; i < count; ++i)
+            {
+                const char* refName = nullptr;
+                stream.Exchange(ZToken::Void, refName);
+                value->Add(g_pEngineData->GetREFByName(refName));
+            }
         }
 
         void ExchangeValue(ISerializerStream& stream, const char* name, REFTAB32& value)
@@ -286,12 +390,20 @@ namespace Glacier::RTP
     template void SaveDataProperty<uint>(ZDataProperty<uint>* pProperty, ISerializerStream& stream, ZSerializableBase& object);
     template void LoadDataProperty<float>(ZDataProperty<float>* pProperty, ISerializerStream& stream, ZSerializableBase& object);
     template void SaveDataProperty<float>(ZDataProperty<float>* pProperty, ISerializerStream& stream, ZSerializableBase& object);
+    template void LoadDataProperty<ZSDOwner>(ZDataProperty<ZSDOwner>* pProperty, ISerializerStream& stream, ZSerializableBase& object);
+    template void SaveDataProperty<ZSDOwner>(ZDataProperty<ZSDOwner>* pProperty, ISerializerStream& stream, ZSerializableBase& object);
+    template void LoadDataProperty<ZAnimVariationHandle>(ZDataProperty<ZAnimVariationHandle>* pProperty, ISerializerStream& stream, ZSerializableBase& object);
+    template void SaveDataProperty<ZAnimVariationHandle>(ZDataProperty<ZAnimVariationHandle>* pProperty, ISerializerStream& stream, ZSerializableBase& object);
     template void LoadDataProperty<TIMETYPE>(ZDataProperty<TIMETYPE>* pProperty, ISerializerStream& stream, ZSerializableBase& object);
     template void SaveDataProperty<TIMETYPE>(ZDataProperty<TIMETYPE>* pProperty, ISerializerStream& stream, ZSerializableBase& object);
     template void LoadDataProperty<ZRTString>(ZDataProperty<ZRTString>* pProperty, ISerializerStream& stream, ZSerializableBase& object);
     template void SaveDataProperty<ZRTString>(ZDataProperty<ZRTString>* pProperty, ISerializerStream& stream, ZSerializableBase& object);
     template void LoadDataProperty<ZGEOMREF>(ZDataProperty<ZGEOMREF>* pProperty, ISerializerStream& stream, ZSerializableBase& object);
     template void SaveDataProperty<ZGEOMREF>(ZDataProperty<ZGEOMREF>* pProperty, ISerializerStream& stream, ZSerializableBase& object);
+    template void LoadDataProperty<ZMsg>(ZDataProperty<ZMsg>* pProperty, ISerializerStream& stream, ZSerializableBase& object);
+    template void SaveDataProperty<ZMsg>(ZDataProperty<ZMsg>* pProperty, ISerializerStream& stream, ZSerializableBase& object);
+    template void LoadDataProperty<ZAllocMany*>(ZDataProperty<ZAllocMany*>* pProperty, ISerializerStream& stream, ZSerializableBase& object);
+    template void SaveDataProperty<ZAllocMany*>(ZDataProperty<ZAllocMany*>* pProperty, ISerializerStream& stream, ZSerializableBase& object);
     template void LoadDataProperty<ZANIM>(ZDataProperty<ZANIM>* pProperty, ISerializerStream& stream, ZSerializableBase& object);
     template void SaveDataProperty<ZANIM>(ZDataProperty<ZANIM>* pProperty, ISerializerStream& stream, ZSerializableBase& object);
     template void LoadDataProperty<ZCOLOR>(ZDataProperty<ZCOLOR>* pProperty, ISerializerStream& stream, ZSerializableBase& object);
@@ -302,6 +414,8 @@ namespace Glacier::RTP
     template void SaveDataProperty<ZRawData>(ZDataProperty<ZRawData>* pProperty, ISerializerStream& stream, ZSerializableBase& object);
     template void LoadDataProperty<REFTAB>(ZDataProperty<REFTAB>* pProperty, ISerializerStream& stream, ZSerializableBase& object);
     template void SaveDataProperty<REFTAB>(ZDataProperty<REFTAB>* pProperty, ISerializerStream& stream, ZSerializableBase& object);
+    template void LoadDataProperty<REFTAB*>(ZDataProperty<REFTAB*>* pProperty, ISerializerStream& stream, ZSerializableBase& object);
+    template void SaveDataProperty<REFTAB*>(ZDataProperty<REFTAB*>* pProperty, ISerializerStream& stream, ZSerializableBase& object);
     template void LoadDataProperty<REFTAB32>(ZDataProperty<REFTAB32>* pProperty, ISerializerStream& stream, ZSerializableBase& object);
     template void SaveDataProperty<REFTAB32>(ZDataProperty<REFTAB32>* pProperty, ISerializerStream& stream, ZSerializableBase& object);
     template void LoadDataProperty<ZAUDIOREF>(ZDataProperty<ZAUDIOREF>* pProperty, ISerializerStream& stream, ZSerializableBase& object);
@@ -402,14 +516,19 @@ namespace Glacier::RTP
         tVirtualTable<ZDataProperty<int>> Data_int = MakeDataTable<int>();
         tVirtualTable<ZDataProperty<uint>> Data_uint = MakeDataTable<uint>();
         tVirtualTable<ZDataProperty<float>> Data_float = MakeDataTable<float>();
+        tVirtualTable<ZDataProperty<ZSDOwner>> Data_ZSDOwner = MakeDataTable<ZSDOwner>();
+        tVirtualTable<ZDataProperty<ZAnimVariationHandle>> Data_ZAnimVariationHandle = MakeDataTable<ZAnimVariationHandle>();
         tVirtualTable<ZDataProperty<TIMETYPE>> Data_TIMETYPE = MakeDataTable<TIMETYPE>();
         tVirtualTable<ZDataProperty<::Glacier::ZRTString>> Data_ZRTString = MakeDataTable<::Glacier::ZRTString>();
         tVirtualTable<ZDataProperty<ZGEOMREF>> Data_ZGEOMREF = MakeDataTable<ZGEOMREF>();
+        tVirtualTable<ZDataProperty<ZMsg>> Data_ZMsg = MakeDataTable<ZMsg>();
+        tVirtualTable<ZDataProperty<ZAllocMany*>> Data_ZAllocMany_ptr = MakeDataTable<ZAllocMany*>();
         tVirtualTable<ZDataProperty<ZANIM>> Data_ZANIM = MakeDataTable<ZANIM>();
         tVirtualTable<ZDataProperty<ZCOLOR>> Data_ZCOLOR = MakeDataTable<ZCOLOR>();
         tVirtualTable<ZDataProperty<ZFILENAME>> Data_ZFILENAME = MakeDataTable<ZFILENAME>();
         tVirtualTable<ZDataProperty<ZRawData>> Data_ZRawData = MakeDataTable<ZRawData>();
         tVirtualTable<ZDataProperty<REFTAB>> Data_REFTAB = MakeDataTable<REFTAB>();
+        tVirtualTable<ZDataProperty<REFTAB*>> Data_REFTAB_ptr = MakeDataTable<REFTAB*>();
         tVirtualTable<ZDataProperty<REFTAB32>> Data_REFTAB32 = MakeDataTable<REFTAB32>();
         tVirtualTable<ZDataProperty<ZAUDIOREF>> Data_ZAUDIOREF = MakeDataTable<ZAUDIOREF>();
         tVirtualTable<ZDataProperty<ZBitfield<ITEMSTATE>>> Data_ZBitfield_ITEMSTATE = MakeDataTable<ZBitfield<ITEMSTATE>>();
@@ -473,7 +592,9 @@ decltype(&Glacier::RTP::VirtualTables::Data_float) VirtualTable_DP__11 = &Glacie
 decltype(&Glacier::RTP::VirtualTables::Data_float_3) VirtualTable_DP__12 = &Glacier::RTP::VirtualTables::Data_float_3;
 decltype(&Glacier::RTP::VirtualTables::Data_short) VirtualTable_DP__13 = &Glacier::RTP::VirtualTables::Data_short;
 decltype(&Glacier::RTP::VirtualTables::Data_int) VirtualTable_DP__14 = &Glacier::RTP::VirtualTables::Data_int;
+decltype(&Glacier::RTP::VirtualTables::Data_ZMsg) VirtualTable_DP__15 = &Glacier::RTP::VirtualTables::Data_ZMsg;
 decltype(&Glacier::RTP::VirtualTables::Data_ZRTString) VirtualTable_DP__16 = &Glacier::RTP::VirtualTables::Data_ZRTString;
+decltype(&Glacier::RTP::VirtualTables::Data_ZSDOwner) VirtualTable_DP__18 = &Glacier::RTP::VirtualTables::Data_ZSDOwner;
 decltype(&Glacier::RTP::VirtualTables::Data_ZAUDIOREF) VirtualTable_DP__21 = &Glacier::RTP::VirtualTables::Data_ZAUDIOREF;
 decltype(&Glacier::RTP::VirtualTables::Data_float_4) VirtualTable_DP__24 = &Glacier::RTP::VirtualTables::Data_float_4;
 decltype(&Glacier::RTP::VirtualTables::Data_uint_4) VirtualTable_DP__27 = &Glacier::RTP::VirtualTables::Data_uint_4;
@@ -481,6 +602,7 @@ decltype(&Glacier::RTP::VirtualTables::Data_float_9) VirtualTable_DP__28 = &Glac
 decltype(&Glacier::RTP::VirtualTables::Data_ZFILENAME) VirtualTable_DP__30 = &Glacier::RTP::VirtualTables::Data_ZFILENAME;
 decltype(&Glacier::RTP::VirtualTables::Data_float_8_4) VirtualTable_DP__31 = &Glacier::RTP::VirtualTables::Data_float_8_4;
 decltype(&Glacier::RTP::VirtualTables::Data_uchar) VirtualTable_DP__32 = &Glacier::RTP::VirtualTables::Data_uchar;
+decltype(&Glacier::RTP::VirtualTables::Data_REFTAB_ptr) VirtualTable_DP__33 = &Glacier::RTP::VirtualTables::Data_REFTAB_ptr;
 decltype(&Glacier::RTP::VirtualTables::Data_TIMETYPE) VirtualTable_DP__39 = &Glacier::RTP::VirtualTables::Data_TIMETYPE;
 decltype(&Glacier::RTP::VirtualTables::Data_ZRawData) VirtualTable_DP__44 = &Glacier::RTP::VirtualTables::Data_ZRawData;
 decltype(&Glacier::RTP::VirtualTables::Data_int_3) VirtualTable_DP__56 = &Glacier::RTP::VirtualTables::Data_int_3;
@@ -498,10 +620,12 @@ decltype(&Glacier::RTP::VirtualTables::Data_ZBitfield_WEAPONOPERATION) VirtualTa
 decltype(&Glacier::RTP::VirtualTables::Data_ZBitfield_ITEMSTATE) VirtualTable_DP__118 = &Glacier::RTP::VirtualTables::Data_ZBitfield_ITEMSTATE;
 decltype(&Glacier::RTP::VirtualTables::Data_char) VirtualTable_DP__123 = &Glacier::RTP::VirtualTables::Data_char;
 decltype(&Glacier::RTP::VirtualTables::Data_float_4) VirtualTable_DP__126 = &Glacier::RTP::VirtualTables::Data_float_4;
+decltype(&Glacier::RTP::VirtualTables::Data_ZAnimVariationHandle) VirtualTable_DP__128 = &Glacier::RTP::VirtualTables::Data_ZAnimVariationHandle;
 decltype(&Glacier::RTP::VirtualTables::Data_ushort) VirtualTable_DP__136 = &Glacier::RTP::VirtualTables::Data_ushort;
 decltype(&Glacier::RTP::VirtualTables::Data_float_3) VirtualTable_DP__149 = &Glacier::RTP::VirtualTables::Data_float_3;
 decltype(&Glacier::RTP::VirtualTables::Data_uint_2) VirtualTable_DP__171 = &Glacier::RTP::VirtualTables::Data_uint_2;
 decltype(&Glacier::RTP::VirtualTables::Data_uint_15) VirtualTable_DP__175 = &Glacier::RTP::VirtualTables::Data_uint_15;
+decltype(&Glacier::RTP::VirtualTables::Data_ZAllocMany_ptr) VirtualTable_DP__178 = &Glacier::RTP::VirtualTables::Data_ZAllocMany_ptr;
 decltype(&Glacier::RTP::VirtualTables::Data_char) VirtualTable_DP__182 = &Glacier::RTP::VirtualTables::Data_char;
 decltype(&Glacier::RTP::VirtualTables::Data_int_21) VirtualTable_DP__184 = &Glacier::RTP::VirtualTables::Data_int_21;
 decltype(&Glacier::RTP::VirtualTables::Data_uchar) VirtualTable_DP__187 = &Glacier::RTP::VirtualTables::Data_uchar;

@@ -75,4 +75,14 @@ namespace Glacier::PF4
     {
         return m_Inside;
     }
+
+    ZLocation& ZLocation::operator=(const ZLocation& rhs)
+    {
+        m_Component = rhs.m_Component;
+        m_Graph = rhs.m_Graph;
+        m_Inside = rhs.m_Inside;
+        PADDING = rhs.PADDING;
+        m_vPos = rhs.m_vPos;
+        return *this;
+    }
 }

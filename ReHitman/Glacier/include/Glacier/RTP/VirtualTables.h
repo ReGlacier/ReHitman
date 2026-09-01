@@ -6,6 +6,8 @@
 #include <Glacier/Geom/ZGEOM.h>
 #include <Glacier/Items/EWeaponOperation.h>
 #include <Glacier/Items/ITEMSTATE.h>
+#include <Glacier/Animation/ZAnimVariationHandle.h>
+#include <Glacier/Audio/ZSDOwner.h>
 #include <Glacier/ZSTL/REFTAB.h>
 #include <Glacier/ZSTL/REFTAB32.h>
 #include <Glacier/ZSTL/TIMETYPE.h>
@@ -47,14 +49,19 @@ namespace Glacier::RTP
         extern tVirtualTable<ZDataProperty<int>> Data_int;
         extern tVirtualTable<ZDataProperty<uint>> Data_uint;
         extern tVirtualTable<ZDataProperty<float>> Data_float;
+        extern tVirtualTable<ZDataProperty<ZSDOwner>> Data_ZSDOwner;
+        extern tVirtualTable<ZDataProperty<ZAnimVariationHandle>> Data_ZAnimVariationHandle;
         extern tVirtualTable<ZDataProperty<TIMETYPE>> Data_TIMETYPE;
         extern tVirtualTable<ZDataProperty<::Glacier::ZRTString>> Data_ZRTString;
         extern tVirtualTable<ZDataProperty<ZGEOMREF>> Data_ZGEOMREF;
+        extern tVirtualTable<ZDataProperty<ZMsg>> Data_ZMsg;
+        extern tVirtualTable<ZDataProperty<ZAllocMany*>> Data_ZAllocMany_ptr;
         extern tVirtualTable<ZDataProperty<ZANIM>> Data_ZANIM;
         extern tVirtualTable<ZDataProperty<ZCOLOR>> Data_ZCOLOR;
         extern tVirtualTable<ZDataProperty<ZFILENAME>> Data_ZFILENAME;
         extern tVirtualTable<ZDataProperty<ZRawData>> Data_ZRawData;
         extern tVirtualTable<ZDataProperty<REFTAB>> Data_REFTAB;
+        extern tVirtualTable<ZDataProperty<REFTAB*>> Data_REFTAB_ptr;
         extern tVirtualTable<ZDataProperty<REFTAB32>> Data_REFTAB32;
         extern tVirtualTable<ZDataProperty<ZAUDIOREF>> Data_ZAUDIOREF;
         extern tVirtualTable<ZDataProperty<ZBitfield<ITEMSTATE>>> Data_ZBitfield_ITEMSTATE;
@@ -121,10 +128,10 @@ extern decltype(&Glacier::RTP::VirtualTables::Data_float) VirtualTable_DP__11;
 extern decltype(&Glacier::RTP::VirtualTables::Data_float_3) VirtualTable_DP__12;
 extern decltype(&Glacier::RTP::VirtualTables::Data_short) VirtualTable_DP__13;
 extern decltype(&Glacier::RTP::VirtualTables::Data_int) VirtualTable_DP__14;
-// extern decltype(&Glacier::RTP::VirtualTables::VirtualTable_DP__15) VirtualTable_DP__15;
+extern decltype(&Glacier::RTP::VirtualTables::Data_ZMsg) VirtualTable_DP__15;
 extern decltype(&Glacier::RTP::VirtualTables::Data_ZRTString) VirtualTable_DP__16;
 // extern decltype(&Glacier::RTP::VirtualTables::VirtualTable_DP__17) VirtualTable_DP__17;
-// extern decltype(&Glacier::RTP::VirtualTables::VirtualTable_DP__18) VirtualTable_DP__18;
+extern decltype(&Glacier::RTP::VirtualTables::Data_ZSDOwner) VirtualTable_DP__18;
 // extern decltype(&Glacier::RTP::VirtualTables::VirtualTable_DP__19) VirtualTable_DP__19;
 // extern decltype(&Glacier::RTP::VirtualTables::VirtualTable_DP__20) VirtualTable_DP__20;
 extern decltype(&Glacier::RTP::VirtualTables::Data_ZAUDIOREF) VirtualTable_DP__21;
@@ -136,7 +143,7 @@ extern decltype(&Glacier::RTP::VirtualTables::Data_float_9) VirtualTable_DP__28;
 extern decltype(&Glacier::RTP::VirtualTables::Data_ZFILENAME) VirtualTable_DP__30;
 extern decltype(&Glacier::RTP::VirtualTables::Data_float_8_4) VirtualTable_DP__31;
 extern decltype(&Glacier::RTP::VirtualTables::Data_uchar) VirtualTable_DP__32;
-// extern decltype(&Glacier::RTP::VirtualTables::VirtualTable_DP__33) VirtualTable_DP__33;
+extern decltype(&Glacier::RTP::VirtualTables::Data_REFTAB_ptr) VirtualTable_DP__33;
 // extern decltype(&Glacier::RTP::VirtualTables::VirtualTable_DP__34) VirtualTable_DP__34;
 // extern decltype(&Glacier::RTP::VirtualTables::VirtualTable_DP__35) VirtualTable_DP__35;
 // extern decltype(&Glacier::RTP::VirtualTables::VirtualTable_DP__37) VirtualTable_DP__37;
@@ -174,7 +181,7 @@ extern decltype(&Glacier::RTP::VirtualTables::Data_char) VirtualTable_DP__123;
 // extern decltype(&Glacier::RTP::VirtualTables::VirtualTable_DP__125) VirtualTable_DP__125;
 extern decltype(&Glacier::RTP::VirtualTables::Data_float_4) VirtualTable_DP__126;
 // extern decltype(&Glacier::RTP::VirtualTables::VirtualTable_DP__127) VirtualTable_DP__127;
-// extern decltype(&Glacier::RTP::VirtualTables::VirtualTable_DP__128) VirtualTable_DP__128;
+extern decltype(&Glacier::RTP::VirtualTables::Data_ZAnimVariationHandle) VirtualTable_DP__128;
 extern decltype(&Glacier::RTP::VirtualTables::Data_ushort) VirtualTable_DP__136;
 // extern decltype(&Glacier::RTP::VirtualTables::VirtualTable_DP__137) VirtualTable_DP__137;
 // extern decltype(&Glacier::RTP::VirtualTables::VirtualTable_DP__140) VirtualTable_DP__140;
@@ -195,7 +202,7 @@ extern decltype(&Glacier::RTP::VirtualTables::Data_uint_2) VirtualTable_DP__171;
 // extern decltype(&Glacier::RTP::VirtualTables::VirtualTable_DP__174) VirtualTable_DP__174;
 extern decltype(&Glacier::RTP::VirtualTables::Data_uint_15) VirtualTable_DP__175;
 // extern decltype(&Glacier::RTP::VirtualTables::VirtualTable_DP__176) VirtualTable_DP__176;
-// extern decltype(&Glacier::RTP::VirtualTables::VirtualTable_DP__178) VirtualTable_DP__178;
+extern decltype(&Glacier::RTP::VirtualTables::Data_ZAllocMany_ptr) VirtualTable_DP__178;
 extern decltype(&Glacier::RTP::VirtualTables::Data_char) VirtualTable_DP__182;
 // extern decltype(&Glacier::RTP::VirtualTables::VirtualTable_DP__183) VirtualTable_DP__183;
 extern decltype(&Glacier::RTP::VirtualTables::Data_int_21) VirtualTable_DP__184;
@@ -267,7 +274,7 @@ inline auto VirtualTable_DP__14 = &Glacier::RTP::VirtualTables::Data_int;
 // inline auto VirtualTable_DP__15 = &Glacier::RTP::VirtualTables::VirtualTable_DP__15;
 inline auto VirtualTable_DP__16 = &Glacier::RTP::VirtualTables::Data_ZRTString;
 // inline auto VirtualTable_DP__17 = &Glacier::RTP::VirtualTables::VirtualTable_DP__17;
-// inline auto VirtualTable_DP__18 = &Glacier::RTP::VirtualTables::VirtualTable_DP__18;
+inline auto VirtualTable_DP__18 = &Glacier::RTP::VirtualTables::Data_ZSDOwner;
 // inline auto VirtualTable_DP__19 = &Glacier::RTP::VirtualTables::VirtualTable_DP__19;
 // inline auto VirtualTable_DP__20 = &Glacier::RTP::VirtualTables::VirtualTable_DP__20;
 inline auto VirtualTable_DP__21 = &Glacier::RTP::VirtualTables::Data_ZAUDIOREF;
@@ -317,7 +324,7 @@ inline auto VirtualTable_DP__123 = &Glacier::RTP::VirtualTables::Data_char;
 // inline auto VirtualTable_DP__125 = &Glacier::RTP::VirtualTables::VirtualTable_DP__125;
 inline auto VirtualTable_DP__126 = &Glacier::RTP::VirtualTables::Data_float_4;
 // inline auto VirtualTable_DP__127 = &Glacier::RTP::VirtualTables::VirtualTable_DP__127;
-// inline auto VirtualTable_DP__128 = &Glacier::RTP::VirtualTables::VirtualTable_DP__128;
+inline auto VirtualTable_DP__128 = &Glacier::RTP::VirtualTables::Data_ZAnimVariationHandle;
 inline auto VirtualTable_DP__136 = &Glacier::RTP::VirtualTables::Data_ushort;
 // inline auto VirtualTable_DP__137 = &Glacier::RTP::VirtualTables::VirtualTable_DP__137;
 // inline auto VirtualTable_DP__140 = &Glacier::RTP::VirtualTables::VirtualTable_DP__140;

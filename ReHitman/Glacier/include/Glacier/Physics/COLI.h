@@ -8,6 +8,13 @@ namespace Glacier
 {
     struct COLI
     {
+        COLI()
+            : t(1.0f)
+            , ColiRef(0)
+            , m_bBothSides(true)
+        {
+        }
+
         ZVector3 lp;
         ZVector3 ln;
         ZVector3 cp;

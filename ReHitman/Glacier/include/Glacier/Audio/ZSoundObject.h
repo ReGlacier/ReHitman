@@ -125,6 +125,8 @@ namespace Glacier
         void Update();
         void Stopped();
         void NotifyStarted();
+        void AddNotifyTarget(ZREF rTarget);
+        void AddNotifyStarted(ZREF rTarget);
 
         // members
         RE_ADD_PADDING(0x24);

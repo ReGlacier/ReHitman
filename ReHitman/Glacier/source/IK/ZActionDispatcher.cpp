@@ -18,7 +18,7 @@ namespace Glacier
     {
         if (m_pCurrentAction && m_pCurrentAction->DeleteOnExit())
         {
-            ZUniMemory::Delete(m_pCurrentAction);
+            delete m_pCurrentAction;
         }
 
         m_pCurrentAction = nullptr;
@@ -71,8 +71,8 @@ namespace Glacier
 
 	    pAction->Terminate();
 
-	    if (pAction->DeleteOnExit())
-	        ZUniMemory::Delete(pAction);
+        if (pAction->DeleteOnExit())
+            delete pAction;
 	}
 
 	void ZActionDispatcher::AnimEnd(Animation::ActiveAnimation* pBoneAnim)

@@ -202,6 +202,7 @@ namespace Glacier
         void UpdateLightListForLight();
         void UpdateLightListForGeom();
         void SetAttachUpdate();
+        void GetRootBox(ZVector3& vMin, ZVector3& vMax) const;
 
         template <typename TGeom> bool IsDerivedFrom() const;
         bool IsDerivedFromStdObj(uint32_t lClassId) const;

@@ -4,6 +4,7 @@
 #include <Glacier/ZSTL/ZPoolAllocRefTab.h>
 #include <Glacier/GlacierFWD.h>
 #include <cstdint>
+#include <cstddef>
 
 
 namespace Glacier
@@ -33,6 +34,8 @@ namespace Glacier
 		virtual void LoadSave(ISerializerStream& stream, bool bSaving);
 
 		// methods
+		static void* operator new(std::size_t size) noexcept;
+		static void operator delete(void* ptr) noexcept;
 		ZLnkAction(uint32_t lActionId);
 
 		// members

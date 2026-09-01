@@ -5,6 +5,7 @@
 #include <Glacier/Geom/ZEngineGeomControl.h>
 #include <Glacier/ZMessageResolver.h>
 #include <Glacier/System/ZSysInterface.h>
+#include <Glacier/System/ZSysMem.h>
 #include <Glacier/System/ZDllBase.h>
 #include <Glacier/Com/Globals.h>
 #include <Glacier/Com/CCom.h>
@@ -32,6 +33,7 @@
 #include <Glacier/Action/ActionInterface.h>
 #include <Glacier/ZSTL/ZPoolAllocRefTab.h>
 #include <Glacier/ZSTL/REFTAB32.h>
+#include <Glacier/ZSTL/StringUtils.h>
 #include <Glacier/PF4/ZData.h>
 #include <Glacier/Physics/ZCollisionBase.h>
 #include <Glacier/Materials/BS_Runtime.h>
@@ -171,7 +173,8 @@ namespace Glacier
         g_pSysInterface->LoadSave(stream);
         if (g_pSysInterface->m_pSoundDll)
         {
-            // TODO: Finish me
+            auto token = stream.GetToken("Sound");
+            stream.Exchange<ZGEOM>(token, g_pSysInterface->GetSoundDll()->m_pPlayer);
         }
 
         // TODO: Finish me
@@ -327,9 +330,21 @@ namespace Glacier
             lExtraGeomsSize += 0x50;
         }
 
-        if (lNrGeomTypes)
+        auto* pCurrentGeomType = &pGeomTypeCount;
+        for (uint32_t i = 0; i < lNrGeomTypes; ++i, ++pCurrentGeomType)
         {
-            // TODO: Finish me
+            lNrBaseGeoms += pCurrentGeomType->m_lGeomCount;
+
+            const auto* pClassInfo = ZGEOM::GetFactory().Find(pCurrentGeomType->m_lGeomType);
+            const uint32_t lExtraGeomSize = pClassInfo ? pClassInfo->Size() : sizeof(ZGEOM);
+            ZASSERT((lExtraGeomSize & 3) == 0);
+
+            lExtraGeomsSize += lExtraGeomSize * pCurrentGeomType->m_lGeomCount;
+            if (!ForceExtraGeom())
+            {
+                ZASSERT(pCurrentGeomType->m_lNoNeedExtraGeom <= pCurrentGeomType->m_lGeomCount);
+                lExtraGeomsSize -= lExtraGeomSize * pCurrentGeomType->m_lNoNeedExtraGeom;
+            }
         }
 
         lExtraGeomsSize += 0x7800; // IOI?!
@@ -396,8 +411,9 @@ namespace Glacier
             m_pRoot->RecurGetNext(&pBaseGeom);
         }
 
-        for (; *reinterpret_cast<int32_t*>(pBufferStart) != -1; pBufferStart = ZCollisionBase::GetCollisionInterface()->LoadInternColiTree(pBufferStart))
+        for (; *reinterpret_cast<int32_t*>(pBufferStart) != -1; )
         {
+            pBufferStart = ZCollisionBase::GetCollisionInterface()->LoadInternColiTree(pBufferStart);
         }
 
         const auto* end = m_pPackedTreeData + m_lPackedTreeDataLength;
@@ -441,9 +457,11 @@ namespace Glacier
 
     void ZEngineDataBase::CreateSoundGraph()
     {
-        if (!g_pSysInterface->m_pSoundDll) return;
+        if (!g_pSysInterface->m_pSoundDll)
+            return;
 
-        // TODO: Finish me after ZSoundDllWintel reversed
+        PUSH_MEMORY_COLOR(0x7777u);
+        g_pSysInterface->GetSoundDll()->InitializeSoundGraph();
     }
 
     void ZEngineDataBase::LoadSoundGraph()
@@ -455,10 +473,9 @@ namespace Glacier
         uint32_t lSize = GetSoundGraphSize();
         if (lSize > 0)
         {
-            void* pData = ZUniMemory::Allocate(lSize);
+            auto* pData = static_cast<char*>(ZUniMemory::Allocate(lSize));
             GetSoundGraphData(pData, lSize);
-
-            // TODO: Finish me after ZSoundDllWintel reversed
+            g_pSysInterface->GetSoundDll()->InstallSoundGraph(pData, lSize);
         }
     }
 
@@ -529,8 +546,28 @@ namespace Glacier
 
     bool ZEngineDataBase::StartUp()
     {
-        // TODO: Finish me after ZRender interface & ZSoundDllWintel will be finished
-        return false;
+        ZASSERT(g_pRenderDll);
+        if (!g_pRenderDll)
+            return false;
+
+        g_pSysInterface->WindowFirst = g_pRenderDll->SetupWindow(g_pSysInterface->MainhWnd);
+
+        MYSTR sInitialScene = m_FileName;
+        if (char* pSeparator = std::strchr(sInitialScene.String, ';'))
+        {
+            m_FileName.SetString(pSeparator + 1);
+            *pSeparator = '\0';
+        }
+
+        if (g_pSysInterface->m_pSoundDll)
+        {
+            PUSH_MEMORY_COLOR(0xFFFFC0u);
+            g_pSysInterface->GetSoundDll()->Initialize();
+        }
+
+        LoadScene(sInitialScene);
+        ControlSceneChange();
+        return true;
     }
 
     void ZEngineDataBase::CloseDown()
@@ -701,7 +738,8 @@ namespace Glacier
         g_pSysInterface->FreeActionMap();
         FreeMsgValues();
         UnlockMinMax();
-        // TODO: Finish me after g_pGameDataFactory reversed
+        if (g_pGameDataFactory)
+            g_pGameDataFactory->DestroyGameData();
     }
 
     void ZEngineDataBase::PushValues(ZScene* pNewScene)
@@ -1050,7 +1088,87 @@ namespace Glacier
 
     void ZEngineDataBase::DoLoadScene()
     {
-        // TODO: Finish me
+        if (g_pGameDataFactory)
+            g_pGameDataFactory->CreateGameData();
+
+        FreeSceneMemory();
+
+        MYSTR sSceneName(m_pScene->GetSceneName());
+        if (striwcmp(sSceneName, "*premission*"))
+            g_pSysInterface->m_lTextureResolution[0] = g_pSysInterface->m_lTextureResolution[1];
+        else
+            g_pSysInterface->m_lTextureResolution[0] = 0;
+
+        MYSTR sScenesPath = g_pSysInterface->ScenesPath();
+        if (!std::strchr(sSceneName.String, '.'))
+        {
+            sSceneName += MYSTR(stricmpend(g_pSysInterface->m_sDefaultScene, ".zip") ? ".gms" : ".zip");
+        }
+
+        if (stricmpend(sSceneName, ".gms"))
+        {
+            if (sSceneName.Length() > 0 && !std::strchr(sSceneName.String, ':'))
+                m_FileName = sScenesPath + MYSTR("\\") + sSceneName;
+            else
+                m_FileName = sSceneName;
+
+            sSceneName = m_FileName;
+        }
+        else
+        {
+            if (std::strchr(sSceneName.String, ':') || sScenesPath.Length() == 0)
+            {
+                m_FileName = sSceneName;
+            }
+            else if (_memicmp(sSceneName, sScenesPath, sScenesPath.Length()))
+            {
+                const char* pSeparator = sScenesPath.String[sScenesPath.Length() - 1] == ':' ? "" : "\\";
+                m_FileName = sScenesPath + MYSTR(pSeparator) + sSceneName;
+            }
+            else
+            {
+                m_FileName = sSceneName;
+            }
+
+            sSceneName = m_FileName;
+        }
+
+        g_pSysInterface->m_sDefaultScene = sSceneName;
+        if (g_pSysInterface->m_pSoundDll)
+            g_pSysInterface->GetSoundDll()->PushScene(sSceneName);
+
+        g_pSysFile->RemoveAllBigs();
+
+        MYSTR sZipFile = CalcCacheFileName(m_FileName, "zip");
+        // TODO: Finish this place after ZLoader_Sequence_Player will be reversed
+        InitAllocSequencePercent(nullptr, false);
+        SetAllocSequencePercent(AS_ZIPLOAD, sSceneName, 0.0f);
+        g_pSysFile->LoadWholeSceneZip(sZipFile);
+        SetAllocSequencePercent(AS_ZIPLOAD, sSceneName, 1.0f);
+
+        MYSTR sSupFile = CalcCacheFileName(m_FileName, "sup");
+        const int lSupFileSize = g_pSysFile->GetSize(sSupFile, false);
+        ZASSERT(lSupFileSize >= 0);
+        if (lSupFileSize < 0)
+            return;
+
+        if (ISysMem::Exists())
+            ISysMem::Instance().SetAllocDirection(ISysMem::AD_BACKWARD);
+        void* pSupFileBuffer = ZUniMemory::Allocate(lSupFileSize);
+        if (ISysMem::Exists())
+            ISysMem::Instance().SetAllocDirection(ISysMem::AD_FORWARD);
+
+        ZASSERT(g_pSysFile->Load(sSupFile, pSupFileBuffer, lSupFileSize, 0, false) == lSupFileSize);
+        SetAllocSequencePercent(AS_INCLUDESCENE, sSceneName, 0.0f);
+        AllocSequence(nullptr);
+        g_pSysFile->RemoveAllBigs();
+        m_pScene->LoadDoneNotify(nullptr);
+        g_pSysInterface->UnlockRefs();
+        // TODO: Finish this place after ZLoader_Sequence_Player will be reversed
+        g_pSysInterface->ResetTime();
+
+        for (auto* pRender = g_pSysInterface->WindowFirst; pRender; pRender = pRender->Nxt)
+            pRender->ColorFill();
     }
 
     MYSTR ZEngineDataBase::CalcCacheFileName(MYSTR path, const char* new_ext)

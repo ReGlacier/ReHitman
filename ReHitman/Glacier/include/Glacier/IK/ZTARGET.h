@@ -21,6 +21,7 @@ namespace Glacier
         ZTARGET();
 
         void SetBoneId(int lBoneId);
+        int BoneId() const;
         float GetTimePrc() const;
         void SetTime(float fTime, bool bRemove);
         bool GetPos(ZVector3& vPos) const;
@@ -32,6 +33,10 @@ namespace Glacier
         bool Removing() const;
         void SetMatPosGeom(const ZMat3x3* pMat, const ZVector3* pPos, ZREF rGeom);
         void SetCallBack(ZIKCALLBACK cb);
+        IKCallBack_t GetCallBack() const;
+        void Update(ZIKLNKOBJ* pIkLnkObj);
+        void Remove(ZIKLNKOBJ* pIkLnkObj, float fTime, ZIKCALLBACK cb);
+        ZREF Geom() const;
 
         // members
         uint8_t m_pad0[4]; // PADDING

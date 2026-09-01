@@ -1,9 +1,26 @@
 #include <Glacier/Serializer/ISerializerStream.h>
 #include <Glacier/IK/ZLnkAction.h>
+#include <Glacier/ZUniMemory.h>
 
 
 namespace Glacier
 {
+    void* ZLnkAction::operator new(std::size_t size) noexcept
+    {
+        return s_LinkActionPool.Alloc(static_cast<uint32_t>(size));
+    }
+
+    void ZLnkAction::operator delete(void* ptr) noexcept
+    {
+        const auto address = reinterpret_cast<uintptr_t>(ptr);
+        const auto poolBegin = reinterpret_cast<uintptr_t>(s_LinkActionBuffer);
+        const auto poolEnd = poolBegin + sizeof(s_LinkActionBuffer);
+        if (address >= poolBegin && address < poolEnd)
+            s_LinkActionPool.Free(ptr);
+        else
+            ZUniMemory::Free(ptr);
+    }
+
     ZLnkAction::ZLnkAction(uint32_t lActionId)
 	    : m_lActionId(lActionId)
 	{

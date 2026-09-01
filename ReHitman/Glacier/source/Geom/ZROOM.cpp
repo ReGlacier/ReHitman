@@ -2,6 +2,7 @@
 #include <Glacier/Geom/ZROOM.h>
 #include <Glacier/Geom/ZGROUP.h>
 #include <Glacier/Geom/ZLIGHT.h>
+#include <Glacier/Audio/ZSoundDllBase.h>
 #include <Glacier/ZSTL/StringUtils.h>
 #include <Glacier/ZSTL/REFTAB32.h>
 #include <Glacier/RTP/VirtualTables.h>
@@ -127,10 +128,11 @@ namespace Glacier
 
     void ZROOM::PostClassInit2()
     {
-        if (!g_pSysInterface->m_pSoundDll)
-            return;
-
-        // TODO: Finish me after ZSoundDll reversed
+        if (ZSoundDllBase* pSoundDll = g_pSysInterface->GetSoundDll(); pSoundDll && m_dwRoomRef)
+        {
+            m_lAudioFilter = static_cast<int32_t>(reinterpret_cast<uintptr_t>(
+                pSoundDll->GetPackedObject(m_dwRoomRef)));
+        }
     }
 
     void ZROOM::CopyData(const ZGEOM* Source)
@@ -485,22 +487,21 @@ namespace Glacier
 #   pragma region " --- RTTI --- "
     namespace cProperties
     {
-        // TODO: Finish me
-        // static RTP::ZDataProperty<REFTAB*> NamespaceItem_2074
-        // {
-        //     .m_Node = {
-        //         .m_Next = nullptr,
-        //         .m_Name = "m_pActorsAwareOfBrokenLight",
-        //         .m_Filter = 2
-        //     },
-        //     .m_VirtualTable = VirtualTable_DP__33,
-        //     .m_Offset = CLASS_PROPERTY(ZROOM, m_pActorsAwareOfBrokenLight)
-        // };
+        static RTP::ZDataProperty<REFTAB*> NamespaceItem_2074
+        {
+            .m_Node = {
+                .m_Next = nullptr,
+                .m_Name = "m_pActorsAwareOfBrokenLight",
+                .m_Filter = 2
+            },
+            .m_VirtualTable = &RTP::VirtualTables::Data_REFTAB_ptr,
+            .m_Offset = CLASS_PROPERTY(ZROOM, m_pActorsAwareOfBrokenLight)
+        };
 
         static RTP::ZDataProperty<REFTAB> NamespaceItem_2073
         {
             .m_Node = {
-                .m_Next = nullptr,
+                .m_Next = NamespaceItem_2074,
                 .m_Name = "m_FurnitureList",
                 .m_Filter = 2
             },

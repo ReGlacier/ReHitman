@@ -46,7 +46,7 @@ namespace Hitman::BloodMoney {
         }
 
         Glacier::ZVector3 visionPos;
-        reinterpret_cast<Glacier::ZCTRLIKLNKOBJ*>(hitman)->GetVisionPos(&visionPos);
+        reinterpret_cast<Glacier::ZCTRLIKLNKOBJ*>(hitman)->GetVisionPos(visionPos);
         ImGui::Text("Position: (%.3f; %.3f; %.3f)",
                     visionPos.x,
                     visionPos.y,

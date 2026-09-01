@@ -72,6 +72,8 @@ namespace Glacier
     class ZBaseGeomLists;
     class CInventory;
     class ZParticleEmitter;
+    class ZAllocMany;
+    class ZHumanBoid;
 
     struct SGeomTypeCount;
     struct SCompiledGeom;

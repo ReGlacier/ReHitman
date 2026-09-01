@@ -2748,6 +2748,23 @@ void ZBaseGeom::RemoveDynamicParent()
         pDrawEntry->m_lControl |= ZRenderEntry::RENDERENTRY_FLAGS::RE_ATTACH_UPDATE;
     }
 
+    void ZBaseGeom::GetRootBox(ZVector3& vMin, ZVector3& vMax) const
+    {
+        vMin = m_vCen;
+
+        ZMat3x3 mMat {};
+        mMat.Reset();
+
+        if (m_pParent)
+        {
+            GetRootPoint(vMin);
+            GetRootMat(mMat);
+        }
+
+        vMax = m_vSize;
+        TransformBox(mMat.Get(), vMax.Get());
+    }
+
     template bool ZBaseGeom::IsDerivedFrom<ZSTDOBJ>() const;
     template bool ZBaseGeom::IsDerivedFrom<ZSHAPE>() const;
     template bool ZBaseGeom::IsDerivedFrom<ZBOUND>() const;

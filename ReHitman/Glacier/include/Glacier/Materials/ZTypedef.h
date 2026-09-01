@@ -16,7 +16,12 @@ namespace Glacier
     template <typename TValue, typename TAG>
     struct ZTypedef
     {
-        TValue m_Value;
+        // methods
+        ZTypedef() = default;
+        ZTypedef(TValue val) : m_Value(val) {}
+
+        // members
+        TValue m_Value {};
     };
 
     // aliases

@@ -9,10 +9,14 @@
 #include <Glacier/GameBase/Boid/ZHumanBoid.h>
 #include <Glacier/Animation/ZAnimVariationHandle.h>
 #include <BloodMoney/Game/ZHM3HmAs.h>
-#include <BloodMoney/Game/ZActor.h>
+#include <Glacier/GameBase/ZActor.h>
 
 namespace Hitman::BloodMoney
 {
+    // fwds
+    class ZHM3HmAs;
+    class ZHM3ItemWeapon;
+
     enum EActorMapRole : int
     {
         Civilian                 = 0,
@@ -50,8 +54,6 @@ namespace Hitman::BloodMoney
         AE_MOVE_OUTSIDEELEVATOR = 4,
     };
 
-
-
     enum EBloodSpurtType
     {
         BloodSpurt = 0x0,
@@ -88,9 +90,6 @@ namespace Hitman::BloodMoney
         eWheelChair = 4,
     };
 
-    class ZHM3HmAs;
-    class ZHM3ItemWeapon;
-
     struct ZDecaying
     {
         float value;
@@ -122,7 +121,7 @@ namespace Hitman::BloodMoney
     };
     RE_VERIFY_SIZE(sUseElevatorInfo, 0x28);
 
-    class ZHM3Actor : public ZActor
+    class ZHM3Actor : public Glacier::ZActor
     {
     public:
         // vftable

@@ -210,6 +210,6 @@ namespace Glacier
         // TODO: Finish me
     }
 
-    DEFINE_ROUT_CLASS(ZFightController, ZBoxPrimitive, FightController, 8, 0, 0x00814A50, nullptr); // TODO: Finish RTTI props
+    DEFINE_ROUT_CLASS(ZFightController, ZBoxPrimitive, FightController, 8, 0, 0x00814A50, nullptr, ZBoxPrimitive); // TODO: Finish RTTI props
     #   pragma endregion
 }

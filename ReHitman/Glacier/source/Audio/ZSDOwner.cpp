@@ -1,6 +1,7 @@
 #include <Glacier/System/ZSysInterface.h>
 #include <Glacier/Data/ZEngineDataBase.h>
 #include <Glacier/Audio/ZSoundObject.h>
+#include <Glacier/Audio/ZDllSound.h>
 #include <Glacier/Audio/ZSDOwner.h>
 
 
@@ -68,8 +69,22 @@ namespace Glacier
 
     int32_t ZSDOwner::GetSoundFromEnumIndex(uint8_t _enumIndex)
     {
-        // TODO: Finish me
-        return 0;
+        auto* pSoundDll = g_pSysInterface->GetSoundDll();
+        if (!m_iSoundDefinitionIndex || !pSoundDll)
+            return 0;
+
+        auto* pPacked = pSoundDll->GetPackedObject(m_iSoundDefinitionIndex);
+        if (!pPacked || pPacked->m_Type != ZAudioTypes::Def)
+            return 0;
+
+        const auto& definition = pPacked->GetAs<ZAudioType<ZAudioTypes::Def>::ZPacked>();
+        if (_enumIndex >= definition.m_Entries.m_lEntryCount)
+            return 0;
+
+        auto* pSoundDllImpl = static_cast<ZDllSound*>(pSoundDll);
+        const auto* pEntries = reinterpret_cast<const uint32_t*>(
+            pSoundDllImpl->m_pPackedData + definition.m_Entries.m_lEntryOffset);
+        return static_cast<int32_t>(pEntries[_enumIndex]);
     }
 
     void ZSDOwner::SetEnsureOneChannel(bool bEnsureOnChannel)

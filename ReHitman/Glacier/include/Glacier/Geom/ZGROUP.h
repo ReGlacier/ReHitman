@@ -93,6 +93,7 @@ namespace Glacier
         ZGEOM* CreateGeom(const char* pName, uint32_t iGeomClassId, bool bCalcMinMax);
         bool IsRoot() const;
         void GroupContainsLight();
+        SREF AddSound3d(float* pDirection, float* pPosition, int lSoundIndex, int lSoundEvent, uint32_t lEventArgument, uint32_t lExtraArgument);
 
 #       pragma region " --- RTTI Methods --- "
         void GetLightShinesIn(bool& bLightShinesIn);

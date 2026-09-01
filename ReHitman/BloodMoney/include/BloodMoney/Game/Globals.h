@@ -26,4 +26,3 @@ namespace Hitman::BloodMoney::Globals
 
 // NEW: I will try to migrate to global vars like in G1HBM
 extern Glacier::ZSysInterfaceWintel*& g_pSysInterface;
-extern Hitman::BloodMoney::ZHM3GameData*& g_pGameData; // TODO: Need remove later because Glacier/ZGameData define same thing
