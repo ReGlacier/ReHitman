@@ -60,10 +60,6 @@ namespace Glacier
 // PC 00450C10
 int RunEngine(bool bOnce)
 {
-    using namespace Glacier;
-
-    ZASSERT(g_pSysInterface);
-    g_pSysInterface->RunMainOnce(bOnce);
-
+    Glacier::g_pSysInterface->RunMainOnce(bOnce);
     return 0;
 }

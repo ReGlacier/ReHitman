@@ -9,9 +9,6 @@
 
 #include <BloodMoney/Game/UI/ZHM3MenuElements.h>
 #include <BloodMoney/Game/UI/ZHM3MenuFactory.h>
-#include <BloodMoney/Game/UI/ZXMLGUISystem.h>
-#include <BloodMoney/Game/UI/ZWINDOWS.h>
-#include <BloodMoney/Game/UI/ZGUIBase.h>
 
 #include <BloodMoney/Game/Globals.h>
 
@@ -42,12 +39,8 @@
 #include <BloodMoney/Game/ZHM3HmAs.h>
 #include <BloodMoney/Game/ZHM3ClothBundle.h>
 #include <BloodMoney/Game/ZHM3BriefingControl.h>
-#include <BloodMoney/Game/UI/ZCHAROBJ.h>
-#include <BloodMoney/Game/UI/ZWINOBJ.h>
-#include <BloodMoney/Game/UI/ZXMLGUISystem.h>
 
 #include <BloodMoney/Game/ZTie.h>
-#include <BloodMoney/Game/UI/ZLINEOBJ.h>
 
 #include <HF/HackingFramework.hpp>
 #include <Glacier/Geom/ZEngineGeomControl.h>

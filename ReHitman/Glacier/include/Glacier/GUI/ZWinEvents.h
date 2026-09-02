@@ -3,11 +3,11 @@
 #include <Glacier/GlacierFWD.h>
 #include <Glacier/ZSTL/ZMath.h>
 
+
 namespace Glacier
 {
-    using SMouseColi = Glacier::Vector4;
-
-    enum ZWM_MESSAGE : uint32_t {
+    enum ZWM_MESSAGE : uint32_t
+    {
         ZWM_COMMAND = 1,
         ZWM_MOUSEMOVE = 2,
         ZWM_KEYDOWN = 4,
@@ -25,20 +25,28 @@ namespace Glacier
         ZWN_STATECHANGED = 2097152,
     };
 
-    struct ZWMEVENT 
+    union _evdata
     {
-        union _evdata 
-        {
-            uint32_t _uint;
-            int32_t  _int;
-            float  _float;
-        };
-        RE_VERIFY_SIZE(_evdata, sizeof(uint32_t));
+        uint32_t _uint;
+        int32_t  _int;
+        float  _float;
+    };
 
+    struct ZWMEVENT
+    {
         ZREF Target;
         ZWM_MESSAGE Message;
         int Param1;
         int Param2;
         bool Return;
+    };
+    RE_VERIFY_SIZE(ZWMEVENT, 0x14);
+
+    struct ZWMSUBSCRIPTION
+    {
+        ZREF rSubscriber;
+        uint32_t dwMessages;
+        _evdata Param1;
+        bool bCompareParam;
     };
 }

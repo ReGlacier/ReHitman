@@ -11,11 +11,14 @@
 #include <Glacier/GUI/ZWinEvents.h>
 #include <Glacier/Render/Sprite/SSpriteArrayElementRaw.h>
 #include <Glacier/Render/Sprite/SSpriteArray.h>
-
+#include <Glacier/Geom/ZSTDOBJ.h>
+#include <Glacier/GUI/CWinEvent.h>
+#include <Glacier/GUI/ZWINDOW.h>
+#include <Glacier/GUI/ZCHAROBJ.h>
 #include <BloodMoney/Game/SMapGroup.h>
 #include <BloodMoney/Game/SIconBase.h>
-#include <BloodMoney/Game/UI/ZWINDOW.h>
-#include <BloodMoney/Game/UI/CWinEvent.h>
+
+
 
 #ifdef small // thx msvc
 #   undef small
@@ -86,7 +89,7 @@ namespace Hitman::BloodMoney
         // Size: 0x4bac (19372) bytes
         Glacier::ZStackArray<256, CMapIconDraw::SIconInfo> m_Icons;
         Glacier::ZStackArray<32, SMapText> m_Texts;
-        Glacier::ZStackArray<32, ZCHAROBJ*> m_TextObjects;
+        Glacier::ZStackArray<32, Glacier::ZCHAROBJ*> m_TextObjects;
         uint32_t* m_pPrims;
         Glacier::SSpriteArray* m_pSpriteArrays;
         Glacier::SSpriteArrayElementRaw* m_pSprites;
@@ -94,8 +97,7 @@ namespace Hitman::BloodMoney
     };
     RE_VERIFY_SIZE(CMapIconDraw, 0x4BAC);
 
-
-    class CIngameMap : public CWinEvent<ZWINDOW>
+    class CIngameMap : public Glacier::CWinEvent<Glacier::ZWINDOW>
     {
     public:
         //vftable

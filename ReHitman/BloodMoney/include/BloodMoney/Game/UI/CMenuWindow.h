@@ -2,12 +2,12 @@
 
 #include <Glacier/ReGlacier.h>
 #include <Glacier/GlacierFWD.h>
-#include <BloodMoney/Game/UI/ZWINDOW.h>
-#include <BloodMoney/Game/UI/CWinEvent.h>
+#include <Glacier/GUI/ZWINDOW.h>
+#include <Glacier/GUI/CWinEvent.h>
 
 namespace Hitman::BloodMoney
 {
-    class CMenuWindow : public CWinEvent<ZWINDOW>
+    class CMenuWindow : public Glacier::CWinEvent<Glacier::ZWINDOW>
     {
     public:
         // vtbl (no new entries)

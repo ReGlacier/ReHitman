@@ -1671,7 +1671,7 @@ namespace Glacier
         BaseGeom()->GetLocalMatPos(mMat, vPos);
     }
 
-    void ZGEOM::GetSize(ZVector3& vSize)
+    void ZGEOM::GetSize(ZVector3& vSize) const
     {
         BaseGeom()->GetSize(vSize);
     }
@@ -1691,9 +1691,14 @@ namespace Glacier
         BaseGeom()->SetRadius(fRadius);
     }
 
-    void ZGEOM::GetRootVect(ZVector3& vect)
+    void ZGEOM::GetRootVect(ZVector3& vect) const
     {
         BaseGeom()->GetRootVect(vect);
+    }
+
+    void ZGEOM::GetPos(ZVector3& vPos) const
+    {
+        BaseGeom()->GetPos(vPos);
     }
 
     float ZGEOM::GetDistanceToObject(const ZGEOM* pTarget) const

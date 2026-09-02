@@ -13,7 +13,6 @@ namespace Glacier
     using ZMSGID = unsigned short;
     using ZDATA = void*;
     using SREF = unsigned int;
-    enum ZWM_MESSAGE;
 
     struct RefRun;
 

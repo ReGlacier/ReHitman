@@ -261,11 +261,12 @@ namespace Glacier
         void SetControl(uint32_t lBitsAdd, uint32_t lBitsRem);
         void GetWorldPosition(ZVector3& vPosition) const;
         void GetLocalMatPos(ZMat3x3& mMat, ZVector3& vPos) const;
-        void GetSize(ZVector3& vSize);
+        void GetSize(ZVector3& vSize) const;
         void SetCen(const ZVector3& vCen);
         void SetSize(const ZVector3& vSize);
         void SetRadius(float fRadius);
-        void GetRootVect(ZVector3& vect);
+        void GetRootVect(ZVector3& vect) const;
+        void GetPos(ZVector3& vPos) const;
         float GetDistanceToObject(const ZGEOM* pTarget) const;
         float GetDistanceToPos(const ZVector3& vPos) const;
         float GetAngleToDir(const ZVector3& vDir) const;

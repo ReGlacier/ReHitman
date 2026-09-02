@@ -1,9 +1,11 @@
 #pragma once
 
-#include "ZNavigator.h"
+#include <Glacier/GUI/ZNavigator.h>
 
-namespace Hitman::BloodMoney {
-    class ZHM3InventoryMenu : public ZNavigator {
+namespace Hitman::BloodMoney
+{
+    class ZHM3InventoryMenu : public Glacier::ZNavigator
+    {
     public:
         //vftable (no changes)
         //api

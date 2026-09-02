@@ -5,6 +5,7 @@
 #include <Glacier/Runtime/ZFactory.h>
 #include <Glacier/Geom/ZGeomValidator.h>
 #include <Glacier/ZUniMemory.h>
+#include <type_traits>
 
 
 #define REGISTER_GLACIER_GEOM_CLASS(Class, BaseClass, ClassID, OldClassInfoAddr) \
@@ -41,6 +42,23 @@
     ); \
     STATIC_CLASS_VAR_IMPL(Class, Glacier::ZGEOMCLASSINFO*, m_OldClassInfo, OldClassInfoAddr, &Class##_Producer.m_Data)
 
+#define REGISTER_GLACIER_GEOM_PURE_CLASS(Class, BaseClass, ClassID, OldClassInfoAddr) \
+    Glacier::ZFactoryProducerPure<Glacier::ZGEOM, Class> Class##_Producer( \
+        ClassID, \
+        Glacier::ZGEOMCLASSINFO( \
+            #Class, \
+            sizeof(Class), \
+            #BaseClass, \
+            ClassID, \
+            0, \
+            nullptr, \
+            Glacier::ZGeomValidator<Class>::SetTypeIDAndMask, \
+            &Class::m_Id, \
+            &Class::m_Mask \
+        ) \
+    ); \
+    STATIC_CLASS_VAR_IMPL(Class, Glacier::ZGEOMCLASSINFO*, m_OldClassInfo, OldClassInfoAddr, &Class##_Producer.m_Data)
+
 #define DECLARE_ID_AND_MASK(cls) \
     STATIC_CLASS_VAR(cls, uint32_t, m_Id); \
     STATIC_CLASS_VAR(cls, uint32_t, m_Mask);
@@ -57,14 +75,25 @@
     DECLARE_ID_AND_MASK(ClassName);
 
 #define DECLARE_GEOM_CLASS_IMPL(ClassName, BaseClass, OldClassInfoAddr, FactroryName, FactoryAddr, FirstProperty, PropertiesAddr, IDAddr, MaskAddr) \
+    static_assert(!std::is_abstract<ClassName>::value, "Looks like you trying to use DECLARE_GEOM_CLASS_IMPL on class with pure virtual methods (one or many). Use DECLARE_GEOM_CLASS_PURE_IMPL instead"); \
     STATIC_CLASS_VAR_IMPL(ClassName, const char*, FactoryName, FactoryAddr, FactroryName);                                                          \
-    STATIC_CLASS_VAR_IMPL(ClassName, Glacier::RTP::ZPropertyInfo, Info, PropertiesAddr, (Glacier::RTP::ZPropertyInfo {                                                \
+    STATIC_CLASS_VAR_IMPL(ClassName, Glacier::RTP::ZPropertyInfo, Info, PropertiesAddr, (Glacier::RTP::ZPropertyInfo {                              \
         .First = FirstProperty,                                                                                                                     \
         .Super = &BaseClass::Info,                                                                                                                  \
         .Name = ClassName::FactoryName                                                                                                              \
     }));                                                                                                                                            \
     DECLARE_ID_AND_MASK_IMPL(ClassName, IDAddr, MaskAddr);                                                                                          \
     REGISTER_GLACIER_GEOM_CLASS(ClassName, BaseClass, ClassName::m_TypeId, OldClassInfoAddr);
+
+#define DECLARE_GEOM_CLASS_PURE_IMPL(ClassName, BaseClass, OldClassInfoAddr, FactroryName, FactoryAddr, FirstProperty, PropertiesAddr, IDAddr, MaskAddr) \
+    STATIC_CLASS_VAR_IMPL(ClassName, const char*, FactoryName, FactoryAddr, FactroryName);                                                               \
+    STATIC_CLASS_VAR_IMPL(ClassName, Glacier::RTP::ZPropertyInfo, Info, PropertiesAddr, (Glacier::RTP::ZPropertyInfo {                                   \
+        .First = FirstProperty,                                                                                                                          \
+        .Super = &BaseClass::Info,                                                                                                                       \
+        .Name = ClassName::FactoryName                                                                                                                   \
+    }));                                                                                                                                                 \
+    DECLARE_ID_AND_MASK_IMPL(ClassName, IDAddr, MaskAddr);                                                                                               \
+    REGISTER_GLACIER_GEOM_PURE_CLASS(ClassName, BaseClass, ClassName::m_TypeId, OldClassInfoAddr);
 
 #define DECLARE_ROUT_CLASS(Class, BaseClass, _FactoryName, RoutCases, Prio) \
     static const Glacier::ZROUTCLASSINFO _##_FactoryName##_ClassInfo; \

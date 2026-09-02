@@ -1,10 +1,10 @@
 #pragma once
 
-#include <BloodMoney/Game/UI/ZStandardMenuFactory.h>
+#include <Glacier/GUI/ZStandardMenuFactory.h>
 
 namespace Hitman::BloodMoney
 {
-    class ZHM3MenuFactory : public ZStandardMenuFactory
+    class ZHM3MenuFactory : public Glacier::ZStandardMenuFactory
     {
     };
 }

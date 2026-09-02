@@ -53,25 +53,9 @@
 #include <BloodMoney/Game/LoaderSequence/ZLoader_Sequence_Info.h>
 #include <BloodMoney/Game/LoaderSequence/ZLoader_Sequence_Setup.h>
 // UI
-#include <BloodMoney/Game/UI/IWindowInterface.h>
-#include <BloodMoney/Game/UI/ZStandardWindow.h>
-#include <BloodMoney/Game/UI/IGUIElement.h>
-#include <BloodMoney/Game/UI/ZXMLGUISystem.h>
+#include <BloodMoney/Game/ZCheatMenu.h> // TODO: Move to UI!
 #include <BloodMoney/Game/UI/CMainMenu.h>
 #include <BloodMoney/Game/UI/ZOSD.h>
-// Need move to Glacier
-#include <BloodMoney/Game/UI/ZCUSTOMFRAME.h>
-#include <BloodMoney/Game/UI/ZKerningFont.h>
-#include <BloodMoney/Game/UI/ZSIMPLEHTML.h>
-#include <BloodMoney/Game/UI/ZExtCharObj.h>
-#include <BloodMoney/Game/UI/ZCHAROBJ.h>
-#include <BloodMoney/Game/UI/ZLINEOBJ.h>
-#include <BloodMoney/Game/ZCheatMenu.h> // TODO: Move to UI!
-#include <BloodMoney/Game/UI/ZWINOBJ.h>
-#include <BloodMoney/Game/UI/ZWINPIC.h>
-#include <BloodMoney/Game/UI/ZTTFONT.h>
-#include <BloodMoney/Game/UI/ZFRAME.h>
-#include <BloodMoney/Game/UI/ZFONT.h>
 // Anim
 #include <Glacier/Animation/ActiveAnimation.h>
 #include <Glacier/Animation/Manager.h>
