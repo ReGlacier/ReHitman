@@ -50,8 +50,8 @@ namespace Glacier
     // Legacy
     class ZOldDrawInfo;
     class ZRender;
-    struct IView;
-    struct IDraw;
+    class IView;
+    class IDraw;
 
     // Light
     struct SUpdateLightData;

@@ -1,6 +1,6 @@
-#include <Glacier/Data/ZGameData.h>
 #include <Glacier/Audio/ZSDOwner.h>
 #include <Glacier/Data/ZEngineDataBase.h>
+#include <Glacier/Data/ZGameData.h>
 #include <Glacier/Data/ZGameStats.h>
 #include <Glacier/Serializer/ISerializerStream.h>
 #include <Glacier/System/ZSysInterface.h>
@@ -10,18 +10,18 @@
 namespace Glacier
 {
     ZGameData::ZGameData()
-        : m_pkBoidSystem(nullptr)
-        , m_ActorsPool()
-        , m_pTrackLinkObjectList(nullptr)
-        , m_ItemsPool()
-        , m_bDisableDust(false)
-        , m_pParticleTemplates(REFTAB::MakeReftab(16, 0))
-        , m_pMenuElements(nullptr)
-        , m_apPlayerIndex{}
-        , m_pStats(nullptr)
-        , m_pSoundDef_OSD(nullptr)
-        , m_pSoundDef_Effects(nullptr)
-        , m_bGameJustLoaded(false)
+        : m_pkBoidSystem(nullptr),
+          m_ActorsPool(),
+          m_pTrackLinkObjectList(nullptr),
+          m_ItemsPool(),
+          m_bDisableDust(false),
+          m_pParticleTemplates(REFTAB::MakeReftab(16, 0)),
+          m_pMenuElements(nullptr),
+          m_apPlayerIndex{},
+          m_pStats(nullptr),
+          m_pSoundDef_OSD(nullptr),
+          m_pSoundDef_Effects(nullptr),
+          m_bGameJustLoaded(false)
     {
         // TODO: Finish this place after ZBoidSystem will be moved to Glacier
     }
@@ -54,7 +54,10 @@ namespace Glacier
     void ZGameData::RemoveItemOnGround(ZItem*) {}
     void ZGameData::CheckPointSave(ZCheckPointBuffer&) {}
     void ZGameData::CheckPointLoad(ZCheckPointBuffer&) {}
-    bool ZGameData::IsFrontEnd() const { return true; }
+    bool ZGameData::IsFrontEnd() const
+    {
+        return true;
+    }
 
     ZGameStats& ZGameData::GetStats()
     {
@@ -63,19 +66,55 @@ namespace Glacier
         return *m_pStats;
     }
 
-    void ZGameData::InitExcludedAnimNames(uint32_t*) { ZASSERT(false); }
-    ZAnimExclude* ZGameData::GetAnimExclude() { return nullptr; }
-    void ZGameData::InitWeaponHandles(uint32_t*) { ZASSERT(false); }
-    uint32_t ZGameData::GetTotalWeaponPrimsCount() const { return 0; }
-    uint32_t* ZGameData::GetTotalWeaponPrims() const { return nullptr; }
-    uint32_t ZGameData::GetUsedWeaponPrimsCount() const { return 0; }
-    uint32_t* ZGameData::GetUsedWeaponPrims() const { return nullptr; }
-    uint32_t ZGameData::GetBigWeaponPrimsCount() const { return 0; }
-    uint32_t* ZGameData::GetBigWeaponPrims() const { return nullptr; }
+    void ZGameData::InitExcludedAnimNames(uint32_t*)
+    {
+        ZASSERT(false);
+    }
+    ZAnimExclude* ZGameData::GetAnimExclude()
+    {
+        return nullptr;
+    }
+    void ZGameData::InitWeaponHandles(uint32_t*)
+    {
+        ZASSERT(false);
+    }
+    uint32_t ZGameData::GetTotalWeaponPrimsCount() const
+    {
+        return 0;
+    }
+    uint32_t* ZGameData::GetTotalWeaponPrims() const
+    {
+        return nullptr;
+    }
+    uint32_t ZGameData::GetUsedWeaponPrimsCount() const
+    {
+        return 0;
+    }
+    uint32_t* ZGameData::GetUsedWeaponPrims() const
+    {
+        return nullptr;
+    }
+    uint32_t ZGameData::GetBigWeaponPrimsCount() const
+    {
+        return 0;
+    }
+    uint32_t* ZGameData::GetBigWeaponPrims() const
+    {
+        return nullptr;
+    }
     void ZGameData::OnDecalRemoval(uint32_t) const {}
-    void ZGameData::GetSuitcaseWeaponPrims(int&, uint32_t*) const { ZASSERT(false); }
-    bool ZGameData::IsInCutsequence() { return false; }
-    const char* ZGameData::LoadGameFailureScene() { return g_pEngineData->GetSceneName(); }
+    void ZGameData::GetSuitcaseWeaponPrims(int&, uint32_t*) const
+    {
+        ZASSERT(false);
+    }
+    bool ZGameData::IsInCutsequence()
+    {
+        return false;
+    }
+    const char* ZGameData::LoadGameFailureScene()
+    {
+        return g_pEngineData->GetSceneName();
+    }
     void ZGameData::AddIconToText(zstring&, const char*, bool) {}
 
     void ZGameData::SetPlayer(ZPlayer* pPlayer, int32_t lIndex)

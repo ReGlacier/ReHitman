@@ -29,8 +29,9 @@ namespace Glacier
 
     using DecalViewCallback_t = void(*)(ZDecalCallBack* , void* , uint32_t);
 
-    struct IDraw
+    class IDraw
     {
+    public:
         // constants
         static constexpr int MAX_VIEWS_NR = 32;
 

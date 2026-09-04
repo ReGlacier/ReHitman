@@ -17,9 +17,9 @@ namespace Glacier
         ZSDOwner();
         uint32_t GetEnumSize() const;
         void StopCurrentSound();
-        void PlaySound(int _enumIndex);
-        void PlaySoundNow(int _enumIndex, ZSoundObject* _pUseMe);
-        void PlaySoundNow(int _enumIndex, ZGEOM* _locationGeom, ZSoundObject* _pUseMe);
+        ZSoundObject* PlaySound(int _enumIndex);
+        ZSoundObject* PlaySoundNow(int _enumIndex, ZSoundObject* _pUseMe);
+        ZSoundObject* PlaySoundNow(int _enumIndex, ZGEOM* _locationGeom, ZSoundObject* _pUseMe);
         void AllowSounds();
         int32_t GetSoundFromEnumIndex(uint8_t _enumIndex);
         void SetEnsureOneChannel(bool bEnsureOnChannel);

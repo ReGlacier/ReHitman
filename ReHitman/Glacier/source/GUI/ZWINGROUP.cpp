@@ -96,6 +96,7 @@ namespace Glacier
 
     ZWINDOWS* ZWINGROUP::GetSystem()
     {
+        // Cache the owning window system after resolving it through the parent chain.
         if (!m_pSystem)
         {
             if (IsDerivedFrom<ZWINDOWS>())

@@ -5,11 +5,15 @@
 #include <Glacier/ZSTL/REFTAB.h>
 #include <BloodMoney/Game/UI/CMenuWindow.h>
 
+
+namespace Glacier
+{
+   	class ZFRAME;
+	class ZCHAROBJ;
+}
+
 namespace Hitman::BloodMoney
 {
-	class ZFRAME;
-	class ZCHAROBJ;
-
 	enum ECheatType
 	{
 		ct_btoggle = 0,
@@ -31,14 +35,14 @@ namespace Hitman::BloodMoney
 		{
 			ECheatType eCheatType;
 			const char* szDisplayName;
-			union 
+			union
 			{
 				const char* szCommand;
 				float* pFloat;
 				bool* pBool;
 				int32_t* pInt;
 				void* pUvarInt;
-				void        (__cdecl* pFn)(); 
+				void        (__cdecl* pFn)();
 				uint32_t    _Dummy;
 			};
 		};
@@ -46,9 +50,9 @@ namespace Hitman::BloodMoney
 
 		//vtbl (no changes)
 		//data (total size is 0x78, base size is 0x30)
-		ZCHAROBJ* m_pText;
-		ZFRAME* m_pFrame1;
-		ZFRAME* m_pFrame2;
+		Glacier::ZCHAROBJ* m_pText;
+		Glacier::ZFRAME* m_pFrame1;
+		Glacier::ZFRAME* m_pFrame2;
 		int32_t m_iSelected;
 		Glacier::ZMSGID m_msgOpen;
 		int32_t m_iExitCountdown;

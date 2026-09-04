@@ -12,6 +12,7 @@ namespace Glacier
 {
     template <typename T> class CWinEvent : public CBaseEvent<T>
     {
+    public:
         //vtbl
         virtual ZWINDOWS* GetSystem();
         virtual void WndMessage(ZWMEVENT* pEvent);
@@ -23,9 +24,9 @@ namespace Glacier
         virtual void OnFocusReceived(uint32_t);
         virtual void OnFocusLost(uint32_t);
         virtual void OnClick(float x, float y);
-        virtual void OnWindowOpen(uint32_t, bool);
-        virtual void OnWindowClose(uint32_t, bool);
-        virtual void OnSliderChange(uint32_t, uint32_t);
+        virtual void OnWindowOpen(uint32_t, bool bPush);
+        virtual void OnWindowClose(uint32_t, bool bPop);
+        virtual bool OnSliderChange(ZREF rSlider, uint32_t iValue);
         virtual void OnFocusChanged(uint32_t, uint32_t);
     };
 }

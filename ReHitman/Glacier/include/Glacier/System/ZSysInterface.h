@@ -255,6 +255,10 @@ namespace Glacier
         RE_ADD_PADDING(3); //0x0B09
         ZDllBase *m_pSoundDll; //0x0B0C
         void* pUnused[2]; // 0x0B10 - it's ok
+        // In debug builds here we have 2 additional fields:
+        //  MYSTR m_sConsoleCmd
+        //  CConsole* m_pConsole;
+        // But we don't have this in PC prod build :(
         bool m_bScriptEnableSanityCheck; //0x0B18 - need check
         bool m_bScriptDebug; //0x0B19 - need check
         bool m_bScriptDebugPrint; //0x0B1A - need check

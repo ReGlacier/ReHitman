@@ -2,8 +2,8 @@
 #include <Glacier/Com/CCom.h>
 #include <Glacier/Data/ZEngineDataBase.h>
 #include <Glacier/Geom/ZCAMERA.h>
-#include <Glacier/GUI/ZBUTTON.h>
-#include <Glacier/GUI/ZCONTROL.h>
+#include <Glacier/GUI/Control/ZBUTTON.h>
+#include <Glacier/GUI/Control/ZCONTROL.h>
 #include <Glacier/GUI/ZSlider.h>
 #include <Glacier/GUI/ZWINDOW.h>
 #include <Glacier/GUI/ZWinGfxHandler.h>

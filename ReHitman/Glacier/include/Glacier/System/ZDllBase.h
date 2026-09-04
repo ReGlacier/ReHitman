@@ -26,7 +26,7 @@ namespace Glacier
         virtual void Set(void* pHandle, const char* psName);
         virtual void* GetAddress(const char* pSymName);
         virtual void PrintStatus();
-        
+
         // methods
         ZDllBase();
 

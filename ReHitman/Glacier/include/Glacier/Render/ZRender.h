@@ -10,7 +10,7 @@ namespace Glacier
     struct ZRenderDrawBase;
     struct ZBoneModifyBase;
     struct SPrims;
-    struct IView;
+    class IView;
     class ZCAMERA;
     class REFTAB;
     class LINKSORTREFTAB;

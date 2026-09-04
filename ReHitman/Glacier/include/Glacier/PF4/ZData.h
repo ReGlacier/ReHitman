@@ -13,6 +13,26 @@
 
 namespace Glacier::PF4
 {
+    class ZBlockAlocator
+    {
+    public:
+        // methods
+        ZBlockAlocator();
+        ~ZBlockAlocator();
+        void Init(int16_t* pData, ZDataRef* pDRef);
+        ZDataRef* Alloc();
+        void Free(ZDataRef* pRef);
+        bool BelongsTo(ZDataRef* pDataRef) const;
+
+        // members
+        ZDataRef* m_Data;
+        short* m_Stack;
+        int m_BlockSize;
+        int m_MaxBlocks;
+        int m_Count;
+    };
+    RE_VERIFY_SIZE(ZBlockAlocator, 0x14); // Confirmed
+
     struct ZOpenNode
     {
         bool bVisited;
@@ -26,7 +46,7 @@ namespace Glacier::PF4
     };
     RE_VERIFY_SIZE(ZOpenNode, 0x18); // Confirmed
 
-    struct ZOpenNodeList 
+    struct ZOpenNodeList
     {
         ZNodeData* m_pNodeData;
         int m_iNodeCount;
@@ -36,15 +56,7 @@ namespace Glacier::PF4
     };
     RE_VERIFY_SIZE(ZOpenNodeList, 0x5DD0); // Confirmed
 
-    struct ZBlockAlocator
-    {
-        ZDataRef* m_Data;
-        short* m_Stack;
-        int m_BlockSize;
-        int m_MaxBlocks;
-        int m_Count;
-    };
-    RE_VERIFY_SIZE(ZBlockAlocator, 0x14); // Confirmed
+
 
     struct ZVertex
     {
@@ -68,7 +80,7 @@ namespace Glacier::PF4
     };
     RE_VERIFY_SIZE(ZNode, 0x28);
 
-    struct ZLink 
+    struct ZLink
     {
         int16_t m_fCost;
         ZIndex m_iNode;
@@ -80,7 +92,7 @@ namespace Glacier::PF4
     };
     RE_VERIFY_SIZE(ZLink, 0x10);
 
-    struct ZComponent 
+    struct ZComponent
     {
         uint8_t m_Corners;
         uint8_t m_SubNodes;
@@ -95,7 +107,7 @@ namespace Glacier::PF4
     };
     RE_VERIFY_SIZE(ZComponent, 0x14);
 
-    struct ZPlaneEquation 
+    struct ZPlaneEquation
     {
         float m_fA;
         float m_fB;
@@ -103,8 +115,17 @@ namespace Glacier::PF4
     };
     RE_VERIFY_SIZE(ZPlaneEquation, 0xC); // Confirmed
 
-    struct ZData : public ZInterface
+    class ZData : public ZInterface
     {
+    public:
+        // vtbl
+        // methods
+
+        void GetIndex(void*& pBuffer, ZIndex& index);
+        void GetIndex(void*& pBuffer, ZUIndex& index);
+        void* GetArray(void*& pBuffer, int lLength);
+
+        // members
         ZGraph*           m_pGraphs;
         ZNode*            m_pNodes;
         ZVertex*          m_pVertices;
@@ -118,7 +139,6 @@ namespace Glacier::PF4
         ZSubNode*         m_pSubNodes;
         ZIndex*           m_pStaticObstacleIds;
         ZStaticObstacle*  m_pStaticObstacles;
-
         ZIndex            m_iSplitTreeCount;
         ZIndex            m_iHeightTreeCount;
         ZIndex            m_iPlaneEquationCount;
@@ -143,4 +163,5 @@ namespace Glacier::PF4
         ZDataRef*         m_DataRefs;
         ZBlockAlocator    m_Allocator[3];
     };
+    RE_VERIFY_SIZE(ZData, 0x5E80); // PC alloc verified
 }

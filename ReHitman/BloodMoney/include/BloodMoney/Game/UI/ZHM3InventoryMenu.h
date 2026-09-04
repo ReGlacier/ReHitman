@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Glacier/GUI/ZNavigator.h>
+#include <Glacier/GUI/XMLInterface/Elements/ZNavigator.h>
 
 namespace Hitman::BloodMoney
 {

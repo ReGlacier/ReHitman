@@ -23,6 +23,9 @@
 #include <Glacier/Data/ZEngineDataBase.h>
 #include <Glacier/ZSTL/CListUser.h>
 #include <Glacier/System/ZSysInterface.h>
+#include <Glacier/GUI/ZWINOBJ.h>
+#include <Glacier/GUI/ZCHAROBJ.h>
+#include <Glacier/GUI/ZWINGROUP.h>
 #include <Glacier/Render/Entry/ZRenderEntry.h>
 #include <Glacier/Render/Draw/ZRenderDraw.h>
 #include <Glacier/Render/Prim/ZPrimControlBase.h>
@@ -2772,4 +2775,7 @@ void ZBaseGeom::RemoveDynamicParent()
     template bool ZBaseGeom::IsDerivedFrom<ZGROUP>() const;
     template bool ZBaseGeom::IsDerivedFrom<ZLIGHT>() const;
     template bool ZBaseGeom::IsDerivedFrom<ZLNKOBJ>() const;
+    template bool ZBaseGeom::IsDerivedFrom<ZWINOBJ>() const;
+    template bool ZBaseGeom::IsDerivedFrom<ZCHAROBJ>() const;
+    template bool ZBaseGeom::IsDerivedFrom<ZWINGROUP>() const;
 }

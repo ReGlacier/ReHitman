@@ -102,6 +102,7 @@ namespace Glacier
         uint8_t GetLoops() const { return m_lLoops; }
         void SetLooping(bool _enabled);
         bool IsLooping() const { return (m_lSoundFlags & 8) != 0; }
+        void SetActive(bool bActive) { if (bActive) m_lSoundFlags |= 0x40u; else m_lSoundFlags &= ~0x40u; }
         void SetCreateTime(TIMETYPE _time) { m_fCreateTime = _time; }
         TIMETYPE GetCreateTime() const { return m_fCreateTime; }
         void SetPoseData(char* _data) { m_pPoseData = _data; }
@@ -120,6 +121,7 @@ namespace Glacier
         void ClearBufferId() { m_lBufferId = -1; }
         bool BufferIdValid() const { return m_lBufferId >= 0; }
         void SetFadeOut(float _fInterval, float _fWait, float _destination);
+        void SetFadeIn(float _fInterval, float _fWait, float _destination);
         const SSound* GetPackedSound() const;
         const SWave* GetWave() const;
         void Update();

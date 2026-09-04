@@ -7,7 +7,7 @@
 
 namespace Glacier
 {
-    struct IView;
+    class IView;
 }
 
 namespace Hitman::BloodMoney

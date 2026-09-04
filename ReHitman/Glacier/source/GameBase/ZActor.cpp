@@ -1223,4 +1223,17 @@ namespace Glacier
         0x0080D1B0,
         0x0097BD60,
         0x0097BD64);
+
+    STATIC_CLASS_VAR_IMPL(ZActor, ZMessageResolver, m_msgPathResponse, 0x0097BD68, { "PathResponse" });
+    STATIC_CLASS_VAR_IMPL(ZActor, ZMessageResolver, m_msgCanPenetrate, 0x0097BD74, { "CanPenetrate" });
+    STATIC_CLASS_VAR_IMPL(ZActor, ZMessageResolver, m_msgPathRequest, 0x0097BD80, { "PATHREQUEST" });
+    STATIC_CLASS_VAR_IMPL(ZActor, ZMessageResolver, m_msgPathFinished, 0x0097BD8C, { "PATHFINISHED" });
+    STATIC_CLASS_VAR_IMPL(ZActor, ZMessageResolver, m_msgPathCanceled, 0x0097BD98, { "PATHCANCELED" });
+    STATIC_CLASS_VAR_IMPL(ZActor, ZMessageResolver, m_msgPathCanceledLockedDoor, 0x0097BDA4, { "PATHCANCELEDLOCKEDDOOR" });
+    STATIC_CLASS_VAR_IMPL(ZActor, ZMessageResolver, m_msgPathError, 0x0097BDB0, { "PATHERROR" });
+    STATIC_CLASS_VAR_IMPL(ZActor, ZMessageResolver, m_msgPathOpenDoor, 0x0097BDBC, { "PATHOPENDOOR" });
+    STATIC_CLASS_VAR_IMPL(ZActor, ZMessageResolver, m_msgEnterCamera, 0x0097BDC8, { "CAM_ENTERCAMERA" });
+    STATIC_CLASS_VAR_IMPL(ZActor, ZMessageResolver, m_msgPathNotify, 0x0097BDD4, { "PATHNOTIFY" });
+    STATIC_CLASS_VAR_IMPL(ZActor, ZMessageResolver, m_msgEnterView, 0x0097BDE0, { "EnterView" });
+    STATIC_CLASS_VAR_IMPL(ZActor, ZMessageResolver, m_msgLeaveView, 0x0097BDEC, { "LeaveView" });
 }

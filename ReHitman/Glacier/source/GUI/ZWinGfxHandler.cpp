@@ -1,9 +1,9 @@
 #include <Glacier/GUI/ZWinGfxHandler.h>
-#include <Glacier/GUI/ZBUTTON.h>
+#include <Glacier/GUI/Control/ZBUTTON.h>
 #include <Glacier/GUI/ZCHAROBJ.h>
-#include <Glacier/GUI/ZCONTROL.h>
-#include <Glacier/GUI/ZFONT.h>
-#include <Glacier/GUI/ZFRAME.h>
+#include <Glacier/GUI/Control/ZCONTROL.h>
+#include <Glacier/GUI/Font/ZFONT.h>
+#include <Glacier/GUI/Frame/ZFRAME.h>
 #include <Glacier/GUI/ZLINEOBJ.h>
 #include <Glacier/System/ZSysInterface.h>
 

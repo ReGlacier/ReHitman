@@ -3,6 +3,7 @@
 #include <Glacier/Audio/ZSoundObject.h>
 #include <Glacier/Audio/ZDllSound.h>
 #include <Glacier/Audio/ZSDOwner.h>
+#include <Glacier/Geom/ZGEOM.h>
 
 
 namespace Glacier
@@ -47,19 +48,123 @@ namespace Glacier
         AllowSounds();
     }
 
-    void ZSDOwner::PlaySound(int _enumIndex)
+    ZSoundObject* ZSDOwner::PlaySound(int _enumIndex)
     {
-        // TODO: Finish me
+        auto* pSoundDll = g_pSysInterface->GetSoundDll();
+        if (!pSoundDll)
+            return nullptr;
+
+        const TIMETYPE tt = m_Time_AllowedToPlay;
+        if (IsEnsuringOneChannel() && g_pSysInterface->GetRealTime() < tt)
+            return nullptr;
+
+        if (!m_iSoundDefinitionIndex)
+            return nullptr;
+
+        const int32_t soundIndex = GetSoundFromEnumIndex(static_cast<uint8_t>(_enumIndex));
+        if (!soundIndex)
+            return nullptr;
+
+        const ZREF soundRef = pSoundDll->AddSound2d(soundIndex);
+        auto* pSoundObject = g_pEngineData->SRefToPtr(soundRef);
+        if (pSoundObject)
+        {
+            if (pSoundObject->m_fTimeLeft < 0.3f)
+                pSoundObject->m_fTimeLeft = 0.3f;
+            m_Time_AllowedToPlay = static_cast<float>(g_pSysInterface->GetRealTime()) + pSoundObject->m_fTimeLeft;
+        }
+        if (IsEnsuringOneChannel())
+            m_rLastPlayed = soundRef;
+
+        return pSoundObject;
     }
 
-    void ZSDOwner::PlaySoundNow(int _enumIndex, ZSoundObject* _pUseMe)
+    ZSoundObject* ZSDOwner::PlaySoundNow(int _enumIndex, ZSoundObject* _pUseMe)
     {
-        // TODO: Finish me
+        auto* pSoundDll = g_pSysInterface->GetSoundDll();
+        if (!pSoundDll)
+            return nullptr;
+
+        const TIMETYPE tt = m_Time_AllowedToPlay;
+        if (IsEnsuringOneChannel() && g_pSysInterface->GetRealTime() < tt)
+            return nullptr;
+
+        if (!m_iSoundDefinitionIndex)
+            return _pUseMe;
+
+        const int32_t soundIndex = GetSoundFromEnumIndex(static_cast<uint8_t>(_enumIndex));
+        if (!soundIndex)
+            return _pUseMe;
+
+        ZSoundObject* pSoundObject = _pUseMe;
+        if (pSoundObject)
+        {
+            pSoundObject->m_lOrigSound = soundIndex;
+
+            // TODO: Finish this place after ZSoundObject::Start will be reversed
+            // ZSoundObject::Start(pSoundObject);
+        }
+        else
+        {
+            const ZREF soundRef = pSoundDll->AddSound2d(soundIndex);
+            pSoundObject = g_pEngineData->SRefToPtr(soundRef);
+        }
+
+        if (pSoundObject)
+        {
+            if (pSoundObject->m_fTimeLeft < 0.3f)
+                pSoundObject->m_fTimeLeft = 0.3f;
+            m_Time_AllowedToPlay = static_cast<float>(g_pSysInterface->GetRealTime()) + pSoundObject->m_fTimeLeft;
+        }
+        if (IsEnsuringOneChannel())
+            m_rLastPlayed = pSoundObject ? g_pEngineData->SPtrToRef(pSoundObject) : 0;
+
+        return pSoundObject;
     }
 
-    void ZSDOwner::PlaySoundNow(int _enumIndex, ZGEOM* _locationGeom, ZSoundObject* _pUseMe)
+    ZSoundObject* ZSDOwner::PlaySoundNow(int _enumIndex, ZGEOM* _locationGeom, ZSoundObject* _pUseMe)
     {
-        // TODO: Finish me
+        auto* pSoundDll = g_pSysInterface->GetSoundDll();
+        if (!pSoundDll)
+            return nullptr;
+
+        const TIMETYPE tt = m_Time_AllowedToPlay;
+        if (IsEnsuringOneChannel() && g_pSysInterface->GetRealTime() < tt)
+            return nullptr;
+
+        if (!m_iSoundDefinitionIndex)
+            return _pUseMe;
+
+        const int32_t soundIndex = GetSoundFromEnumIndex(static_cast<uint8_t>(_enumIndex));
+        if (!soundIndex)
+            return _pUseMe;
+
+        if (_pUseMe)
+        {
+            _pUseMe->m_vLocalPos = _locationGeom->Pos();
+            _pUseMe->m_vLocalOrient = _locationGeom->Mat().data;
+            _pUseMe->m_lOrigSound = soundIndex;
+            _pUseMe->m_rParent = _locationGeom->GetRef();
+
+            // TODO: Finish this place after ZSoundObject::Start will be reversed
+            // ZSoundObject::Start(_pUseMe);
+        }
+        else
+        {
+            ZMat3x3 mat = _locationGeom->Mat();
+            ZVector3 pos = _locationGeom->Pos();
+            const ZREF soundRef = pSoundDll->AddSound3d(_locationGeom, soundIndex, mat.data, pos);
+            _pUseMe = g_pEngineData->SRefToPtr(soundRef);
+        }
+
+        if (!_pUseMe)
+            return nullptr;
+
+        const SWave* pWave = _pUseMe->GetWave();
+        const float fDuration = pWave ? pWave->m_fDuration : 0.0f;
+        m_Time_AllowedToPlay = static_cast<float>(g_pSysInterface->GetRealTime()) + fDuration;
+
+        return _pUseMe;
     }
 
     void ZSDOwner::AllowSounds()

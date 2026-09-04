@@ -25,4 +25,9 @@ namespace Glacier
 
 		return false;
 	}
+
+	int ZCAMERA::GetCameraCon() const
+	{
+	    return CameraCon;
+	}
 }

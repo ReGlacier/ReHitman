@@ -15,6 +15,8 @@ namespace Glacier
     struct ZGEOMREF
     {
         uint32_t m_Value{};
+
+        ZREF GetRef() const { return m_Value; }
     };
     RE_VERIFY_SIZE(ZGEOMREF, 0x4);
 

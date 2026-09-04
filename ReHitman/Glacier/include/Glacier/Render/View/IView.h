@@ -9,8 +9,9 @@
 
 namespace Glacier
 {
-    struct IView
+    class IView
     {
+    public:
         virtual ZRender* Render() = 0;
         virtual void Init() = 0;
         virtual void End() = 0;

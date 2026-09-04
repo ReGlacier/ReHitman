@@ -6,9 +6,14 @@
 #include <Glacier/Geom/ZSTDOBJ.h>
 #include <Glacier/Audio/ZSDOwner.h>
 
-namespace Hitman::BloodMoney
+
+namespace Glacier
 {
     class ZLINEOBJ;
+}
+
+namespace Hitman::BloodMoney
+{
 	class ZCheatMenu;
     class ZContainerMenu;
 
@@ -78,7 +83,7 @@ namespace Hitman::BloodMoney
         int m_field48;
         int m_field4C_REF;
         int m_field50_REF;
-        ZLINEOBJ* m_pSubtitles;
+        Glacier::ZLINEOBJ* m_pSubtitles;
         int m_field58;
         int m_field5C;
         int m_field60;

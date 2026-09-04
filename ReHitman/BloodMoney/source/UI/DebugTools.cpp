@@ -70,7 +70,7 @@
 #include <Glacier/Animation/ZRunMatPosAnim.h>
 #include <Glacier/SSplineMover.h>
 #include <Glacier/GUI/ZWINGROUP.h>
-#include <Glacier/GUI/ZCONTROL.h>
+#include <Glacier/GUI/Control/ZCONTROL.h>
 #include <Glacier/GameBase/CInventory.h>
 #include <Glacier/GameBase/ZPlayer.h>
 #include <Glacier/Geom/ZEngineGeomControl.h>

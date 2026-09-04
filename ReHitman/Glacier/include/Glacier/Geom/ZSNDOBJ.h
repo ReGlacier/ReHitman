@@ -5,6 +5,9 @@
 
 namespace Glacier
 {
+    // fwds
+    class ZSoundObject;
+
     class ZSNDOBJ : public ZSTDOBJ
     {
     public:
@@ -16,6 +19,7 @@ namespace Glacier
 
         // methods
         bool AttachToDefaultRoom(bool bOverride);
+        ZSoundObject* GetSoundObject();
 
         // data (total size is 0x1C, base size is 0x10)
         int m_AudioRef;

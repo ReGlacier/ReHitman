@@ -2,7 +2,7 @@
 
 #include <Glacier/ReGlacier.h>
 #include <Glacier/ZSTL/REFTAB.h>
-#include <Glacier/GUI/ZCONTROL.h>
+#include <Glacier/GUI/Control/ZCONTROL.h>
 #include <Glacier/Runtime/Macro.h>
 
 

@@ -19,7 +19,7 @@ namespace Glacier
     class ZGameData
     {
     public:
-        ZGameData();
+        // vtbl
         virtual ~ZGameData();
         virtual void LoadSave(ISerializerStream& stream, bool bSaving);
         virtual void Init();
@@ -53,6 +53,8 @@ namespace Glacier
         virtual bool IsInCutsequence();
         virtual const char* LoadGameFailureScene();
 
+        // methods
+        ZGameData();
         void SetTrackLinkObjectList(ZLIST* pList) { m_pTrackLinkObjectList = pList; }
         ZLIST* GetTrackLinkObjectList() const { return m_pTrackLinkObjectList; }
         void SetPlayer(ZPlayer* pPlayer, int32_t lIndex);
@@ -62,6 +64,7 @@ namespace Glacier
         void SetAudioEffectsInterface(ZSDOwner* pOwner) { m_pSoundDef_Effects = pOwner; }
         ZSDOwner& GetAudioEffectsInterface() const { return *m_pSoundDef_Effects; }
 
+        // members
         void* m_pkBoidSystem;
         ZStaticVector<ZActor*, 512> m_ActorsPool;
         ZLIST* m_pTrackLinkObjectList;

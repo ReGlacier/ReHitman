@@ -9,7 +9,8 @@
 namespace Glacier
 {
     // fwds
-	struct ZWINDOWS;
+	class ZWINDOWS;
+	class ZBaseGeom;
 
 	class ZWINGROUP : public ZGROUP
 	{

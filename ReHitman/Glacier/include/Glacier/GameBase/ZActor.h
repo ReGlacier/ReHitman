@@ -1,10 +1,11 @@
 #pragma once
 
+#include <Glacier/ReGlacier.h>
 #include <Glacier/GlacierFWD.h>
+#include <Glacier/ZMessageResolver.h>
 #include <Glacier/IK/ZLNKWHANDS.h>
 #include <Glacier/PF4/ZMetaNode.h>
 #include <Glacier/PF4/ZPath.h>
-#include <Glacier/ReGlacier.h>
 #include <Glacier/Runtime/Macro.h>
 #include <Glacier/ZSTL/ZMath.h>
 
@@ -138,6 +139,20 @@ namespace Glacier
     public:
         // RTTI
         DECLARE_GEOM_CLASS(ZActor, 0x2007D0u);
+
+        // Static
+        STATIC_CLASS_VAR(ZActor, ZMessageResolver, m_msgPathResponse);
+        STATIC_CLASS_VAR(ZActor, ZMessageResolver, m_msgCanPenetrate);
+        STATIC_CLASS_VAR(ZActor, ZMessageResolver, m_msgPathRequest);
+        STATIC_CLASS_VAR(ZActor, ZMessageResolver, m_msgPathFinished);
+        STATIC_CLASS_VAR(ZActor, ZMessageResolver, m_msgPathCanceled);
+        STATIC_CLASS_VAR(ZActor, ZMessageResolver, m_msgPathCanceledLockedDoor);
+        STATIC_CLASS_VAR(ZActor, ZMessageResolver, m_msgPathError);
+        STATIC_CLASS_VAR(ZActor, ZMessageResolver, m_msgPathOpenDoor);
+        STATIC_CLASS_VAR(ZActor, ZMessageResolver, m_msgEnterCamera);
+        STATIC_CLASS_VAR(ZActor, ZMessageResolver, m_msgPathNotify);
+        STATIC_CLASS_VAR(ZActor, ZMessageResolver, m_msgEnterView);
+        STATIC_CLASS_VAR(ZActor, ZMessageResolver, m_msgLeaveView);
 
         // types
         enum ACTORSTATE : int8_t

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Glacier/GUI/ZStandardMenuFactory.h>
+#include <Glacier/GUI/XMLInterface/System/ZStandardMenuFactory.h>
 
 namespace Hitman::BloodMoney
 {

@@ -1,4 +1,7 @@
 #include <Glacier/Geom/ZSNDOBJ.h>
+#include <Glacier/Audio/ZSoundObject.h>
+#include <Glacier/Data/ZEngineDataBase.h>
+#include <Glacier/System/ZSysInterface.h>
 #include <G1ConfigurationService.h>
 #include <cassert>
 
@@ -14,5 +17,10 @@ namespace Glacier
             return ((bool(__thiscall*)(ZSNDOBJ*,bool))(G1ConfigurationService::G1API_FunctionAddress_ZSNDOBJ_AttachToDefaultRoom))(this, bOverride);
         }
         return false;
+    }
+
+    ZSoundObject* ZSNDOBJ::GetSoundObject()
+    {
+        return g_pEngineData->SRefToPtr(m_rZSoundRef);
     }
 }
