@@ -27,7 +27,7 @@ namespace Glacier
         ZSimpleMenuItem *pItems;
     };
 
-    
+
     class ZStoredSimpleMenu
     {
     public:
@@ -50,19 +50,20 @@ namespace Glacier
         virtual void EnterMenu(ZSimpleMenu* pMenu);
         virtual void DrawAlways();
         virtual void Draw();
-        
+
         // methods
         ZSimpleDebugMenu();
         void CountMenuItems();
-        void CalcMenuSizeX();
-        void CalcMenuSizeY();
+        uint32_t CalcMenuSizeX() const;
+        uint32_t CalcMenuSizeY() const;
         bool KeyRepeatWait(bool bRepeat);
 
         // members
-        uint32_t m_iNumberItems;
-        bool m_bEditEnabled;
-        uint32_t m_lSelectedMenuItem;
-        ZSimpleMenu* m_pCurrentMenu;
-        ZStackArray<32, ZStoredSimpleMenu> m_LastMenu;
+        uint32_t m_iNumberItems; // +0x4
+        bool m_bEditEnabled; // +0x8
+        RE_ADD_PADDING(3);
+        uint32_t m_lSelectedMenuItem; // +0xC
+        ZSimpleMenu* m_pCurrentMenu; // +0x10
+        ZStackArray<32, ZStoredSimpleMenu> m_LastMenu; // +0x14
     };
 }

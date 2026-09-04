@@ -65,4 +65,13 @@ namespace Glacier
             if (!*w) return true;
         }
     }
+
+    int strcasecmp(const char* pszLhs, const char* pszRhs)
+    {
+#       ifdef _WIN32
+        return _stricmp(pszLhs, pszRhs);
+#       else
+        return StrCaseCmp(pszLhs, pszRhs);
+#       endif
+    }
 }

@@ -2,7 +2,6 @@
 
 #include <Glacier/ReGlacier.h>
 #include <Glacier/Render/Debug/ZDrawDebugObject.h>
-#include <cstdint>
 
 
 namespace Glacier

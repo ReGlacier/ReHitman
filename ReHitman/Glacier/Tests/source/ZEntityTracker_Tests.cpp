@@ -5,45 +5,6 @@
 
 using namespace Glacier;
 
-namespace Glacier::PF4
-{
-    ZInterface::~ZInterface() = default;
-    int ZInterface::MapNodeIdx(ZDataRef, float*, float*, EPathWayActions&, unsigned int&) { return 0; }
-    int ZInterface::GetMetaId() { return 0; }
-    void ZInterface::AddNode(ZMetaNode*, const ZLocation&) {}
-    void ZInterface::RemoveNode(ZMetaNode*) {}
-    void ZInterface::MoveNodeConstrained(ZMetaNode*, const float*) {}
-    void ZInterface::TeleportNode(ZMetaNode*, const float*) {}
-    int ZInterface::FindNodes(const ZLocation&, ZResult*, int, float, int) { return 0; }
-    void ZInterface::AddObstacle(ZDynamicObstacle*, const ZLocation&) {}
-    void ZInterface::RemoveObstacle(ZDynamicObstacle*) {}
-    void ZInterface::MoveObstacle(ZDynamicObstacle*, const ZLocation&) {}
-    void ZInterface::AddObstacle(ZDynamicObstacle*, const float*) {}
-    void ZInterface::MoveObstacle(ZDynamicObstacle*, const float*) {}
-    void ZInterface::PushOutOfObstacles(ZMetaNode*, int, float*) {}
-    bool ZInterface::HasObstacles() { return false; }
-    bool ZInterface::FindPath(ZPathRequest*) { return false; }
-    void ZInterface::FreePath(ZPath*) {}
-    bool ZInterface::AllocateBufferPath(const ZPath&, ZPath*) { return false; }
-    float ZInterface::FindPathLength(ZPathRequest*) { return 0.0f; }
-    bool ZInterface::PositionInside(const float*) { return false; }
-    bool ZInterface::MapLocation(const float*, ZLocation&) { return false; }
-    bool ZInterface::MapValidLocation(const float*, ZLocation&) { return false; }
-    bool ZInterface::MapInside(const ZLocation&, ZLocation&, bool) { return false; }
-    float ZInterface::ComponentHeight(int, float, float) { return 0.0f; }
-    bool ZInterface::MapOntoComponent(const ZLocation&, ZLocation&) { return false; }
-    int ZInterface::FindComponents(const ZLocation&, int*, int, float) { return 0; }
-    int ZInterface::CloseExit(float*) { return 0; }
-    int ZInterface::CloseLinks(float*, float*, unsigned int) { return 0; }
-    int ZInterface::OpenLinks(float*, float*, unsigned int) { return 0; }
-    int ZInterface::GraphCount() { return 0; }
-    void ZInterface::FindCornersInGraph(int, int&, float*) {}
-    float ZInterface::FindWallIntersection(const ZLocation&, const float*, float, void*, float*, void*, ZLocation&, bool, bool) { return 0.0f; }
-    int ZInterface::FindWalls(const ZLocation&, float, float*) { return 0; }
-    int ZInterface::FindObstacles(const ZLocation&, ZDynamicObstacle**, int) { return 0; }
-    void ZInterface::RemapDoorRefs(unsigned int*, unsigned int) {}
-}
-
 namespace
 {
     struct RawMetaNode
@@ -85,12 +46,12 @@ namespace
             LastAddedInside = location.Inside();
         }
         void RemoveNode(PF4::ZMetaNode* node) override { LastRemovedNode = node; }
-        void MoveNodeConstrained(PF4::ZMetaNode* node, const float* position) override
+        void MoveNodeConstrained(PF4::ZMetaNode* pNode, const ZVector3& vPos) override
         {
-            LastMovedNode = node;
-            LastMovedPosition = position;
+            LastMovedNode = pNode;
+            LastMovedPosition = vPos;
         }
-        void TeleportNode(PF4::ZMetaNode*, const float*) override {}
+        void TeleportNode(PF4::ZMetaNode* pNode, const ZVector3& vPos) override {}
         int FindNodes(const PF4::ZLocation& source, PF4::ZInterface::ZResult* output, int maxEntities, float maxDistance, int type) override
         {
             LastFindSource = &source;
@@ -103,32 +64,40 @@ namespace
         void AddObstacle(PF4::ZDynamicObstacle*, const PF4::ZLocation&) override {}
         void RemoveObstacle(PF4::ZDynamicObstacle*) override {}
         void MoveObstacle(PF4::ZDynamicObstacle*, const PF4::ZLocation&) override {}
-        void AddObstacle(PF4::ZDynamicObstacle*, const float*) override {}
-        void MoveObstacle(PF4::ZDynamicObstacle*, const float*) override {}
-        void PushOutOfObstacles(PF4::ZMetaNode*, int, float*) override {}
+        void AddObstacle(PF4::ZDynamicObstacle* pObstacle2, const ZVector3& vPos) override {}
+        void MoveObstacle(PF4::ZDynamicObstacle*, const ZVector3&) override {}
+        void PushOutOfObstacles(PF4::ZMetaNode*, int, const ZVector3&) override {}
         bool HasObstacles() override { return false; }
         bool FindPath(PF4::ZPathRequest*) override { return false; }
         void FreePath(PF4::ZPath*) override {}
         bool AllocateBufferPath(const PF4::ZPath&, PF4::ZPath*) override { return false; }
         float FindPathLength(PF4::ZPathRequest*) override { return 0.0f; }
-        bool PositionInside(const float*) override { return false; }
-        bool MapLocation(const float* position, PF4::ZLocation& location) override
+        bool PositionInside(const ZVector3&) override { return false; }
+        bool MapLocation(const ZVector3& position, PF4::ZLocation& location) override
         {
             LastMappedPosition = position;
-            location.Set(ZVector3(position), 2, 3, true);
+            location.Set(position, 2, 3, true);
             return true;
         }
-        bool MapValidLocation(const float*, PF4::ZLocation&) override { return false; }
+        bool MapValidLocation(const ZVector3& position, PF4::ZLocation&) override { return false; }
         bool MapInside(const PF4::ZLocation&, PF4::ZLocation&, bool) override { return false; }
         float ComponentHeight(int, float, float) override { return 0.0f; }
         bool MapOntoComponent(const PF4::ZLocation&, PF4::ZLocation&) override { return false; }
         int FindComponents(const PF4::ZLocation&, int*, int, float) override { return 0; }
         int CloseExit(float*) override { return 0; }
-        int CloseLinks(float*, float*, unsigned int) override { return 0; }
-        int OpenLinks(float*, float*, unsigned int) override { return 0; }
+        int CloseLinks(const ZVector3& vMin, const ZVector3& vMax, uint32_t) override { return 0; }
+        int OpenLinks(const ZVector3& vMin, const ZVector3& vMax, uint32_t) override { return 0; }
         int GraphCount() override { return 0; }
         void FindCornersInGraph(int, int&, float*) override {}
-        float FindWallIntersection(const PF4::ZLocation&, const float*, float, void*, float*, void*, PF4::ZLocation&, bool, bool) override { return 0.0f; }
+        float FindWallIntersection(const PF4::ZLocation& kLoc,
+        const ZVector3& vEndPoint,
+        float fMaxDistance,
+        const ZVector3&,
+        ZVector3&,
+        bool& bHitWall,
+        PF4::ZLocation& endLocation,
+        bool bReportDoorsAsWalls,
+        bool bIgnoreObstacles) override { return 0.0f; }
         int FindWalls(const PF4::ZLocation&, float, float*) override { return 0; }
         int FindObstacles(const PF4::ZLocation&, PF4::ZDynamicObstacle**, int) override { return 0; }
         void RemapDoorRefs(unsigned int*, unsigned int) override {}

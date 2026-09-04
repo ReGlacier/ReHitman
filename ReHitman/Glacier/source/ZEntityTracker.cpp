@@ -19,7 +19,7 @@ namespace Glacier
         pEntity->m_Type = m_ActorTypeId;
 
         PF4::ZLocation location {};
-        m_PathFinder->MapLocation(vPos.Get(), location);
+        m_PathFinder->MapLocation(vPos, location);
         m_PathFinder->AddNode(pEntity, location);
     }
 
@@ -28,7 +28,7 @@ namespace Glacier
         pEntity->m_Type = m_HeroTypeId;
 
         PF4::ZLocation location {};
-        m_PathFinder->MapLocation(vPos.Get(), location);
+        m_PathFinder->MapLocation(vPos, location);
         m_PathFinder->AddNode(pEntity, location);
     }
 
@@ -37,7 +37,7 @@ namespace Glacier
         pEntity->m_Type = m_ReservedPointId;
 
         PF4::ZLocation location {};
-        m_PathFinder->MapLocation(vPos.Get(), location);
+        m_PathFinder->MapLocation(vPos, location);
         m_PathFinder->AddNode(pEntity, location);
     }
     
@@ -68,7 +68,7 @@ namespace Glacier
 
     void ZEntityTracker::Move(PF4::ZMetaNode& node, const ZVector3& vPos)
     {
-        m_PathFinder->MoveNodeConstrained(&node, vPos.Get());
+        m_PathFinder->MoveNodeConstrained(&node, vPos);
     }
 
     void ZEntityTracker::Remove(PF4::ZMetaNode& node)

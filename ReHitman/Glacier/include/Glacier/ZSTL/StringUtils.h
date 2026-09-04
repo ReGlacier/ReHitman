@@ -6,4 +6,5 @@
 namespace Glacier
 {
     uint32_t striwcmp(const char* str, const char* wildcard);
+    int strcasecmp(const char* pszLhs, const char* pszRhs);
 }

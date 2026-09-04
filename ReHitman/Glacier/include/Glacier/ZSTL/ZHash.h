@@ -2,6 +2,7 @@
 
 #include <Glacier/ReGlacier.h>
 #include <Glacier/ZUniMemory.h>
+#include <Glacier/ZSTL/MYSTR.h>
 #include <cstdint>
 #include <cstring>
 #include <type_traits>
@@ -653,4 +654,7 @@ namespace Glacier
     {
         return std::strcmp(*pKey1, *pKey2) == 0;
     }
+
+    template <typename T>
+    using ZStrHash = ZHash<MYSTR, T>;
 }

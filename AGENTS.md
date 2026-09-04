@@ -2,8 +2,11 @@
 
 - Do not change class layouts or vtables while reversing existing Glacier classes.
 - Prefer the smallest correct implementation that matches the PC decompile and current project types.
-- If decompiled code references an entity that is not reversed yet, do not invent stubs or new layout. Leave a TODO at the call site.
-- TODO format: `// TODO: Finish this place after {ClassName} will be reversed`.
+- **Check before leaving TODOs:** Before marking a class or entity as missing, search the repository to confirm whether it is already reversed or available under another header.
+- **Handling unreversed entities:**
+  - If a required entity is completely missing from the codebase, search the local codebase first, then leave a TODO at the call site rather than inventing a layout or stub.
+  - **TODO format:** `// TODO: Finish me` with an optional reason, for example `// TODO: Finish me after ZMissingClass reversed`.
+  - If the entity already exists, call its available methods or fields. If a member is missing, update that class first where possible; otherwise use `// TODO: Finish me after ClassName::MemberName reversed`.
 - When useful, include the expected decompiled call as commented example code below the TODO.
 - Do not hardcode source file string literals or line numbers for replay/debug call-site arguments. Use `__FILE__` and `__LINE__`.
 - Use `ZASSERT(false)` instead of `__debugbreak()` or `DebugBreak()` in project code.
@@ -14,4 +17,5 @@
 - In Glacier code, do not use the host C++ Standard Library containers or strings for reversed engine data. The original game used STLport 4.6.1; when decompiled code mentions `std::map`, `std::vector`, `std::string`, `std::set`, or similar STL entities, use the STLport target and write them as `stlp::map`, `stlp::vector`, `stlp::string`, `stlp::set`, etc.
 - Connect STLport through the CMake target named `stlport`. Do not add ad-hoc include paths to `STLport-4.6.1/stlport`; link the target instead so the configured `stlp` namespace and compatibility defines are applied.
 - Prefer `stlp::` explicitly in Glacier headers and sources for original STL containers. Do not alias `stlp` to `std`, and do not use host `std::` containers in binary-compatible Glacier layouts.
+- Never use ordinary `new`, `new[]`, `delete`, or `delete[]` in project code. Use `ZUniMemory::Allocate`/`ZUniMemory::Free` instead; placement-new construction through the project's placement-new mechanism is the only exception.
 - Never use `goto` in project code. Rewrite decompiled control flow that relies on `goto` with structured constructs (loops, `break`/`continue`, early `return`, or small helpers) while preserving the original semantics.

@@ -107,6 +107,12 @@ namespace Glacier::PF4
     };
     RE_VERIFY_SIZE(ZComponent, 0x14);
 
+    struct ZPathLink
+    {
+        ZVector3 m_Pos;
+        int m_Action;
+    };
+
     struct ZPlaneEquation
     {
         float m_fA;
@@ -119,11 +125,70 @@ namespace Glacier::PF4
     {
     public:
         // vtbl
-        // methods
+        ~ZData() override;
+        int MapNodeIdx(ZDataRef rRef, float*, float*, EPathWayActions&, unsigned int&) override;
+        int GetMetaId() override;
+        void AddNode(ZMetaNode* pNode, const ZLocation& kLocation) override;
+        void RemoveNode(ZMetaNode* pNode) override;
+        void MoveNodeConstrained(ZMetaNode* pNode, const ZVector3& vPos) override;
+        void TeleportNode(ZMetaNode* pNode, const ZVector3& vPos) override;
+        int FindNodes(const ZLocation& kSource, ZResult* pList, int iMaxEntities, float fMaxDistance, int type) override;
+        void AddObstacle(ZDynamicObstacle* pObstacle2, const ZLocation& kLocation) override;
+        void RemoveObstacle(ZDynamicObstacle* pObstacle2) override;
+        void MoveObstacle(ZDynamicObstacle* pObstacle2, const ZLocation& kPos) override;
+        void AddObstacle(ZDynamicObstacle* pObstacle2, const ZVector3& vPos) override;
+        void MoveObstacle(ZDynamicObstacle* pObstacle2, const ZVector3& vPos) override;
+        void PushOutOfObstacles(ZMetaNode* pNode, int iObstacleTypeMask, const ZVector3& vPos) override;
+        bool HasObstacles() override;
+        bool FindPath(ZPathRequest* pRequest) override;
+        void FreePath(ZPath* pPath) override;
+        bool AllocateBufferPath(const ZPath& sPath, ZPath* pResult) override;
+        float FindPathLength(ZPathRequest* pRequest) override;
+        bool PositionInside(const ZVector3& vPos) override;
+        bool MapLocation(const ZVector3& vPos, ZLocation& kLocation) override;
+        bool MapValidLocation(const ZVector3& vPos, ZLocation& kLocation) override;
+        bool MapInside(const ZLocation& kSource, ZLocation& kNewTarget, bool bUseObstacle) override;
+        float ComponentHeight(int iComponent, float x, float z) override;
+        bool MapOntoComponent(const ZLocation& kSource, ZLocation& kTarget) override;
+        int FindComponents(const ZLocation& kSource, int* pList, int iMax, float fMaxDistance) override;
+        int CloseExit(float*) override;
+        int CloseLinks(const ZVector3& vMin, const ZVector3& vMax, uint32_t lNewKeyMask) override;
+        int OpenLinks(const ZVector3& vMin, const ZVector3& vMax, uint32_t lNewKeyMask) override;
+        int GraphCount() override;
+        void FindCornersInGraph(int, int&, float*) override;
+        float FindWallIntersection(
+            const ZLocation& kLoc,
+            const ZVector3& vEndPoint,
+            float fMaxDistance,
+            const ZVector3&,
+            ZVector3&,
+            bool& bHitWall,
+            ZLocation& endLocation,
+            bool bReportDoorsAsWalls,
+            bool bIgnoreObstacles) override;
+        int FindWalls(const ZLocation& kSource, float fMaxDistance, float* pWall) override;
+        int FindObstacles(const ZLocation& kLocation, ZDynamicObstacle** obstacles2, int max) override;
+        void RemapDoorRefs(ZREF* pRefs, uint32_t lRefsNr) override;
 
-        void GetIndex(void*& pBuffer, ZIndex& index);
-        void GetIndex(void*& pBuffer, ZUIndex& index);
-        void* GetArray(void*& pBuffer, int lLength);
+        // methods
+        bool FindPath(const ZLocation&, const ZLocation&, ZPath&, ZPathLink*, int&, bool, unsigned int);
+        void AssignGraph(ZLocation&);
+        bool GetGraphAndComponent(const float*, ZIndex&, ZIndex&);
+        bool GetClosestGraphAndComponent(const float*, float*, ZIndex&, ZIndex&, bool);
+        int FindComponentPathAStar(const ZLocation&, const ZLocation&, ZPath&, ZPathLink*, unsigned int);
+        int TraceExit(int, int, int, int*);
+        int StraightenGates(const float*, const float*, int*, int, ZPathLink*, ZPath&);
+
+        void GetIndex(void*& pBuffer, ZIndex& index) const;
+        void GetIndex(void*& pBuffer, ZUIndex& index) const;
+        void* GetArray(void*& pBuffer, int lLength) const;
+        int SplitTreeCount() const;
+        int HeightTreeCount() const;
+        int PlaneEquationCount() const;
+        int ComponentCount() const;
+        int NodeCount() const;
+        int VertexCount() const;
+        int LinkCount() const;
 
         // members
         ZGraph*           m_pGraphs;

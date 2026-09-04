@@ -1,4 +1,5 @@
 #include <Glacier/Render/Debug/ZRenderDebugMenu.h>
+#include <Glacier/Render/Debug/Globals.h>
 
 
 namespace Glacier
@@ -23,7 +24,7 @@ namespace Glacier
 
         void ToggleCameraMode(void* ptr) { reinterpret_cast<ZRenderDebugMenu*>(ptr)->ToggleCameraMode(); }
         void ToggleDrawMode(void* ptr) { reinterpret_cast<ZRenderDebugMenu*>(ptr)->ToggleDrawMode(); }
-        
+
         void ToggleMipCoverageMode(void* ptr)
         {
             // TODO: Finish me
@@ -51,10 +52,19 @@ namespace Glacier
 
         void ToggleConCmdMode(void* ptr)
         {
-            // TODO: Finish me
+            if (g_bConCmdDisplayEnabled)
+            {
+                g_bConCmdDisplayEnabled = false;
+                // TODO: Finish me
+            }
+            else
+            {
+                // TODO: Finish me
+                g_bConCmdDisplayEnabled = true;
+            }
         }
 
-        ZMenuItem RenderDebugMenu_Items[9] {
+        ZMenuItem RenderDebugItems[9] {
             {
                 .pText = nullptr,
                 .pCallback = ToggleCameraMode,
@@ -90,13 +100,13 @@ namespace Glacier
             }
         };
 
-        ZMenu RenderDebugMenu 
+        ZMenu RenderDebugMenu
         {
             .pEnterMenuCallback = nullptr,
             .pLeaveMenuCallback = nullptr,
             .pMoveLeftCallback = nullptr,
             .pMoveRightCallback = nullptr,
-            .m_pItems = RenderDebugMenu_Items,
+            .m_pItems = RenderDebugItems,
             .m_lLastSelectedMenuItem = 0
         };
     }

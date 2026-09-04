@@ -103,7 +103,7 @@ namespace Glacier
         void xVertex2v(const float* v);
         void xDrawText(const float* m, const float* v, const float* s, const char* pszText, uint32_t lTextLength, uint32_t lColor, int8_t lAlignFlags);
         void xDrawText(const ZVector3& v, const char* pszText, uint32_t lColor, int8_t lAlignFlags);
-        
+
         void SetOrtho(const float* v);
         void TransformWorldToView(float* vOut, const float* vIn);
         void TransformViewToWorld(float* vOut, const float* vIn);
@@ -127,6 +127,8 @@ namespace Glacier
         void DrawAxis(const ZVector3& vStart, const ZVector3& vDir, float fScale, uint32_t lColor);
         void DrawCapsule(const ZVector3& p0, const ZVector3& p1, float fRadius, uint32_t lColor);
         void DrawMatrix(ZMat3x3& m, const ZVector3& v, int8_t lAxisMask);
+
+        SViewport Viewport() const { return m_Viewport; }
 
         // members
         const IView* m_pIView;
