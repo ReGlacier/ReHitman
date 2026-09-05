@@ -7,4 +7,6 @@ namespace Glacier {
         WO_FULLAUTO = 4,
         WO_FULLAUTO3 = 8
     };
+
+    using WEAPONOPERATION = EWeaponOperation;
 }

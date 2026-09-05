@@ -1,6 +1,6 @@
 #include <BloodMoney/Patches/All/FreeFileSystemPatch.h>
 #include <BloodMoney/FreeFS/HBMFreeFsProxy.h>
-#include <Glacier/FsZip_t.h>
+#include <Glacier/Filesystem/FsZip_t.h>
 #include <spdlog/spdlog.h>
 
 namespace Hitman::BloodMoney {

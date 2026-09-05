@@ -1,14 +1,21 @@
 #pragma once
 
+#include <Glacier/ReGlacier.h>
 #include <Glacier/ZSTL/ZMath.h>
 #include <Glacier/GlacierFWD.h>
 #include <Glacier/Geom/ZSTDOBJ.h>
-#include <Glacier/ZSDOwner.h>
+#include <Glacier/Audio/ZSDOwner.h>
+
+
+namespace Glacier
+{
+    class ZLINEOBJ;
+}
 
 namespace Hitman::BloodMoney
 {
-    class ZLINEOBJ;
 	class ZCheatMenu;
+    class ZContainerMenu;
 
     class ZOSD : public Glacier::ZSTDOBJ
     {
@@ -41,24 +48,24 @@ namespace Hitman::BloodMoney
         void AddHint(const char* message, bool a2, bool shouldPlayNotificationSound, int osdElement, bool a6, const char* tutorialId);
 
         //data (total size is 0x8FC, base size is 0x10)
-        char m_field10;
-        char field_11;
-        char field_12;
-        char field_13;
-        char m_field14;
-        char field_15;
-        char field_16;
-        char field_17;
-        char m_field18;
-        char field_19;
-        char m_bShowWeaponDisplay;
-        char field_1B;
-        char m_field1C;
-        char field_1D;
-        char m_bDrawActionMenu;
-        char field_1F;
-        char m_field20;
-        char field_21;
+        char m_field10; //+0x10
+        char field_11; //+0x11
+        char field_12; //+0x12
+        char field_13; //+0x13
+        char m_field14; //+0x14
+        char field_15; //+0x15
+        char field_16; //+0x16
+        char field_17; //+0x17
+        char m_field18; //+0x18
+        char field_19; //+0x19
+        char m_bShowWeaponDisplay; //+0x1A
+        char field_1B; //+0x1B
+        char m_field1C; //+0x1C
+        char field_1D; //+0x1D
+        char m_bDrawActionMenu; //+0x1E
+        char m_bDrawContainerMenu; //+0x1F
+        char m_bForceHideCrosshair; //+0x20
+        char field_21; //+0x21
         char field_22;
         char field_23;
         int m_field24;
@@ -76,7 +83,7 @@ namespace Hitman::BloodMoney
         int m_field48;
         int m_field4C_REF;
         int m_field50_REF;
-        ZLINEOBJ* m_pSubtitles;
+        Glacier::ZLINEOBJ* m_pSubtitles;
         int m_field58;
         int m_field5C;
         int m_field60;
@@ -103,12 +110,17 @@ namespace Hitman::BloodMoney
         char field_A2;
         char field_A3;
         int m_fieldA4;
-        Glacier::ZVector3 m_vInfoDisplayPosition;
-        int m_rInfoDisplay;
-        int m_pInfoDisplay;
-        float m_fHitpoints;
-        int m_fieldC0_REF;
-        int m_pHealthFrame;
+
+#pragma region "Info & Health bars"
+        // ******** Info & Health ********
+        Glacier::ZVector3 m_pInfoPos;
+        uint32_t m_rInfoDisplay;
+        class ZInfoDisplay* m_pInfoDisplay;
+        float m_fCurrentHitpointsFactor;
+        uint32_t m_rHealthFrame;
+        class ZWINPIC* m_pHealthFrame;
+#pragma endregion
+
         int m_fieldC8_REF;
         int m_fieldCC;
         int m_fieldD0_REF;
@@ -162,30 +174,43 @@ namespace Hitman::BloodMoney
         int m_field190;
         int m_field194;
         int m_field198;
-        int m_field19C;
-        int m_field1A0;
-        int m_field1A4;
-        int m_rCheatMenu;
-	    ZCheatMenu* m_pCheatMenu;
-        int m_vPickupMenuPosition;
-        int m_field1B4;
-        int m_field1B8;
-        int m_rPickupMenu;
-        int m_pPickupMenu;
-        Glacier::ZVector3 m_vDropDisplayPosition;
-        int m_rDropDisplay;
-        int m_pDropDisplay;
-        int m_vActionDisplayPosition;
-        int m_field1DC;
-        int m_field1E0;
-        int m_rActionMenu;
-        int m_pActionDisplay;
-        int m_field1EC;
-        int m_field1F0;
-        int m_field1F4;
-        int m_rContainerMenu;
-        int m_pContainerMenu;
-        Glacier::ZSDOwner m_sdOwner;
+
+#pragma region "Cheats"
+        // ********* Cheats *********
+        Glacier::ZVector3 m_pCheatsPos;
+        uint32_t m_rCheatsMenu;
+	    ZCheatMenu* m_pCheatsMenu;
+#pragma endregion
+
+#pragma region "Pickup menu"
+        // ********* Pickup Menu *********
+        Glacier::ZVector3 m_pPickupMenuPos;
+        uint32_t m_rPickupMenu;
+        class ZPickupMenu* m_pPickupMenu;
+#pragma endregion
+
+#pragma region "Drop menu"
+        // ********* Drop Menu *********
+        Glacier::ZVector3 m_pDropDisplayPos;
+        uint32_t m_rDropDisplay;
+        class ZDropDisplay* m_pDropDisplay;
+#pragma endregion
+
+#pragma region "Action menu"
+        // ********* Action Menu *********
+        Glacier::ZVector3 m_pActionMenuPos;
+        uint32_t m_rActionMenu;
+        class ZActionMenu* m_pActionMenu;
+#pragma endregion
+
+#pragma region "Container menu"
+        // ********* Container Menu *********
+        Glacier::ZVector3 m_pContainerMenuPos;
+        uint32_t m_rContainerMenu;
+        ZContainerMenu* m_pContainerMenu;
+#pragma endregion
+
+        Glacier::ZSDOwner m_SoundDef;
         int m_field210;
         int m_field214;
         int m_field218;
@@ -633,4 +658,5 @@ namespace Hitman::BloodMoney
         char field_8FA;
         char field_8FB;
     };
+    RE_VERIFY_SIZE(ZOSD, 0x8FC); // Verified
 }

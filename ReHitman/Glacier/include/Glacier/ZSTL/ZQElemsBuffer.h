@@ -1,19 +1,21 @@
 #pragma once
 
+#include <Glacier/ReGlacier.h>
+#include <Glacier/ZSTL/ZQStaticMemBlock.h>
+#include <cstdint>
+
+
 namespace Glacier
 {
 
-    class ZQElemsBuffer
+    class ZQElemsBuffer : public ZQStaticMemBlock
     {
     public:
-        // data
-        int m_field4;
-        int m_field8;
-        int m_fieldC;
-        int m_field10;
-        int m_field14;
+        using ZQStaticMemBlock::ZQStaticMemBlock;
 
-        // vftable
-        virtual void Release();
+        void* Add(uint32_t lSize, bool bLargeUseHigh);
+        void Remove(int lOffset, uint32_t lSize);
+        void Remove(void* pMemory, uint32_t lSize);
     };
+    RE_VERIFY_SIZE(ZQElemsBuffer, 0x18);
 }

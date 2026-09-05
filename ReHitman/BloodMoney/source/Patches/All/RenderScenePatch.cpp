@@ -1,12 +1,13 @@
 #include <BloodMoney/Patches/All/RenderScenePatch.h>
 #include <BloodMoney/Game/Globals.h>
-#include <Glacier/ZEngineDataBase.h>
-#include <Glacier/ZSysInterfaceWintel.h>
+#include <Glacier/Data/ZEngineDataBase.h>
+#include <Glacier/System/ZSysInterfaceWintel.h>
 #include <Glacier/Geom/ZGROUP.h>
 #include <Glacier/Geom/ZGEOM.h>
-#include <Glacier/Geom/ZEntityLocator.h>
-#include <Glacier/ZRenderEntry.h>
-#include <Glacier/ZCAMERA.h>
+#include <Glacier/Geom/ZBaseGeom.h>
+#include <Glacier/Render/Fwd.h>
+#include <Glacier/Render/Entry/ZRenderEntry.h>
+#include <Glacier/Geom/ZCAMERA.h>
 #include <spdlog/spdlog.h>
 
 
@@ -24,12 +25,12 @@ namespace Hitman::BloodMoney {
                 return;
             }
 
-            Glacier::ZEntityLocator* pEntityLocator = pRenderEntry->GetEntityLocator();
-            if (!pEntityLocator) {
+            Glacier::ZBaseGeom* pBaseGeom = pRenderEntry->GetBaseGeom();
+            if (!pBaseGeom) {
                 return;
             }
 
-            auto pGeom = reinterpret_cast<Glacier::ZGEOM*>(pEntityLocator->m_assignedTo);
+            auto pGeom = pBaseGeom->m_pExtraGeom;
             if (!pGeom) {
                 return;
             }

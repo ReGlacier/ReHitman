@@ -1,21 +1,32 @@
 #pragma once
 
+#include <Glacier/ReGlacier.h>
 #include <Glacier/Geom/ZSTDOBJ.h>
 
 namespace Glacier
 {
+    // fwds
+    class ZSoundObject;
+
     class ZSNDOBJ : public ZSTDOBJ
     {
     public:
-        // vftable
-        virtual void ModifyGeomCon(int, int);
+        STATIC_CLASS_VAR(ZSNDOBJ, uint32_t, m_Id);
+        STATIC_CLASS_VAR(ZSNDOBJ, uint32_t, m_Mask);
 
-        // api
-        bool AttachToDefaultRoom(bool a1);
+        // vftable
+        virtual void ModifyGeomCon(int AddBits, int RemoveBits);
+
+        // methods
+        bool AttachToDefaultRoom(bool bOverride);
+        ZSoundObject* GetSoundObject();
 
         // data (total size is 0x1C, base size is 0x10)
-        int m_field10;
-        int m_field14;
-        int m_field18;
-    };
+        int m_AudioRef;
+        int m_rZSoundRef;
+        bool m_bPlayable;
+        bool m_bActive;
+        RE_ADD_PADDING(2);
+    }; // Size 0x1C
+    RE_VERIFY_SIZE(ZSNDOBJ, 0x1C); // Verified
 }

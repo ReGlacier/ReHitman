@@ -2,12 +2,27 @@
 
 #include <BloodMoney/Game/ZHM3Actor.h>
 #include <BloodMoney/Game/LevelControls/ZHM3LevelControl.h>
+#include <BloodMoney/Game/ZHM3BriefingControl.h>
+#include <BloodMoney/Game/ZClothTracker.h>
 #include <BloodMoney/Game/UI/ZOSD.h>
 
-#include <Glacier/ZGameData.h>
+#include <Glacier/Data/ZGameData.h>
+#include <Glacier/Data/ZGameStats.h>
+#include <Glacier/ZSTL/ZArray.h>
 #include <Glacier/ZSTL/REFTAB.h>
+#include <Glacier/ZSTL/ZStaticVector.h>
+#include <Glacier/ReGlacier.h>
+#include <Glacier/EventBase/ZBaseConRout.h>
 
 #define DECLARE_UNKNOWN_TYPE_PTR(name) using name = std::uintptr_t;
+#define VERIFY_FIELD_POS(cls, fld, expected) static_assert(offsetof(cls, fld) == (expected), "Bad offset of " #cls "::" #fld);
+
+namespace Glacier
+{
+    class ZWINDOW;
+    class ZPlayer;
+
+}
 
 namespace Hitman::BloodMoney
 {
@@ -16,67 +31,297 @@ namespace Hitman::BloodMoney
     DECLARE_UNKNOWN_TYPE_PTR(N0000163D);
     DECLARE_UNKNOWN_TYPE_PTR(CGlobalCom);
     DECLARE_UNKNOWN_TYPE_PTR(ZHM3CameraEventCameraClass);
-    DECLARE_UNKNOWN_TYPE_PTR(ZClothTracker);
 
     class ZHM3DialogControl;
     class ZHM3MenuElements;
-    class ZHM3Hitman3;
+    class ZHitman3;
     class ZGui;
     class CIngameMap;
-    class ZHM3BriefingControl;
     class ZHM3WeaponUpgradeControl;
     class ZHM3CameraClass;
     class ZBoidSystem;
-    class ZHM3GameStats;
+
+    class ZHM3GameStats : public Glacier::ZGameStats
+    {
+    public:
+        int m_iShotsHit;  // +0xC
+        int m_iShotCount; // +0x10
+    };
+
+    VERIFY_FIELD_POS(ZHM3GameStats, m_iShotsHit, 0xC);
+    VERIFY_FIELD_POS(ZHM3GameStats, m_iShotCount, 0x10);
+
+    enum EBriefingDetailType : int {
+        eBriefingTypeNoType = 0,
+        eBriefingTypeTarget = 1,
+        eBriefingTypeRetrieve = 2,
+        eBriefingTypeEscape = 3,
+        eBriefingTypeDispose = 4,
+        eBriefingTypeProtect = 5,
+        eBriefingTypeOptional = 6
+    };
+
+    class ZLevelLinking
+    {
+    public:
+        EBriefingDetailType m_eBriefingDetailType; //0x0000
+        void* m_pCom; //0x0004
+        uint8_t m_Profile[24216]; //0x0008
+    }; //Size: 0x5EA0
+
+    struct sDifficultySettings {
+        float fstanddowntime;
+        float ffollowtrailtime;
+        float fhunttargettracktime;
+        float fseethroughdisguisedistance;
+        float fseethroughdisguisespeed;
+        float fforgetdisguisespeed;
+        float frunsuspiciousrange;
+        float faccuracymodifier;
+        float fburstlength;
+        float frofmultiplier;
+        float faimspeed;
+        float fdrawspeedmultiplier;
+        float fshothearingrange;
+        float fscreamhearingrange;
+        float fcheckfootstepsbehindrange;
+        float factorrelaxedvisionrange;
+        float factorrelaxedfov;
+        float factoralertvisionrange;
+        float factoralertfov;
+        float ffallingdamagemultiplier;
+        float fusecoverpercentage;
+        float fbleedtodeathtime;
+        float fciviliansattackhmpercentage;
+        float fcivilianhidetime;
+        float flockpicktimemultiplier;
+        float ffriskintrusiondecaytime;
+        float fsmallweaponvisiblemultiplierciv;
+        float fsmallweaponvisiblemultipliergrd;
+        int ihitmanhitpoints;
+        int iguardhitpoints;
+        int icivilianhitpoints;
+        int itargethitpoints;
+        bool bautoaim;
+        bool bheadshotsagainsthitman;
+        bool bpad[2];
+        float fmoneymultiplier;
+        float fmaxmoneymultiplier;
+        float fcleanupprice;
+        float finnocentbribeprice;
+        float fpolicebribeprice;
+        float fnewidentityprice;
+        float fweaponupgradeprice;
+        float fweaponretrieveprice;
+    };
+
+    static_assert(sizeof(sDifficultySettings) == 164, "Bad size of sDifficultySettings");
+
+    enum EDifficulty : uint32_t {
+        eeROOKIE = 0,
+        eNORMAL = 1,
+        eEXPERT = 2,
+        ePROFESSIONAL = 3,
+
+        eMAX_VALUE = 4
+    };
+
+    class ZDifficultySettings
+    {
+    public:
+        sDifficultySettings aSettings[EDifficulty::eMAX_VALUE];
+    };
+
+    struct sPricesStruct {
+        int iObjectivePrices[13][6];
+        int iTierPrices[5];
+        int iTierUpgradePrice[5];
+        int iExtraBriefing;
+        int iAdditionalInfo;
+        int iPlaceClothbundle;
+        int iPlaceHandgun;
+        int iPlaceSilencedHandgun;
+        int iPlaceSMG;
+        int iPlaceExtraSyringes;
+        int iDisablingAlarms;
+        int iGuardsNotFrisking;
+        int iRetrieveWeapons;
+        int iReplacementSuit;
+        int iInnocentDamageControl;
+        int iPoliceDamageControl;
+        int iRetrieveVideotapes;
+        int iBribeInnocent;
+        int iBribePolice;
+        int iNewIdentity;
+    };
+
+    // Size: 0x1A4 (420 bytes)
+    struct ZMoneySystem {
+        sPricesStruct m_sPrices;
+    };
+
+    struct sNotorietyModifiers {
+        int iCaughtOnTapeDisguised;
+        int iCaughtOnTapeNotDisguised;
+        int iWitness1;
+        int iWitness2;
+        int iWitness3;
+        int iWitness4;
+        int iWitnessx;
+        int iMaxWitnessesNormal;
+        int iMaxWitnessesExpert;
+        int iMaxWitnessesProfessional;
+        int iBribeInnocent;
+        int iBribePolice;
+        int iNewIdentity;
+    };
+
+    struct ZNotorietySystem
+    {
+        sNotorietyModifiers m_sNotorietyModifiers;
+    };
+
+    static_assert(sizeof(ZNotorietySystem) == 52, "Bad size of ZNotorietySystem");
+
+    struct ZRatingSystem
+    {
+        // There are nothing, all stored in static vars
+    };
+
+    enum EFriskOp : int
+    {
+        eeFriskOp_Attack = 0,
+        eFriskOp_DefendAreaNormal = 1,
+        eFriskOp_DefendAreaAggressive = 2,
+        eFriskOp_TakeWeapons = 3
+    };
+
+    struct ZBloodTrail : public Glacier::ZSTDOBJ
+    {
+        int m_iTrailIndex;
+        int m_iElementNr;
+        bool m_bIsRegistered;
+    };
+
+    class ZTrailControl {
+    public:
+        virtual ~ZTrailControl();
+
+        struct ZBloodTrail* m_pTrails[5][5];
+        bool m_bActiveElements[5][5];
+        int m_bDecalIndex[5][5];
+        bool m_bActiveTrails[5];
+        short m_NumElements;
+        int m_currentTrail;
+        int m_currentElement;
+        int m_currentReadTrail;
+        int m_currentReadElement;
+    };
+
+    static_assert(sizeof(ZTrailControl) == 0x100, "Bad size of ZTrailControl");
+
+    enum EUpgradeType : int {
+        UT_Dummy = 0, UT_AmmoACP = 1, UT_AmmoArmorPiercing = 2, UT_Ammo127mm = 3, UT_AmmoMagnum = 4,
+        UT_AmmoFlechetteSlugs = 5, UT_AmmoGaugesSlugs = 6, UT_AmmoLowVelocity = 7, UT_Magazine = 8,
+        UT_Silencer1 = 9, UT_Silencer2 = 10, UT_LaserSight = 11, UT_DualAction = 12, UT_DualActionAuto = 13,
+        UT_DoubleCapMag = 14, UT_FullAuto = 15, UT_ReloadBoost = 16, UT_BeltFeeding = 17, UT_BiPod = 18,
+        UT_ScopeType1 = 19, UT_ScopeType2 = 20, UT_ScopeType3 = 21, UT_NightVision = 22, UT_Lightweight = 23,
+        UT_DefaultAmmo = 24, UT_DefaultNoScope = 25, UT_DefaultBarrel = 26, UT_DefaultMagazine = 27,
+        UT_RailMount = 28, UT_CarbonBarrel = 29, UT_Buttstock = 30, UT_Suitcase = 31, UT_DefaultButtStock = 32,
+        UT_DefaultGrip = 33, UT_DefaultHandguard = 34, UT_DefaultHandle = 35, UT_DefaultSight = 36,
+        UT_BoltAction = 37, UT_RedDotSight = 38, UT_ShortBarrel = 39, UT_PistolGrip = 40, UT_HandGuard = 41,
+        UT_RapidFire = 42, UT_LongSlide = 43, UT_ClipX2 = 44, UT_ClipX3 = 45, UT_ClipX4 = 46,
+        UT_NumUpgradeTypes = 47
+    };
+
+    struct ZWeaponUpgradeUtils {
+        Glacier::REFTAB* m_pUpgradeList;
+        uint32_t m_ALIGN4;
+        unsigned long long m_lAvailableUpgradesMask;
+        int m_lLastUpgrade;
+        int m_lCurrentUpgrade;
+        EHM3ItemType m_eCurrentSelectedItem;
+        EUpgradeType m_eCurrentUpgrade;
+    };
+
+    static_assert(sizeof(ZWeaponUpgradeUtils) == 0x20, "Bad size of ZWeaponUpgradeUtils");
 
     class ZHM3GameData final : public Glacier::ZGameData
     {
     public:
-        ZBoidSystem* m_BoidSystem; //0x0004
-        int32_t m_ActorsInPoolCount; //0x0008
-        ZHM3Actor* m_ActorsPool[512]; //0x000C
-        Glacier::ZLIST* m_AllActorsAndPlayerList; //0x080C
-        char pad_0x0810[0x208]; //0x0810
-        Glacier::REFTAB* m_ParticleTemplatesList; //0x0A18
-        ZHM3MenuElements* m_MenuElements; //0x0A1C
-        ZHM3Hitman3* m_Hitman3; //0x0A20 (also in A40 located similar instance, it doesn't matter what I will use, but few instructions trying to talk with +A40)
-        int m_field0A24; //0x0A24
-        int m_field0A28; //0x0A28
-        int m_field0A2C; //0x0A2C
-        ZHM3GameStats* m_GameStats; //0x0A30
-        int m_field0A34; //0x0A34
-        int m_field0A38; //0x0A38
-        int m_field0A3C; //0x0A3C
-        ZHM3Hitman3* m_Hitman3_2; //0x0A40 (hitman instance too, maybe it's merged from other structure or smth like that)
-        Glacier::ZREF m_rPlayer; //0x0A44 (ZREF to ZHitman3 instance)
+        ZHM3GameData();
+        Glacier::TEnumID GetAmmoEnumId(const char* psName) override;
+
+        ZHitman3* m_Hitman3; //0x0A40
+        Glacier::ZREF m_rPlayer; //0x0A44
         ZHM3LevelControl* m_LevelControl; //0x0A48
         ZOSD* m_OSD; //0x0A4C
         ZGui* m_Gui; //0x0A50
         CIngameMap* m_IngameMap; //0x0A54
-        int m_fieldA58; //0x0A58
-        CGlobalCom* m_GlobCom; //0x0A5C
-        char m_ProfileName[16]; //0xFC5888
-        char pad_0x0A70[0x64]; //0x0A70
-        int32_t m_PlayerMoney; //0x0AD4
-        char pad_0AD8[24096]; //0x0AD8
-        ZHM3BriefingControl* m_BriefingControl; //0x68F8
-        char pad_68FC[116]; //0x68FC
-        ZHM3WeaponUpgradeControl* m_WeaponUpgradeControl; //0x6970
-        ZHM3CameraEventCameraClass* m_CameraEventCameraClass; //0x6974
-        ZHM3CameraClass* m_CameraClass; //0x6978
-        int m_field697C;
-        int m_field6980;
-        int m_field6984;
-        int m_field6988; //0x6988 (something about materials)
-        int m_field698C;
-        int m_rActorCommunicationComponentID; //0x6990
-        int m_rFightControllerComponentID; //0x6994
-        int m_rCoverListComponentID;	//0x6998
-        ZClothTracker* m_ClothTracker; //0x699C
-        int m_field69A0; //0x69A0
-        int m_field69A4; //0x69A4
+        ZLevelLinking m_LevelLinking;
+        ZHM3BriefingControl m_BriefingControl;
+        Glacier::ZWINDOW* m_pZWindow;
+        ZHM3WeaponUpgradeControl* m_pWeaponUgradeControl; //0x6970
+        ZHM3CameraEventCameraClass* m_pEventCamera; //0x6974
+        ZHM3CameraClass* m_pMainCamera; //0x6978
+        int m_pActorMoveSets;
+        ZDifficultySettings* m_pDifficultySettings;
+        ZMoneySystem* m_pMoneySystem;
+        ZNotorietySystem* m_pNororietySystem;
+        ZRatingSystem* m_pRatingSystem;
+        uint32_t m_rActorCommunication;
+        uint32_t m_rFightController;
+        uint32_t m_rCoverList;
+        ZClothTracker* m_pClothTracker; //0x699C Created on demand by ZHitman3::OnActorBlowingHitmansCover
+        uint32_t m_rActorFriskingHM;
+        EFriskOp m_eFriskOperation; //0x69A0
         ZHM3DialogControl* m_DialogControl; //0x69A8
-    };
+        Glacier::REFTAB m_Elevators;
+        ZWeaponUpgradeUtils* m_pWeaponUpgradeUtils;
+        Glacier::REFTAB m_FriskGuards;
+        Glacier::REFTAB m_ItemTemplates;
+        float m_fTension;
+        float m_fTensionDelta;
+        Glacier::ZGROUP* m_pBodyBagGroup;
+        unsigned int* m_pTotalWeaponPrims;
+        int m_lTotalWeaponPrimsCount;
+        unsigned int* m_pUsedWeaponPrims;
+        int m_lUsedWeaponPrimsCount;
+        unsigned int* m_pBigWeaponPrims;
+        int m_lBigWeaponPrimsCount;
+        ZTrailControl* m_pTrailControl;
+        int m_iPFBodyBagBoxTypeId;
+        Glacier::REFTAB m_WantedPosts;
+        bool m_bLoadError;
+        bool m_bLoadErrorM00;
+        bool m_bForceBriefingM00;
+        bool m_pad6A4F;
+
+        // Exclude anims shit
+        // (I Still don't know what the fuck is happening here)
+        struct ZExcludedAnimList {
+            void* m_pSentinelNode;    // 0x00
+            uint32_t m_iSize;         // 0x04
+            uint32_t m_pUnusedPadding;// 0x08
+        };
+        static_assert(sizeof(ZExcludedAnimList) == 12, "Bad size of ZExcludedAnimList");
+
+        ZExcludedAnimList m_aExcluded[4]; // 0x6A50
+
+        uint8_t  m_bAnimContainerFlag;    // 0x6A80
+        char     m_pad6A81;               // 0x6A81
+        char     m_pad6A82;               // 0x6A82
+        char     m_pad6A83;               // 0x6A83
+        uint32_t m_alwaysZeroed;          // 0x6A84
+    }; // Total size is 0x6A88 (27272)
+
+    RE_VERIFY_SIZE(ZHM3GameData, 0x6A88);
+    RE_VERIFY_OFFSET(ZHM3GameData, m_Hitman3, 0x0A40);
+    RE_VERIFY_OFFSET(ZHM3GameData, m_Gui, 0x0A50);
+    RE_VERIFY_OFFSET(ZHM3GameData, m_rActorCommunication, 0x6990);
+    RE_VERIFY_OFFSET(ZHM3GameData, m_pClothTracker, 0x699C);
+    RE_VERIFY_OFFSET(ZHM3GameData, m_DialogControl, 0x69A8);
+    RE_VERIFY_OFFSET(ZHM3GameData, m_pWeaponUpgradeUtils, 0x69C8);
 }
 
 #undef DECLARE_UNKNOWN_TYPE_PTR

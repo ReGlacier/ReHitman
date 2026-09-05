@@ -1,4 +1,5 @@
 #include <BloodMoney/UI/DebugWidget.h>
+#include <Glacier/Geom/ZBackdrop.h>
 
 #include <algorithm>
 

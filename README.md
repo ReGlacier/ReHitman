@@ -27,20 +27,26 @@ Install
  2. Unpack `NVCPL.dll` & `ReHitman.dll` into the game folder
  3. Launch HitmanBloodMoney.exe
 
+Current Project Goals
+---------------------
+
+ * [ ] Glacier 1 Engine Open Source SDK — Create a base SDK for convenient engine interaction.
+ * [x] Implement ImGUI backend (IO, Render (re-use D3D9 + add hooks))
+ * [x] Reverse the input API (mouse, keyboard).
+ * [ ] Evolve into a robust header-only SDK for seamless modding and extension development.
+ * [ ] Comprehensive Engine Reverse Engineering — Decompile and reconstruct Hitman Blood Money piece by piece.
+   * [ ] Reverse all classes.
+     * [ ] In-game
+     * [ ] Engine
+   * [ ] Reimplement reversed class methods and internal logic.
+   * [ ] Reimplement global and helper functions.
+   * [ ] Gradually replace original engine methods with open-source implementations until the entire game loop runs natively on the new codebase.
+ * [ ] Reverse & write docs for scene and asset formats.
+ * [ ] Create a dedicated toolset for Hitman: Blood Money (modding, asset extraction, etc.). [In progress, see BMEdit repo]
+
 FAQ
----------------
+-----
  * [Wiki.](https://github.com/ReGlacier/ReHitman/wiki)
-
-Current Project Goals.
----------------
-
- - [x] Create an open source SDK for the Glacier 1 Engine
- - [ ] Reverse the rendering API
- - [x] Implement ImGUI backend over Glacier renderer wrapper (ZWintelRendererD3D)
- - [x] Reverse the input API (mouse, keyboard)
- - [ ] Reverse the GUI API
- - [ ] Reverse the scene format
- - [ ] Create a toolset for Hitman Blood Money
 
 Credits
 ------

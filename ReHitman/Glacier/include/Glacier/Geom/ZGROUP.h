@@ -1,64 +1,121 @@
 #pragma once
 
+#include <Glacier/ReGlacier.h>
 #include <Glacier/GlacierFWD.h>
 #include <Glacier/ZSTL/ZMath.h>
 #include <Glacier/Geom/ZGEOM.h>
 
+
 namespace Glacier
 {
+    // fwds
+    class ZBaseGeom;
+
     class ZGROUP : public ZGEOM
     {
     public:
-        //vftable
+        // RTTI
+        DECLARE_GEOM_CLASS(ZGROUP, 0x100001u);
+
+        // ZGROUP Control flags
+        static constexpr uint32_t ZGRPCF_OVERRIDE_NEAR_FAR = 0x200u;
+        static constexpr uint32_t ZGRPCF_INVALID_BOUNDS = 0x8000u;
+        static constexpr uint32_t ZGRPCF_GROUP_CONTAINS_LIGHT = 0x10000u;
+        static constexpr uint32_t ZGRPCF_LIGHT_SHINES_IN = 0x1000000u;
+        static constexpr uint32_t ZGRPCF_LIGHT_SHINES_OUT = 0x2000000u;
+        static constexpr uint32_t ZGRPCF_RESET = 0x40000000u;
+
+        // vtbl
+        ~ZGROUP() override;
+
+        // ZSerializable
+        void LoadSave(ISerializerStream& stream, bool bSaving) override;
+
+        // RTP::cBase
+        const RTP::ZPropertyInfo& GetProperties() const override;
+
+        // ZGEOM
+        uint32_t GetObjectId() const override;
+        void GetObjectIdAndMask(uint32_t& id, uint32_t& mask) const override;
+        ZGEOMCLASSINFO* GetOldClassInfo() const override;
+
+        bool DoInit() override;
+        void CalcCenSize() override;
+        void PreSaveGame() override;
+        eGlobalTreeType GetBoundTreeType() const override;
+        void RecurGetNext(ZBaseGeom** ZGeom) override;
+        void SetRootTM(const ZMat3x3& RTMat, const ZVector3& RTPos) override;
+        void Freeze(bool OnOff) override;
+        void SetMoving(bool bMoving) override;
+        void SendCommandRecursive(ZMSGID Msg, void* pData, ZGEOM* pTarget) override;
+        bool CheckPointInside(ZVector3& pPoint, float fDotDist) override;
+        bool CheckBoxInside(const ZMat3x3& mMat, const ZVector3& vPos, const float* vHalfSize) override;
+        float GetPointInsideDistance(const ZVector3& vPos) override;
+        ZGEOM* Duplicate(ZGROUP* DestGroup, const char* DupName, bool Recursive) override;
+        ZGEOM* DuplicateToResource(ZGROUP* DestGroup, uint32_t lGeomResourceId, const char* DupName, bool Recursive) override;
+        ZGEOM* DuplicateToResourceInit(ZGROUP* DestGroup, uint32_t lGeomResourceId, const ZMat3x3* mMat, const ZVector3* vPos, const char* DupName, bool Recursive) override;
+        void CopyData(const ZGEOM* Source) override;
+
+        // ZGROUP
         virtual bool IsRecursiveActivateAllowed();
-        virtual void DynamicGroupOnScreen();
-        virtual void CheckBoxInside_ZGROUP(const float*, const float*,const float*);
-        virtual ZGEOM* FindLoadWorldGeom(char const*);
-        virtual ZGEOM* FindMasterGeom(char const*);
-        virtual ZGEOM* FindGeom(const char*, ZEntityLocator*);
+        virtual bool DynamicGroupOnScreen();
+        virtual ZGEOM* FindLoadWorldGeom(const char* pSearchName) const;
+        virtual ZGEOM* FindMasterGeom(const char* pSearchName) const;
+        virtual ZGEOM* FindGeom(const char* GName, ZBaseGeom* pZGeomContinue);
         virtual int GroupDepth();
-        virtual float GetPFResMultiplier();
-        virtual void LinkBound(unsigned int);
-        virtual void RemoveBound(unsigned int);
-        virtual void GetAmbientSettings(const float*, float*, float*, float*);
-        virtual void CreateParentsRecur(ZGROUP*,ZGROUP**,bool);
-        virtual void SetOverRideNearFar(float *);
+        virtual float GetPFResMultiplier() const;
+        virtual void LinkBound(ZREF rBound);
+        virtual void RemoveBound(ZREF rBound);
+        virtual void GetAmbientSettings(const ZVector3& p0, float* AmbientDir, float* AmbientLowColor, float* AmbientHiColor) const;
+        virtual void CreateParentsRecur(ZGROUP* ZParent, ZGROUP** ZDest, bool bAllowLoadWorlds);
+        virtual void SetOverRideNearFar(const ZVector2& NearFar);
         virtual void CorrectCenSizeRecur();
         virtual void CorrectCenSize();
         virtual void InvalidateBounds();
-        virtual void AttachGeom(ZEntityLocator*, bool);
-        virtual void AttachGeom(ZGEOM*, bool);
-        virtual void DetachGeom(ZEntityLocator*, bool);
-        virtual void RecurGetNextGroup(const ZEntityLocator**);
-        virtual void RecurGetNextExclRoom(const ZEntityLocator**);
-        virtual void SetGroupControl(unsigned int, unsigned int);
-        virtual unsigned int GroupControl();
-        virtual void ResetGroupPosition(bool);
+        virtual void AttachGeom(ZGEOM* pGeom, bool bCalcMinMax);
+        virtual void AttachGeom(ZBaseGeom* pBaseGeom, bool bCalcMinMax);
+        virtual void DetachGeom(ZBaseGeom* pBaseGeom, bool bDestroying);
+        virtual void RecurGetNextGroup(const ZBaseGeom** pGroup) const;
+        virtual void RecurGetNextExclRoom(const ZBaseGeom** ZGeom) const;
+        virtual void SetGroupControl(uint32_t lAddBits, uint32_t lRemBits);
+        virtual uint32_t GroupControl() const;
+        virtual void ResetGroupPosition(bool bReset);
         virtual void MakeActiveRecursive();
-        virtual void GetStaticLights(ZEntityLocator**, ZEntityLocator**);
+        virtual ZBaseGeom** GetStaticLights(ZBaseGeom** pDrawGeomsList, ZBaseGeom** pDrawGeomsListEnd);
         virtual void CalcCenSizeRecur();
-        virtual void GetCenSizeRecur(float*, float*, bool);
-        virtual ZGEOM* FindMaskGeom(char const*, int);
+        virtual void GetCenSizeRecur(ZVector3& vCen, ZVector3& vSize, bool bIgnoreHidden);
+        virtual ZGEOM* FindMaskGeom(const char* pSearchName, int32_t lMask) const;
 
-        //data (total size is 0x4F)
-        float m_field10; //0x0010
-        float m_field14; //0x0014
-        float m_field18; //0x0018
-        float m_field1C; //0x001C
-        float m_field20; //0x0020
-        float m_field24; //0x0024
-        int32_t m_control; //0x0028
-        int32_t m_field2C; //0x002C
-        int32_t m_field30; //0x0030
-        int32_t m_field34; //0x0034
-        int32_t m_field38; //0x0038
-        ZEntityLocator* m_pEntity0; //0x003C
-        ZEntityLocator* m_pEntity1; //0x0040
-        int32_t m_field44; //0x0044
-        int32_t m_field48; //0x0048
+        // methods
+        ZGROUP(const char* psName, ZBaseGeom* pBaseGeom);
 
-        //API
-        ZGEOM* CreateGeom(const char* name, int typeId, bool unk3);
-        bool IsRoot();
+        ZGEOM* CreateResourceGeom(const char* pName, uint32_t iGeomResourceId, uint32_t lGeomClassType, bool bCalcMinMax);
+        ZGEOM* CreateGeom(const char* pName, uint32_t iGeomClassId, bool bCalcMinMax);
+        bool IsRoot() const;
+        void GroupContainsLight();
+        SREF AddSound3d(float* pDirection, float* pPosition, int lSoundIndex, int lSoundEvent, uint32_t lEventArgument, uint32_t lExtraArgument);
+
+#       pragma region " --- RTTI Methods --- "
+        void GetLightShinesIn(bool& bLightShinesIn);
+        void SetLightShinesIn(const bool& bLightShinesIn);
+        void GetLightShinesOut(bool& bLightShinesOut);
+        void SetLightShinesOut(const bool& bLightShinesOut);
+#       pragma endregion
+
+        // members
+        float m_vSizeInsideCheck[3];
+        float m_vCenInsideCheck[3];
+        uint32_t m_lGroupCon;
+        float m_OverRideNearFar[2];
+        REFTAB* m_pZBounds;
+        uint32_t m_LightList;
+        ZBaseGeom* m_pGroupFirst;
+        ZBaseGeom* m_pGroupLast;
+        float m_fPFResMultiplier;
+        uint16_t m_NrAttachGeom;
+        RE_ADD_PADDING(2);
     };
+    RE_VERIFY_SIZE(ZGROUP, 0x4C); // Verified
+
+    bool ForGroupsCheck(ZBaseGeom* pBaseGeom);
 }

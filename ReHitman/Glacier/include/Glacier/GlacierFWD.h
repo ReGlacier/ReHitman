@@ -1,6 +1,9 @@
 #pragma once
 
+#include <Glacier/ZSTL/zstring.h>
+#include <Glacier/ZREF.h>
 #include <string>
+#include <cassert>
 
 namespace Glacier
 {
@@ -9,24 +12,21 @@ namespace Glacier
     using uint = unsigned int;
     using ZMSGID = unsigned short;
     using ZDATA = void*;
-    using ZREF = unsigned int;
     using SREF = unsigned int;
-    using ZWM_MESSAGE = signed int; //Less that 0x1000!
 
     struct RefRun;
-    using TabBlk = void*;
 
     /// FWD
-    class ISerializerStream {};
-    class IInputSerializerStream {};
-    class IOutputSerializerStream {};
+    struct ISerializerStream;
+    struct IInputSerializerStream;
+    struct IOutputSerializerStream;
 
     class ZPackedInput;
     class ZScene;
     class ZLIST;
-    class COLI;
+    struct COLI;
     class CCom;
-    class ZBone;
+    struct ZBone;
     class ZCameraSpace;
     class ZDrawBuffer;
     class ZItemState;
@@ -52,7 +52,7 @@ namespace Glacier
     class ZAnimationInfo;
     class AnimationManager;
     class ResourceCollection;
-    class ZAnimVariationHandle;
+    struct ZAnimVariationHandle;
     class ZLnkAction;
     class ZIKHAND;
     class ZItemContainer;
@@ -60,8 +60,8 @@ namespace Glacier
     class ZBodyInfo;
     class ZActionDispatcher;
     class ZROUTCLASSINFO;
-    class CHUNKFILE;
-    class CHUNK;
+    struct CHUNKFILE;
+    struct CHUNK;
     class REFTAB;
     class REFTAB32;
     class ZOffsetAlloc;
@@ -69,6 +69,10 @@ namespace Glacier
     class ZGeomBufferPoolEntity;
     class ZQElemsBuffer;
     class ZBaseGeomLists;
+    class CInventory;
+    class ZParticleEmitter;
+    class ZAllocMany;
+    class ZHumanBoid;
 
     struct SGeomTypeCount;
     struct SCompiledGeom;
@@ -76,33 +80,19 @@ namespace Glacier
     struct SInputActionDefinition;
     struct SExtendedImpactInfo;
     struct SRigidBodyVelocity;
+    struct ZPoolAllocRefTab;
+    struct ZPoolAllocLinkSortRefTab;
 
-    enum ALLOCSEQUENCESTATUS {};
+    enum ALLOCSEQUENCESTATUS;
     struct LocomotionInfo;
-
-    enum class ITEMHANDS : uint32_t  {
-	    IH_FORCE32 = 0x7FFFFFFFu,
-	    IH_TWOHANDED = 2u,
-	    IH_ONEHANDED = 1u,
-	    IH_NONE = 0u
-    };
-
-    using ITEMSTATE = int;
-    struct WEAPONOPERATION {};
-    enum EFootSide;
 
     class ZCheckPointBuffer; // NOT AVAILABLE FOR PC ?
 
-    using zstring = std::string; /// I GUESS, CAUSE INSIDE ZSTRING USED STD::BASIC_STRING<CHAR, ...>
-
-    namespace PF4
-    {
-        class Interface;
-    }
-
-    class ZEntityLocator;
-    class ZBaseGeom; //ZEntityLocator implements this by old design
+    class ZBaseGeom;
     class FsZip_t;
 
     using AnimCallback_t = bool(ZGEOM::*)(void*, float, float, unsigned int);
+
+    class ZRX86AllocIf;
+    struct SBoneDefinition;
 }

@@ -7,8 +7,8 @@
 
 #include <Glacier/Glacier.h>
 #include <Glacier/ZAction.h>
-#include <Glacier/ZSysInterfaceWintel.h>
-#include <Glacier/ZEngineDataBase.h>
+#include <Glacier/System/ZSysInterfaceWintel.h>
+#include <Glacier/Data/ZEngineDataBase.h>
 #include <Glacier/Geom/ZROOM.h>
 #include <Glacier/IK/ZLNKOBJ.h>
 #include <Glacier/EventBase/ZEventBuffer.h>
@@ -36,7 +36,7 @@ namespace Hitman::BloodMoney
             if (gameData && msg == g_ChangeSuitMSGID) {
                 auto playerGeom = reinterpret_cast<Glacier::ZGEOM*>(gameData->m_Hitman3);
 
-                reinterpret_cast<Glacier::ZLNKOBJ*>(playerGeom)->CopyGeometryFrom(pSelf->m_baseGeom->m_primitive);
+                reinterpret_cast<Glacier::ZLNKOBJ*>(playerGeom)->CopyGeometryFrom(pSelf->m_baseGeom->m_lPrim);
                 reinterpret_cast<Glacier::ZLNKOBJ*>(playerGeom)->UpdateGeometry(true);
 
                 ((void(__cdecl*)(Glacier::ZGEOM*, const char*))0x005D3BA0)(pSelf, "Take clothes"); //RemoveCUIAction
@@ -52,7 +52,7 @@ namespace Hitman::BloodMoney
             auto sysInterface = Glacier::getInterface<Glacier::ZSysInterfaceWintel>(Globals::kSysInterfaceAddr);
             if (!sysInterface) { return; }
 
-            auto engineDb = sysInterface->m_engineDataBase;
+            auto engineDb = sysInterface->m_pEngineData;
             if (!engineDb) { return; }
 
             auto listener = reinterpret_cast<Glacier::ZGEOM*>(pSelf);
@@ -73,8 +73,9 @@ namespace Hitman::BloodMoney
                                         0,
                                         270);
 
-            auto pAction = Glacier::ZEventBuffer::EventRefToInstance<Glacier::ZAction>(actionId);
-            if (pAction) { // It's not required but why not
+            auto* pAction = (Glacier::ZAction*)Glacier::ZEventBase::RefToPtr(actionId);
+            if (pAction)
+            {
                 pAction->Show();
             }
 

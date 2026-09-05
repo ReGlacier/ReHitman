@@ -275,6 +275,11 @@ namespace HF
                 return writtenBytes;
             }
 
+            size_t writeMemory(std::uintptr_t addr, std::initializer_list<uint8_t> bytes)
+            {
+                return writeMemory(addr, bytes.size(), bytes.begin());
+            }
+
             bool fillMemory(std::uintptr_t addr, uint8_t byte, size_t count)
             {
                 if (!count)

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Glacier/Geom/ZGEOM.h>
-#include <Glacier/ZSTL/ZLIST.h>
+#include <Glacier/Geom/ZLIST.h>
 
 #include <BloodMoney/UI/ImGuiInspector.h>
 #include <BloodMoney/Game/PF/ZPathFollower.h>
@@ -31,10 +31,10 @@ namespace ImGui
 
             for (int waypointListIndex = 0; waypointListIndex < totalWaypointsListsCount; ++waypointListIndex)
             {
-                const int ZLISTEntityId = reinterpret_cast<int>(pathFollower->m_listsOfWaypoints[waypointListIndex]);
+                const auto ZLISTEntityId = pathFollower->m_listsOfWaypoints[waypointListIndex];
                 auto pointsList = reinterpret_cast<Glacier::ZLIST*>(Glacier::ZGEOM::RefToPtr(ZLISTEntityId));
 
-                if (!pointsList || !pointsList->m_entries)
+                if (!pointsList || !pointsList->m_pZList)
                 {
                     ImGui::TextColored(ImVec4 { 1.f, 1.f, 0.f, 1.f }, "Waypoint List #%d not found", (waypointListIndex + 1));
                     continue;
@@ -49,7 +49,7 @@ namespace ImGui
 //                    }
 //                }
 
-                ImGui::Text("Waypoints List #%d : %s", (waypointListIndex+1), pointsList->m_baseGeom->entityName);
+                ImGui::Text("Waypoints List #%d : %s", (waypointListIndex+1), pointsList->m_baseGeom->m_Name);
                 //const int pointsCount = pointsList->m_entries->Count();
                 //TODO: Continue from https://github.com/DronCode/ReHitman/blob/22fb0d77f3bfb593072bdfb8a3c380e7e2dc7c37/HM3CoreKill/HM3CoreKill/ck/HM3InGameTools.cpp#L896
             }

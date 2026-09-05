@@ -1,6 +1,6 @@
 #include <BloodMoney/FreeFS/HBMFreeFsProxy.h>
-#include <Glacier/ZSysInterfaceWintel.h>
-#include <Glacier/FsZip_t.h>
+#include <Glacier/System/ZSysInterfaceWintel.h>
+#include <Glacier/Filesystem/FsZip_t.h>
 
 #include <filesystem>
 #include <spdlog/spdlog.h>
@@ -51,7 +51,8 @@ namespace Hitman::BloodMoney::FreeFS {
         // --- detect scene ---
         std::string fileName = name;
         std::string zipPackageFileName = fs::path(this->m_missionZipFilePath).stem().string();
-        std::string sceneName = fs::path(sys->m_currentScene).stem().string();
+
+        std::string sceneName = fs::path(static_cast<const char*>(sys->m_sDefaultScene)).stem().string();
 
         if (fileName[0] == '*')
         {
@@ -98,7 +99,7 @@ namespace Hitman::BloodMoney::FreeFS {
         // --- detect scene ---
         std::string fileName = name;
         std::string zipPackageFileName = fs::path(this->m_missionZipFilePath).stem().string();
-        std::string sceneName = fs::path(sys->m_currentScene).stem().string();
+        std::string sceneName = fs::path(static_cast<const char*>(sys->m_sDefaultScene)).stem().string();
 
         if (fileName[0] == '*')
         {

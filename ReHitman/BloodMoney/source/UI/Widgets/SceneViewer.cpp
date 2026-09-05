@@ -9,9 +9,9 @@
 
 #include <BloodMoney/Game/Globals.h>
 
-#include <Glacier/ZSysInterfaceWintel.h>
-#include <Glacier/ZEngineDataBase.h>
-#include <Glacier/Geom/ZEntityLocator.h>
+#include <Glacier/System/ZSysInterfaceWintel.h>
+#include <Glacier/Data/ZEngineDataBase.h>
+#include <Glacier/Geom/ZBaseGeom.h>
 #include <Glacier/Glacier.h>
 #include <Glacier/Geom/ZGROUP.h>
 #include <Glacier/Geom/ZGEOM.h>
@@ -22,6 +22,7 @@
 #include <Glacier/Geom/ZTreeGroup.h>
 #include <Glacier/Geom/ZSNDOBJ.h>
 #include <Glacier/ZTypeTraits.h>
+#include <Glacier/Runtime/ZGEOMCLASSINFO.h>
 
 #include <BloodMoney/Game/ZHM3Actor.h>
 
@@ -33,30 +34,30 @@ namespace Hitman::BloodMoney
     {
         if (!currentGroup) return;
 
-        Glacier::ZEntityLocator* currentEntity = currentGroup->m_pEntity0;
+        Glacier::ZBaseGeom* currentEntity = currentGroup->m_pGroupFirst;
 
         while (currentEntity) {
-            auto assignedTo = reinterpret_cast<Glacier::ZGEOM*>(currentEntity->m_assignedTo);
+            auto assignedTo = reinterpret_cast<Glacier::ZGEOM*>(currentEntity->m_pExtraGeom);
             if (!assignedTo) {
                 currentEntity = currentEntity->Next();
                 continue;
             }
 
-            ImGui::PushID(currentEntity->m_id);
+            ImGui::PushID(reinterpret_cast<int>(currentEntity->m_pDynId));
 
-            auto classInfo = assignedTo->GetOldClassInfo();
+            Glacier::ZGEOMCLASSINFO* classInfo = assignedTo->GetOldClassInfo();
             std::string_view type = "N/A";
             std::string_view parent = "N/A";
 
-            if (classInfo) { type = classInfo->ComplexTypeName; }
+            if (classInfo) { type = classInfo->m_szClassInfoName; }
 
             if (Glacier::ZCast<Glacier::ZGROUP>::IsBasedOn(assignedTo)) {
                 auto childGroup = reinterpret_cast<Glacier::ZGROUP*>(assignedTo);
                 if (!childGroup) {
                     ImGui::TextColored(ImVec4{1.f, 0.f, 0.f, 1.f}, "Bad group pointer!");
                 } else {
-                    if (ImGui::TreeNode(fmt::format("Group \"{}\" (type: {} of {}, ID: {:08X})", currentEntity->entityName, type, parent, assignedTo->GetRef()).c_str())) {
-                        ImGui::Inspector<Glacier::ZEntityLocator>::Draw("NONE", assignedTo->m_baseGeom);
+                    if (ImGui::TreeNode(fmt::format("Group \"{}\" (type: {} of {}, ID: {:08X})", currentEntity->m_Name, type, parent, assignedTo->GetRef()).c_str())) {
+                        ImGui::Inspector<Glacier::ZBaseGeom>::Draw("NONE", assignedTo->m_baseGeom);
                         ImGui::Separator();
                         PrepareGroup(childGroup);
                         ImGui::TreePop();
@@ -64,26 +65,26 @@ namespace Hitman::BloodMoney
                 }
             }
             else if (Glacier::ZCast<Hitman::BloodMoney::ZHM3Actor>::IsBasedOn(assignedTo)) {
-                if (ImGui::TreeNode(fmt::format("Actor \"{}\" (type: {} of {}, ID: {:08X})", currentEntity->entityName, type, parent, assignedTo->GetRef()).c_str())) {
+                if (ImGui::TreeNode(fmt::format("Actor \"{}\" (type: {} of {}, ID: {:08X})", currentEntity->m_Name, type, parent, assignedTo->GetRef()).c_str())) {
                     ImGui::Inspector<Hitman::BloodMoney::ZHM3Actor>::Draw("NONE", reinterpret_cast<Hitman::BloodMoney::ZHM3Actor*>(assignedTo));
                     ImGui::TreePop();
                 }
             }
             else if (Glacier::ZCast<Glacier::ZCAMERA>::IsBasedOn(assignedTo)) {
-                if (ImGui::TreeNode(fmt::format("ZCamera \"{}\" (type: {} of {}, ID: {:08X})", currentEntity->entityName, type, parent, assignedTo->GetRef()).c_str())) {
+                if (ImGui::TreeNode(fmt::format("ZCamera \"{}\" (type: {} of {}, ID: {:08X})", currentEntity->m_Name, type, parent, assignedTo->GetRef()).c_str())) {
                     ImGui::Inspector<Glacier::ZCAMERA>::Draw("None", reinterpret_cast<Glacier::ZCAMERA*>(assignedTo));
                     ImGui::TreePop();
                 }
             }
             else if (Glacier::ZCast<Glacier::ZSNDOBJ>::IsBasedOn(assignedTo)) {
-                if (ImGui::TreeNode(fmt::format("ZSoundObject \"{}\" (type: {} of {}, ID: {:08X})", currentEntity->entityName, type, parent, assignedTo->GetRef()).c_str())) {
+                if (ImGui::TreeNode(fmt::format("ZSoundObject \"{}\" (type: {} of {}, ID: {:08X})", currentEntity->m_Name, type, parent, assignedTo->GetRef()).c_str())) {
                     ImGui::Inspector<Glacier::ZSNDOBJ>::Draw("None", reinterpret_cast<Glacier::ZSNDOBJ*>(assignedTo));
                     ImGui::TreePop();
                 }
             }
             else {
-                if (ImGui::TreeNode(fmt::format("Entity \"{}\" (type: {} of {}, type ptr: {:08X}, ID: {:08X})", currentEntity->entityName, type, parent, (int)classInfo, assignedTo->GetRef()).c_str())) {
-                    ImGui::Inspector<Glacier::ZEntityLocator>::Draw("NONE", currentEntity);
+                if (ImGui::TreeNode(fmt::format("Entity \"{}\" (type: {} of {}, type ptr: {:08X}, ID: {:08X})", currentEntity->m_Name, type, parent, (int)classInfo, assignedTo->GetRef()).c_str())) {
+                    ImGui::Inspector<Glacier::ZBaseGeom>::Draw("NONE", currentEntity);
                     ImGui::TreePop();
                 }
             }
@@ -103,13 +104,13 @@ namespace Hitman::BloodMoney
         auto sysInterface = Glacier::getInterface<Glacier::ZSysInterfaceWintel>(Globals::kSysInterfaceAddr);
         if (!sysInterface) { return; }
 
-        auto engineDb = sysInterface->m_engineDataBase;
+        auto engineDb = sysInterface->m_pEngineData;
         if (!engineDb) { return; }
 
         ImGui::Text("Scene Inspector");
         ImGui::Separator();
 
-        PrepareGroup(engineDb->m_root);
+        PrepareGroup(engineDb->m_pRoot);
 
         ImGui::End();
     }

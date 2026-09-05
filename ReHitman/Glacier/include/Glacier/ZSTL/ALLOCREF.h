@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Glacier/ReGlacier.h>
 #include <Glacier/Glacier.h>
 
 namespace Glacier
@@ -7,12 +8,15 @@ namespace Glacier
     class ALLOCREF
     {
     public:
-        //vftable
-        virtual void Release(bool);
+        // methods
+        ALLOCREF(uint32_t lRefShift, uint32_t lNrActiveRefs);
+        
+        // vtbl
+        virtual ~ALLOCREF();
         virtual Glacier::ZREF NewRef();
-        virtual int GetActiveRefs(REFTAB* out);
-        virtual int GetNrActiveRefs();
-        virtual void FreeRef(Glacier::ZREF ref);
+        virtual uint32_t GetActiveRefs(REFTAB* out);
+        virtual uint32_t GetNrActiveRefs();
+        virtual bool FreeRef(Glacier::ZREF ref);
         virtual bool CheckRefActive(Glacier::ZREF ref);
         virtual void PrintRef(Glacier::ZREF ref); // Do nothing :(
         virtual REFTAB* GetRefStack();
@@ -21,15 +25,13 @@ namespace Glacier
         virtual void SetUsedRefs(Glacier::ZREF* refs, unsigned int count);
 
         //data
-        int* m_usedRefs;
-        REFTAB* m_refStack;
-        int m_fieldC;
-        int m_count;
-        int m_capacity;
-        bool m_field18;
-        bool m_field18;
-        bool m_field19;
-        bool m_field1A;
-        bool m_field1B;
+        unsigned int *m_pUsedRefs;
+        REFTAB *m_pRefStack;
+        unsigned int m_lActRefNr;
+        unsigned int m_lRefAnd;
+        unsigned int m_lRefShift;
+        bool m_bCheckLock;
+        RE_ADD_PADDING(3);
     };
+    RE_VERIFY_SIZE(ALLOCREF, 0x1C);
 }

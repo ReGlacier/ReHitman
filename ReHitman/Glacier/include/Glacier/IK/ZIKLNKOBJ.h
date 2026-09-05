@@ -1,104 +1,133 @@
 #pragma once
 
 #include <Glacier/IK/ZLNKOBJ.h>
+#include <Glacier/IK/ZIKHAND.h>
 #include <Glacier/GlacierFWD.h>
+#include <Glacier/Runtime/Macro.h>
+#include <Glacier/Materials/ZTypedef.h>
+#include <Glacier/IK/ZActionDispatcher.h>
 #include <Glacier/ZSTL/ZMath.h>
+#include <Glacier/IK/IK.h>
+#include <Glacier/ZUniMemory.h>
+
 
 namespace Glacier
 {
     class ZIKLNKOBJ : public ZLNKOBJ
     {
     public:
-        using IKCallBack_t = void(ZIKLNKOBJ::*)();
+        // RTTI
+        DECLARE_GEOM_CLASS(ZIKLNKOBJ, 0x200027u);
 
-        //vftable
-        virtual void ActivateRagdoll(bool, bool, bool);
+        // static
+        STATIC_CLASS_VAR(ZIKLNKOBJ, TScenePropertyID, ContactDepris);
+
+        // types
+        struct SIKBoneCollision
+        {
+            uint8_t cBodyPart;
+            bool bFront;
+        };
+        RE_VERIFY_SIZE(SIKBoneCollision, 0x2);
+
+        // vtbl
+        ~ZIKLNKOBJ() override;
+
+        // ZSerializable
+        void LoadSave(ISerializerStream& stream, bool bSaving) override;
+
+        // RTP::cBase
+        const RTP::ZPropertyInfo& GetProperties() const override;
+
+        // ZGEOM
+        uint32_t GetObjectId() const override;
+        void GetObjectIdAndMask(uint32_t& id, uint32_t& mask) const override;
+        ZGEOMCLASSINFO* GetOldClassInfo() const override;
+        int AnimCallBackToId(ActiveAnimCB pCallback) override;
+        ActiveAnimCB AnimCallBackFromId(int) override;
+        void ClassInit() override;
+        void ClassInit2() override;
+        void ClassFrameUpdate() override;
+        void Invisible() override;
+        void PushState() override;
+
+        // ZLNKOBJ
+        void GetDefaultBones(ZBone *pBones, uint32_t lFirstBoneNum) const override;
+        void SetDefaultBones(const ZBone* pBones, const SBoneDefinition* pDef) override;
+        void CopyGeometryFrom(ZREF rGeom) override;
+        void CalcShadowProjectPlane(float* vTans, const float* mObjectToLight, const float* pObjectToLight) const override;
+        void AnimEnd(Animation::ActiveAnimation* pAnim, int lControl) override;
+
+        // ZIKLNKOBJ
+        virtual bool ActivateRagdoll(bool bActive, bool bEnableTimeout, bool bUseDamping);
         virtual void CalcAnimRemapNames();
         virtual void EnableIK();
         virtual void DisableIK();
         virtual void DisableControls();
         virtual void EnableControls();
-        virtual void ForceFacing(const ZVector3*);
-        virtual void GetFocalPoint(ZVector3*);
+        virtual void ForceFacing(const ZVector3& vFacing);
+        virtual void GetFocalPoint(ZVector3& vPoint);
         virtual void Reset();
-        virtual void GetRootCenter(ZMat3x3*, ZVector3*);
-        virtual void GetBoneCollision(ZMat3x3*, ZVector3*);
-        virtual void GetOwnerMoveSpeed();
-        virtual void GetIKBoneMatPos(int, ZMat3x3*, ZVector3*);
-        virtual void GetIKBoneMat(int, ZMat3x3*);
-        virtual void GetIKBonePos(int,ZVector3*);
-        virtual void SetHeadTarget(const ZVector3*,float);
+        virtual void GetRootCenter(ZMat3x3& mMat, ZVector3& vPos) const;
+        virtual SIKBoneCollision GetBoneCollision(const ZVector3& vPoint, const ZVector3& vDirection);
+        virtual float GetOwnerMoveSpeed() const;
+        virtual bool GetIKBoneMatPos(int lBoneNr, ZMat3x3& mMat, ZVector3& vPos) const;
+        virtual bool GetIKBoneMat(int lBoneNr, ZMat3x3& mMat) const;
+        virtual bool GetIKBonePos(int lBoneNr, ZVector3& vPos) const;
+        virtual void SetHeadTarget(const ZVector3& vPos, float fSpeedScaleFactor);
         virtual void ResetHeadTarget();
-        virtual unsigned int HeadBoneIndex();
-        virtual unsigned int NeckBoneIndex();
-        virtual unsigned int PelvisBoneIndex();
-        virtual unsigned int LHandBoneIndex();
-        virtual unsigned int RHandBoneIndex();
-        virtual unsigned int LToeBoneIndex();
-        virtual unsigned int RToeBoneIndex();
-        virtual void IKCallBackToId(IKCallBack_t callback);
-        virtual IKCallBack_t IKCallBackFromId(int);
-        virtual void SetFacingTarget(unsigned int, float, IKCallBack_t callback);
-        virtual void RemoveFacingTarget(float, IKCallBack_t callback);
+        virtual int32_t HeadBoneIndex() const;
+        virtual int32_t NeckBoneIndex() const;
+        virtual int32_t PelvisBoneIndex() const;
+        virtual int32_t LHandBoneIndex() const;
+        virtual int32_t RHandBoneIndex() const;
+        virtual int32_t LToeBoneIndex() const;
+        virtual int32_t RToeBoneIndex() const;
+        virtual int32_t IKCallBackToId(ZIKCALLBACK* pCallBack);
+        virtual ZIKCALLBACK* IKCallBackFromId(int);
+        virtual void SetFacingTarget(ZREF rGeom, float fTime, ZIKCALLBACK cb);
+        virtual void RemoveFacingTarget(float fTime, ZIKCALLBACK callback);
         virtual void DisableFacing();
         virtual void EnableFacing();
         virtual void CreateActionDispatcher();
-        virtual void RunLnkAction(ZLnkAction*);
+        virtual bool RunLnkAction(ZLnkAction* pAction);
         virtual void RemoveCurrentLnkAction();
         virtual void UpdateCurrentLnkAction();
         virtual void CallBackLnkActionTarget();
-        virtual void CallBackLnkActionBone(Animation::ActiveAnimation*, float, float, unsigned int);
-        virtual ZLnkAction* CreateLnkAction(unsigned int);
-        virtual unsigned int CurrentLnkActionId();
-        virtual ZLnkAction* GetCurrentLnkAction();
-        virtual void DisplayGround(bool);
-        virtual void EmitFootDustParticle(float, int);
-        virtual void MakeFootPrint(bool);
+        virtual bool CallBackLnkActionBone(Animation::ActiveAnimation* pZBoneAnim, float fCallBackStartFrame, float fFrame, ZREF rGeomRef);
+        virtual ZLnkAction* CreateLnkAction(uint32_t lActionId);
+        virtual uint32_t CurrentLnkActionId() const;
+        virtual ZLnkAction* GetCurrentLnkAction() const;
+        virtual bool DisplayGround(bool bDisplay);
+        virtual void EmitFootDustParticle(float fStartTime, int lBoneIndex);
+        virtual void MakeFootPrint(bool bMake);
         virtual void UpdateHead();
         virtual void UpdateFacing();
         virtual void UpdateTargets();
         virtual void ResetTargets();
         virtual void RemoveTargets();
 
-        //data (total size is 0x190, base size is 0xF4)
-        int m_fieldF4;
-        int m_fieldF8;
-        int m_fieldFC;
-        int m_field100;
-        int m_field104;
-        int m_field108;
-        int m_field10C;
-        int m_field110;
-        int m_field114;
-        int m_field118;
-        int m_field11C;
-        int m_field120;
-        int m_field124;
-        int m_field128;
-        int m_field12C;
-        int m_field130;
-        int m_field134;
-        int m_field138;
-        int m_field13C;
-        int m_field140;
-        int m_field144;
-        int m_field148;
-        int m_field14C;
-        int m_field150;
-        int m_field154;
-        int m_field158;
-        int m_field15C;
-        int m_field160;
-        int m_field164;
-        int m_field168;
-        int m_field16C;
-        int m_field170;
-        int m_field174;
-        int m_field178;
-        int m_field17C;
-        int m_field180;
-        int m_field184;
-        int m_field188;
-        int m_field18C;
+        // methods
+        ZIKLNKOBJ(const char* psName, ZBaseGeom* pBaseGeom);
+
+        bool CanPlayAnimSegment(Animation::Header* pAnimHeader, float fFrom, float fTo, bool bMirror);
+        bool CanPlayAnimSegment(Animation::Header* pAnimHeader, float fFrom, float fTo, const float* pRootMat, const float* pRootPos, bool bMirror, float fHeight, float fDepth);
+
+        // members
+        uint32_t m_Active;
+        bool m_bRunning;
+        bool m_bFacingDisabled;
+        bool m_pad13D[2];
+        int m_lPushedActive;
+        ZGEOM* m_pFootDustTemplate;
+        ZGEOM* m_pFootPrints;
+        ZTARGET m_BodyFacingTarget;
+        ZVector3 m_vHeadTarget;
+        float m_fHeadTargetPrc;
+        float m_fHeadHeight;
+        ZActionDispatcher* m_pActionDispatcher;
+        ZActionDispatcher m_StdActionDisplatcher;
+        uint32_t m_pad;
     };
+    RE_VERIFY_SIZE(ZIKLNKOBJ, 0x190); // Verified PC alloc
 }

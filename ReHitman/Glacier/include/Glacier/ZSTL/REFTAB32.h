@@ -1,58 +1,70 @@
 #pragma once
 
 #include <Glacier/GlacierFWD.h>
+#include <Glacier/ReGlacier.h>
+#include <Glacier/ZSTL/REFTAB.h>
+
 
 namespace Glacier
 {
-    // Class definition REFTAB32
-    class REFTAB32
+    /**
+     * @class REFTAB32
+     * @brief A specialized, fixed-capacity variant of @ref REFTAB optimized for up to 32 elements.
+     *
+     * @details
+     * REFTAB32 extends the base @ref REFTAB container by embedding the **very first data block** * directly inside the class instance memory layout layout (Small Buffer Optimization / SBO).
+     * * ### Internal Memory & Math Breakdown:
+     * - The class reserves a local byte array `m_FirstTab` of exactly **144 bytes**.
+     * - **144 bytes** corresponds to: `sizeof(TabBlk)` (16 bytes) + `32 elements * sizeof(uint32_t)` (128 bytes).
+     * - Total structure size strictly evaluates to **0xAC** (172 bytes), preserving flawless 1:1 binary alignment 
+     * with the original Glacier Engine.
+     *
+     * ### Performance Strategy:
+     * 1. **Zero-Allocation Setup:** For short-lived or small collections (<= 32 elements), this container performs 
+     * **no dynamic heap allocations** whatsoever. It recycles the pre-allocated stack/embedded `m_FirstTab` buffer.
+     * 2. **Fallback to Chaining:** If the 33rd element is added, @ref NewBlock overrides seamlessly kick in, triggering 
+     * the engine's heap allocator (`ZNetAlloc::Allocate`) to chain subsequent blocks into a standard linked list.
+     * 3. **Destruction Safety:** @ref DeleteBlock ensures that the embedded `m_FirstTab` region is skipped during 
+     * heap cleanup routines, eliminating any risks of dangling pointers or `free()` corruption.
+     */
+    class REFTAB32 : public REFTAB
     {
     public:
-        // === members ===
-        uint32_t m_pStart; //0x0004
-        char pad_0008[28]; //0x0008
-        int32_t m_itemsCount; //0x0024
-        char pad_0028[4]; //0x0028
-        uint32_t m_firstItem; //0x002C
-        char pad_0030[128]; //0x0030
+        /**
+         * @brief Standard constructor initializing the underlying REFTAB with a hardcoded 
+         * pool size of 32 elements.
+         */
+        REFTAB32();
 
-    public:
-        virtual void Release_REFTAB32(bool); //#0000 at 00117DC0 org REFTAB32::~REFTAB32()
-        virtual void Add(unsigned int); //#0001 at 00117358 org REFTAB::Add(unsigned int)
-        virtual void AddUnique(unsigned int); //#0002 at 00117420 org REFTAB::AddUnique(unsigned int)
-        virtual void Clear(); //#0003 at 00117480 org REFTAB::Clear(void)
-        virtual void ClearThis(); //#0004 at 00117494 org REFTAB::ClearThis(void)
-        virtual size_t Count(); //#0005 at 0011752C org REFTAB::Count(void)const
-        virtual size_t Size(); //#0006 at 00117534 org REFTAB::Size(void)const
-        virtual size_t GetEleSize(); //#0007 at 0043A0CC org REFTAB::GetEleSize(void)const
-        virtual size_t PoolSize(); //#0008 at 0011753C org REFTAB::PoolSize(void)
-        virtual void DelRefPtr(unsigned int *); //#0009 at 00117544 org REFTAB::DelRefPtr(unsigned int *)
-        virtual bool Exists(unsigned int); //#0010 at 001175B8 org REFTAB::Exists(unsigned int)const
-        virtual bool Exists(unsigned int *); //#0011 at 00117628 org REFTAB::Exists(unsigned int *)const
-        virtual void* Find(unsigned int); //#0012 at 00117718 org REFTAB::Find(unsigned int)
-        virtual void* GetRefNr(int); //#0013 at 00117788 org REFTAB::GetRefNr(int)const
-        virtual void* GetRefPtrNr(int); //#0014 at 001177E0 org REFTAB::GetRefPtrNr(int)const
-        virtual size_t GetIndex(unsigned int); //#0015 at 00117698 org REFTAB::GetIndex(unsigned int)const
-        virtual void Remove(unsigned int); //#0016 at 00117834 org REFTAB::Remove(unsigned int)
-        virtual void RemoveIfExists(unsigned int); //#0017 at 00117858 org REFTAB::RemoveIfExists(unsigned int)
-        virtual void RunDelRef(RefRun *); //#0018 at 00117BF0 org REFTAB::RunDelRef(RefRun *)
-        virtual void RunInitNxtRef(RefRun *); //#0019 at 001178DC org REFTAB::RunInitNxtRef(RefRun *)
-        virtual void RunInitNxtRef(RefRun *) const; //#0020 at 00117908 org REFTAB::RunInitNxtRef(RefRun *)const
-        virtual void RunInitPrevRef(RefRun *); //#0021 at 00117920 org REFTAB::RunInitPrevRef(RefRun *)
-        virtual void RunInitPrevRef(RefRun *) const; //#0022 at 0011795C org REFTAB::RunInitPrevRef(RefRun *)const
-        virtual void RunNxtRef(RefRun *); //#0023 at 00117988 org REFTAB::RunNxtRef(RefRun *)
-        virtual void RunNxtRef(RefRun *) const; //#0024 at 001179BC org REFTAB::RunNxtRef(RefRun *)const
-        virtual void RunNxtRefPtr(RefRun *); //#0025 at 001179F0 org REFTAB::RunNxtRefPtr(RefRun *)
-        virtual void RunNxtRefPtr(RefRun *) const; //#0026 at 00117A64 org REFTAB::RunNxtRefPtr(RefRun *)const
-        virtual void RunPrevRef(RefRun *); //#0027 at 00117AD8 org REFTAB::RunPrevRef(RefRun *)
-        virtual void RunPrevRef(RefRun *) const; //#0028 at 00117B0C org REFTAB::RunPrevRef(RefRun *)const
-        virtual void RunPrevRefPtr(RefRun *); //#0029 at 00117B40 org REFTAB::RunPrevRefPtr(RefRun *)
-        virtual void RunPrevRefPtr(RefRun *) const; //#0030 at 00117B98 org REFTAB::RunPrevRefPtr(RefRun *)const
-        virtual void* operator[](size_t index); //#0031 at 0043A0D4 org REFTAB::operator[](int)const
-        virtual void RunToRefPtr(RefRun *); //#0032 at 00117D38 org REFTAB::RunToRefPtr(RefRun *)
-        virtual void DeleteBlock(TabBlk *); //#0033 at 00117DFC org REFTAB32::DeleteBlock(TabBlk *)
-        virtual void* NewBlock(); //#0034 at 00117E2C org REFTAB32::NewBlock(void)
-    }; //End of REFTAB32 from 0054FBE0
+        /**
+         * @brief Call of REFTAB' constructo IS PROHIBITED due data layout limitations
+         */
+        REFTAB32(int, int) = delete;
+
+        // Our "custom" dtor
+        ~REFTAB32() override;
+
+        // vtbl (dtor not overloaded due PC impl refs to original dtor)
+        /**
+         * @brief Overrides memory allocation. Returns a pointer to @ref m_FirstTab on the first call,
+         * or falls back to system allocation if additional chained blocks are required.
+         */
+        void DeleteBlock(TabBlk *) override;
+
+        /**
+         * @brief Overrides block deallocation. Safely ignores requests to free @ref m_FirstTab,
+         * while calling standard release operators on any dynamically allocated secondary blocks.
+         */
+        TabBlk* NewBlock(void) override;
+        
+        // members
+        /**
+         * @brief Inlined memory block acting as the first chunk for up to 32 elements.
+         * @note Combines 16 bytes for @ref TabBlk header and 128 bytes for 32 x uint32_t elements.
+         */
+        char m_FirstTab[144];
+    };
+    RE_VERIFY_SIZE(REFTAB32, 0xAC);
 
     template <typename T> T* get(REFTAB32* reftab, size_t index)
     {

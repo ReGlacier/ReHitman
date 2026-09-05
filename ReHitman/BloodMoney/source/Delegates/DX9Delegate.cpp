@@ -15,11 +15,11 @@
 #include <BloodMoney/Game/ZHM3Actor.h>
 #include <BloodMoney/Game/ZHM3GameData.h>
 
-#include <Glacier/ZSysInterfaceWintel.h>
-#include <Glacier/ZRenderWintelD3D.h>
-#include <Glacier/ZEngineDataBase.h>
+#include <Glacier/System/ZSysInterfaceWintel.h>
+#include <Glacier/Render/Fwd.h>
+#include <Glacier/Data/ZEngineDataBase.h>
 #include <Glacier/ZCameraSpace.h>
-#include <Glacier/ZCAMERA.h>
+#include <Glacier/Geom/ZCAMERA.h>
 #include <Glacier/Glacier.h>
 
 #include <imgui.h>
@@ -28,8 +28,8 @@
 
 #include <spdlog/spdlog.h>
 #include <HF/HackingFramework.hpp>
-#include <Glacier/ZPrimControlWintel.h>
-#include <Glacier/ZRenderWintelD3DDll.h>
+#include <Glacier/Render/ZRender.h>
+
 
 namespace Hitman::BloodMoney
 {
@@ -51,9 +51,7 @@ namespace Hitman::BloodMoney
         ImGui::StyleColorsDark();
 
         auto systemInterface = Glacier::getInterface<Glacier::ZSysInterfaceWintel>(Globals::kSysInterfaceAddr);
-        Glacier::ZRenderWintelD3D* renderer = systemInterface ? systemInterface->m_renderer : nullptr;
-
-        const auto hwnd = renderer ? renderer->m_HWND : nullptr;
+        const auto hwnd = (HWND)systemInterface->MasterHwnd;
         if (!hwnd)
             throw std::runtime_error { "Failed to get HWND. No renderer at systemInterface->m_renderer" };
 
@@ -64,11 +62,11 @@ namespace Hitman::BloodMoney
 
         // Register widgets
         {
-            Globals::g_pDebugTools->addChild(std::make_shared<SandboxWidget>());
+//            Globals::g_pDebugTools->addChild(std::make_shared<SandboxWidget>());
             Globals::g_pDebugTools->addChild(std::make_shared<ActorsListWidget>());
-            Globals::g_pDebugTools->addChild(std::make_shared<CutSequencePlayerWidget>());
-            Globals::g_pDebugTools->addChild(std::make_shared<SceneViewer>());
-            Globals::g_pDebugTools->addChild(std::make_shared<PlayerTeleportWidget>());
+//            Globals::g_pDebugTools->addChild(std::make_shared<CutSequencePlayerWidget>());
+//            Globals::g_pDebugTools->addChild(std::make_shared<SceneViewer>());
+//            Globals::g_pDebugTools->addChild(std::make_shared<PlayerTeleportWidget>());
         }
 
         // Register gizmos

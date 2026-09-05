@@ -1,9 +1,9 @@
 #include <BloodMoney/Patches/All/InputDevicesPatches.h>
 #include <BloodMoney/Delegates/IInputDelegate.h>
 #include <BloodMoney/Game/Globals.h>
-#include <Glacier/ZSysInterfaceWintel.h>
-#include <Glacier/ZSysInputWintel.h>
-#include <Glacier/ZInputDevice.h>
+#include <Glacier/System/ZSysInterfaceWintel.h>
+#include <Glacier/Input/ZSysInputWintel.h>
+#include <Glacier/Input/ZInputDevice.h>
 
 #include <spdlog/spdlog.h>
 
@@ -71,13 +71,12 @@ namespace Hitman::BloodMoney
         static std::unique_ptr<HF::Hook::VFHook<ZSysInputCustom>> g_sysInputOnUpdateHook = nullptr;
     }
 
-    struct ZMouseWintel {
-	    ///
-		/// REVERSED DATA [READ ONLY, DO NOT CHANGE THE STRUCTURE]
-		///
-		char pad_0000[44]; //0x0000
-		uint32_t m_mouseState; //0x002C
-		char pad_0030[60]; //0x0030
+	struct ZMouseDevice : public Glacier::ZInputDevice
+	{
+	};
+
+    struct ZMouseWintel : public ZMouseDevice
+	{
 		uint32_t m_directInput; //0x006C
 		uint32_t m_device2; //0x0070
 		char pad_0074[540]; //0x0074
@@ -89,6 +88,7 @@ namespace Hitman::BloodMoney
 		uint8_t m_midButton; //0x029E
 		char pad_029F[177]; //0x029F
     };
+	static_assert(offsetof(ZMouseWintel, m_directInput) == 0x6C);
 
     static int __cdecl GlacierKeyboardHandler(unsigned int key, int mask, void* pData) {
 		// Detect pressed keys and classify 'em
@@ -175,9 +175,10 @@ namespace Hitman::BloodMoney
          * @brief Called by Glacier when engine wants to update input devices
          */
 		bool OnUpdate() {
-			if (m_attachedDevicesCount) {
-				for (int i = 0; i < m_attachedDevicesCount; i++) {
-					if (!m_devices[i]) {
+			if (m_devicecount) {
+				for (int i = 0; i < m_devicecount; i++) {
+					if (!m_devices[i]) 
+					{
 						continue;
 					}
 
@@ -189,7 +190,7 @@ namespace Hitman::BloodMoney
 
 				static bool g_kbHandlerAttached = false;
 				if (!g_kbHandlerAttached) {
-					int kbDeviceIndex = GetPrimaryDevice(Glacier::EDeviceType::KEYBOARD);
+					int kbDeviceIndex = GetPrimaryDevice(Glacier::SysInput::EDeviceType::eKEYBOARD_TYPE);
 					g_kbHandlerAttached = InstallHandler(kbDeviceIndex, GlacierKeyboardHandler, (void*)kbDeviceIndex);
 					if (g_kbHandlerAttached) {
 						spdlog::info("Keyboard handler added!");
@@ -205,7 +206,7 @@ namespace Hitman::BloodMoney
 
     private:
     	void UpdateMouse() {
-			auto mouseDevice = reinterpret_cast<ZMouseWintel*>(GetPrimaryDevicePtr(Glacier::EDeviceType::MOUSE));
+			auto mouseDevice = reinterpret_cast<ZMouseWintel*>(GetPrimaryDevicePtr(Glacier::SysInput::EDeviceType::eMOUSE_TYPE));
 
 		    if (mouseDevice && Globals::g_pInputDelegate) {
 			    Globals::g_pInputDelegate->setMouseKeyState(0, mouseDevice->m_leftButton);

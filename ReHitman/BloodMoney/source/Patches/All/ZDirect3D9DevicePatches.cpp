@@ -1,6 +1,6 @@
 #include <BloodMoney/Patches/All/ZDirect3D9DevicePatches.h>
 #include <BloodMoney/Delegates/IDirect3DDelegate.h>
-#include <BloodMoney/Engine/ZDirect3DDevice.h>
+#include <Glacier/Render/ZDirect3DDevice.h>
 
 #include <spdlog/spdlog.h>
 
@@ -131,16 +131,16 @@ namespace Callbacks
         return res;
     }
 
-    static void __stdcall OnZDirect3DDeviceConstructor(Hitman::BloodMoney::Engine::ZDirect3DDevice* pDevice)
+    static void __stdcall OnZDirect3DDeviceConstructor(Glacier::ZDirect3DDevice* pDevice)
     {
         spdlog::info("ZDirect3DDevice constructed at {:08X}", reinterpret_cast<std::intptr_t>(pDevice));
-        spdlog::info(" D3D Device at {:08X}", reinterpret_cast<std::intptr_t>(pDevice->m_d3dDevice));
+        spdlog::info(" D3D Device at {:08X}", reinterpret_cast<std::intptr_t>(pDevice->m_pDevice));
 
-        Globals::SetupD3DHooks(pDevice->m_d3dDevice);
+        Globals::SetupD3DHooks(pDevice->m_pDevice);
 
         if (Globals::g_pDelegate)
         {
-            Globals::g_pDelegate->OnInitialised(pDevice->m_d3dDevice);
+            Globals::g_pDelegate->OnInitialised(pDevice->m_pDevice);
         }
     }
 }
@@ -185,7 +185,7 @@ namespace Hitman::BloodMoney
 
         if (auto process = modules.process.lock())
         {
-            m_ZDirect3DDevice_Constructor = HookFunction<void(__stdcall*)(Engine::ZDirect3DDevice*), 10>(
+            m_ZDirect3DDevice_Constructor = HookFunction<void(__stdcall*)(Glacier::ZDirect3DDevice*), 10>(
                     process,
                     Consts::kZDirect3DDeviceConstructor,
                     &Callbacks::OnZDirect3DDeviceConstructor,

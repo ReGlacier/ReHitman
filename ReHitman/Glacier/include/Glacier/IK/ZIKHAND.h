@@ -1,56 +1,55 @@
 #pragma once
 
+#include <Glacier/ReGlacier.h>
 #include <Glacier/ZSTL/ZMath.h>
+#include <Glacier/IK/ZTARGET.h>
+#include <Glacier/Items/ZItemTemplate.h>
+
 
 namespace Glacier
 {
+    // fwds
     class ZItem;
     class ZItemTemplate;
     class ZIKLNKOBJ;
+    class ZLNKOBJ;
 
-    enum class HandType {
-        LeftHand	= 32,
-        RightHand	= 31,
-        RatUnk0		= 20,
-        RatUnk1		= 25
+    struct SHandInfo
+    {
+        // methods
+        SHandInfo();
+
+        void LoadSave(ISerializerStream& stream, bool bSaving);
+
+        // members
+        uint32_t m_rItem{ 0 };
+        bool m_bIKItemEnabled{ false };
+        RE_ADD_PADDING(3);
     };
+    RE_VERIFY_SIZE(SHandInfo, 0x8);
 
-    class ZIKHAND
+    class ZIKHAND : public ZTARGET
     {
     public:
-        virtual void LoadSave(ZPackedInput*, bool);
-        virtual void AttachItem(ZIKLNKOBJ* owner, Glacier::ZREF itemID);
-        virtual void SlipItem(ZIKLNKOBJ* owner);
-        virtual ZItem* GetItem();
-        virtual ZItemTemplate* GetItemType();
+        // vtbl
+        void LoadSave(ZLNKOBJ* pLnkObj, ISerializerStream& stream, bool bSaving) override;
+        virtual ZREF AttachItem(ZIKLNKOBJ* pLnkObj, ZREF rItem);
+        virtual void SlipItem(ZIKLNKOBJ* pLnkObj);
+        virtual ZItem* GetItem() const;
+        virtual ITEMHANDS GetItemType() const;
         virtual void Reset();
-        virtual void SetTarget(ZIKLNKOBJ* owner, const Matrix4x4* transform, const Vector3* point, float veliocity, void* callback);
+        virtual void SetTarget(ZIKLNKOBJ* pLnkObj, const ZMat3x3& mMat, const ZVector3& vPos, float fTime, ZIKCALLBACK CallBack);
+
+        // methods
+        ZIKHAND(uint32_t lBoneId);
+        void PlaceItem(ZIKLNKOBJ* pLnkObj, ZItem* _pItem);
 
         // data
-        int field_4;
-        char m_bEnabled;
-        char field_9;
-        char field_A;
-        char field_B;
-        Glacier::ZMat3x3 m_mTarget;
-        Glacier::ZVector3 m_vTarget;
-        float m_fTime;
-        float m_fStartTime;
-        Glacier::ZREF m_rGeom;
-        int m_lBoneId;
-        int field_4C;
-        int field_50;
-        int field_54;
-        int field_58;
-        int field_5C;
-        int m_itemId;
-        bool m_hasItem;
-        char field_65;
-        char field_66;
-        char field_67;
-        HandType m_handType;
+        SHandInfo m_HandInfo;
+        unsigned int m_lBoneId;
         Glacier::ZVector3 m_vItemOffset;
-        int MSG_INVERTORYSETACTIVELEFT;
-        int field_7C;
+        ZMSGID m_msgInventorySetActive;
+        uint8_t m_pad2[6];
     };
+    RE_VERIFY_SIZE(ZIKHAND, 0x80); // Verified for PC
 }

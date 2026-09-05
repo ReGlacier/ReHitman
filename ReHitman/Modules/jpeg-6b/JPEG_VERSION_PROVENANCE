@@ -1,0 +1,70 @@
+Independent JPEG Group libjpeg 6b   (JVERSION "6b  27-Mar-1998")
+
+Source provenance
+-----------------
+Upstream:   https://www.ijg.org/files/jpegsrc.v6b.tar.gz
+Downloaded: 2026-07-25
+Size:       613,261 bytes
+sha256:     75c3ec241e9996504fe02a9ed4d12f16b74ade713972f3db9e65ce95cd27e35d
+md5:        dbd5f3b47ed13132f04c685d608a7547   <- matches IJG's long-published md5
+Extracted:  tar xzf jpegsrc.v6b.tar.gz   (pristine, no edits; dir name is
+            upstream's own "jpeg-6b")
+
+Why 6b, and why exactly this tarball
+------------------------------------
+Read out of the executable, not guessed. jerror.c's JMESSAGE table lives at
+VA 0x00754B90 in HitmanBloodMoney.exe:
+    [73] "Copyright (C) 1998, Thomas G. Lane"    (JMSG_COPYRIGHT)
+    [74] "6b  27-Mar-1998"                       (JMSG_VERSION)
+Both strings are reproduced character-for-character by this tarball's
+jversion.h -- including the DOUBLE SPACE in "6b  27-Mar-1998".
+
+The table's size is a second, independent check. Upstream jerror.h expands to
+exactly 124 JMESSAGE entries (codes 0..123), so the last message code is
+123 = 0x7B -- which is precisely the 0x7B the game's jpeg_std_error hard-codes.
+
+Ruling out neighbours:
+  - "Sorry, there are legal restrictions on arithmetic coding" IS present in
+    the exe, and IS present here; libjpeg 7 removed it, so 7/8/9 are out.
+  - None of the 7/8 additions ("Invalid crop request", DCT-scaling messages)
+    appear in the exe.
+  - 6a would read "Copyright (C) 1996".
+  - libjpeg-turbo post-dates this 2006 build.
+So: 6b exactly, unmodified.
+
+Module provenance
+-----------------
+The only RCS ident string in the whole 4.3MB image (.rdata 0x354478) is:
+    $Header: /var/lib/cvs/code/libraries/jpegdll/cactusjpeg.c,v 1.3
+             2003/11/10 18:47:08 st Exp $
+That attests IOI's module directory: code/libraries/jpegdll/ -- which is why
+our transcriptions live at src/libraries/jpegdll/ (source root is z:\code\;
+hmcd_dbg.map shows only two top-level dirs, jamout_hitman3 and libraries).
+
+libjpeg is PC-only. The PS2 build contains no libjpeg at all (0 case-insensitive
+hits for "jpeg" across all 167MB of hmcd_dbg.elf, STABS included), so there is
+no PS2 source_file mapping to inherit. The iOS Reprisal port DOES link libjpeg,
+but only the COMPRESS half (jinit_c_*, jpeg_CreateCompress, jpeg_write_scanlines,
+jpeg_fdct_*, ... 47 symbols) -- useful as a naming source for that half only.
+
+Traps when byte-matching this band
+----------------------------------
+The original was linked with /OPT:ICF, so identical bodies were folded to one
+RVA. Five folded export RVAs (each is ONE function in the image -- do not chase
+both halves as separate byte-matches):
+    0x0000FCF0  jpeg_destroy_compress == jpeg_destroy_decompress
+    0x0000FD00  jpeg_abort_compress   == jpeg_abort_decompress
+    0x000236A0  jpeg_get_small        == jpeg_get_large
+    0x000236B0  jpeg_free_small       == jpeg_free_large
+    0x000715C0  jpeg_mem_term         == EditPrint   (<- NOT libjpeg)
+Three more folded into unrelated game code, so those RVAs are not libjpeg's to
+own: 0x000715C0 (EditPrint), 0x002B3640 (jpeg_mem_init), 0x0003BAE0 (jzero_far).
+
+Also: d3dx9_27.dll ships Microsoft's own copy of libjpeg 6b with identical
+version/copyright strings. It is unrelated to the game's copy.
+
+Scope
+-----
+Reference and diff base only -- NOTHING here is compiled. The build inputs are
+our transcriptions at src/libraries/jpegdll/*.cpp, mirroring IOI's own tree
+layout one .cpp per upstream .c.
