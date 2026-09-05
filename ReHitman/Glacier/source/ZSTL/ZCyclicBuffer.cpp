@@ -71,6 +71,9 @@ namespace Glacier
             }
 
             iOffset += iSize + 4;
+
+            if (*reinterpret_cast<int*>(m_pBuffer + iOffset) == -1)
+                iOffset = 0;
         }
 
         return m_pBuffer + iOffset + 4;
