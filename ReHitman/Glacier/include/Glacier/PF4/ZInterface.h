@@ -20,6 +20,15 @@ namespace Glacier::PF4
         unsigned int m_Id   : 14;
         unsigned int m_Type : 2;
         ZVector2 m_Pos;
+
+        // Re-targets a path entry at an existing custom vertex (PC 004D8D10).
+        void SetPosition(int16_t iVertexIndex, float fX, float fZ)
+        {
+            m_Id = static_cast<unsigned int>(iVertexIndex) & 0x3FFFu;
+            m_Type = 3u;
+            m_Pos.x = fX;
+            m_Pos.y = fZ;
+        }
     };
     RE_VERIFY_SIZE(ZDataRef, 0xC);
 
@@ -47,19 +56,19 @@ namespace Glacier::PF4
         };
 
         virtual ~ZInterface() = default;
-        virtual int MapNodeIdx(ZDataRef rRef, float*, float*, EPathWayActions&, unsigned int&) = 0;
+        virtual float* MapNodeIdx(ZDataRef rRef, float*, float*, EPathWayActions&, unsigned int&) = 0;
         virtual int GetMetaId() = 0;
         virtual void AddNode(ZMetaNode* pNode, const ZLocation& kLocation) = 0;
-        virtual void RemoveNode(ZMetaNode* pNode) = 0;
+        virtual ZMetaNode* RemoveNode(ZMetaNode* pNode) = 0;
         virtual void MoveNodeConstrained(ZMetaNode* pNode, const ZVector3& vPos) = 0;
-        virtual void TeleportNode(ZMetaNode* pNode, const ZVector3& vPos) = 0;
+        virtual bool TeleportNode(ZMetaNode* pNode, const ZVector3& vPos) = 0;
         virtual int FindNodes(const ZLocation& kSource, ZResult* pList, int iMaxEntities, float fMaxDistance, int type) = 0;
         virtual void AddObstacle(ZDynamicObstacle* pObstacle2, const ZLocation& kLocation) = 0;
         virtual void RemoveObstacle(ZDynamicObstacle* pObstacle2) = 0;
         virtual void MoveObstacle(ZDynamicObstacle* pObstacle2, const ZLocation& kPos) = 0;
         virtual void AddObstacle(ZDynamicObstacle* pObstacle2, const ZVector3& vPos) = 0;
         virtual void MoveObstacle(ZDynamicObstacle* pObstacle2, const ZVector3& vPos) = 0;
-        virtual void PushOutOfObstacles(ZMetaNode* pNode, int iObstacleTypeMask, const ZVector3& vPos) = 0;
+        virtual void PushOutOfObstacles(ZMetaNode* pNode, int iObstacleTypeMask, ZVector3& vPos) = 0;
         virtual bool HasObstacles() = 0;
         virtual bool FindPath(ZPathRequest* pRequest) = 0;
         virtual void FreePath(ZPath* pPath) = 0;

@@ -19,7 +19,7 @@ namespace Glacier
     class ZLNKWHANDS;
     struct COLI;
     class ZDrawDebugRender;
-    
+
     // Seeable type bitmask constants (namespace Vision in checkvisible.cpp).
     namespace Vision
     {
@@ -85,6 +85,8 @@ namespace Glacier
         void AddSeeableItem(ZItem* pItem);
         void UpdateSeeableItem(ZItem* pItem);
         void RemoveSeeableItem(ZItem* pItem);
+
+        // known types: player - 0x8, actor - 0x4
         void AddSeeableActor(ZLNKWHANDS* pActor, uint16_t type);
         void UpdateSeeableActor(ZLNKWHANDS* pActor);
         void RemoveSeeableActor(ZLNKWHANDS* pActor);

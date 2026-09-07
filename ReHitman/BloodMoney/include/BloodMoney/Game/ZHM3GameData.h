@@ -249,9 +249,14 @@ namespace Hitman::BloodMoney
     class ZHM3GameData final : public Glacier::ZGameData
     {
     public:
+        // vtbl
+
+        // methods
         ZHM3GameData();
         Glacier::TEnumID GetAmmoEnumId(const char* psName) override;
+        ZHM3LevelControl* GetLevelControl() const;
 
+        // members
         ZHitman3* m_Hitman3; //0x0A40
         Glacier::ZREF m_rPlayer; //0x0A44
         ZHM3LevelControl* m_LevelControl; //0x0A48

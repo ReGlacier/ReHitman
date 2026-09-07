@@ -28,6 +28,11 @@ namespace Hitman::BloodMoney
             psName);
     }
 
+    ZHM3LevelControl* ZHM3GameData::GetLevelControl() const
+    {
+        return m_LevelControl;
+    }
+
     class ZGameDataFactory final : public Glacier::ZGameDataFactoryBase
     {
     public:

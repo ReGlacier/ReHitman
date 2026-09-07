@@ -11,6 +11,7 @@
 #include <Glacier/Com/CCom.h>
 #include <Glacier/Render/ZRender.h>
 #include <Glacier/Render/ZRenderBaseDll.h>
+#include <Glacier/Render/Draw/IDraw.h>
 #include <Glacier/Render/Debug/Globals.h>
 #include <Glacier/ScriptEngine/ScriptEngine.h>
 #include <Glacier/Serializer/ISerializerStream.h>
@@ -691,7 +692,119 @@ namespace Glacier
 
     void ZEngineDataBase::DoUnloadScene()
     {
-        // TODO: Finish me
+        g_pSysInterface->UnlockRefs();
+        if (g_pSysInterface->WindowFirst)
+        {
+            IDraw::Instance()->Flush();
+        }
+
+        if (ZCollisionBase::s_pCollisionBase)
+        {
+            ZCollisionBase::s_pCollisionBase->FreeSceneMemory();
+        }
+
+        BS_Runtime::ZMaterialDescriptionDB::Destroy();
+
+        if (m_pRoomColiTreeData)
+        {
+            ZUniMemory::Free(m_pRoomColiTreeData);
+            m_pRoomColiTreeData = nullptr;
+        }
+
+        if (m_pGlobalColiTreeData)
+        {
+            ZUniMemory::Free(m_pGlobalColiTreeData);
+            m_pGlobalColiTreeData = nullptr;
+        }
+
+        if (m_pEntityTracker)
+        {
+            ZUniMemory::Delete(m_pEntityTracker);
+            m_pEntityTracker = nullptr;
+        }
+
+        if (m_pPathfinder4Data)
+        {
+            ZUniMemory::Delete(m_pPathfinder4Data);
+            m_pPathfinder4Data = nullptr;
+        }
+
+        if (m_AnimationManager)
+        {
+            m_AnimationManager->Clear();
+            Animation::instance = nullptr;
+            ZUniMemory::Delete(m_AnimationManager);
+        }
+
+        m_AnimationManager = nullptr;
+
+        if (m_pPackedTreeData)
+        {
+            ZUniMemory::Free(m_pPackedTreeData);
+            m_pPackedTreeData = nullptr;
+        }
+
+        m_lPackedTreeDataLength = 0;
+        DeleteAllGeoms();
+
+        m_EventList.Clear();
+
+        if (m_pScheduledUpdate)
+        {
+            ZUniMemory::Delete(m_pScheduledUpdate);
+            m_pScheduledUpdate = nullptr;
+        }
+
+        if (auto* pInst = ZStaticGameLevelData::Instance())
+        {
+            pInst->Destroy();
+        }
+
+        ZEngineGeomControl::GetInstance().Clear();
+
+        if (m_pListUser)
+        {
+            ZUniMemory::Delete(m_pListUser);
+            m_pListUser = nullptr;
+        }
+
+        m_SceneCom.Clear();
+
+        if (m_pStaticBuffer)
+        {
+            ZUniMemory::Free(m_pStaticBuffer);
+            m_pStaticBuffer = nullptr;
+        }
+
+        if (m_pPackedAnims)
+        {
+            ZUniMemory::Free(m_pPackedAnims);
+            m_pPackedAnims = nullptr;
+            m_lPackedAnimsLength = 0;
+        }
+
+        for (auto* pCurrentRender = g_pSysInterface->WindowFirst; pCurrentRender; pCurrentRender = pCurrentRender->Nxt)
+        {
+            pCurrentRender->RemoveCameras();
+            pCurrentRender->FreeDrawBuffers();
+        }
+
+        Action::Free();
+
+        FreeMsgValues();
+
+        --m_lLockMinMax;
+        if (m_bRunTime)
+        {
+            m_bRunTime = false;
+        }
+
+        g_pSysInterface->LockRefs();
+
+        if (g_pGameDataFactory)
+        {
+            g_pGameDataFactory->DestroyGameData();
+        }
     }
 
     void ZEngineDataBase::FreeSceneMemory()
@@ -1008,10 +1121,12 @@ namespace Glacier
         return &m_SceneCom;
     }
 
-    ZREF ZEngineDataBase::GetSceneVar(const char* varname) const
+    ZREF ZEngineDataBase::GetSceneVar(const char* varname)
     {
-        // TODO: Finish me
-        return 0;
+        int32_t lValue = 0;
+        m_SceneCom.GetVal(varname, &lValue);
+
+        return static_cast<ZREF>(lValue);
     }
 
     ZSoundObject* ZEngineDataBase::SRefToPtr(Glacier::ZREF sref)

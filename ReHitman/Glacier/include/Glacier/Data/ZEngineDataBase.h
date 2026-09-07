@@ -188,7 +188,7 @@ namespace Glacier
         ZREF GetREFByName(const char* pszName) const;
         ZGEOM* GeomRefToPtr(ZREF rGeom) const;
         CCom* GetSceneCom();
-        ZREF GetSceneVar(const char* varname) const;
+        ZREF GetSceneVar(const char* varname);
         ZSoundObject* SRefToPtr(Glacier::ZREF sref);
 	    ZGEOMCLASSINFO* GetGeomClassInfo(uint32_t lTypeId);
         ZROUTCLASSINFO* GetRoutClassInfo(const char* pszRoutInfo);

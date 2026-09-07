@@ -19,7 +19,7 @@ namespace Glacier::PF4
         // methods
         ZBlockAlocator();
         ~ZBlockAlocator();
-        void Init(int16_t* pData, ZDataRef* pDRef);
+        void Init(int16_t* pStack, ZDataRef* pDataRef);
         ZDataRef* Alloc();
         void Free(ZDataRef* pRef);
         bool BelongsTo(ZDataRef* pDataRef) const;
@@ -60,25 +60,72 @@ namespace Glacier::PF4
 
     struct ZVertex
     {
-        EPathWayActions m_eAction;
-        ZVector3 Position;
-        float distFromStart;
-        int id;
+        ZVector2 m_kPos;      // +0x0 world x/z
+        float m_fHeight;      // +0x8
+        ZVector2 m_kNormal;   // +0xC
     };
-    RE_VERIFY_SIZE(ZVertex, 0x18);
+    RE_VERIFY_SIZE(ZVertex, 0x14); // Confirmed (PC pf4runtime)
 
     struct ZNode
     {
-        ZVector3 m_Pos;
-        uint32_t m_FirstChild;
-        uint32_t m_LastChild;
-        uint32_t m_sExitNodeID;
-        uint32_t m_sExitGraphID;
-        int m_ExitId;
-        uint32_t m_myGraph;
-        uint32_t coord;
+        ZVector2 m_kPos;      // +0x0 world x/z
+        float m_fHeight;      // +0x8
+        ZIndex m_iFirstLink;  // +0xC
+        ZIndex m_iLastLink;   // +0xE
+        ZIndex m_iComponent;  // +0x10
+        ZIndex m_iGraph;      // +0x12
     };
-    RE_VERIFY_SIZE(ZNode, 0x28);
+    RE_VERIFY_SIZE(ZNode, 0x14); // Confirmed (PC pf4runtime)
+
+    struct ZNodeData
+    {
+        ZIndex iOpenNode;
+    };
+    RE_VERIFY_SIZE(ZNodeData, 0x2);
+
+    struct ZSplitTree
+    {
+        ZIndex m_iChild[2];   // +0x0 child index (or encoded component when negative)
+        float m_fA;           // +0x4 plane: A * x + B * z
+        float m_fB;           // +0x8
+        float m_fC;           // +0xC
+    };
+    RE_VERIFY_SIZE(ZSplitTree, 0x10); // Confirmed (PC pf4runtime)
+
+    struct ZCorner
+    {
+        ZIndex m_iComponent;  // +0x0
+        ZIndex m_iVertex;     // +0x2
+    };
+    RE_VERIFY_SIZE(ZCorner, 0x4); // Confirmed (PC pf4runtime)
+
+    struct ZSubNode
+    {
+        ZIndex m_Node;            // +0x0
+        ZIndex m_Divider;         // +0x2
+        ZIndex m_SourceComponent; // +0x4
+        ZIndex m_Component;       // +0x6
+    };
+    RE_VERIFY_SIZE(ZSubNode, 0x8); // Confirmed (PC pf4runtime)
+
+    struct SPF4DataBlock
+    {
+        int16_t m_iSplitTreeCount;
+        int16_t m_iHeightTreeCount;
+        int16_t m_iPlaneEquationCount;
+        int16_t m_iComponentCount;
+        int16_t m_iGraphCount;
+        int16_t m_iNodeCount;
+        int16_t m_iVertexCount;
+        int16_t m_iLinkCount;
+        int16_t m_iExitDistCount;
+        int16_t m_iCornerCount;
+        int16_t m_iSubNodeCount;
+        int16_t m_iStaticObstacleIdCount;
+        int16_t m_iStaticObstacleCount;
+        int16_t PADDING;
+    };
+    RE_VERIFY_SIZE(SPF4DataBlock, 0x1C);
 
     struct ZLink
     {
@@ -121,24 +168,45 @@ namespace Glacier::PF4
     };
     RE_VERIFY_SIZE(ZPlaneEquation, 0xC); // Confirmed
 
+    struct ZGraph
+    {
+        ZIndex  m_iNodes;
+        ZIndex  m_iVertices;
+        ZIndex  m_iComponents;
+        ZIndex  m_iExits;
+        ZIndex  m_iEntrances;
+        ZIndex  m_iFirstNode;
+        ZIndex  m_iFirstVertex;
+        ZIndex  m_iFirstComponent;
+        ZUIndex m_iFirstExitDist;
+        ZIndex  m_iSplitTree;
+        ZIndex  m_iHeightTree;
+        ZIndex  m_iEquations;
+        ZVector3 m_Min;
+        ZVector3 m_Max;
+    };
+    RE_VERIFY_SIZE(ZGraph, 0x30); // Confirmed (PC pf4runtime)
+
     class ZData : public ZInterface
     {
     public:
-        // vtbl
+        ZData();
         ~ZData() override;
-        int MapNodeIdx(ZDataRef rRef, float*, float*, EPathWayActions&, unsigned int&) override;
+
+        // vtbl
+        float* MapNodeIdx(ZDataRef rRef, float*, float*, EPathWayActions&, unsigned int&) override;
         int GetMetaId() override;
         void AddNode(ZMetaNode* pNode, const ZLocation& kLocation) override;
-        void RemoveNode(ZMetaNode* pNode) override;
+        ZMetaNode* RemoveNode(ZMetaNode* pNode) override;
         void MoveNodeConstrained(ZMetaNode* pNode, const ZVector3& vPos) override;
-        void TeleportNode(ZMetaNode* pNode, const ZVector3& vPos) override;
+        bool TeleportNode(ZMetaNode* pNode, const ZVector3& vPos) override;
         int FindNodes(const ZLocation& kSource, ZResult* pList, int iMaxEntities, float fMaxDistance, int type) override;
         void AddObstacle(ZDynamicObstacle* pObstacle2, const ZLocation& kLocation) override;
         void RemoveObstacle(ZDynamicObstacle* pObstacle2) override;
         void MoveObstacle(ZDynamicObstacle* pObstacle2, const ZLocation& kPos) override;
         void AddObstacle(ZDynamicObstacle* pObstacle2, const ZVector3& vPos) override;
         void MoveObstacle(ZDynamicObstacle* pObstacle2, const ZVector3& vPos) override;
-        void PushOutOfObstacles(ZMetaNode* pNode, int iObstacleTypeMask, const ZVector3& vPos) override;
+        void PushOutOfObstacles(ZMetaNode* pNode, int iObstacleTypeMask, ZVector3& vPos) override;
         bool HasObstacles() override;
         bool FindPath(ZPathRequest* pRequest) override;
         void FreePath(ZPath* pPath) override;
@@ -172,12 +240,14 @@ namespace Glacier::PF4
 
         // methods
         bool FindPath(const ZLocation&, const ZLocation&, ZPath&, ZPathLink*, int&, bool, unsigned int);
-        void AssignGraph(ZLocation&);
-        bool GetGraphAndComponent(const float*, ZIndex&, ZIndex&);
-        bool GetClosestGraphAndComponent(const float*, float*, ZIndex&, ZIndex&, bool);
+        void AssignGraph(ZLocation& kLocation);
+        bool GetGraphAndComponent(const float* pvPosition, ZIndex& rGraph, ZIndex& rComponent);
+        bool GetClosestGraphAndComponent(
+            const float* pvPosition, float* pvClosest, ZIndex& rGraph, ZIndex& rComponent, bool bSkipFallback);
         int FindComponentPathAStar(const ZLocation&, const ZLocation&, ZPath&, ZPathLink*, unsigned int);
-        int TraceExit(int, int, int, int*);
+        int TraceExit(int iGraph, int iFromNode, int iToNode, int* pOut, int* pOutEnd);
         int StraightenGates(const float*, const float*, int*, int, ZPathLink*, ZPath&);
+        void LoadDataBlock(void* pData);
 
         void GetIndex(void*& pBuffer, ZIndex& index) const;
         void GetIndex(void*& pBuffer, ZUIndex& index) const;

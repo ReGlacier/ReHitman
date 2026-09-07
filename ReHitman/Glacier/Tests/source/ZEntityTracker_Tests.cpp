@@ -36,7 +36,7 @@ namespace
         PF4::ZInterface::ZResult* LastFindOutput = nullptr;
 
         ~FakePathFinder() override = default;
-        int MapNodeIdx(PF4::ZDataRef, float*, float*, PF4::EPathWayActions&, unsigned int&) override { return 0; }
+        float* MapNodeIdx(PF4::ZDataRef, float*, float*, PF4::EPathWayActions&, unsigned int&) override { return nullptr; }
         int GetMetaId() override { return NextMetaId++; }
         void AddNode(PF4::ZMetaNode* node, const PF4::ZLocation& location) override
         {
@@ -45,13 +45,17 @@ namespace
             LastAddedGraph = location.Graph();
             LastAddedInside = location.Inside();
         }
-        void RemoveNode(PF4::ZMetaNode* node) override { LastRemovedNode = node; }
+        PF4::ZMetaNode* RemoveNode(PF4::ZMetaNode* node) override
+        {
+            LastRemovedNode = node;
+            return node;
+        }
         void MoveNodeConstrained(PF4::ZMetaNode* pNode, const ZVector3& vPos) override
         {
             LastMovedNode = pNode;
             LastMovedPosition = vPos;
         }
-        void TeleportNode(PF4::ZMetaNode* pNode, const ZVector3& vPos) override {}
+        bool TeleportNode(PF4::ZMetaNode* pNode, const ZVector3& vPos) override { return false; }
         int FindNodes(const PF4::ZLocation& source, PF4::ZInterface::ZResult* output, int maxEntities, float maxDistance, int type) override
         {
             LastFindSource = &source;
@@ -66,7 +70,7 @@ namespace
         void MoveObstacle(PF4::ZDynamicObstacle*, const PF4::ZLocation&) override {}
         void AddObstacle(PF4::ZDynamicObstacle* pObstacle2, const ZVector3& vPos) override {}
         void MoveObstacle(PF4::ZDynamicObstacle*, const ZVector3&) override {}
-        void PushOutOfObstacles(PF4::ZMetaNode*, int, const ZVector3&) override {}
+        void PushOutOfObstacles(PF4::ZMetaNode*, int, ZVector3&) override {}
         bool HasObstacles() override { return false; }
         bool FindPath(PF4::ZPathRequest*) override { return false; }
         void FreePath(PF4::ZPath*) override {}
