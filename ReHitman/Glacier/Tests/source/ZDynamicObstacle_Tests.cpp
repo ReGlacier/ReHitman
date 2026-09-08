@@ -113,7 +113,7 @@ TEST(ZDynamicObstacle, ClosestPointReturnsClosestHullPoint)
 
     EXPECT_FLOAT_EQ(found[0], 1.0f);
     EXPECT_FLOAT_EQ(found[1], 0.0f);
-    EXPECT_FLOAT_EQ(fDist, 4.0f * 4.0f); // squared distance
+    EXPECT_FLOAT_EQ(fDist, 4.0f); // linear distance (PC 004D9CC0)
 }
 
 TEST(ZDynamicObstacle, IntersectRayThroughSquare)

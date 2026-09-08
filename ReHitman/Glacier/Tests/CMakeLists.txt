@@ -8,6 +8,12 @@ file(GLOB_RECURSE GLACIER_TEST_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/source/*.cpp 
 add_executable(GlacierTests ${GLACIER_TEST_SOURCES})
 target_include_directories(GlacierTests PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
+# Absolute location of the bundled test data so tests do not depend on the
+# process working directory (CI / IDE runs).
+target_compile_definitions(GlacierTests PUBLIC
+    GLACIER_TESTS_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data"
+)
+
 target_link_libraries(GlacierTests PUBLIC G1::TestCore gtest gtest_main)
 
 include(GoogleTest)

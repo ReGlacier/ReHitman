@@ -1,5 +1,6 @@
 #include <Glacier/PF4/ZData.h>
 #include <Glacier/PF4/ZDynamicObstacle.h>
+#include <Glacier/PF4/ZStaticObstacle.h>
 #include <Glacier/PF4/ZPath.h>
 #include <Glacier/Debug/ZDebugInt.h>
 #include <Glacier/ZUniAssert.h>
@@ -241,8 +242,6 @@ namespace Glacier::PF4
             return iResult;
         }
     }
-
-    // ZData
 
     // Debug command that turns on the path line visualisation (PC 0x9725A4).
     ZDebugInt g_lDisplayPathLinesCommand("pf4ShowPath", "Draw paths as they are found. Hold SHIFT to clear all lines.", 0, 0, 1, 1, "PathFinder/");
@@ -589,9 +588,158 @@ namespace Glacier::PF4
         return pNode;
     }
 
-    void ZData::MoveNodeConstrained(ZMetaNode*, const ZVector3&)
+    void ZData::MoveNodeConstrained(ZMetaNode* pNode, const ZVector3& vPos)
     {
-        // TODO: Finish me (PC 004DF240)
+        // Moves a registered meta node towards vPos without letting it leave the
+        // walkable area it can reach. The components reachable from the node's
+        // current location inside the horizontal move distance are collected; when
+        // vPos lies inside one of them the node simply moves there, otherwise it is
+        // pulled back onto the nearest polygon edge of that area (PC 004DF240).
+        if (pNode->m_Location.Graph() == -1 || m_iGraphCount == 0)
+        {
+            return;
+        }
+
+        const ZVector3& rNodePos = pNode->m_Location.m_vPos;
+        const float fDx = rNodePos.x - vPos.x;
+        const float fDz = rNodePos.z - vPos.z;
+        const float fMoveDistance = std::sqrt(fDx * fDx + fDz * fDz);
+
+        int aComponents[100];
+        const int iComponentCount = FindComponents(pNode->m_Location, aComponents, 100, fMoveDistance);
+
+        int iBestComponent = -1;
+        float fBestDistance = 3.4028235e38f;
+        float fBestX = vPos.x;
+        float fBestZ = vPos.z;
+
+        for (int i = 0; i < iComponentCount; ++i)
+        {
+            const int iComponent = aComponents[i];
+            const ZComponent& rComponent = m_pComponents[iComponent];
+            const int iCorners = rComponent.m_Corners;
+            const int iFirstCorner = rComponent.m_FirstCorner;
+
+            int iInsideCount = 0;
+            for (int iCorner = 0; iCorner < iCorners; ++iCorner)
+            {
+                const int iNext = (iCorner + 1 == iCorners) ? 0 : iCorner + 1;
+                const ZVertex& rVertexA = m_pVertices[m_pCorners[iFirstCorner + iCorner].m_iVertex];
+                const ZVertex& rVertexB = m_pVertices[m_pCorners[iFirstCorner + iNext].m_iVertex];
+
+                const float fAx = rVertexA.m_kPos.x;
+                const float fAz = rVertexA.m_kPos.y;
+                const float fEx = rVertexB.m_kPos.x - fAx;
+                const float fEz = rVertexB.m_kPos.y - fAz;
+                const float fTx = vPos.x - fAx;
+                const float fTz = vPos.z - fAz;
+
+                // The target is on the inner side when every directed boundary edge
+                // keeps it on the same side of the polygon.
+                if (fTx * fEz - fTz * fEx >= 0.0f)
+                {
+                    ++iInsideCount;
+                }
+
+                // Closest point of the edge segment to the target.
+                const float fDot = fTx * fEx + fTz * fEz;
+                const float fLen2 = fEx * fEx + fEz * fEz;
+                float fQx;
+                float fQz;
+                float fDist;
+                if (fDot >= 0.0f)
+                {
+                    if (fDot <= fLen2)
+                    {
+                        const float fT = (fLen2 == 0.0f) ? 0.0f : fDot / fLen2;
+                        fQx = fAx + fEx * fT;
+                        fQz = fAz + fEz * fT;
+                        fDist = std::sqrt(
+                            (vPos.x - fQx) * (vPos.x - fQx) + (vPos.z - fQz) * (vPos.z - fQz));
+                    }
+                    else
+                    {
+                        fQx = rVertexB.m_kPos.x;
+                        fQz = rVertexB.m_kPos.y;
+                        fDist = std::sqrt(
+                            (vPos.x - fQx) * (vPos.x - fQx) + (vPos.z - fQz) * (vPos.z - fQz));
+                    }
+                }
+                else
+                {
+                    fQx = fAx;
+                    fQz = fAz;
+                    fDist = std::sqrt(
+                        (vPos.x - fQx) * (vPos.x - fQx) + (vPos.z - fQz) * (vPos.z - fQz));
+                }
+
+                if (fDist < fBestDistance)
+                {
+                    fBestDistance = fDist;
+                    fBestX = fQx;
+                    fBestZ = fQz;
+                    iBestComponent = iComponent;
+                }
+            }
+
+            // The target lies inside this component: it is the movement end point.
+            if (iInsideCount == iCorners)
+            {
+                iBestComponent = iComponent;
+                fBestX = vPos.x;
+                fBestZ = vPos.z;
+                break;
+            }
+        }
+
+        if (iBestComponent == -1)
+        {
+            return;
+        }
+
+        // The target was pulled onto a polygon edge; an exact zero best-distance
+        // means the requested position itself is already on the area boundary.
+        if (fBestDistance == 0.0f)
+        {
+            fBestX = vPos.x;
+            fBestZ = vPos.z;
+        }
+
+        const int iOldComponent = pNode->m_Location.Component();
+        if (iBestComponent != iOldComponent)
+        {
+            // Unlink from the old component list.
+            if (pNode->m_Next)
+            {
+                pNode->m_Next->m_Prev = pNode->m_Prev;
+            }
+            if (pNode->m_Prev)
+            {
+                pNode->m_Prev->m_Next = pNode->m_Next;
+            }
+            if (m_pComponents[iOldComponent].m_MetaNodes == pNode)
+            {
+                m_pComponents[iOldComponent].m_MetaNodes = pNode->m_Next;
+            }
+
+            // Link into the new component list.
+            pNode->m_Next = m_pComponents[iBestComponent].m_MetaNodes;
+            pNode->m_Prev = nullptr;
+            if (pNode->m_Next)
+            {
+                pNode->m_Next->m_Prev = pNode;
+            }
+            m_pComponents[iBestComponent].m_MetaNodes = pNode;
+        }
+
+        const ZComponent& rComponent = m_pComponents[iBestComponent];
+        ZLocation& rLocation = pNode->m_Location;
+        rLocation.m_vPos.x = fBestX;
+        rLocation.m_vPos.z = fBestZ;
+        rLocation.m_vPos.y = ComponentHeight(iBestComponent, fBestX, fBestZ);
+        rLocation.m_Graph = rComponent.m_Graph;
+        rLocation.m_Inside = 1;
+        rLocation.m_Component = static_cast<int16_t>(iBestComponent);
     }
 
     bool ZData::TeleportNode(ZMetaNode* pNode, const ZVector3& vPos)
@@ -1600,7 +1748,7 @@ namespace Glacier::PF4
         return m_iGraphCount;
     }
 
-void ZData::FindCornersInGraph(int iGraph, int& iMaxCorners, float* pvOut)
+    void ZData::FindCornersInGraph(int iGraph, int& iMaxCorners, float* pvOut)
     {
         // Walks the graph's vertex ring and reports every sharp gate corner inside
         // a 60-unit radius. Each reported corner is three world-space triples:
@@ -1700,24 +1848,418 @@ void ZData::FindCornersInGraph(int iGraph, int& iMaxCorners, float* pvOut)
     }
 
     float ZData::FindWallIntersection(
-        const ZLocation&,
-        const ZVector3&,
-        float,
-        const ZVector3&,
-        ZVector3&,
-        bool&,
-        ZLocation&,
-        bool,
-        bool)
+        const ZLocation& kSource,
+        const ZVector3& vEndPoint,
+        float fMaxDistance,
+        ZVector3& rWallPointA,
+        ZVector3& rWallPointB,
+        bool& bHitWall,
+        ZLocation& endLocation,
+        bool bReportDoorsAsWalls,
+        bool bIgnoreObstacles)
     {
-        // TODO: Finish me (PC 004DFAA0)
-        return 0.0f;
+        // Casts a horizontal ray from the location position towards the (x, z)
+        // pair carried by the first two floats of vEndPoint and returns the
+        // distance to the first blocking wall/door edge or dynamic obstacle.
+        // bHitWall is only set when the blocker is a real wall/door edge; the two
+        // wall endpoints are reported through the output vectors as (x, 0, z)
+        // triples and endLocation receives the graph location of the blocker.
+        // When nothing is hit up to fMaxDistance the end location is reported at
+        // the far end of the ray and -1 is returned. (PC 004DFAA0 / PS2 0x1F5ACC)
+        bHitWall = false;
+
+        const float fSrcX = kSource.m_vPos.x;
+        const float fSrcZ = kSource.m_vPos.z;
+        const float* pfEndPoint = &vEndPoint.x;
+        const float fEndX = pfEndPoint[0];
+        const float fEndZ = pfEndPoint[1];
+
+        const float fDx = fEndX - fSrcX;
+        const float fDz = fEndZ - fSrcZ;
+        constexpr float kEps = 0.00012207031f;
+        if (std::fabs(fDx) < kEps && std::fabs(fDz) < kEps)
+        {
+            return -1.0f;
+        }
+
+        const float fRayLength = std::sqrt(fDx * fDx + fDz * fDz);
+        const float fDirX = fDx / fRayLength;
+        const float fDirZ = fDz / fRayLength;
+
+        // The cast starts one tenth of a unit behind the queried position so an
+        // actor standing exactly on a wall still detects it.
+        const float fStartX = fSrcX - fDirX * 0.1f;
+        const float fStartZ = fSrcZ - fDirZ * 0.1f;
+
+        int iComponent = kSource.Component();
+        if (iComponent == -1)
+        {
+            return -1.0f;
+        }
+
+        ZVector3* pWallPointA = &rWallPointA;
+        ZVector3* pWallPointB = &rWallPointB;
+
+        auto SetEndLocation = [this](ZLocation& rLocation, int iComponent, float fX, float fZ)
+        {
+            const ZComponent& rComponent = m_pComponents[iComponent];
+            rLocation.Set(
+                ZVector3(fX, ComponentHeight(iComponent, fX, fZ), fZ),
+                rComponent.m_Graph, static_cast<int16_t>(iComponent), true);
+        };
+
+        float fWallA[3] = {};
+        float fWallB[3] = {};
+        const bool bWriteWall = pWallPointA != nullptr && pWallPointB != nullptr;
+
+        // Follows the ray across components; each step checks the component's
+        // obstacles first and then walks over its polygon edges.
+        for (int iIteration = 512; iIteration > 0; --iIteration)
+        {
+            const ZComponent& rComponent = m_pComponents[iComponent];
+
+            float fBestObstacle = 3.4028235e38f;
+            if (!bIgnoreObstacles)
+            {
+                const float fRayEndX = fStartX + fDirX;
+                const float fRayEndZ = fStartZ + fDirZ;
+                const ZVector2 vRayStart(fStartX, fStartZ);
+                const ZVector2 vRayEnd(fRayEndX, fRayEndZ);
+
+                if (m_pStaticObstacleIds && m_pStaticObstacles)
+                {
+                    for (int i = 0; i < rComponent.m_ObstacleIds; ++i)
+                    {
+                        const int iObstacleId =
+                            m_pStaticObstacleIds[rComponent.m_FirstObstacleId + i];
+                        if (iObstacleId < 0 || iObstacleId >= m_iStaticObstacleCount)
+                        {
+                            continue;
+                        }
+                        float aFound[2][3];
+                        const float fHit = m_pStaticObstacles[iObstacleId].Intersect(
+                            *this, vRayStart, vRayEnd, fMaxDistance, fBestObstacle, aFound);
+                        if (fHit < fBestObstacle)
+                        {
+                            fBestObstacle = fHit;
+                            if (bWriteWall)
+                            {
+                                for (int k = 0; k < 3; ++k)
+                                {
+                                    fWallA[k] = aFound[0][k];
+                                    fWallB[k] = aFound[1][k];
+                                }
+                            }
+                        }
+                    }
+                }
+
+                auto** pHeads = reinterpret_cast<ZDynamicObstacle_Link**>(m_pDynamicObstacles);
+                if (pHeads)
+                {
+                    const float fPStart[2] = { fStartX, fStartZ };
+                    const float fPEnd[2] = { fStartX + fDirX, fStartZ + fDirZ };
+                    for (ZDynamicObstacle_Link* pLink = pHeads[iComponent]; pLink;
+                         pLink = pLink->m_Next)
+                    {
+                        ZDynamicObstacle* pObstacle = pLink->m_This;
+                        if (!pObstacle)
+                        {
+                            continue;
+                        }
+                        float fTangent[2][2];
+                        int iRight = -1;
+                        int iLeft = -1;
+                        const float fHit = pObstacle->Intersect(
+                            fPStart, fPEnd, fMaxDistance, fBestObstacle, fTangent, iRight, iLeft);
+                        if (fHit < fBestObstacle)
+                        {
+                            fBestObstacle = fHit;
+                            if (bWriteWall)
+                            {
+                                fWallA[0] = fTangent[0][0];
+                                fWallA[1] = 0.0f;
+                                fWallA[2] = fTangent[0][1];
+                                fWallB[0] = fTangent[1][0];
+                                fWallB[1] = 0.0f;
+                                fWallB[2] = fTangent[1][1];
+                            }
+                        }
+                    }
+                }
+
+                if (fBestObstacle < 3.4028235e38f)
+                {
+                    // An obstacle blocks the ray before any wall edge.
+                    const float fHitX = fStartX + fDirX * fBestObstacle;
+                    const float fHitZ = fStartZ + fDirZ * fBestObstacle;
+                    SetEndLocation(endLocation, iComponent, fHitX, fHitZ);
+                    if (bWriteWall)
+                    {
+                        *pWallPointA = ZVector3(fWallA[0], 0.0f, fWallA[2]);
+                        *pWallPointB = ZVector3(fWallB[0], 0.0f, fWallB[2]);
+                    }
+                    return fBestObstacle;
+                }
+            }
+
+            // Find the polygon edge the ray crosses next.
+            const int iCorners = rComponent.m_Corners;
+            const int iFirstCorner = rComponent.m_FirstCorner;
+            int iEdge = iCorners;
+            for (int iCorner = 0; iCorner < iCorners; ++iCorner)
+            {
+                const int iNext = (iCorner + 1 == iCorners) ? 0 : iCorner + 1;
+                const ZVertex& vertA = m_pVertices[m_pCorners[iFirstCorner + iCorner].m_iVertex];
+                const ZVertex& vertB = m_pVertices[m_pCorners[iFirstCorner + iNext].m_iVertex];
+                const float fSideA = (vertA.m_kPos.x - fStartX) * fDirZ
+                    - (vertA.m_kPos.y - fStartZ) * fDirX;
+                const float fSideB = (vertB.m_kPos.x - fStartX) * fDirZ
+                    - (vertB.m_kPos.y - fStartZ) * fDirX;
+                if (fSideA <= 0.0f && fSideB > 0.0f)
+                {
+                    iEdge = iCorner;
+                    break;
+                }
+            }
+
+            if (iEdge >= iCorners)
+            {
+                return -1.0f;
+            }
+
+            const int iNextEdge = (iEdge + 1 == iCorners) ? 0 : iEdge + 1;
+            const ZVertex& vertA = m_pVertices[m_pCorners[iFirstCorner + iEdge].m_iVertex];
+            const ZVertex& vertB = m_pVertices[m_pCorners[iFirstCorner + iNextEdge].m_iVertex];
+
+            const float fEdgeX = vertB.m_kPos.x - vertA.m_kPos.x;
+            const float fEdgeZ = vertB.m_kPos.y - vertA.m_kPos.y;
+            const float fCrossOriginEdge =
+                (fStartX - vertA.m_kPos.x) * fEdgeZ - (fStartZ - vertA.m_kPos.y) * fEdgeX;
+            const float fCrossDirEdge = fDirX * fEdgeZ - fDirZ * fEdgeX;
+            if (fCrossDirEdge == 0.0f)
+            {
+                return -1.0f;
+            }
+            const float fCrossing = -fCrossOriginEdge / fCrossDirEdge;
+
+            if (fCrossing < 0.0f || fCrossing >= fMaxDistance)
+            {
+                // No wall before the maximum ray length: report the far end.
+                const float fHitX = fStartX + fDirX * fMaxDistance;
+                const float fHitZ = fStartZ + fDirZ * fMaxDistance;
+                SetEndLocation(endLocation, iComponent, fHitX, fHitZ);
+                return -1.0f;
+            }
+
+            const int iGate = m_pCorners[iFirstCorner + iEdge].m_iComponent;
+            if (iGate == -1 || (iGate < 0 && bReportDoorsAsWalls))
+            {
+                // A solid wall edge or a door that is reported as a wall.
+                bHitWall = true;
+                if (bWriteWall)
+                {
+                    *pWallPointA = ZVector3(vertA.m_kPos.x, 0.0f, vertA.m_kPos.y);
+                    *pWallPointB = ZVector3(vertB.m_kPos.x, 0.0f, vertB.m_kPos.y);
+                }
+                const float fHitX = fStartX + fDirX * fCrossing;
+                const float fHitZ = fStartZ + fDirZ * fCrossing;
+                SetEndLocation(endLocation, iComponent, fHitX, fHitZ);
+                return fCrossing;
+            }
+
+            // Open gate: continue the cast in the neighbouring component.
+            iComponent = (iGate < 0) ? (-2 - iGate) : iGate;
+        }
+
+        return -1.0f;
     }
 
-    int ZData::FindWalls(const ZLocation&, float, float*)
+    int ZData::FindWalls(const ZLocation& kSource, float fMaxDistance, float* pvWall)
     {
-        // TODO: Finish me (PC 004DDB30)
-        return 0;
+        // Flood fills the components reachable from kSource through corner gates
+        // closer than fMaxDistance and reports the nearest solid wall (or dynamic
+        // obstacle hull) of that area as a world (x, z) point in pvWall[0..1] with
+        // its distance in pvWall[2]. Every time a nearer candidate is found the
+        // result counter is incremented, so re-running the query with the previous
+        // best distance enumerates further walls. (PC 004DDB30 / PS2 0x1F4C40)
+        if (kSource.Component() == -1 || !m_pComponentVisited)
+        {
+            return 0;
+        }
+
+        std::memset(m_pComponentVisited, 0, 4u * m_iComponentVisitedSize);
+
+        const float fMaxDistance2 = fMaxDistance * fMaxDistance;
+        const ZVector3& rSource = kSource.m_vPos;
+
+        int aStack[100];
+        int iStackSize = 0;
+        aStack[iStackSize++] = kSource.Component();
+
+        pvWall[2] = fMaxDistance;
+
+        int iCount = 0;
+        while (iStackSize > 0)
+        {
+            const int iComponent = aStack[--iStackSize];
+            m_pComponentVisited[iComponent >> 5] |= 1u << (iComponent & 0x1F);
+
+            const ZComponent& rComponent = m_pComponents[iComponent];
+
+            // Dynamic obstacles registered on the component act as walls.
+            auto** pHeads = reinterpret_cast<ZDynamicObstacle_Link**>(m_pDynamicObstacles);
+            if (pHeads)
+            {
+                const float fFrom[2] = { rSource.x, rSource.z };
+                for (ZDynamicObstacle_Link* pLink = pHeads[iComponent]; pLink; pLink = pLink->m_Next)
+                {
+                    ZDynamicObstacle* pObstacle = pLink->m_This;
+                    if (!pObstacle)
+                    {
+                        continue;
+                    }
+                    float fFound[2];
+                    const float fDist = pObstacle->ClosestPoint(fFrom, fFound);
+                    if (fDist < pvWall[2])
+                    {
+                        pvWall[0] = fFound[0];
+                        pvWall[1] = fFound[1];
+                        pvWall[2] = fDist;
+                        ++iCount;
+                    }
+                }
+            }
+
+            const int iCorners = rComponent.m_Corners;
+            if (iCorners <= 0)
+            {
+                continue;
+            }
+
+            const int iFirstCorner = rComponent.m_FirstCorner;
+            for (int iCorner = 0; iCorner < iCorners; ++iCorner)
+            {
+                const ZCorner& rCornerA = m_pCorners[iFirstCorner + iCorner];
+                int iNeighbor = rCornerA.m_iComponent;
+                if (iNeighbor != -1)
+                {
+                    if (iNeighbor < 0)
+                    {
+                        iNeighbor = -2 - iNeighbor;
+                    }
+                    if (iNeighbor < 0
+                        || (m_pComponentVisited[iNeighbor >> 5] & (1u << (iNeighbor & 0x1F))) != 0)
+                    {
+                        continue;
+                    }
+                }
+
+                const int iNext = (iCorner + 1 == iCorners) ? 0 : iCorner + 1;
+                const ZVertex& rVertexA = m_pVertices[rCornerA.m_iVertex];
+                const ZVertex& rVertexB = m_pVertices[m_pCorners[iFirstCorner + iNext].m_iVertex];
+
+                const float fAx = rVertexA.m_kPos.x;
+                const float fAh = rVertexA.m_fHeight;
+                const float fAz = rVertexA.m_kPos.y;
+                const float fEx = rVertexB.m_kPos.x - fAx;
+                const float fEh = rVertexB.m_fHeight - fAh;
+                const float fEz = rVertexB.m_kPos.y - fAz;
+                const float fLen2 = fEx * fEx + fEh * fEh + fEz * fEz;
+
+                if (iNeighbor == -1)
+                {
+                    // Solid wall segment: pull the source onto the segment and
+                    // report the closest point when it beats the best found so far.
+                    if (fLen2 <= 0.0f)
+                    {
+                        continue;
+                    }
+
+                    const float fT = ((rSource.x - fAx) * fEx + (rSource.y - fAh) * fEh
+                                     + (rSource.z - fAz) * fEz)
+                        / fLen2;
+                    float fQx;
+                    float fQy;
+                    float fQz;
+                    if (fT > 0.0f)
+                    {
+                        if (fT < 1.0f)
+                        {
+                            fQx = fAx + fEx * fT;
+                            fQy = fAh + fEh * fT;
+                            fQz = fAz + fEz * fT;
+                        }
+                        else
+                        {
+                            fQx = rVertexB.m_kPos.x;
+                            fQy = rVertexB.m_fHeight;
+                            fQz = rVertexB.m_kPos.y;
+                        }
+                    }
+                    else
+                    {
+                        fQx = fAx;
+                        fQy = fAh;
+                        fQz = fAz;
+                    }
+
+                    const float fDx = fQx - rSource.x;
+                    const float fDy = fQy - rSource.y;
+                    const float fDz = fQz - rSource.z;
+                    const float fDist = std::sqrt(fDx * fDx + fDy * fDy + fDz * fDz);
+                    if (fDist <= pvWall[2])
+                    {
+                        pvWall[0] = fQx;
+                        pvWall[1] = fQz;
+                        pvWall[2] = fDist;
+                        ++iCount;
+                    }
+                    continue;
+                }
+
+                // Corner gate to a not yet visited component: the flood crosses
+                // when the gate is reachable from the source within fMaxDistance.
+                bool bReachable = false;
+                const float fDax = rSource.x - fAx;
+                const float fDay = rSource.y - fAh;
+                const float fDaz = rSource.z - fAz;
+                const float fDbx = rSource.x - rVertexB.m_kPos.x;
+                const float fDby = rSource.y - rVertexB.m_fHeight;
+                const float fDbz = rSource.z - rVertexB.m_kPos.y;
+                if (fDax * fDax + fDay * fDay + fDaz * fDaz <= fMaxDistance2
+                    || fDbx * fDbx + fDby * fDby + fDbz * fDbz <= fMaxDistance2)
+                {
+                    bReachable = true;
+                }
+                else if (fLen2 > 0.0f)
+                {
+                    const float fT = ((rSource.x - fAx) * fEx + (rSource.y - fAh) * fEh
+                                     + (rSource.z - fAz) * fEz)
+                        / fLen2;
+                    if (fT > 0.0f && fT < 1.0f)
+                    {
+                        const float fQx = fAx + fEx * fT;
+                        const float fQy = fAh + fEh * fT;
+                        const float fQz = fAz + fEz * fT;
+                        const float fDx = fQx - rSource.x;
+                        const float fDy = fQy - rSource.y;
+                        const float fDz = fQz - rSource.z;
+                        if (fDx * fDx + fDy * fDy + fDz * fDz <= fMaxDistance2)
+                        {
+                            bReachable = true;
+                        }
+                    }
+                }
+
+                if (bReachable && iStackSize < 100)
+                {
+                    aStack[iStackSize++] = iNeighbor;
+                }
+            }
+        }
+
+        return iCount;
     }
 
     int ZData::FindObstacles(const ZLocation& kLocation, ZDynamicObstacle** pvFoundObstacles, int iMax)
@@ -2011,10 +2553,433 @@ void ZData::FindCornersInGraph(int iGraph, int& iMaxCorners, float* pvOut)
         return false;
     }
 
-    int ZData::FindComponentPathAStar(const ZLocation&, const ZLocation&, ZPath&, ZPathLink*, unsigned int)
+    int ZData::FindComponentPathAStar(
+        const ZLocation& kFrom, const ZLocation& kTo, ZPath& rPath, ZPathLink* pPathLink,
+        unsigned int lActorKeymask)
     {
-        // TODO: Finish me (PC 004DE3B0)
-        return 0;
+        // Two-level A* over the component/navmesh graph (PC 004DE3B0 / PS2 0x1F8328).
+        // The search state walks "portal nodes": sub-node anchors inside a graph let the
+        // search cross between components, while exit links and per-exit distance rows
+        // (m_pExitDists) move between navmeshes. Every open entry stores in iParent the
+        // node it was reached from and in iGate[0]/iGate[1] a (type, value) pair that is
+        // expanded back into the final gate list when the goal is found.
+        ZASSERT(kFrom.Graph() >= 0 && kFrom.Graph() < m_iGraphCount);
+
+        const bool bSameGraph = (kFrom.Graph() == kTo.Graph());
+        const int iFromComponent = kFrom.Component();
+        if (iFromComponent == kTo.Component())
+        {
+            pPathLink[0].m_Pos = kFrom.m_vPos;
+            pPathLink[0].m_Action = 0;
+            pPathLink[1].m_Pos = kTo.m_vPos;
+            pPathLink[1].m_Action = 0;
+            rPath.AddVertex(&kFrom.m_vPos.x);
+            rPath.AddVertex(&kTo.m_vPos.x);
+            return 2;
+        }
+
+        const float fFromX = kFrom.m_vPos.x;
+        const float fFromZ = kFrom.m_vPos.z;
+        const float fToX = kTo.m_vPos.x;
+        const float fToZ = kTo.m_vPos.z;
+
+        auto NodeDist2D = [](const ZNode& node, float fX, float fZ)
+        {
+            const float fDx = node.m_kPos.x - fX;
+            const float fDz = node.m_kPos.y - fZ;
+            return std::sqrt(fDx * fDx + fDz * fDz);
+        };
+
+        // The engine keeps per-exit scratch for the cross-graph seeding below.
+        int aBestSubNode[100];
+
+        if (bSameGraph)
+        {
+            // Same navmesh: seed every sub-node anchor of the starting component.
+            const ZComponent& rStartComponent = m_pComponents[iFromComponent];
+            for (int i = 0; i < rStartComponent.m_SubNodes; ++i)
+            {
+                const ZSubNode& subNode = m_pSubNodes[rStartComponent.m_FirstSubNode + i];
+                const int iNode = subNode.m_Node;
+                const ZNode& node = m_pNodes[iNode];
+                const float fFromDist = NodeDist2D(node, fFromX, fFromZ);
+                const float fToDist = NodeDist2D(node, fToX, fToZ);
+                if (subNode.m_Component == -1)
+                {
+                    m_kOpenList.DecreaseKey(-1, iNode, subNode.m_Component, -4, iNode,
+                        fFromDist + fToDist, fFromDist);
+                }
+                else
+                {
+                    m_kOpenList.DecreaseKey(-1, iNode, subNode.m_Component, iFromComponent,
+                        rStartComponent.m_FirstSubNode + i, fFromDist + fToDist, fFromDist);
+                }
+            }
+        }
+        else
+        {
+            // Different navmeshes: from the best sub-node of the start component that
+            // reaches each exit, seed the corresponding exit node of the start graph.
+            const ZGraph& rFromGraph = m_pGraphs[kFrom.Graph()];
+            const ZComponent& rStartComponent = m_pComponents[iFromComponent];
+            for (int iExit = 0; iExit < rFromGraph.m_iExits; ++iExit)
+            {
+                aBestSubNode[iExit] = -1;
+                float fBestCost = 3.4028235e38f;
+                for (int i = 0; i < rStartComponent.m_SubNodes; ++i)
+                {
+                    const ZSubNode& subNode = m_pSubNodes[rStartComponent.m_FirstSubNode + i];
+                    const int iNode = subNode.m_Node;
+                    const int iRel = iNode - rFromGraph.m_iFirstNode;
+                    ZASSERT(iRel >= 0);
+                    ZASSERT(iRel < rFromGraph.m_iNodes);
+                    const int iExitDistIndex = 2 * (rFromGraph.m_iExits * iRel + iExit)
+                        + rFromGraph.m_iFirstExitDist;
+                    const float fCandidate = m_pExitDists[iExitDistIndex]
+                        + NodeDist2D(m_pNodes[iNode], fFromX, fFromZ);
+                    if (fCandidate < fBestCost)
+                    {
+                        fBestCost = fCandidate;
+                        aBestSubNode[iExit] = rStartComponent.m_FirstSubNode + i;
+                    }
+                }
+
+                if (aBestSubNode[iExit] != -1)
+                {
+                    const int iExitNode = rFromGraph.m_iFirstNode + iExit;
+                    const float fToDist = NodeDist2D(m_pNodes[iExitNode], fToX, fToZ);
+                    m_kOpenList.DecreaseKey(
+                        -1, iExitNode, -1, -5, iExit, fBestCost + fToDist, fBestCost);
+                }
+            }
+        }
+
+        int iResultNode = -1;
+        float fBestTotal = 100000.0f;
+
+        for (;;)
+        {
+            const int iNode = m_kOpenList.ExtractMin();
+            if (iNode == -1)
+            {
+                break;
+            }
+
+            const float fKey = m_kOpenList.GetKey(iNode);
+            const float fCost = m_kOpenList.GetCost(iNode);
+            const int iLinkIndex = m_kOpenList.GetLinkIndex(iNode);
+            m_kOpenList.SetVisited(iNode, true);
+
+            if (fKey >= 100000.0f)
+            {
+                break;
+            }
+
+            if (iLinkIndex == kTo.Component())
+            {
+                // A node inside the destination component: the goal is reached.
+                const float fTotal = fCost + NodeDist2D(m_pNodes[iNode], fToX, fToZ);
+                if (fTotal < fBestTotal)
+                {
+                    fBestTotal = fTotal;
+                    iResultNode = iNode;
+                }
+                break;
+            }
+
+            const ZNode& rNode = m_pNodes[iNode];
+            const int iNodeGraph = rNode.m_iGraph;
+            const bool bCrossGraph = (iNodeGraph != kTo.Graph());
+
+            if (bCrossGraph)
+            {
+                // Inside a foreign navmesh: relax the other exit nodes of that graph
+                // using its pre-baked exit distances.
+                const ZGraph& rGraph = m_pGraphs[iNodeGraph];
+                const int iRel = iNode - rGraph.m_iFirstNode;
+                for (int iExit = 0; iExit < rGraph.m_iExits; ++iExit)
+                {
+                    const int iExitNode = rGraph.m_iFirstNode + iExit;
+                    if (m_kOpenList.GetVisited(iExitNode))
+                    {
+                        continue;
+                    }
+                    const int iExitDistIndex = 2 * (rGraph.m_iExits * iRel + iExit)
+                        + rGraph.m_iFirstExitDist;
+                    const int iExitDist = m_pExitDists[iExitDistIndex];
+                    if (iExitDist == -1)
+                    {
+                        continue;
+                    }
+                    const float fNewCost = fCost + static_cast<float>(iExitDist);
+                    const float fToDist = NodeDist2D(m_pNodes[iExitNode], fToX, fToZ);
+                    m_kOpenList.DecreaseKey(
+                        iNode, iExitNode, -1, -2, iExitNode, fNewCost + fToDist, fNewCost);
+                }
+            }
+
+            if (iLinkIndex == -1)
+            {
+                // Plain navmesh node: follow its links (doors / graph exits).
+                for (int iLink = rNode.m_iFirstLink; iLink < rNode.m_iLastLink; ++iLink)
+                {
+                    const ZLink& link = m_pLinks[iLink];
+                    ZASSERT(link.m_iNode != -1);
+                    ZASSERT(link.m_Graph >= 0 && link.m_Graph < m_iGraphCount);
+                    const int iTargetNode =
+                        m_pGraphs[link.m_Graph].m_iFirstNode + link.m_iNode;
+                    if (m_kOpenList.GetVisited(iTargetNode))
+                    {
+                        continue;
+                    }
+
+                    const float fNewCost = fCost + static_cast<float>(link.m_fCost);
+                    const float fToDist = NodeDist2D(m_pNodes[iTargetNode], fToX, fToZ);
+                    const int iTargetComponent = m_pNodes[iTargetNode].m_iComponent;
+                    if ((link.m_iKeyMask & lActorKeymask) == 0)
+                    {
+                        continue;
+                    }
+                    if (link.m_Type == 1)
+                    {
+                        m_kOpenList.DecreaseKey(iNode, iTargetNode, iTargetComponent, -1, iNode,
+                            fNewCost + fToDist, fNewCost);
+                    }
+                    else if (link.m_Type == 2)
+                    {
+                        m_kOpenList.DecreaseKey(iNode, iTargetNode, iTargetComponent, -3, iLink,
+                            fNewCost + fToDist, fNewCost);
+                    }
+                    else
+                    {
+                        return 0;
+                    }
+                }
+            }
+            else if (!bCrossGraph)
+            {
+                // Inside a component of the destination graph: cross into the
+                // neighbouring components through the component's sub nodes.
+                const ZComponent& rComponent = m_pComponents[iLinkIndex];
+                for (int i = 0; i < rComponent.m_SubNodes; ++i)
+                {
+                    const ZSubNode& subNode = m_pSubNodes[rComponent.m_FirstSubNode + i];
+                    const int iTargetNode = subNode.m_Node;
+                    if (iTargetNode == iNode || m_kOpenList.GetVisited(iTargetNode))
+                    {
+                        continue;
+                    }
+
+                    const float fNewCost = fCost + NodeDist2D(m_pNodes[iTargetNode],
+                        rNode.m_kPos.x, rNode.m_kPos.y);
+                    const float fToDist = NodeDist2D(m_pNodes[iTargetNode], fToX, fToZ);
+                    if (subNode.m_Component == -1)
+                    {
+                        m_kOpenList.DecreaseKey(iNode, iTargetNode, subNode.m_Component, -4,
+                            iTargetNode, fNewCost + fToDist, fNewCost);
+                    }
+                    else
+                    {
+                        m_kOpenList.DecreaseKey(iNode, iTargetNode, subNode.m_Component,
+                            iLinkIndex, rComponent.m_FirstSubNode + i, fNewCost + fToDist,
+                            fNewCost);
+                    }
+                }
+            }
+        }
+
+        // Trace the parent chain of the found node back to the seeds.
+        int aChain[400];
+        int iChainSize = 0;
+        int iCurrentNode = iResultNode;
+        while (iCurrentNode != -1)
+        {
+            if (iChainSize >= 200)
+            {
+                break;
+            }
+            const int iOpen = m_pNodeData[iCurrentNode].iOpenNode;
+            aChain[2 * iChainSize] = m_kOpenList.m_aList[iOpen].iGate[0];
+            aChain[2 * iChainSize + 1] = m_kOpenList.m_aList[iOpen].iGate[1];
+            ++iChainSize;
+            iCurrentNode = m_kOpenList.m_aList[iOpen].iParent;
+        }
+
+        m_kOpenList.ResetUsedNodeData();
+
+        // Reverse the chain so it runs from the start towards the goal.
+        for (int i = 0; i < iChainSize / 2; ++i)
+        {
+            const int iSwap = iChainSize - i - 1;
+            std::swap(aChain[2 * i], aChain[2 * iSwap]);
+            std::swap(aChain[2 * i + 1], aChain[2 * iSwap + 1]);
+        }
+
+        int pGates[3 * 2000];
+        int iGateCount = 0;
+        auto AddGate = [&](int iType, int iValue)
+        {
+            pGates[3 * iGateCount + 1] = iType;
+            pGates[3 * iGateCount + 2] = iValue;
+            ++iGateCount;
+        };
+
+        int iCurNode = -1;
+        int* pGateEnd = pGates + 3 * 2000;
+
+        for (int i = 0; i < iChainSize; ++i)
+        {
+            const int iType = aChain[2 * i];
+            const int iValue = aChain[2 * i + 1];
+            const int iNextType = (i + 1 < iChainSize) ? aChain[2 * (i + 1)] : 0;
+
+            switch (iType)
+            {
+            case -5:
+            {
+                // Cross-graph start: re-emit the gate of the sub node that reaches
+                // the graph exit and trace the intra-graph corridor to that exit.
+                const ZGraph& rFromGraph = m_pGraphs[kFrom.Graph()];
+                const int iSubNodeIndex = aBestSubNode[iValue];
+                const ZSubNode& subNode = m_pSubNodes[iSubNodeIndex];
+                const int iNode = subNode.m_Node;
+                iCurNode = iNode;
+
+                const int iRel = iNode - rFromGraph.m_iFirstNode;
+                const int iExitDistIndex = 2 * (rFromGraph.m_iExits * iRel + iValue)
+                    + rFromGraph.m_iFirstExitDist;
+                ZASSERT(iExitDistIndex < m_iExitDistCount);
+                const int iNextExitDist = m_pExitDists[iExitDistIndex + 1];
+                const int iOtherComponent = (iNextExitDist == -1)
+                    ? -1
+                    : m_pSubNodes[iNextExitDist].m_SourceComponent;
+
+                if (subNode.m_SourceComponent != iOtherComponent)
+                {
+                    if (subNode.m_Divider == -1)
+                    {
+                        AddGate(-4, iNode);
+                    }
+                    else
+                    {
+                        const ZComponent& rComponent =
+                            m_pComponents[subNode.m_SourceComponent];
+                        const int iNext = (subNode.m_Divider + 1 >= rComponent.m_Corners)
+                            ? 0
+                            : subNode.m_Divider + 1;
+                        AddGate(
+                            m_pCorners[rComponent.m_FirstCorner + subNode.m_Divider].m_iVertex,
+                            m_pCorners[rComponent.m_FirstCorner + iNext].m_iVertex);
+                    }
+                }
+
+                const int iTrace = TraceExit(
+                    kFrom.Graph(), iValue, iNode, &pGates[3 * iGateCount], pGateEnd);
+                if (iTrace == -1)
+                {
+                    return -1;
+                }
+                iGateCount += iTrace;
+
+                if (i + 1 < iChainSize && iNextType == -3)
+                {
+                    AddGate(-4, rFromGraph.m_iFirstNode + iValue);
+                }
+                break;
+            }
+
+            case -4:
+                if (i + 1 < iChainSize && iNextType < 0)
+                {
+                    AddGate(-4, iValue);
+                }
+                iCurNode = iValue;
+                break;
+
+            case -3:
+            {
+                // Crossed a door/exit link: remember the link and the node behind it.
+                const ZLink& link = m_pLinks[iValue];
+                AddGate(-3, iValue);
+                iCurNode = link.m_iNode + m_pGraphs[link.m_Graph].m_iFirstNode;
+                break;
+            }
+
+            case -2:
+            {
+                // Entered a foreign graph through an exit node: trace back the exit
+                // corridor to the previous anchor and mark the entry node.
+                const ZNode& rNode = m_pNodes[iValue];
+                const int iTrace = TraceExit(
+                    rNode.m_iGraph, iValue - m_pGraphs[rNode.m_iGraph].m_iFirstNode, iCurNode,
+                    &pGates[3 * iGateCount], pGateEnd);
+                if (iTrace == -1)
+                {
+                    return -1;
+                }
+                iGateCount += iTrace;
+                AddGate(-4, iValue);
+                iCurNode = iValue;
+                break;
+            }
+
+            case -1:
+            {
+                // Reached the destination component through a door link (type 1).
+                const ZNode& rNode = m_pNodes[iValue];
+                int iLink = rNode.m_iFirstLink;
+                while (iLink < rNode.m_iLastLink && m_pLinks[iLink].m_Type != 1)
+                {
+                    ++iLink;
+                }
+                ZASSERT(iLink != rNode.m_iLastLink);
+
+                const ZComponent& rComponent = m_pComponents[rNode.m_iComponent];
+                const int iDivider = m_pLinks[iLink].m_iAction;
+                const int iNext = (iDivider + 1 >= rComponent.m_Corners) ? 0 : iDivider + 1;
+                AddGate(m_pCorners[rComponent.m_FirstCorner + iDivider].m_iVertex,
+                    m_pCorners[rComponent.m_FirstCorner + iNext].m_iVertex);
+                iCurNode = m_pLinks[iLink].m_iNode
+                    + m_pGraphs[m_pLinks[iLink].m_Graph].m_iFirstNode;
+                break;
+            }
+
+            default:
+            {
+                // Sub-node crossing inside a graph: emit the divider gate of the
+                // component we crossed out of (iType).
+                const ZComponent& rComponent = m_pComponents[iType];
+                const ZSubNode& subNode = m_pSubNodes[iValue];
+                if (subNode.m_Component == -1 || subNode.m_Divider == -1)
+                {
+                    if (i + 1 < iChainSize && iNextType < 0)
+                    {
+                        AddGate(-4, subNode.m_Node);
+                    }
+                }
+                else
+                {
+                    const int iNext = (subNode.m_Divider + 1 >= rComponent.m_Corners)
+                        ? 0
+                        : subNode.m_Divider + 1;
+                    AddGate(
+                        m_pCorners[rComponent.m_FirstCorner + subNode.m_Divider].m_iVertex,
+                        m_pCorners[rComponent.m_FirstCorner + iNext].m_iVertex);
+                }
+                break;
+            }
+            }
+        }
+
+        if (iGateCount == 0)
+        {
+            return 0;
+        }
+
+        pPathLink[0].m_Pos = kFrom.m_vPos;
+        pPathLink[0].m_Action = 0;
+        return 1 + StraightenGates(
+                       &kFrom.m_vPos.x, &kTo.m_vPos.x, pGates, iGateCount, &pPathLink[1], rPath);
     }
 
     int ZData::TraceExit(int iGraph, int iStartNode, int iEndNode, int* pOut, int* pOutEnd)
@@ -2087,141 +3052,125 @@ void ZData::FindCornersInGraph(int iGraph, int& iMaxCorners, float* pvOut)
 
     int ZData::StraightenGates(const float* pvStart, const float* pvEnd, int* pGates, int iGateCount, ZPathLink* pLinksOut, ZPath& rPath)
     {
-        // Smooths a gate corridor into a straight path (PC 004DBD40).
-        // Gate records are produced by TraceExit: [-3, exit, ...] / [-4, subnode, ...] /
-        // otherwise [vertexA, vertexB]. Each 3-int gate is 12 bytes.
-        //
-        // NOTE: DRAFT translation - the gate record semantics and the ZDataRef
-        // encoding used here must be validated against TraceExit and its only caller
-        // FindComponentPathAStar once those are fully reversed.
-
-        ZVector3 vStart(pvStart[0], pvStart[1], pvStart[2]);
+        // Smooths a gate corridor into a straight path (PC 004DBD40 / PS2 0x1FAA0C).
+        // Gate records (12 bytes each, fields [1]/[2] used) are produced by TraceExit
+        // and FindComponentPathAStar: [-3/-2, exit-link] / [-4, sub-node] /
+        // otherwise [vertexFrom, vertexTo]. The corridor keeps two "wall" candidates
+        // (seg/alt) and only emits a path point when a gate forces a turn; on such a
+        // commit the walk rewinds to the last gate where the candidate touched a gate
+        // vertex (v63/v64 markers) and re-evaluates from the new point.
         ZVector3 vEnd(pvEnd[0], pvEnd[1], pvEnd[2]);
+        ZVector3 vStart(pvStart[0], pvStart[1], pvStart[2]);
 
-        int iOutCount = 0;
+        int iOut = 0;
         if (iGateCount <= 0)
         {
             pLinksOut[0].m_Pos = vEnd;
             pLinksOut[0].m_Action = 0;
-            iOutCount = 1;
+            iOut = 1;
         }
 
-        // "prev" end point/candidate references (mirrors v76/v78 and their refs).
-        // We track a candidate as: handle (hA/hB), point + its own pos copy.
         ZDataRef refStart = rPath.AddVertex(pvStart);
-        const uint32_t hStart = HandleOf(refStart);
-
-        // Current best "start" reference of the segment being extended.
-        uint32_t hSeg = hStart;         // v82/v87 (== combined)
-        float fSegX = refStart.m_Pos.x; // v83/v88 (x)
-        float fSegZ = refStart.m_Pos.y; // v84/X    (z)
-        ZVector3 vSeg = vStart;         // v76
-
-        // Alternate/right candidate reference.
-        uint32_t hAlt = hStart;         // v87
-        float fAltX = fSegX;            // v88
-        float fAltZ = fSegZ;            // X
-        ZVector3 vAlt = vStart;         // v78
-
-        // reference to the currently processed gate start point
-        float fCurX = vStart.x; // v79
-        float fCurZ = vStart.z; // Z
-
-        // gate cursor in bytes
-        int iGateByte = 0;
-
-        int iGateIndex = -1; // v81 (loop counter = processed gate index)
-
-        const int iLoopEnd = iGateCount + 1;
-        while (++iGateIndex < iLoopEnd)
+        if (refStart.m_Type != 3 || refStart.m_Id >= 4)
         {
-            ZPathLink* pOut = &pLinksOut[iOutCount];
-            ZVector3 vA = vEnd;  // v94 (start of the segment for this gate)
-            ZVector3 vB = vEnd;  // v93 (end of the segment for this gate)
-            uint32_t hA = 0x7FFE; // v96
-            uint32_t hB = 0x7FFE; // v99
-            float fAx = vEnd.x;
-            float fAz = vEnd.z;
-            float fBx = vEnd.x;
-            float fBz = vEnd.z;
+            ZASSERT(false);
+        }
 
-            bool bSkip = false;
-            bool bTouching = false;
+        // Two wall candidates ("seg" = v51/v55, "alt" = v48/v54 in the PS2 build),
+        // the committed point and the gate index at which each candidate last touched
+        // a gate vertex (rewind markers).
+        ZVector3 vSeg = vStart;
+        ZVector3 vAlt = vStart;
+        ZVector3 vCur = vStart;
+        uint32_t hSeg = HandleOf(refStart);
+        uint32_t hAlt = HandleOf(refStart);
+        int iSegStop = 0;
+        int iAltStop = 0;
 
-            if (iGateIndex != iGateCount)
+        auto Emit = [&](const ZVector3& vPos, uint32_t hRef, int iAction)
+        {
+            ZPathLink& rOut = pLinksOut[iOut];
+            rOut.m_Pos = vPos;
+            rOut.m_Action = iAction;
+            ++iOut;
+            rPath.AddRef(MakeRef(hRef, vPos.x, vPos.z));
+        };
+
+        constexpr float kEps = 0.0000099999997f;
+        constexpr float k2DTol = 0.0099999998f;
+        auto XZEq = [](const ZVector3& a, const ZVector3& b)
+        {
+            return a.x == b.x && a.z == b.z;
+        };
+
+        for (int i = 0; i < iGateCount + 1; ++i)
+        {
+            // Resolve the two candidate points of this gate (from/to).
+            ZVector3 vFrom = vEnd;
+            ZVector3 vTo = vEnd;
+            uint32_t hFrom = 0x7FFE;
+            uint32_t hTo = 0x7FFE;
+
+            if (i != iGateCount)
             {
-                const int iType = pGates[iGateByte / 4 + 1]; // gate[1]
-                const int iArg = pGates[iGateByte / 4 + 2];  // gate[2]
+                const int iType = pGates[3 * i + 1];
+                const int iArg = pGates[3 * i + 2];
 
                 if (iType == -2 || iType == -3)
                 {
-                    // Exit link: the "gate" is a doorway the segment must pass through.
+                    // Crossing a door/exit link: commit the current point and emit the
+                    // door way-point (as a link ref), then continue from the target node.
                     const ZLink& link = m_pLinks[iArg];
                     const ZNode& node = LinkToNode(*this, link);
-                    vA = ZVector3(node.m_kPos.x, node.m_fHeight, node.m_kPos.y);
-                    vB = vA;
+                    const ZVector3 vNode(node.m_kPos.x, node.m_fHeight, node.m_kPos.y);
 
-                    // Output current segment point and pass through the door.
-                    pOut->m_Pos = vSeg;
-                    pOut->m_Action = 0;
-                    rPath.AddRef(MakeRef(hSeg, fSegX, fSegZ));
-                    ++iOutCount;
+                    Emit(vSeg, hSeg, 0);
+                    Emit(vNode, MakeHandle(static_cast<uint32_t>(iArg), 2u), link.m_iAction);
 
-                    pOut = &pLinksOut[iOutCount];
-                    pOut->m_Pos = vA;
-                    pOut->m_Action = link.m_iAction;
-                    rPath.AddRef(MakeRef(MakeHandle(iArg, 2u), vA.x, vA.z));
-                    ++iOutCount;
-
-                    // The segment continues from the door point.
-                    hSeg = MakeHandle(static_cast<uint32_t>(iArg), 2u);
-                    fSegX = vA.x;
-                    fSegZ = vA.z;
-                    vSeg = vA;
-                    vAlt = vA;
-                    fCurX = vA.x;
-                    fCurZ = vA.z;
-                    bSkip = true;
+                    vSeg = vNode;
+                    vAlt = vNode;
+                    vCur = vNode;
+                    // PS2 stores a plain node ref (type 0) on both sides after the door.
+                    const uint32_t hNode = MakeHandle(static_cast<uint32_t>(
+                        link.m_iNode + m_pGraphs[link.m_Graph].m_iFirstNode), 0u);
+                    hSeg = hNode;
+                    hAlt = hNode;
+                    iSegStop = i + 2;
+                    iAltStop = i + 2;
+                    continue;
                 }
-                else if (iType == -4)
+
+                if (iType == -4)
                 {
-                    // Sub-node crossing: only worth resolving when the next gate is an exit.
-                    if (iGateIndex + 1 >= iGateCount || pGates[iGateByte / 4 + 4] >= 0)
+                    // Sub-node anchor: only relevant when the following record is a
+                    // negative (exit/sub-node) record.
+                    if (i + 1 >= iGateCount || pGates[3 * (i + 1) + 1] >= 0)
                     {
-                        bSkip = true;
+                        continue;
                     }
-                    else
-                    {
-                        // Sub-node point (uses this gate's vertex B).
-                        const ZNode& nodeA = m_pNodes[iArg];
-                        vB = ZVector3(nodeA.m_kPos.x, nodeA.m_fHeight, nodeA.m_kPos.y);
-                        vA = vB;
-                        const uint32_t hTmp = iArg & 0x3FFF;
-                        hB = hTmp;
-                        hA = hTmp;
-                        fBx = vB.x;
-                        fBz = vB.z;
-                        fAx = vA.x;
-                        fAz = vA.z;
-                    }
+                    const ZNode& node = m_pNodes[iArg];
+                    vFrom = ZVector3(node.m_kPos.x, node.m_fHeight, node.m_kPos.y);
+                    vTo = vFrom;
+                    const uint32_t hNode = MakeHandle(static_cast<uint32_t>(iArg), 0u);
+                    hFrom = hNode;
+                    hTo = hNode;
                 }
                 else
                 {
-                    // Vertex gate (normal case, ids >= 0): a passage between two corner
-                    // vertices; shrink it by a small safety margin.
+                    // Vertex gate (ids >= 0): shrink the divider by a safety margin.
                     const ZVertex& vertFrom = m_pVertices[iType];
                     const ZVertex& vertTo = m_pVertices[iArg];
-                    const float fFromH = vertFrom.m_fHeight;
-                    const float fToH = vertTo.m_fHeight;
                     float fFromX = vertFrom.m_kPos.x;
                     float fFromZ = vertFrom.m_kPos.y;
+                    const float fFromH = vertFrom.m_fHeight;
                     float fToX = vertTo.m_kPos.x;
                     float fToZ = vertTo.m_kPos.y;
+                    const float fToH = vertTo.m_fHeight;
 
                     float fDX = fToX - fFromX;
                     float fDZ = fToZ - fFromZ;
-                    float fLen = std::sqrt(fDX * fDX + fDZ * fDZ);
-                    float fInvLen = 1.0f / fLen;
+                    const float fLen = std::sqrt(fDX * fDX + fDZ * fDZ);
+                    const float fInvLen = 1.0f / fLen;
                     float fEdge = fLen - 5.0f;
                     if (fEdge > 0.0f)
                     {
@@ -2229,146 +3178,105 @@ void ZData::FindCornersInGraph(int iGraph, int& iMaxCorners, float* pvOut)
                         {
                             fEdge = 100.0f;
                         }
-                        fDZ *= fInvLen;
-                        const float fStep = fDX * fInvLen * fEdge;
-                        fDX = fStep;
-                        const float fStepZ = fEdge * fDZ;
-                        fDZ = fStepZ;
+                        const float fNx = fDX * fInvLen;
+                        const float fNz = fDZ * fInvLen;
+                        fDX = fNx * fEdge;
+                        fDZ = fNz * fEdge;
                         fFromX += 0.40000001f * fDX;
                         fFromZ += 0.40000001f * fDZ;
                         fToX -= 0.89999998f * fDX;
                         fToZ -= 0.89999998f * fDZ;
                     }
 
-                    // vA = from point, vB = to point
-                    vA = ZVector3(fFromX, fFromH, fFromZ);
-                    vB = ZVector3(fToX, fToH, fToZ);
-                    fAx = vA.x;
-                    fAz = vA.z;
-                    fBx = vB.x;
-                    fBz = vB.z;
-                    hA = MakeHandle(static_cast<uint32_t>(iType), 1u);
-                    hB = MakeHandle(static_cast<uint32_t>(iArg), 1u);
+                    vFrom = ZVector3(fFromX, fFromH, fFromZ);
+                    vTo = ZVector3(fToX, fToH, fToZ);
+                    hFrom = MakeHandle(static_cast<uint32_t>(iType), 1u);
+                    hTo = MakeHandle(static_cast<uint32_t>(iArg), 1u);
                 }
             }
             else
             {
-                // Last gate: close at the end point.
-                vA = vEnd;
-                vB = vEnd;
-                hA = 0x7FFE;
-                hB = 0x7FFE;
-                fAx = fBx = vEnd.x;
-                fAz = fBz = vEnd.z;
+                // Closing gate: both candidates are the destination point.
+                vFrom = vEnd;
+                vTo = vEnd;
+                hFrom = 0x7FFE;
+                hTo = 0x7FFE;
             }
 
-            if (!bSkip)
+            auto SideXZ = [&](const ZVector3& pA, const ZVector3& pB)
             {
-                const float fEps = 0.0000099999997f;
-                const float f2DTol = 0.0099999998f;
-                const bool bAtSeg = (vSeg.x == fCurX && vSeg.z == fCurZ);
-                const bool bAtAlt = (vAlt.x == fCurX && vAlt.z == fCurZ);
+                // cross(pB - cur, pA - cur) sign helper: +1/-1/0 style not needed;
+                // used only via the two scalar forms below.
+                return (pA.x - vCur.x) * (pB.z - vCur.z) - (pA.z - vCur.z) * (pB.x - vCur.x);
+            };
 
-                const float fCrossA = (vB.x - fCurX) * (vSeg.z - fCurZ) - (vB.z - fCurZ) * (vSeg.x - fCurX);
-                const float fCrossB = (vA.x - fCurX) * (vAlt.z - fCurZ) - (vA.z - fCurZ) * (vAlt.x - fCurX);
+            const bool bAtSeg = XZEq(vSeg, vCur);
+            const bool bAtAlt = XZEq(vAlt, vCur);
 
-                if (bAtSeg || fCrossA >= -fEps)
+            // O1: the "to" candidate does not force the seg side to turn.
+            const float fSegTo = (vTo.x - vCur.x) * (vSeg.z - vCur.z) - (vTo.z - vCur.z) * (vSeg.x - vCur.x);
+            if (bAtSeg || fSegTo >= -kEps)
+            {
+                // O2: the "from" candidate does not force the alt side to turn.
+                const float fAltFrom = (vFrom.x - vCur.x) * (vAlt.z - vCur.z) - (vFrom.z - vCur.z) * (vAlt.x - vCur.x);
+                if (bAtAlt || fAltFrom <= kEps)
                 {
-                    // Segment not forced to turn yet: possibly advance alt/seg.
-                    const float fCrossAB = (vA.x - fCurX) * (vSeg.z - fCurZ) - (vA.z - fCurZ) * (vSeg.x - fCurX);
-                    if (bAtAlt || (fCrossB < -fEps) || fCrossB <= fEps)
+                    // Still free: advance the candidates and remember where they
+                    // touched a gate vertex (used to rewind after the next commit).
+                    const float fSegFrom = (vFrom.x - vCur.x) * (vSeg.z - vCur.z) - (vFrom.z - vCur.z) * (vSeg.x - vCur.x);
+                    if (bAtSeg || fSegFrom > kEps)
                     {
-                        const bool bAltAhead = bAtSeg
-                            || (((vA.x - fCurX) * (vAlt.z - fCurZ) - (vA.z - fCurZ) * (vAlt.x - fCurX)) >= -fEps
-                                && ((vA.x - fCurX) * (vAlt.z - fCurZ) - (vA.z - fCurZ) * (vAlt.x - fCurX)) > fEps);
-                        if (bAltAhead)
-                        {
-                            vAlt = vA;
-                            hAlt = hA;
-                            fAltX = fAx;
-                            fAltZ = fAz;
-                        }
+                        vSeg = vFrom;
+                        hSeg = hFrom;
+                    }
+                    const float fAltTo = (vTo.x - vCur.x) * (vAlt.z - vCur.z) - (vTo.z - vCur.z) * (vAlt.x - vCur.x);
+                    if (bAtAlt || fAltTo < -kEps)
+                    {
+                        vAlt = vTo;
+                        hAlt = hTo;
+                    }
 
-                        const bool bSegAhead = bAtAlt
-                            || ((vB.x - fCurX) * (vAlt.z - fCurZ) - (vB.z - fCurZ) * (vAlt.x - fCurX)) < -fEps;
-                        if (bSegAhead)
-                        {
-                            vSeg = vB;
-                            hSeg = hB;
-                            fSegX = fBx;
-                            fSegZ = fBz;
-                        }
-
-                        const bool bSegTouches = Dist2DSq(vSeg.x, vSeg.z, vA.x, vA.z) < f2DTol;
-                        if (bSegTouches)
-                        {
-                            bTouching = true;
-                        }
-                        if (Dist2DSq(vAlt.x, vAlt.z, vB.x, vB.z) < f2DTol)
-                        {
-                            // collapse the gate into a single output point
-                            pOut = &pLinksOut[iOutCount];
-                            pOut->m_Pos = vSeg;
-                            pOut->m_Action = 0;
-                            rPath.AddRef(MakeRef(hSeg, fSegX, fSegZ));
-                            ++iOutCount;
-                            fCurX = vSeg.x;
-                            fCurZ = vSeg.z;
-                            iGateByte += 12;
-                            continue;
-                        }
-                        bSkip = true;
+                    const float fSegFromDx = vSeg.x - vFrom.x;
+                    const float fSegFromDz = vSeg.z - vFrom.z;
+                    if (fSegFromDx * fSegFromDx + fSegFromDz * fSegFromDz < k2DTol)
+                    {
+                        iSegStop = i + 1;
+                    }
+                    const float fAltToDx = vAlt.x - vTo.x;
+                    const float fAltToDz = vAlt.z - vTo.z;
+                    if (fAltToDx * fAltToDx + fAltToDz * fAltToDz < k2DTol)
+                    {
+                        iAltStop = i + 1;
                     }
                 }
-
-                if (!bSkip && !bTouching)
+                else
                 {
-                    // The segment is no longer free: commit the "start" candidate.
-                    if (bAtSeg || fCrossA < -fEps)
-                    {
-                        // add alt
-                        pOut = &pLinksOut[iOutCount];
-                        pOut->m_Pos = vAlt;
-                        pOut->m_Action = 0;
-                        rPath.AddRef(MakeRef(hAlt, fAltX, fAltZ));
-                        ++iOutCount;
-
-                        vSeg = vAlt;
-                        hSeg = hAlt;
-                        fSegX = fAltX;
-                        fSegZ = fAltZ;
-                        fCurX = vAlt.x;
-                        fCurZ = vAlt.z;
-                    }
-                    else
-                    {
-                        // add seg
-                        pOut = &pLinksOut[iOutCount];
-                        pOut->m_Pos = vSeg;
-                        pOut->m_Action = 0;
-                        rPath.AddRef(MakeRef(hSeg, fSegX, fSegZ));
-                        ++iOutCount;
-
-                        fCurX = vSeg.x;
-                        fCurZ = vSeg.z;
-                        vAlt = vSeg;
-                        hAlt = hSeg;
-                        fAltX = fSegX;
-                        fAltZ = fSegZ;
-                    }
+                    // The alt side must turn: commit the alt candidate.
+                    Emit(vAlt, hAlt, 0);
+                    vCur = vAlt;
+                    vSeg = vAlt;
+                    hSeg = hAlt;
+                    i = iAltStop - 1;
                 }
             }
-
-            iGateByte += 12;
+            else
+            {
+                // The seg side must turn: commit the seg candidate.
+                Emit(vSeg, hSeg, 0);
+                vCur = vSeg;
+                vAlt = vSeg;
+                hAlt = hSeg;
+                i = iSegStop - 1;
+            }
         }
 
-        // Append the destination as a custom vertex.
-        const ZDataRef refEnd = rPath.AddVertex(pvEnd);
-        ZPathLink* pFinal = &pLinksOut[iOutCount];
+        // Append the destination as a custom vertex and the closing link.
+        rPath.AddVertex(pvEnd);
+        ZPathLink* pFinal = &pLinksOut[iOut];
         pFinal->m_Pos = vEnd;
         pFinal->m_Action = 0;
 
-        return iOutCount + 1;
+        return iOut + 1;
     }
 
     ZInterface* CreatePathFinder(void* data)

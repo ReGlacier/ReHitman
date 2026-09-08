@@ -106,6 +106,10 @@ namespace Glacier::PF4
 
     float ZDynamicObstacle::ClosestPoint(const float* pvFrom, float* pvFound) const
     {
+        // Returns the (linear) distance from pvFrom to the closest point of the
+        // convex hull; the found point is stored in world X/Z. Hull edge distance
+        // candidates are measured as |P - A| after projecting P onto the edge
+        // normal (PC 004D9CC0 / PS2 0x1F1958).
         const int iHullSize = m_HullSize;
         if (!iHullSize)
         {
@@ -128,7 +132,7 @@ namespace Glacier::PF4
             const float fAy = m_ConvexHull[i].y;
 
             // Closest hull vertex.
-            const float fVertexDist = V2DistSq(fX, fY, fAx, fAy);
+            const float fVertexDist = std::sqrt(V2DistSq(fX, fY, fAx, fAy));
             if (fVertexDist < fBest)
             {
                 fBest = fVertexDist;
@@ -150,7 +154,7 @@ namespace Glacier::PF4
                 const float fS = -(fTx * fNx + fTy * fNy) / fNorm2;
                 const float fPx = fNx * fS;
                 const float fPy = fNy * fS;
-                const float fNormDist = fPx * fPx + fPy * fPy;
+                const float fNormDist = std::sqrt(fPx * fPx + fPy * fPy);
                 if (fNormDist < fBest)
                 {
                     fBest = fNormDist;

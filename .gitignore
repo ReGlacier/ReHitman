@@ -6,3 +6,4 @@ build*/*
 .zed
 **/__pycache__/
 compile_commands.json
+Tools/PFViewer/Examples

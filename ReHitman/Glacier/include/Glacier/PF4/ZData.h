@@ -7,59 +7,19 @@
 #include <Glacier/PF4/EPathWayActions.h>
 #include <Glacier/PF4/ZInterface.h>
 #include <Glacier/PF4/PF4.h>
+#include <Glacier/PF4/ZBlockAlocator.h>
+#include <Glacier/PF4/ZGraph.h>
+#include <Glacier/PF4/ZOpenNode.h>
+#include <Glacier/PF4/ZOpenNodeList.h>
 
 #include <cstdint>
 
 
 namespace Glacier::PF4
 {
-    class ZBlockAlocator
-    {
-    public:
-        // methods
-        ZBlockAlocator();
-        ~ZBlockAlocator();
-        void Init(int16_t* pStack, ZDataRef* pDataRef);
-        ZDataRef* Alloc();
-        void Free(ZDataRef* pRef);
-        bool BelongsTo(ZDataRef* pDataRef) const;
-
-        // members
-        ZDataRef* m_Data;
-        short* m_Stack;
-        int m_BlockSize;
-        int m_MaxBlocks;
-        int m_Count;
-    };
-    RE_VERIFY_SIZE(ZBlockAlocator, 0x14); // Confirmed
-
-    struct ZOpenNode
-    {
-        bool bVisited;
-        RE_ADD_PADDING(3);
-        float fKey;
-        ZIndex iNode;
-        ZIndex iParent;
-        ZIndex iLinkIndex;
-        ZIndex iGate[2];
-        float fCost;
-    };
-    RE_VERIFY_SIZE(ZOpenNode, 0x18); // Confirmed
-
-    struct ZOpenNodeList
-    {
-        ZNodeData* m_pNodeData;
-        int m_iNodeCount;
-        int m_iOpenNodeCount;
-        int m_iClosedNodeCount;
-        ZOpenNode m_aList[1000];
-    };
-    RE_VERIFY_SIZE(ZOpenNodeList, 0x5DD0); // Confirmed
-
-
-
     struct ZVertex
     {
+        // members
         ZVector2 m_kPos;      // +0x0 world x/z
         float m_fHeight;      // +0x8
         ZVector2 m_kNormal;   // +0xC
@@ -168,25 +128,6 @@ namespace Glacier::PF4
     };
     RE_VERIFY_SIZE(ZPlaneEquation, 0xC); // Confirmed
 
-    struct ZGraph
-    {
-        ZIndex  m_iNodes;
-        ZIndex  m_iVertices;
-        ZIndex  m_iComponents;
-        ZIndex  m_iExits;
-        ZIndex  m_iEntrances;
-        ZIndex  m_iFirstNode;
-        ZIndex  m_iFirstVertex;
-        ZIndex  m_iFirstComponent;
-        ZUIndex m_iFirstExitDist;
-        ZIndex  m_iSplitTree;
-        ZIndex  m_iHeightTree;
-        ZIndex  m_iEquations;
-        ZVector3 m_Min;
-        ZVector3 m_Max;
-    };
-    RE_VERIFY_SIZE(ZGraph, 0x30); // Confirmed (PC pf4runtime)
-
     class ZData : public ZInterface
     {
     public:
@@ -228,8 +169,8 @@ namespace Glacier::PF4
             const ZLocation& kLoc,
             const ZVector3& vEndPoint,
             float fMaxDistance,
-            const ZVector3&,
-            ZVector3&,
+            ZVector3& rWallPointA,
+            ZVector3& rWallPointB,
             bool& bHitWall,
             ZLocation& endLocation,
             bool bReportDoorsAsWalls,

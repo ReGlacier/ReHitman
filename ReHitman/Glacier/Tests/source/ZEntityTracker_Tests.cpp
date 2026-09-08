@@ -96,7 +96,7 @@ namespace
         float FindWallIntersection(const PF4::ZLocation& kLoc,
         const ZVector3& vEndPoint,
         float fMaxDistance,
-        const ZVector3&,
+        ZVector3&,
         ZVector3&,
         bool& bHitWall,
         PF4::ZLocation& endLocation,
