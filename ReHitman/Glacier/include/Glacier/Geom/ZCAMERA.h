@@ -4,6 +4,7 @@
 #include <Glacier/Geom/CCLIPPLANES.h>
 #include <Glacier/Geom/ZBaseGeom.h>
 #include <Glacier/Geom/ZGEOM.h>
+#include <Glacier/Runtime/Macro.h>
 #include <Glacier/ZSTL/ZMath.h>
 
 namespace Glacier
@@ -16,48 +17,69 @@ namespace Glacier
     class ZCAMERA : public ZGEOM
     {
     public:
-        //vftable
-        virtual void SetNear(float);
-        virtual void SetFar(float);
-        virtual void SetBackColor(int);
-        virtual void SetTargetLen(float);
-        virtual void SetFOV(float);
+        // RTTI
+        DECLARE_GEOM_CLASS(ZCAMERA, 0x400003u);
+
+        // vtbl
+        ~ZCAMERA() override;
+
+        // ZSerializable
+        bool PostLoad(ISerializerStream& stream) override;
+        void LoadSave(ISerializerStream& stream, bool bSaving) override;
+
+        // RTP::cBase
+        const RTP::ZPropertyInfo& GetProperties() const override;
+
+        // ZGEOM
+        uint32_t GetObjectId() const override;
+        void GetObjectIdAndMask(uint32_t& id, uint32_t& mask) const override;
+        ZGEOMCLASSINFO* GetOldClassInfo() const override;
+        void CalcCenSize() override;
+        void CopyData(const ZGEOM* Source) override;
+
+        // ZCAMERA
+        virtual void SetNear(float fNear);
+        virtual void SetFar(float fFar);
+        virtual void SetBackColor(int lColor);
+        virtual void SetTargetLen(float fTargetLen);
+        virtual void SetFOV(float fFOV);
         virtual float GetFOV();
-        virtual void SetFOVFirstPerson(float);
+        virtual void SetFOVFirstPerson(float fFOVFirstPerson);
         virtual float GetFOVFirstPerson();
         virtual void ViewUpdateBegin(); //nullstub
         virtual void ViewUpdateEnd();   //nullstub
-        virtual void Init(ZRender*);
-        virtual void SetViewport(const ZVector4*);
-        virtual void GetViewport(ZVector4*);
-        virtual void SetViewAspect(float);
+        virtual void Init(ZRender* pRender);
+        virtual void SetViewport(const ZVector4* pViewport);
+        virtual void GetViewport(ZVector4* pViewport);
+        virtual void SetViewAspect(float fViewAspect);
         virtual float GetViewAspect();
         virtual ZGEOM* GetCameraRoot();
         virtual void ActivateCam();
         virtual void DeactivateCam();
         virtual bool IsActive();
-        virtual void AddAlwaysDrawGeom(const ZBaseGeom*);
-        virtual void RemoveAlwaysDrawGeom(const ZBaseGeom*);
-        virtual void SetCamPrio(int); //nullstub
-        virtual void SetCamTarget(Vector3*, float);
-        virtual void SetCam6ClipPlanes(float,float,float,int,int,float);
-        virtual void Proj2D(ZVector2*, const ZVector3*);
-        virtual void Proj3D(ZVector3*, const ZVector3*);
-        virtual void Proj2D3D(ZVector3*, const ZVector3*);
-        virtual void SetCameraRoot(unsigned int);
-        virtual void SetCameraListPrio(float);
-        virtual void SetCurrentRoomHint(ZROOM*);
+        virtual void AddAlwaysDrawGeom(const ZBaseGeom* pBaseGeom);
+        virtual void RemoveAlwaysDrawGeom(const ZBaseGeom* pBaseGeom);
+        virtual void SetCamPrio(int lCamPrio); //nullstub
+        virtual void SetCamTarget(Vector3* pTarget, float fTargetLen);
+        virtual void SetCam6ClipPlanes(float fFOV, float fNear, float fFar, int lScreenWidth, int lScreenHeight, float fScreenAspect);
+        virtual void Proj2D(ZVector2* pScreenPos, const ZVector3* pViewPos);
+        virtual void Proj3D(ZVector3* pScreenPos, const ZVector3* pViewPos);
+        virtual void Proj2D3D(ZVector3* pScreenPos, const ZVector3* pViewDir);
+        virtual void SetCameraRoot(unsigned int lRootRef);
+        virtual void SetCameraListPrio(float fPrio);
+        virtual void SetCurrentRoomHint(ZROOM* pRoom);
         virtual ZROOM* GetCurrentRoomHint();
-        virtual void* GetScreenSelect(SScreenSelect*, bool, unsigned int, float);
-        virtual void SetWideScreen(bool);
-        virtual void FindCurrentRoom(ZROOM** room, unsigned int searchLimit);
+        virtual void* GetScreenSelect(SScreenSelect* pScreenSelect, bool bUseColi, unsigned int lGeomControlMask, float fSelectDistance);
+        virtual void SetWideScreen(bool bWideScreen);
+        virtual void FindCurrentRoom(ZROOM** pRooms, unsigned int searchLimit);
 
 		// methods
+		ZCAMERA(const char* psName, ZBaseGeom* pBaseGeom);
 		void SetFogEnabled(bool* bEnabled);
 		bool IsFogEnabled();
 		int GetCameraCon() const;
 
-        //data (total size is 0x18C, ZGEOM size is 0x10)
+        // members
         ZBaseGeom* m_AlwaysDrawGeoms[2];
         int m_lNrAlwaysDrawGeoms;
         int CameraType;
@@ -87,5 +109,5 @@ namespace Glacier
         RE_ADD_PADDING(3);
         struct ZRender* m_SubWindow;
     };
-    RE_VERIFY_SIZE(ZCAMERA, 0x18C); // Verified
+    RE_VERIFY_SIZE(ZCAMERA, 0x18C); // Verified PC alloc
 }

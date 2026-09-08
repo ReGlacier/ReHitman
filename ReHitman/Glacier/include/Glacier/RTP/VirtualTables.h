@@ -87,6 +87,7 @@ namespace Glacier::RTP
         extern tVirtualTable<ZDataProperty<float[8][4]>> Data_float_8_4;
         extern tVirtualTable<ZDataProperty<ZGEOMREF[6]>> Data_ZGEOMREF_6;
         extern tVirtualTable<ZDataProperty<ZGEOMREF[64]>> Data_ZGEOMREF_64;
+        extern tVirtualTable<ZDataProperty<ZBaseGeom*[2]>> Data_ZBaseGeom_ptr_2;
 
         extern tVirtualTable<ZVirtualProperty<bool>> Virtual_bool;
         extern tVirtualTable<ZVirtualProperty<int>> Virtual_int;
@@ -166,7 +167,7 @@ extern decltype(&Glacier::RTP::VirtualTables::Data_float) VirtualTable_DP__68;
 extern decltype(&Glacier::RTP::VirtualTables::Data_float_12) VirtualTable_DP__71;
 // extern decltype(&Glacier::RTP::VirtualTables::VirtualTable_DP__73) VirtualTable_DP__73;
 // extern decltype(&Glacier::RTP::VirtualTables::VirtualTable_DP__74) VirtualTable_DP__74;
-// extern decltype(&Glacier::RTP::VirtualTables::VirtualTable_DP__75) VirtualTable_DP__75;
+extern decltype(&Glacier::RTP::VirtualTables::Data_ZBaseGeom_ptr_2) VirtualTable_DP__75;
 extern decltype(&Glacier::RTP::VirtualTables::Data_float_2) VirtualTable_DP__76;
 // extern decltype(&Glacier::RTP::VirtualTables::VirtualTable_DP__77) VirtualTable_DP__77;
 extern decltype(&Glacier::RTP::VirtualTables::Data_float_4) VirtualTable_DP__79;

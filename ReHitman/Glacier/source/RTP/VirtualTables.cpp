@@ -1,6 +1,7 @@
 #define GLACIER_RTP_VIRTUALTABLES_NO_XEXE_ALIASES
 #include <Glacier/RTP/VirtualTables.h>
 #include <Glacier/Geom/ZGEOM.h>
+#include <Glacier/Geom/ZBaseGeom.h>
 #include <Glacier/Geom/ZAllocMany.h>
 #include <Glacier/Serializer/ISerializerStream.h>
 #include <Glacier/System/ZSysInterface.h>
@@ -61,6 +62,7 @@ namespace Glacier::RTP
         void ExchangeValue(ISerializerStream& stream, const char* name, REFTAB& value);
         void ExchangeValue(ISerializerStream& stream, const char* name, REFTAB*& value);
         void ExchangeValue(ISerializerStream& stream, const char* name, REFTAB32& value);
+        void ExchangeValue(ISerializerStream& stream, const char* name, ZBaseGeom* (&value)[2]);
 
         template <typename T>
         void ExchangeValue(ISerializerStream& stream, const char* name, ZBitfield<T>& value);
@@ -118,6 +120,37 @@ namespace Glacier::RTP
             const char* refName = nullptr;
             stream.Exchange(name, refName);
             value.m_Value = g_pEngineData->GetREFByName(refName);
+        }
+
+        void ExchangeValue(ISerializerStream& stream, const char* name, ZBaseGeom* (&value)[2])
+        {
+            for (uint32_t i = 0; i < 2; ++i)
+            {
+                ZBaseGeom*& pEntry = value[i];
+
+                if (stream.TestStreamFilter(1u << ISerializerStream::CONTENT_SavedGame))
+                {
+                    uint32_t ref = pEntry ? pEntry->GetRef() : 0;
+                    stream.Exchange(name, ref);
+
+                    if (stream.IsLoading())
+                    {
+                        pEntry = ZBaseGeom::RefToPtr(ref);
+                    }
+
+                    continue;
+                }
+
+                if (stream.IsSaving())
+                {
+                    ZASSERT(false);
+                    continue;
+                }
+
+                const char* refName = nullptr;
+                stream.Exchange(name, refName);
+                pEntry = ZBaseGeom::RefToPtr(g_pEngineData->GetREFByName(refName));
+            }
         }
 
         void ExchangeValue(ISerializerStream& stream, const char* name, ZMsg& value)
@@ -461,6 +494,8 @@ namespace Glacier::RTP
     template void SaveDataProperty<ZGEOMREF[6]>(ZDataProperty<ZGEOMREF[6]>* pProperty, ISerializerStream& stream, ZSerializableBase& object);
     template void LoadDataProperty<ZGEOMREF[64]>(ZDataProperty<ZGEOMREF[64]>* pProperty, ISerializerStream& stream, ZSerializableBase& object);
     template void SaveDataProperty<ZGEOMREF[64]>(ZDataProperty<ZGEOMREF[64]>* pProperty, ISerializerStream& stream, ZSerializableBase& object);
+    template void LoadDataProperty<ZBaseGeom*[2]>(ZDataProperty<ZBaseGeom*[2]>* pProperty, ISerializerStream& stream, ZSerializableBase& object);
+    template void SaveDataProperty<ZBaseGeom*[2]>(ZDataProperty<ZBaseGeom*[2]>* pProperty, ISerializerStream& stream, ZSerializableBase& object);
 
     template void LoadVirtualProperty<bool>(ZVirtualProperty<bool>* pProperty, ISerializerStream& stream, ZSerializableBase& object);
     template void SaveVirtualProperty<bool>(ZVirtualProperty<bool>* pProperty, ISerializerStream& stream, ZSerializableBase& object);
@@ -554,6 +589,7 @@ namespace Glacier::RTP
         tVirtualTable<ZDataProperty<float[8][4]>> Data_float_8_4 = MakeDataTable<float[8][4]>();
         tVirtualTable<ZDataProperty<ZGEOMREF[6]>> Data_ZGEOMREF_6 = MakeDataTable<ZGEOMREF[6]>();
         tVirtualTable<ZDataProperty<ZGEOMREF[64]>> Data_ZGEOMREF_64 = MakeDataTable<ZGEOMREF[64]>();
+        tVirtualTable<ZDataProperty<ZBaseGeom*[2]>> Data_ZBaseGeom_ptr_2 = MakeDataTable<ZBaseGeom*[2]>();
 
         tVirtualTable<ZVirtualProperty<bool>> Virtual_bool = MakeVirtualTable<bool>();
         tVirtualTable<ZVirtualProperty<int>> Virtual_int = MakeVirtualTable<int>();
@@ -613,6 +649,7 @@ decltype(&Glacier::RTP::VirtualTables::Data_uint_32) VirtualTable_DP__61 = &Glac
 decltype(&Glacier::RTP::VirtualTables::Data_uint_32) VirtualTable_DP__62 = &Glacier::RTP::VirtualTables::Data_uint_32;
 decltype(&Glacier::RTP::VirtualTables::Data_float) VirtualTable_DP__68 = &Glacier::RTP::VirtualTables::Data_float;
 decltype(&Glacier::RTP::VirtualTables::Data_float_12) VirtualTable_DP__71 = &Glacier::RTP::VirtualTables::Data_float_12;
+decltype(&Glacier::RTP::VirtualTables::Data_ZBaseGeom_ptr_2) VirtualTable_DP__75 = &Glacier::RTP::VirtualTables::Data_ZBaseGeom_ptr_2;
 decltype(&Glacier::RTP::VirtualTables::Data_float_2) VirtualTable_DP__76 = &Glacier::RTP::VirtualTables::Data_float_2;
 decltype(&Glacier::RTP::VirtualTables::Data_float_4) VirtualTable_DP__79 = &Glacier::RTP::VirtualTables::Data_float_4;
 decltype(&Glacier::RTP::VirtualTables::Data_float_2_3) VirtualTable_DP__89 = &Glacier::RTP::VirtualTables::Data_float_2_3;

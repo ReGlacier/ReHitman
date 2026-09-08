@@ -8,6 +8,7 @@
 #include <Glacier/RTP/VirtualTables.h>
 #include <Glacier/Serializer/ISerializerStream.h>
 #include <Glacier/System/ZSysInterface.h>
+#include <Glacier/Data/ZEngineDataBase.h>
 #include <Glacier/ZUniMemory.h>
 #include <Glacier/ZUniAssert.h>
 
@@ -133,6 +134,16 @@ namespace Glacier
             m_lAudioFilter = static_cast<int32_t>(reinterpret_cast<uintptr_t>(
                 pSoundDll->GetPackedObject(m_dwRoomRef)));
         }
+    }
+
+    void ZROOM::SetFogColor(uint32_t lColor)
+    {
+        uint32_t lCameraBackgroundColor = 0;
+        g_pSysInterface->m_pEngineData->GetSceneCom()->GetVal("CameraBackgroundColor", reinterpret_cast<int*>(&lCameraBackgroundColor));
+
+        m_lFogColor = (lCameraBackgroundColor & 0xFF00FF00)
+            | ((lCameraBackgroundColor & 0xFF) << 16)
+            | ((lCameraBackgroundColor >> 16) & 0xFF);
     }
 
     void ZROOM::CopyData(const ZGEOM* Source)
