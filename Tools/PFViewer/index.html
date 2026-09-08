@@ -47,6 +47,7 @@
     <div class="row" style="margin:0 0 0 auto;">
         <input type="checkbox" id="showComps" checked> <label for="showComps">components</label>
         <input type="checkbox" id="showLinks"> <label for="showLinks">links</label>
+        <input type="checkbox" id="showActions" checked> <label for="showActions">actions</label>
     </div>
 </div>
 
@@ -223,13 +224,78 @@ scene.add(overlay);
 
 const gObjects = [];      // per-graph fill meshes
 const gWire = [];         // per-graph wireframe object
+let gLinkGroup = null;    // non-door link lines
+let gActionGroup = null;  // door gates + action markers/labels
+let gExtraStats = null;   // doors / action counts (shown in the stats panel)
 
 const $ = id => document.getElementById(id);
+
+// EPathWayActions labels/colors used by the navmesh links.
+const ACTION_INFO = {
+    1: ["CLIMB", 0xff5252], 2: ["FALL", 0x40c4ff], 3: ["JUMP", 0xffab40],
+    4: ["WALK", 0x81c784],  5: ["STOP", 0xe0e0e0], 6: ["RAPEL", 0x7e57c2],
+    7: ["DOOR", 0xffd54f],  8: ["ENTER LIFT", 0x4dd0e1], 9: ["EXIT LIFT", 0x00bcd4]
+};
+
+function makeLabelSprite(text, color) {
+    // Build the label at a 2x pixel ratio; the sprite keeps the exact canvas
+    // aspect so the text never looks stretched.
+    const fontPx = 44;
+    const padX = 18;
+    const lineH = 64;
+    const dpr = 2;
+
+    const measure = document.createElement("canvas").getContext("2d");
+    measure.font = "bold " + fontPx + "px Segoe UI, Arial, sans-serif";
+    const textW = measure.measureText(text).width;
+
+    const w = Math.ceil(textW) + padX * 2;
+    const h = lineH;
+    const canvas = document.createElement("canvas");
+    canvas.width = w * dpr;
+    canvas.height = h * dpr;
+    const ctx = canvas.getContext("2d");
+    ctx.scale(dpr, dpr);
+
+    ctx.fillStyle = "rgba(8,12,16,0.85)";
+    ctx.strokeStyle = "#" + (color >>> 16).toString(16).padStart(2, "0")
+        + ((color >> 8) & 255).toString(16).padStart(2, "0")
+        + (color & 255).toString(16).padStart(2, "0");
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.roundRect ? ctx.roundRect(0, 0, w, h, 10) : ctx.rect(0, 0, w, h);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.font = "bold " + fontPx + "px Segoe UI, Arial, sans-serif";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = "#fff";
+    ctx.fillText(text, padX, h * 0.5 + 2);
+
+    const mat = new THREE.SpriteMaterial({
+        map: new THREE.CanvasTexture(canvas), depthTest: false, transparent: true
+    });
+    const sprite = new THREE.Sprite(mat);
+    sprite.userData.labelW = w;
+    sprite.userData.labelH = h;
+    return sprite;
+}
+
+// Thin callout line from the bottom-center of a label down to its anchor point.
+function makeLeaderLine(color) {
+    const mat = new THREE.LineBasicMaterial({
+        color, transparent: true, opacity: 0.8, depthTest: false
+    });
+    return new THREE.Line(new THREE.BufferGeometry(), mat);
+}
 
 function clearScene() {
     for (const o of gObjects) { scene.remove(o); }
     for (const w of gWire) { scene.remove(w); }
     gObjects.length = 0; gWire.length = 0;
+    if (gLinkGroup) { scene.remove(gLinkGroup); gLinkGroup = null; }
+    if (gActionGroup) { scene.remove(gActionGroup); gActionGroup = null; }
+    gExtraStats = null;
     overlay.clear();
 }
 
@@ -306,25 +372,121 @@ function buildGeometry(pf) {
         }
     }
 
-    // Door/exit links: draw the two "side" polygons of each link as a short line.
-    if ($("showLinks").checked) {
-        const linkPts = [];
-        for (const ln of pf.links) {
-            const n = pf.nodes[ln.node + pf.graphs[ln.graph].firstNode];
-            if (n) { linkPts.push([-n.x, n.height, n.z]); extend(-n.x, n.height, n.z); }
-        }
-        // Link endpoints alone don't carry segment direction; connect each to its
-        // owning component centroid for a readable cue is overkill - draw as dots.
-        const pts = new Float32Array(linkPts.length * 3);
-        linkPts.forEach((p, i) => { pts[i * 3] = p[0]; pts[i * 3 + 1] = p[1]; pts[i * 3 + 2] = p[2]; });
-        const dots = new THREE.Points(new THREE.BufferGeometry()
-            .setAttribute("position", new THREE.BufferAttribute(pts, 3)),
-            new THREE.PointsMaterial({ color: 0xffe082, size: 12 }));
-        overlay.add(dots);
-    }
-
     // bounds fallback from graphs (X mirrored to match the rendered geometry)
     for (const g of pf.graphs) { extend(-g.min[0], g.min[1], g.min[2]); extend(-g.max[0], g.max[1], g.max[2]); }
+
+    // ------------------------------------------------------------------
+    // Links & actions
+    // ------------------------------------------------------------------
+    // A navmesh link connects a source node to a node of another graph. Links of
+    // type 1 are door links: their m_iAction stores the divider index of the
+    // door's component (see the -1 case of the path reconstruction), so we can
+    // draw the actual gate segment across the component polygon.
+    const span = Math.max(bounds.max[0] - bounds.min[0], bounds.max[2] - bounds.min[2], 1.0);
+
+    gLinkGroup = new THREE.Group();
+    gActionGroup = new THREE.Group();
+    scene.add(gLinkGroup);
+    scene.add(gActionGroup);
+    gLinkGroup.visible = $("showLinks").checked;
+    gActionGroup.visible = $("showActions").checked;
+
+    const linkSeen = new Set();
+    const plainSegs = [];
+    const doorSegs = [];
+    const actionPts = [];   // { x,y,z, action, keyMask, door }
+    let iDoors = 0;
+
+    for (let ni = 0; ni < pf.nodes.length; ++ni) {
+        const node = pf.nodes[ni];
+        if (!node || node.firstLink < 0) continue;
+        const iLast = Math.min(node.lastLink, pf.links.length);
+        for (let li = node.firstLink; li < iLast; ++li) {
+            if (linkSeen.has(li)) continue;
+            linkSeen.add(li);
+            const link = pf.links[li];
+            if (!link) continue;
+            const sx = -node.x, sy = node.height, sz = node.z;
+
+            if (link.type === 1) {
+                // Door gate across the component divider stored in link.action.
+                const comp = pf.components[node.component];
+                if (comp && link.action >= 0 && link.action < comp.corners) {
+                    const c0 = pf.corners[comp.firstCorner + link.action];
+                    const c1Idx = comp.firstCorner + link.action + 1;
+                    const c1 = pf.corners[c1Idx >= comp.firstCorner + comp.corners
+                        ? comp.firstCorner : c1Idx];
+                    const v0 = c0 && pf.vertices[c0.vertex];
+                    const v1 = c1 && pf.vertices[c1.vertex];
+                    if (v0 && v1) {
+                        doorSegs.push(-v0.x, v0.h, v0.z, -v1.x, v1.h, v1.z);
+                        actionPts.push({
+                            x: (-v0.x - v1.x) * 0.5, y: (v0.h + v1.h) * 0.5 + span * 0.004,
+                            z: (v0.z + v1.z) * 0.5, action: link.action === 0 ? 7 : -1,
+                            keyMask: link.keyMask, door: link.door, isDoor: true
+                        });
+                        ++iDoors;
+                    }
+                }
+            } else {
+                // Plain / exit link: source node -> target node line.
+                const tg = pf.graphs[link.graph];
+                const target = tg && pf.nodes[tg.firstNode + link.node];
+                if (target) {
+                    plainSegs.push(sx, sy, sz, -target.x, target.height, target.z);
+                }
+                if (link.action > 0 && ACTION_INFO[link.action]) {
+                    actionPts.push({
+                        x: (-target.x + sx) * 0.5, y: (target.height + sy) * 0.5 + span * 0.004,
+                        z: (target.z + sz) * 0.5, action: link.action,
+                        keyMask: link.keyMask, door: link.door, isDoor: false
+                    });
+                }
+            }
+        }
+    }
+
+    const addSegs = (group, segs, color, opacity) => {
+        if (!segs.length) return;
+        const geo = new THREE.BufferGeometry();
+        geo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(segs), 3));
+        group.add(new THREE.LineSegments(geo, new THREE.LineBasicMaterial({
+            color, transparent: opacity < 1, opacity, depthTest: opacity >= 1
+        })));
+    };
+    addSegs(gLinkGroup, plainSegs, 0x6db3f2, 0.35);  // normal links
+    addSegs(gActionGroup, doorSegs, 0xffd54f, 1.0);  // doors
+
+    // Labels for non-door action links (doors are already drawn as their gold
+    // gate segment above). A thin leader line points from under the text to the
+    // exact action position.
+    const pxWorld = span * 0.00042;   // uniform pixel -> world scale
+    let iLabels = 0;
+    const MAX_LABELS = 1500;
+    for (const p of actionPts) {
+        if (p.isDoor) continue;
+        const info = ACTION_INFO[p.action];
+        if (!info) continue;
+        if (iLabels >= MAX_LABELS) continue;
+
+        const sp = makeLabelSprite(info[0], info[1]);
+        const w = sp.userData.labelW * pxWorld;
+        const h = sp.userData.labelH * pxWorld;
+        // The label floats one label-height above the point; the leader connects
+        // the bottom-center of the text down to the action position.
+        const yTop = p.y + h;
+        sp.position.set(p.x, yTop + h * 0.5, p.z);
+        sp.scale.set(w, h, 1);
+        gActionGroup.add(sp);
+
+        const line = makeLeaderLine(info[1]);
+        const pos = new Float32Array([p.x, yTop, p.z, p.x, p.y, p.z]);
+        line.geometry.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+        gActionGroup.add(line);
+        ++iLabels;
+    }
+
+    gExtraStats = { doors: iDoors, actionLinks: actionPts.length - iDoors, labels: iLabels };
     return bounds;
 }
 
@@ -385,8 +547,12 @@ function showStats() {
         ["Nodes", s.node], ["Links", s.link], ["Corners", s.corner],
         ["Sub nodes", s.subNode], ["Split trees", s.splitTree], ["Height trees", s.heightTree]
     ];
+    if (gExtraStats) {
+        lines.push(["Doors (type 1)", gExtraStats.doors], ["Action links", gExtraStats.actionLinks]);
+    }
     $("stats").innerHTML = lines.map(([k, v]) =>
-        `<div class="stat"><span>${k}</span><b>${v}</b></div>`).join("");
+        `<div class="stat"><span>${k}</span><b>${v}</b></div>`).join("")
+        + `<div style="margin-top:8px;opacity:.75">gold = door gate · markers = actions<br>(labels capped at 1500)</div>`;
 }
 
 function renderScene() { renderer.render(scene, camera); }
@@ -425,13 +591,15 @@ $("wire").addEventListener("click", () => {
     $("wire").textContent = "Wireframe: " + (on ? "OFF" : "ON");
 });
 $("showComps").addEventListener("change", () => {
-    if (!lastBlock) return;
     const on = $("showComps").checked;
     gObjects.forEach(m => m.visible = on);
     gWire.forEach(w => w.visible = on);
 });
 $("showLinks").addEventListener("change", () => {
-    if (lastBlock) rebuildFromBlock(lastBlock, lastFileName);
+    if (gLinkGroup) gLinkGroup.visible = $("showLinks").checked;
+});
+$("showActions").addEventListener("change", () => {
+    if (gActionGroup) gActionGroup.visible = $("showActions").checked;
 });
 
 window.addEventListener("resize", () => {
