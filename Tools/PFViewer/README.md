@@ -3,13 +3,11 @@
 Standalone HTML5 viewer for the **PF4 (pathfinder4)** navmesh chunk stored inside
 Hitman: Blood Money `.GMS` level files.
 
-## Quick start (no web server needed)
+![Screenshot](Screenshots/Main.png)
 
-Just double-click **`index.html`** and open a `.GMS` file (or drag & drop it onto
-the page). All libraries (`three.min.js`, `OrbitControls.js`, `pako.min.js`) are
-vendored locally, so the page works from `file://` and offline.
+## Quick start
 
-## Or serve it via npm
+Or serve it via npm
 
 ```bash
 npm start      # uses `python -m http.server 8000`
@@ -70,7 +68,4 @@ Colors: `DOOR` gold · `CLIMB` red · `JUMP` orange · `WALK` green ·
 
 ## Reference
 
-- Dump format key used by the game: `ReHitmanT00l$2k26` (see
-  `ReHitman/Glacier/Tests/data/` for an obfuscated sample).
-- Data layout: `ZData::LoadDataBlock` in
-  `ReHitman/Glacier/source/PF4/ZData.cpp`.
+- Data layout: `ZData::LoadDataBlock` in `ReHitman/Glacier/source/PF4/ZData.cpp`.
