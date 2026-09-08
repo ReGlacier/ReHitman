@@ -260,8 +260,11 @@ function buildGeometry(pf) {
                 const corner = pf.corners[comp.firstCorner + k];
                 if (!corner) continue;
                 const v = pf.vertices[corner.vertex];
-                ring.push([v.x, v.h, v.z]);
-                extend(v.x, v.h, v.z);
+                // The engine uses a mirrored world axis; flip X for display so the
+                // level matches its in-game left/right orientation.
+                const gx = -v.x;
+                ring.push([gx, v.h, v.z]);
+                extend(gx, v.h, v.z);
             }
             if (ring.length < 3) continue;
 
@@ -308,7 +311,7 @@ function buildGeometry(pf) {
         const linkPts = [];
         for (const ln of pf.links) {
             const n = pf.nodes[ln.node + pf.graphs[ln.graph].firstNode];
-            if (n) { linkPts.push([n.x, n.height, n.z]); extend(n.x, n.height, n.z); }
+            if (n) { linkPts.push([-n.x, n.height, n.z]); extend(-n.x, n.height, n.z); }
         }
         // Link endpoints alone don't carry segment direction; connect each to its
         // owning component centroid for a readable cue is overkill - draw as dots.
@@ -320,8 +323,8 @@ function buildGeometry(pf) {
         overlay.add(dots);
     }
 
-    // bounds fallback from graphs
-    for (const g of pf.graphs) { extend(g.min[0], g.min[1], g.min[2]); extend(g.max[0], g.max[1], g.max[2]); }
+    // bounds fallback from graphs (X mirrored to match the rendered geometry)
+    for (const g of pf.graphs) { extend(-g.min[0], g.min[1], g.min[2]); extend(-g.max[0], g.max[1], g.max[2]); }
     return bounds;
 }
 
