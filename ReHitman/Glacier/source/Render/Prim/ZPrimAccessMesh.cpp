@@ -67,29 +67,17 @@ namespace Glacier
         memcpy(&pIndices[lStartIndex], plVertices, lIndexCount * sizeof(uint16_t));
     }
 
-    uint32_t ZPrimAccessMesh::GetTrianglesInBox(uint32_t* pTriangles, uint32_t lMaxNumTriangles, const float* vMin, const float* vMax)
-    {
-        const uint32_t lStartTriangle = reinterpret_cast<uint32_t>(pTriangles);
-        ZASSERT(lStartTriangle + lMaxNumTriangles <= GetNumTriangles());
-
-        uint16_t* pDstIndices = &GetIndices()[3 * lStartTriangle];
-        const uint16_t* pSrcIndices = reinterpret_cast<const uint16_t*>(vMin);
-
-        const uint32_t lIndexCount = 3 * lMaxNumTriangles;
-        for (uint32_t i = 0; i < lIndexCount; ++i)
-        {
-            pDstIndices[i] = pSrcIndices[i];
-        }
-
-        return reinterpret_cast<uint32_t>(&pDstIndices[lIndexCount]);
-    }
-
     uint32_t ZPrimAccessMesh::GetNumTriangles() const
     {
-        const uint16_t* pIndices = GetIndices();
-        ZASSERT(pIndices);
-        ZASSERT(pIndices[0] != 1);
-        return pIndices[0] / 3;
+        const SPrimMesh* pMesh = m_hPrim;
+        const uint32_t lSubMeshTable = pMesh->lSubMeshTable;
+        const uint32_t* pSubMeshTable = ZPrimHandle{lSubMeshTable};
+        const uint32_t lFirstSubMesh = pSubMeshTable[0];
+        const SPrimSubMesh* pFirstSubMesh = ZPrimHandle{lFirstSubMesh};
+        const uint32_t lIndices = pFirstSubMesh->lIndices;
+        const uint16_t* pIndices = ZPrimHandle{lIndices};
+        ZASSERT(pIndices[0] == 1);
+        return pIndices[1] / 3;
     }
 
     uint32_t ZPrimAccessMesh::GetNumVertices() const
@@ -142,5 +130,33 @@ namespace Glacier
         const uint32_t lVertices = pFirstSubMesh->lVertices;
         const uint32_t* pVertices = ZPrimHandle{lVertices};
         return pVertices;
+    }
+
+    const uint32_t* ZPrimAccessMesh::GetVerticesConst() const
+    {
+        ZASSERT((m_lStatusFlags & STATUS_FLAGS::SF_LOCKED));
+
+        const SPrimMesh* pMesh = m_hPrim;
+        const uint32_t lSubMeshTable = pMesh->lSubMeshTable;
+        const uint32_t* pSubMeshTable = ZPrimHandle{lSubMeshTable};
+        const uint32_t lFirstSubMesh = pSubMeshTable[0];
+        const SPrimSubMesh* pFirstSubMesh = ZPrimHandle{lFirstSubMesh};
+        const uint32_t lVertices = pFirstSubMesh->lVertices;
+        const uint32_t* pVertices = ZPrimHandle{lVertices};
+        return pVertices;
+    }
+
+    const uint16_t* ZPrimAccessMesh::GetIndicesConst() const
+    {
+        ZASSERT((m_lStatusFlags & STATUS_FLAGS::SF_LOCKED));
+
+        const SPrimMesh* pMesh = m_hPrim;
+        const uint32_t lSubMeshTable = pMesh->lSubMeshTable;
+        const uint32_t* pSubMeshTable = ZPrimHandle{lSubMeshTable};
+        const uint32_t lFirstSubMesh = pSubMeshTable[0];
+        const SPrimSubMesh* pFirstSubMesh = ZPrimHandle{lFirstSubMesh};
+        const uint32_t lIndices = pFirstSubMesh->lIndices;
+        const uint16_t* pIndices = ZPrimHandle{lIndices};
+        return pIndices;
     }
 }

@@ -26,11 +26,10 @@ namespace Glacier
         virtual void SetTexCoords(uint32_t lStartVertex, uint32_t lNumVertices, const float* pfTexCoords) = 0;
         virtual void GetVerticesRaw(uint32_t lStartVertex, uint32_t lNumVertices, void* pVertices) = 0;
         virtual void SetVerticesRaw(uint32_t lStartVertex, uint32_t lNumVertices, const void* pVertices) = 0;
-        virtual void GetTriangles(uint32_t lStartTriangle, uint32_t lNumTriangles, uint16_t* plVertices) = 0;
-        virtual void SetTriangles(uint32_t lStartTriangle, uint32_t lNumTriangles,const uint16_t* plVertices);
-        virtual uint32_t GetTrianglesInBox(uint32_t* pTriangles, uint32_t lMaxNumTriangles, const float* vMin, const float* vMax);
-        virtual void GetTriangles(uint32_t lStartTriangle, uint32_t lNumTriangles, float* pfVertices) = 0;
-        virtual uint32_t GetTrianglesInBox(uint32_t lStartTriangle, uint32_t iNumTestTriangles, float* pfVertices, uint32_t lMaxNumTriangles, const float* vMin, const float* vMax) = 0;
+        virtual void GetTriangles(uint32_t lStartTriangle, uint32_t lNumTriangles, float* pfVertices) = 0; // PC 0x004A4710 (OldMeshD3D)
+        virtual void SetTriangles(uint32_t lStartTriangle, uint32_t lNumTriangles, const uint16_t* plVertices);
+        virtual uint32_t GetTrianglesInBox(uint32_t lStartTriangle, uint32_t iNumTestTriangles, float* pfVertices, uint32_t lMaxNumTriangles, const float* vMin, const float* vMax) = 0; // PC 0x004A4820 (OldMeshD3D)
+        virtual uint32_t GetTrianglesInBox(uint32_t* pTriangles, uint32_t lMaxNumTriangles, const float* vMin, const float* vMax) const = 0; // PC 0x004A40D0 (OldMeshD3D)
 
         // methods
         uint32_t GetNumTriangles() const;
@@ -38,5 +37,7 @@ namespace Glacier
         uint16_t* GetIndices() const;
         uint16_t* GetIndicesReadWrite();
         const uint32_t* GetVertices() const;
+        const uint32_t* GetVerticesConst() const; // PC 0x0047CBF0
+        const uint16_t* GetIndicesConst() const;
     };
 }
