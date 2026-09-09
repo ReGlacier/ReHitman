@@ -7,7 +7,13 @@
 #include <Glacier/Render/ZRenderBaseDll.h>
 #include <Glacier/Render/ZRender.h>
 #include <Glacier/System/ZDllBase.h>
+#include <Glacier/System/ZDllMain.h>
 #include <Glacier/Data/ZEngineDataBase.h>
+#include <Glacier/Input/SysInput.h>
+#include <Glacier/Input/ZInterface.h>
+#include <Glacier/Input/ZSysInputWintel.h>
+#include <Glacier/Render/ZRenderWintel.h>
+#include <Glacier/Render/ZRenderWintelD3D.h>
 
 #include <Windows.h>
 #include <intrin.h>
@@ -122,8 +128,10 @@ namespace Glacier
 
         if (!m_bQuit)
         {
-            // TODO: Finish after ZSoundDllWintel reversed!
-            // NOTE: Actually, nothing serious here
+            if (m_pSoundDll)
+            {
+                m_pSoundDll->PrintStatus();
+            }
         }
     }
 
@@ -187,8 +195,7 @@ namespace Glacier
 
         if (m_pSoundDll)
         {
-            // TODO: Finish me after ZSoundDllWintel reversed!
-            // m_pSoundDll->{VFTBL +0x10}()
+            m_pSoundDll->End();
             RemoveDll(m_pSoundDll);
             m_pSoundDll = nullptr;
         }
@@ -205,8 +212,7 @@ namespace Glacier
         UnloadRuntimeLoadedDLLs();
         if (g_pRenderDll)
         {
-            // TODO: Finish me after ZRenderBaseDll reversed
-            // g_pRenderDll->{VFTBL + 0x14}?
+            g_pRenderDll->End();
             RemoveDll(g_pRenderDll);
             g_pRenderDll = nullptr;
         }
@@ -226,9 +232,10 @@ namespace Glacier
 
     void ZSysInterfaceWintel::CloseAllWindows()
     {
-        // REALLY WEIRD CODE! Who will cleanup memory?!?!
-        // TODO: Check this later!!!
-        WindowFirst->~ZRender();
+        while (WindowFirst)
+        {
+            ZUniMemory::Delete(static_cast<ZRenderWintelD3D*>(WindowFirst));
+        }
     }
 
     void ZSysInterfaceWintel::ReloadDLLs()
@@ -265,7 +272,7 @@ namespace Glacier
 
         if (g_pRenderDll)
         {
-            // TODO: Finish me
+            g_pRenderDll->End();
             RemoveDll(g_pRenderDll);
             g_pRenderDll = nullptr;
         }
@@ -302,13 +309,13 @@ namespace Glacier
 
         MainWindowInit();
 
-        // MISSING CALL: sub_463710((int)&g_pRenderDll, (int)v10); -> Unrolled to __debugbreak
+        g_pRenderDll = CreateD3DDll();
 
         bool bUseOldRender = false;
         if (g_pRenderDll)
         {
-            // TODO: Uncomment after ZRenderBaseDll will be reversed
-            // g_pRenderDll->CreateD3D();
+            g_pRenderDll->Init();
+            g_pRenderDll->SetupWindow(MainhWnd);
         }
         else
         {
@@ -326,18 +333,18 @@ namespace Glacier
 
             if (g_pRenderDll)
             {
-                // TODO: Finish me
+                g_pRenderDll->End();
                 RemoveDll(g_pRenderDll);
                 g_pRenderDll = nullptr;
             }
 
             m_sActiveDrawDll = sRenderDllName;
-            // MISSING CALL: sub_463710((int)&g_pRenderDll, (int)v10); -> Unrolled to __debugbreak
+            g_pRenderDll = CreateD3DDll();
 
             if (g_pRenderDll)
             {
-                // TODO: Uncomment after ZRenderBaseDll will be reversed
-                // g_pRenderDll->CreateD3D();
+                g_pRenderDll->Init();
+                g_pRenderDll->SetupWindow(MainhWnd);
             }
             else
             {
@@ -1258,13 +1265,11 @@ namespace Glacier
         CalcCycSec();
         InitConfiguration();
 
-        // TODO: Finish this place after ZDllMain will be reversed
-        // m_pMainDll = ZDllMain::ZDllMain();
-        // if (m_pMainDll)
-        // {
-        //     m_pMainDll->Init();
-        // }
-        m_pMainDll = nullptr;
+        m_pMainDll = ZDllMain::BuildInstance();
+        if (m_pMainDll)
+        {
+            m_pMainDll->Init();
+        }
 
         if (!g_pRenderDll)
         {
@@ -1292,19 +1297,17 @@ namespace Glacier
 
         m_pEngineData->CreateObjectFactories();
 
-        // TODO: Finish this place after SysInput will be reversed
-        // if (SysInput::instance)
-        // {
-        //     SysInput::instance->Init();
-        // }
+        if (SysInput::instance)
+        {
+            SysInput::instance->ActivateDevices();
+        }
 
         m_pEngineData->StartUp();
         ResetTime();
 
         if (WindowFirst)
         {
-            // TODO: Finish this place after ZRender will be fully reversed
-            // WindowFirst->InitRender(); // vftable + 0x214
+            static_cast<ZRenderWintel*>(WindowFirst)->OnSetFocus();
         }
 
         SetupThreadAffinity();
@@ -1466,23 +1469,21 @@ namespace Glacier
         {
             if (Msg == WM_KILLFOCUS)
             {
-                // TODO: Finish this place after ZDllSoundWintel will be reversed
-                // if (g_pSysInterface->m_pSoundDll && !g_pSysInterface->m_pSoundDll->IsMuted())
-                // {
-                //     g_pSysInterface->m_bUnPauseAudio = true;
-                //     g_pSysInterface->m_pSoundDll->Pause(1, 1);
-                // }
+                auto* pSoundDll = static_cast<ZSoundDllBase*>(g_pSysInterface->m_pSoundDll);
+                if (pSoundDll && !pSoundDll->IsPaused())
+                {
+                    static_cast<ZSysInterfaceWintel*>(g_pSysInterface)->m_bUnPauseAudio = true;
+                    pSoundDll->Pause(true, true);
+                }
 
-                // TODO: Finish this place after fullscreen deactivate lock flag will be identified
                 if (!g_lRunOutOfFocus)
                 {
                     g_pSysInterface->m_lIsActive = 0;
 
-                    // TODO: Finish this place after SysInput will be reversed
-                    // if (SysInput::instance)
-                    // {
-                    //     SysInput::OnFocusLost();
-                    // }
+                    if (SysInput::instance)
+                    {
+                        static_cast<ZSysInputWintel*>(SysInput::instance)->UnacquireDevices();
+                    }
                 }
             }
             else if (Msg == WM_SYSCOMMAND)
@@ -1502,21 +1503,19 @@ namespace Glacier
             switch (Msg)
             {
             case WM_SETFOCUS:
-                // TODO: Finish this place after ZDllSoundWintel will be reversed
-                // if (g_pSysInterface->m_pSoundDll && g_pSysInterface->m_bUnPauseAudio)
-                // {
-                //     g_pSysInterface->m_bUnPauseAudio = false;
-                //     g_pSysInterface->m_pSoundDll->Pause(0, 1);
-                // }
+                if (g_pSysInterface->m_pSoundDll && static_cast<ZSysInterfaceWintel*>(g_pSysInterface)->m_bUnPauseAudio)
+                {
+                    static_cast<ZSysInterfaceWintel*>(g_pSysInterface)->m_bUnPauseAudio = false;
+                    static_cast<ZSoundDllBase*>(g_pSysInterface->m_pSoundDll)->Pause(false, true);
+                }
 
                 g_pSysInterface->ResetTime();
                 g_pSysInterface->m_lIsActive = 1;
 
-                // TODO: Finish this place after SysInput will be reversed
-                // if (SysInput::instance)
-                // {
-                //     SysInput::OnFocusGained();
-                // }
+                if (SysInput::instance)
+                {
+                    static_cast<ZSysInputWintel*>(SysInput::instance)->UnacquireDevices();
+                }
                 break;
 
             case WM_DESTROY:
@@ -1537,7 +1536,6 @@ namespace Glacier
                 }
                 else
                 {
-                    // TODO: Finish this place after fullscreen deactivate lock flag will be identified
                     if (!g_lRunOutOfFocus)
                     {
                         g_pSysInterface->m_lIsActive = 0;
@@ -1547,11 +1545,7 @@ namespace Glacier
                             SetWindowPos(hWnd, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
                         }
 
-                        // TODO: Finish this place after ZDllSoundWintel will be reversed
-                        // if (g_pSysInterface->m_pSoundDll)
-                        // {
-                        //     g_pSysInterface->m_pSoundDll->SetActive(false);
-                        // }
+                        // The PC sound DLL's SetActive(false) slot is an empty stub.
                     }
                 }
                 break;
@@ -1560,8 +1554,7 @@ namespace Glacier
 
         if (g_pSysInterface->WindowFirst)
         {
-            // TODO: Finish this place after ZRender window message handler will be reversed
-            // return g_pSysInterface->WindowFirst->HandleWindowMessage(Msg, wParam, lParam); // vftable + 0x1D8
+            return static_cast<ZRenderWintel*>(g_pSysInterface->WindowFirst)->WindowProc(Msg, wParam, lParam);
         }
 
         return DefWindowProcA(hWnd, Msg, wParam, lParam);
@@ -1586,23 +1579,24 @@ namespace Glacier
 
             if (FrameTime.secs >= 0)
             {
-                // TODO: Finish this place after SysInput will be reversed
-                // if (SysInput::instance)
-                // {
-                //     SysInput::instance->Update();
-                // }
+                if (SysInput::instance)
+                {
+                    SysInput::instance->Update();
+                }
 
-                // TODO: Finish this place after ZSysInterface::CheckDebugKeys will be reversed
-                // CheckDebugKeys();
+                if (m_bDebugActive && WindowFirst)
+                {
+                    WindowFirst->GetTextSizeY();
+                }
 
                 if (!g_pSysInterface->m_bUseDirectInputMouse && g_pSysInterface->WindowFirst)
                 {
                     POINT point;
                     GetCursorPos(&point);
 
-                    // TODO: Finish this place after ZRender Win32 window fields and mouse input will be reversed
-                    // ScreenToClient(g_pSysInterface->WindowFirst->m_hWnd, &point);
-                    // g_pSysInterface->WindowFirst->SetMousePosition(0, point.x, point.y); // vftable + 0x208
+                    auto* pRender = static_cast<ZRenderWintel*>(g_pSysInterface->WindowFirst);
+                    ScreenToClient(static_cast<HWND>(pRender->m_hWnd), &point);
+                    pRender->OnMouseMove(0, point.x, point.y);
                 }
 
                 m_pEngineData->MainLoop(UpdateViews);

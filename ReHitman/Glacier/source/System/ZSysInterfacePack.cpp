@@ -39,8 +39,8 @@ namespace Glacier
         m_pMainDll = nullptr;
         m_pEngineData = nullptr;
 
-        // NOTE: This code skipped
-        // TODO: Reverse later
+        // NOTE: This code skipped due it was test or dummy code
+        //       No affect at all
         // CHUNK sChunk { 'EMPT', nullptr, -1 };
         // sChunk.GetFileLen();
 
