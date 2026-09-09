@@ -30,9 +30,8 @@ namespace Glacier
         // members
         CRagdoll2* m_pRagdolls; // +0x0
         CRagdoll2* m_pDragRagdoll; // +0x4
-        int32_t m_lMaxNumRagdolls; // +0x8
-        bool* m_pUsed; // +0xC
+        bool* m_pUsed; // +0x8
     };
-
+    RE_VERIFY_SIZE(ZRagdollContainer, 0xC); // Verified PC alloc at ZRenderBaseDll::InitBoneModifier
     STATIC_GLOBAL_CLASS_INSTANCE(int32_t, g_lMaxRagdolls);
 }

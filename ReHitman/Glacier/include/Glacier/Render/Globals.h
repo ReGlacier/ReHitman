@@ -82,7 +82,10 @@ namespace Glacier
     STATIC_GLOBAL_CLASS_INSTANCE(uint32_t, g_lPrimToFreeCount);
     STATIC_GLOBAL_CLASS_INSTANCE(SPrimToFreeList_t, g_lPrimToFreeList);
     STATIC_GLOBAL_CLASS_INSTANCE(SHandleTableEntry*, g_pPrimHandleTable);
+    STATIC_GLOBAL_CLASS_INSTANCE(uint32_t*, g_pMaterialInstanceRefCountTable);
     STATIC_GLOBAL_CLASS_INSTANCE(float, g_fStaticShadowSampleHeightLimit);
+    STATIC_GLOBAL_CLASS_INSTANCE(bool, g_bSelfShadows);    // 0x0090DE54 - option "SelfShadows"
+    STATIC_GLOBAL_CLASS_INSTANCE(bool, g_bBlurShadows);    // 0x0090DE5C - option "BlurShadows"
     STATIC_GLOBAL_CLASS_INSTANCE(float, g_fTrisPerSec);         // 0x008C39F4 - triangles/sec stat (updated by ZRender::Update)
     STATIC_GLOBAL_CLASS_INSTANCE(TIMETYPE, g_ttLastTime);       // 0x008C39F8 - last update timestamp of the FPS counter
     STATIC_GLOBAL_CLASS_INSTANCE(uint32_t, g_lTrisPerSecFlags); // 0x008C39FC - FPS counter init flag (bit 0)

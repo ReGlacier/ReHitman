@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Glacier/Render/ZRenderBinder.h>
+#include <Glacier/Render/Material/ZRenderBinder.h>
 #include <Glacier/Render/D3D9.h>
 
 

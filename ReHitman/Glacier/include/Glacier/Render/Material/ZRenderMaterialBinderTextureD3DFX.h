@@ -3,7 +3,7 @@
 #include <Glacier/ReGlacier.h>
 #include <Glacier/Render/Fwd.h>
 #include <Glacier/Render/D3D9.h>
-#include <Glacier/Render/ZRenderBinderTexture.h>
+#include <Glacier/Render/Material/ZRenderBinderTexture.h>
 
 
 namespace Glacier

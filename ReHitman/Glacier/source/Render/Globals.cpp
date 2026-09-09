@@ -51,7 +51,10 @@ namespace Glacier
     STATIC_GLOBAL_CLASS_INSTANCE_IMPL(uint32_t, g_lPrimToFreeCount, 0x008EBE14, 0);
     STATIC_GLOBAL_CLASS_INSTANCE_IMPL(SPrimToFreeList_t, g_lPrimToFreeList, 0x008C3A08, {});
     STATIC_GLOBAL_CLASS_INSTANCE_IMPL(SHandleTableEntry*, g_pPrimHandleTable, 0x008EBE08, nullptr);
+    STATIC_GLOBAL_CLASS_INSTANCE_IMPL(uint32_t*, g_pMaterialInstanceRefCountTable, 0x008C39F0, nullptr);
     STATIC_GLOBAL_CLASS_INSTANCE_IMPL(float, g_fStaticShadowSampleHeightLimit, 0x007F66C8, 0.f);
+    STATIC_GLOBAL_CLASS_INSTANCE_IMPL(bool, g_bSelfShadows, 0x0090DE54, false);
+    STATIC_GLOBAL_CLASS_INSTANCE_IMPL(bool, g_bBlurShadows, 0x0090DE5C, false);
     STATIC_GLOBAL_CLASS_INSTANCE_IMPL(float, g_fTrisPerSec, 0x008C39F4, 0.f);
     STATIC_GLOBAL_CLASS_INSTANCE_IMPL(TIMETYPE, g_ttLastTime, 0x008C39F8, {});
     STATIC_GLOBAL_CLASS_INSTANCE_IMPL(uint32_t, g_lTrisPerSecFlags, 0x008C39FC, 0);

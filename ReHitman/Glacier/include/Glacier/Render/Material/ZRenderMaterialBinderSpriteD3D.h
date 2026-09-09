@@ -2,7 +2,7 @@
 
 #include <Glacier/ReGlacier.h>
 #include <Glacier/Render/D3D9.h>
-#include <Glacier/Render/ZRenderBinderSprite.h>
+#include <Glacier/Render/Material/ZRenderBinderSprite.h>
 
 
 namespace Glacier

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Glacier/ReGlacier.h>
-#include <Glacier/Render/ZRenderBinderList.h>
+#include <Glacier/Render/Material/ZRenderBinderList.h>
 #include <cstdint>
 
 
@@ -12,7 +12,7 @@ namespace Glacier
     public:
         // methods
         ZRenderMaterialBinderList() = default;
-        
+
         // members
         ZRenderBinderList m_BindersMaterial{};
         ZRenderBinderList m_BindersObject{};

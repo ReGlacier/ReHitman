@@ -11,7 +11,7 @@
 #include <Glacier/Render/Material/ZRenderMaterialEffectD3DFX.h>
 #include <Glacier/Render/Globals.h>
 #include <Glacier/Render/ZRenderBaseDll.h>
-#include <Glacier/Render/ZRenderBinderList.h>
+#include <Glacier/Render/Material/ZRenderBinderList.h>
 #include <Glacier/ZUniAssert.h>
 #include <Glacier/ZUniMemory.h>
 

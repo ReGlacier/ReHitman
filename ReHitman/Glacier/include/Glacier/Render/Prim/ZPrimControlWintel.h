@@ -18,6 +18,7 @@ namespace Glacier
         uint32_t GetPrimSize(const SPrims* lPrim) override;
         uint32_t CopySinglePrim(uint32_t lPrim, uint32_t lFlags) override;
         uint32_t GetNumEntries(uint32_t lPrim, uint32_t lFlags) override;
+        void SetSubPrimOnTop(uint32_t lPrim, uint32_t lSubPrim) override;
         uint32_t GetNrBones(uint32_t lPrim) override;
         const float* GetLocalPrimBones(uint32_t lPrim) override;
         const float* GetLocalPrimBonesQuats(uint32_t lPrim) override;

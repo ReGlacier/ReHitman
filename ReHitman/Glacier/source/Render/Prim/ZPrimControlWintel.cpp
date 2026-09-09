@@ -368,6 +368,38 @@ namespace Glacier
         }
     }
 
+    // PC 0x00487500; iOS 0x100242564.
+    void ZPrimControlWintel::SetSubPrimOnTop(uint32_t lPrim, uint32_t lSubPrim)
+    {
+        float fMin = 1.0f;
+        float fMax = 0.0f;
+        for (uint32_t lCurrent = lPrim; lCurrent;)
+        {
+            const auto* pPrim = static_cast<const SPrims*>(GetPrimData(lCurrent));
+            if (pPrim->lType == EPrimType::PTSTRIP)
+            {
+                const float* pData = reinterpret_cast<const float*>(pPrim);
+                if (fMin > pData[21])
+                    fMin = pData[21];
+                if (fMax < pData[22])
+                    fMax = pData[22];
+            }
+            lCurrent = pPrim->lNextPrim;
+        }
+
+        auto* pSubPrim = static_cast<SPrims*>(const_cast<void*>(GetPrimData(lSubPrim)));
+        if (pSubPrim->lType != EPrimType::PTSTRIP)
+            return;
+
+        uint32_t lLayer = static_cast<uint32_t>((1.0f - fMin) * 1275.0f + 0.5f) + 1;
+        if (lLayer > 7)
+            lLayer = 7;
+
+        float* pData = reinterpret_cast<float*>(pSubPrim);
+        pData[21] = 1.0f - static_cast<float>(lLayer) * 0.00078431371f;
+        pData[22] = fMax;
+    }
+
     uint32_t ZPrimControlWintel::GetNrBones(uint32_t lPrim)
     {
         const auto* pBonesData = GetBonesNr(this, lPrim);

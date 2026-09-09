@@ -1,5 +1,5 @@
-#include <Glacier/Render/ZRenderBinderList.h>
-#include <Glacier/Render/ZRenderBinder.h>
+#include <Glacier/Render/Material/ZRenderBinderList.h>
+#include <Glacier/Render/Material/ZRenderBinder.h>
 #include <Glacier/ZUniMemory.h>
 
 

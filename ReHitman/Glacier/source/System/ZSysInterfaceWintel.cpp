@@ -1268,9 +1268,8 @@ namespace Glacier
 
         if (!g_pRenderDll)
         {
-            // TODO: Finish this place after ZRenderBaseDll and CreateD3DDll will be reversed
-            // g_pRenderDll = CreateD3DDll();
-            // g_pRenderDll->CreateMaterialBuffer();
+            g_pRenderDll = Glacier::CreateD3DDll();
+            g_pRenderDll->Init();
         }
 
         m_pSoundDll = nullptr;

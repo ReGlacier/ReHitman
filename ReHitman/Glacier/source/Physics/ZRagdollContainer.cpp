@@ -14,11 +14,10 @@ namespace Glacier
 
     ZRagdollContainer::ZRagdollContainer()
     {
-        m_lMaxNumRagdolls = 4;
-        m_pRagdolls = ZUniMemory::NewArray<CRagdoll2>(m_lMaxNumRagdolls, false);
+        m_pRagdolls = ZUniMemory::NewArray<CRagdoll2>(g_lMaxRagdolls, false);
         m_pDragRagdoll = ZUniMemory::New<CRagdoll2>(true);
-        m_pUsed = (bool*)ZUniMemory::Allocate(sizeof(bool) * m_lMaxNumRagdolls);
-        std::memset(m_pUsed, 0, sizeof(bool) * m_lMaxNumRagdolls);
+        m_pUsed = (bool*)ZUniMemory::Allocate(sizeof(bool) * g_lMaxRagdolls);
+        std::memset(m_pUsed, 0, sizeof(bool) * g_lMaxRagdolls);
     }
 
     ZRagdollContainer::~ZRagdollContainer()
@@ -82,7 +81,6 @@ namespace Glacier
 
             if (lIndex >= 0 && lIndex < lMaxRagdolls)
             {
-                // Original assert: i >= 0 && i < m_lMaxNumRagdolls (PS2)
                 ZASSERT(lIndex < lMaxRagdolls);
                 m_pUsed[lIndex] = false;
             }

@@ -22,7 +22,6 @@ namespace Glacier
 
     using GLOBALMESSAGECALLBACK = GLOBALMESSAGE(*)(void*);
 
-    // TODO: Finish me
     struct ZRenderBaseDll : public ZDllBase
     {
         // vtbl
@@ -30,39 +29,39 @@ namespace Glacier
         virtual void FinalizeTextureBuffer();
         virtual uint32_t CalcTextureBufferLength();
         virtual void* CalcTextureBuffer();
-        virtual void Init();
-        virtual void End();
-        virtual void PushScene(const char*);
-        virtual void PopScene();
+        virtual void Init() override;
+        virtual void End() override;
+        virtual void PushScene(const char*) override;
+        virtual void PopScene() override;
         virtual void ParseOptions();
-        virtual void* PackPrimBuffer(uint32_t*, char*, unsigned int);
+        virtual void* PackPrimBuffer(uint32_t*, char*, uint32_t);
         virtual void RestorePrimBuffer(char*);
-        virtual bool CleanupBeforeCloseDown();
+        virtual bool CleanupBeforeCloseDown() override;
         virtual ZRender* SetupWindow(void*);
-        virtual void SetActiveAxis(unsigned int);
+        virtual void SetActiveAxis(uint32_t);
         virtual void Cleanup();
         virtual void InitPrimPack();
         virtual void CreatePrimControl();
-        virtual uint32_t CompactPrimBuffer(void*, unsigned int);
-        virtual void InstallPrimBuffer(void*, unsigned int);
+        virtual uint32_t CompactPrimBuffer(void*, uint32_t);
+        virtual void InstallPrimBuffer(void*, uint32_t);
         virtual void SetGlobalMessage(GLOBALMESSAGECALLBACK pCallback, void* pUserData);
         virtual void InitTexturePack();
-        virtual uint32_t CompactTextureBuffer(void*, unsigned int);
-        virtual void InstallTextureBuffer(void*, unsigned int);
-        virtual void FreeTextureData(unsigned int);
+        virtual uint32_t CompactTextureBuffer(void*, uint32_t);
+        virtual void InstallTextureBuffer(void*, uint32_t);
+        virtual void FreeTextureData(uint32_t);
         virtual void InitMaterialPack();
-        virtual void InstallShaders(void*, unsigned int, long unsigned int);
-        virtual void InstallMaterialBuffer(void*, unsigned int, unsigned int);
-        virtual void SetPopSceneFade(float, unsigned int);
-        virtual ZTextureBase* GetTexture(unsigned int);
-        virtual uint32_t ReserveTexture(unsigned int, unsigned int);
-        virtual void UpdateTexture(unsigned int, const ZBitmap*);
-        virtual ZBoneModifyBase* CreateBoneModifier(unsigned int);
+        virtual void InstallShaders(void*, uint32_t, uint32_t);
+        virtual void InstallMaterialBuffer(void*, uint32_t, uint32_t);
+        virtual void SetPopSceneFade(float, uint32_t);
+        virtual ZTextureBase* GetTexture(uint32_t);
+        virtual uint32_t ReserveTexture(uint32_t, uint32_t);
+        virtual void UpdateTexture(uint32_t, const ZBitmap*);
+        virtual ZBoneModifyBase* CreateBoneModifier(uint32_t);
         virtual void InitBoneModifier();
         virtual ZRagdollContainer* GetRagdollContainer();
         virtual void CalcRoutsTable();
         virtual void SetTextureLevel(int);
-        virtual const void* GetTextureData(unsigned int);
+        virtual const void* GetTextureData(uint32_t);
 
         // methods
         ZRenderBaseDll();
@@ -109,11 +108,13 @@ namespace Glacier
         uint32_t m_lAntialias;
         uint32_t m_lAnisotropy;
         float m_fGammaValue;
-        RE_ADD_PADDING(sizeof(uint32_t) * 5); // Add padding for weird things, idk
+        RE_ADD_PADDING(0x10); // Unused tail in PC ZRenderWintelD3DDll allocation
     };
 
-    RE_VERIFY_SIZE(ZRenderBaseDll, 0xC0);
+    RE_VERIFY_SIZE(ZRenderBaseDll, 0xBC); // Verified by PC CreateD3DDll allocation
     RE_VERIFY_OFFSET(ZRenderBaseDll, m_pPrimBuffer, 0x20); // Verified in PC ZRenderDll::InstallPrimBuffer
 
     STATIC_GLOBAL_CLASS_INSTANCE(ZRenderBaseDll*, g_pRenderDll);
+
+    ZRenderBaseDll* CreateD3DDll();
 }

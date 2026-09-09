@@ -2,7 +2,7 @@
 #include <Glacier/Render/Material/ZRenderMaterialLayerD3DFX.h>
 #include <Glacier/Render/Material/ZRenderMaterialEffectD3DFX.h>
 #include <Glacier/Render/Material/ZRenderMaterialBinderList.h>
-#include <Glacier/Render/ZRenderBinderList.h>
+#include <Glacier/Render/Material/ZRenderBinderList.h>
 
 
 namespace Glacier
@@ -31,7 +31,7 @@ namespace Glacier
 
         UINT uPasses = 0;
         m_pEffect->m_pD3DXEffect->Begin(
-            &uPasses, 
+            &uPasses,
             D3DXFX_DONOTSAVESTATE | D3DXFX_DONOTSAVESHADERSTATE | D3DXFX_DONOTSAVESAMPLERSTATE // 7
         );
 
@@ -70,9 +70,9 @@ namespace Glacier
     }
 
     void ZRenderMaterialLayerD3DFX::BeginObject(
-        const ZRenderMaterialInstance* pMaterialInstance, 
-        const ZRenderMaterialBinderList* pBinderList, 
-        const ZRenderObjectInstance* pInstance, 
+        const ZRenderMaterialInstance* pMaterialInstance,
+        const ZRenderMaterialBinderList* pBinderList,
+        const ZRenderObjectInstance* pInstance,
         const ZRenderContext* pContext
     )
     {

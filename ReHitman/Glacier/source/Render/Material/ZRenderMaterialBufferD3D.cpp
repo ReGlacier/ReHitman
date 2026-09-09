@@ -6,7 +6,7 @@
 #include <Glacier/Render/Material/ZRenderMaterialBinderList.h>
 #include <Glacier/Render/Material/ZRenderMaterialClass.h>
 #include <Glacier/Render/Material/SMATHeader.h>
-#include <Glacier/Render/ZRenderBinderTexture.h>
+#include <Glacier/Render/Material/ZRenderBinderTexture.h>
 #include <Glacier/Render/ZSharedResourcesD3D.h>
 #include <Glacier/Render/ZTextureManagerD3D.h>
 #include <Glacier/Render/ZRenderBaseDll.h>
