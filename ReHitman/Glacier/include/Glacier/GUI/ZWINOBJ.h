@@ -3,7 +3,7 @@
 #include <Glacier/ReGlacier.h>
 #include <Glacier/GlacierFWD.h>
 #include <Glacier/Geom/ZSTDOBJ.h>
-#include <Glacier/ZCameraSpace.h>
+#include <Glacier/Camera/ZCameraSpace.h>
 #include <Glacier/GUI/SMouseColi.h>
 #include <Glacier/Render/Sprite/SSpriteArrayElementUV.h>
 #include <Glacier/Render/Sprite/SSpriteArray.h>

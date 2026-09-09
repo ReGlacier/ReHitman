@@ -8,7 +8,7 @@
 #include <Glacier/System/ZSysInterfaceWintel.h>
 #include <Glacier/Render/Fwd.h>
 #include <Glacier/Data/ZEngineDataBase.h>
-#include <Glacier/ZCameraSpace.h>
+#include <Glacier/Camera/ZCameraSpace.h>
 #include <Glacier/Geom/ZCAMERA.h>
 #include <Glacier/Glacier.h>
 

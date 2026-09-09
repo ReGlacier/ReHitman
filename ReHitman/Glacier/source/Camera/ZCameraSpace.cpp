@@ -1,4 +1,4 @@
-#include <Glacier/ZCameraSpace.h>
+#include <Glacier/Camera/ZCameraSpace.h>
 #include <algorithm>
 #include <cmath>
 
@@ -66,7 +66,7 @@ namespace Glacier {
         m_bIsMain = (pCamera->CameraCon & 1) != 0;
         m_bGatesEnabled = (pCamera->CameraCon & 0x10000) == 0;
         m_bGeomBoundsEnabled = (pCamera->CameraCon & 0x200000) == 0;
-        m_rTopNode = pCamera->m_rCameraRoot ? pCamera->m_rCameraRoot->GetRef() : 0;
+        m_rTopNode = pCamera->m_rCameraRoot;
         return *this;
     }
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Glacier/EventBase/ZBaseConRout.h>
+#include <Glacier/ZUniAssert.h>
 
 namespace Glacier
 {
@@ -11,14 +12,9 @@ namespace Glacier
         // methods
         CBaseEvent() = default;
 
-        // From PS2 Pre-alpha build
-        ZGEOM* GetGeom() 
+        ZGEOM* GetGeom()
         {
-            /*
-            This method was found in PS2 pre-alpha build and it looks like
             ZASSERT(m_pBaseGeom);
-            return m_pBaseGeom;
-            */ 
             return m_pBaseGeom;
         }
     };

@@ -12,7 +12,13 @@ namespace Glacier
     class ZROOM;
     class ZRender;
     class ZBaseGeom;
-    struct SScreenSelect;
+
+    struct SScreenSelect
+    {
+        ZVector3 p0;    // +0x0 select point (world)
+        uint32_t rGeom; // +0xC selected geom ref
+    };
+    RE_VERIFY_SIZE(SScreenSelect, 0x10);
 
     class ZCAMERA : public ZGEOM
     {
@@ -58,18 +64,18 @@ namespace Glacier
         virtual void DeactivateCam();
         virtual bool IsActive();
         virtual void AddAlwaysDrawGeom(const ZBaseGeom* pBaseGeom);
-        virtual void RemoveAlwaysDrawGeom(const ZBaseGeom* pBaseGeom);
+        virtual bool RemoveAlwaysDrawGeom(const ZBaseGeom* pBaseGeom);
         virtual void SetCamPrio(int lCamPrio); //nullstub
         virtual void SetCamTarget(Vector3* pTarget, float fTargetLen);
         virtual void SetCam6ClipPlanes(float fFOV, float fNear, float fFar, int lScreenWidth, int lScreenHeight, float fScreenAspect);
         virtual void Proj2D(ZVector2* pScreenPos, const ZVector3* pViewPos);
         virtual void Proj3D(ZVector3* pScreenPos, const ZVector3* pViewPos);
-        virtual void Proj2D3D(ZVector3* pScreenPos, const ZVector3* pViewDir);
+        virtual void Proj2D3D(ZVector3* pScreenPos, ZVector3* pViewDir);
         virtual void SetCameraRoot(unsigned int lRootRef);
         virtual void SetCameraListPrio(float fPrio);
         virtual void SetCurrentRoomHint(ZROOM* pRoom);
         virtual ZROOM* GetCurrentRoomHint();
-        virtual void* GetScreenSelect(SScreenSelect* pScreenSelect, bool bUseColi, unsigned int lGeomControlMask, float fSelectDistance);
+        virtual bool GetScreenSelect(SScreenSelect* pScreenSelect, bool bUseColi, unsigned int lGeomControlMask, float fSelectDistance);
         virtual void SetWideScreen(bool bWideScreen);
         virtual void FindCurrentRoom(ZROOM** pRooms, unsigned int searchLimit);
 
@@ -99,7 +105,7 @@ namespace Glacier
         float m_fFogFar;
         CCLIPPLANES m_ClipPlanes;
         ZROOM* m_pCurrentRoom;
-        ZBaseGeom* m_rCameraRoot;
+        ZREF m_rCameraRoot;
         Glacier::ZVector4 m_viewport;
         float m_fViewAspect;
         float m_fLightMultiplier;
