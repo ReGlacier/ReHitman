@@ -20,6 +20,9 @@ namespace Glacier
 
         void SetName(const char* pszName);
 
+        template <typename T>
+        T* UserData() const { return reinterpret_cast<T*>(m_pUserData); }
+
         // members
         uint16_t m_usSize[2] { 0 };
         float m_fOffset[2] { 0.f };

@@ -46,7 +46,9 @@ namespace Glacier
 
         void Free();
         void Allocate();
-        void BlurTexture(IDirect3DTexture9* pTexture, float fBlur1, float fBlur2, int lFlags, bool);
+        // Returns the resulting (last-pass) texture. Absent from the PC binary where the
+        // wrapper is inlined into ZRenderDrawD3D::Update; iOS keeps it (iOS 0x100247924).
+        IDirect3DTexture9* BlurTexture(IDirect3DTexture9* pTexture, float fBlur1, float fBlur2, int lFlags, bool bSinglePass);
         void LockBuffersForCopy();
 
         // members

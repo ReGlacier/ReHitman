@@ -31,6 +31,19 @@ namespace Glacier
     STATIC_GLOBAL_CLASS_INSTANCE(uint32_t, g_dwFogColor);
     STATIC_GLOBAL_CLASS_INSTANCE(float, g_fFogNear);
     STATIC_GLOBAL_CLASS_INSTANCE(ZTextureD3D, g_texWhite);
+    STATIC_GLOBAL_CLASS_INSTANCE(ZTextureD3D, g_texMouse16x16);    // 0x0090AE10
+    STATIC_GLOBAL_CLASS_INSTANCE(ZTextureD3D, g_texShadowClip1x2); // 0x0090AE58
+    STATIC_GLOBAL_CLASS_INSTANCE(ZTextureD3D, g_texFont8x13);      // 0x0090AEA0
+
+    // 8x13 fixed-font glyph texel positions, one float pair per ASCII code
+    // (PC 0x008EE130). Written by ZSharedResourcesD3D::Allocate; the fixed-font
+    // consumer was stripped from the PC build.
+    struct ZFontLetterPositionTable
+    {
+        float m_fUV[0x80][2];
+    };
+    STATIC_GLOBAL_CLASS_INSTANCE(ZFontLetterPositionTable, g_FontLetterPositions);
+
     STATIC_GLOBAL_CLASS_INSTANCE(ZPostFilter*, g_pPostFilter);
     STATIC_GLOBAL_CLASS_INSTANCE(IDirect3DVertexBuffer9*, g_pVBPDT1);
     STATIC_GLOBAL_CLASS_INSTANCE(IDirect3DVertexBuffer9*, g_pVBPDT2);
