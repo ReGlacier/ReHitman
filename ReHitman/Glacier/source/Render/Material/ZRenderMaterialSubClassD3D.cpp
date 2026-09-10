@@ -232,4 +232,73 @@ namespace Glacier
 
         return true;
     }
+
+    void ZRenderMaterialSubClassD3D::SetBinderValidators(const ZRPropertyReader* pBindList)
+    {
+        ZASSERT(pBindList && pBindList->m_pProperty);
+        const auto* pRoot = pBindList->m_pProperty;
+        if (pRoot->lSize == 0)
+        {
+            return;
+        }
+
+        ZASSERT(pRoot->lType == ZRPropertyReader::PROPERTY_TYPE::PT_LIST);
+        const auto* pElements = static_cast<const ZRPropertyReader::SProperty*>(pBindList->m_pBuffer->GetData(pRoot->lData));
+
+        for (uint32_t i = 0; i < pRoot->lSize; ++i)
+        {
+            ZRPropertyReader sElement{};
+            sElement.m_pBuffer = pBindList->m_pBuffer;
+            sElement.m_pProperty = const_cast<ZRPropertyReader::SProperty*>(&pElements[i]);
+
+            ZRPropertyReader sEnabElem{};
+            sElement.GetNamedListElement('ENAB', sEnabElem);
+            ZASSERT(sEnabElem.m_pProperty->lType == ZRPropertyReader::PROPERTY_TYPE::PT_UINT32);
+
+            uint32_t bEnabled =
+                (sEnabElem.m_pProperty->lSize == 1u)
+                    ? sEnabElem.m_pProperty->lData
+                    : *static_cast<const uint32_t*>(sEnabElem.m_pBuffer->GetData(sEnabElem.m_pProperty->lData));
+
+            if (!bEnabled)
+            {
+                continue;
+            }
+
+            if (sElement.m_pProperty->lName == 'BOOL')
+            {
+                ZRPropertyReader sNameElem{};
+                sElement.GetNamedListElement('NAME', sNameElem);
+                ZASSERT(sNameElem.m_pProperty->lType == ZRPropertyReader::PROPERTY_TYPE::PT_CHAR);
+
+                const char* pszBinderName = static_cast<const char*>(sNameElem.m_pBuffer->GetData(sNameElem.m_pProperty->lData));
+
+                ZRPropertyReader sValuElem{};
+                sElement.GetNamedListElement('VALU', sValuElem);
+                ZASSERT(sValuElem.m_pProperty->lType == ZRPropertyReader::PROPERTY_TYPE::PT_UINT32);
+
+                uint32_t lVal = (sValuElem.m_pProperty->lSize == 1u)
+                    ? sValuElem.m_pProperty->lData
+                    : *static_cast<const uint32_t*>(sValuElem.m_pBuffer->GetData(sValuElem.m_pProperty->lData));
+
+                m_BinderValidators[m_lNumBinderValidators].m_pszBinderName = pszBinderName;
+                m_BinderValidators[m_lNumBinderValidators].m_bBinderValue = (lVal != 0u);
+                ++m_lNumBinderValidators;
+            }
+            else if (sElement.m_pProperty->lName == 'RSTA')
+            {
+                ZRPropertyReader sBenaElem{};
+                sElement.GetNamedListElement('BENA', sBenaElem);
+                ZASSERT(sBenaElem.m_pProperty->lType == ZRPropertyReader::PROPERTY_TYPE::PT_UINT32);
+
+                uint32_t lBenaVal = (sBenaElem.m_pProperty->lSize == 1u)
+                    ? sBenaElem.m_pProperty->lData
+                    : *static_cast<const uint32_t*>(sBenaElem.m_pBuffer->GetData(sBenaElem.m_pProperty->lData));
+
+                m_BinderValidators[m_lNumBinderValidators].m_pszBinderName = "BlendEnabled";
+                m_BinderValidators[m_lNumBinderValidators].m_bBinderValue = (lBenaVal != 0u);
+                ++m_lNumBinderValidators;
+            }
+        }
+    }
 }

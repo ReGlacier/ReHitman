@@ -84,7 +84,7 @@ namespace Glacier
 
             pEntry->CalcLODMask(&sInfo);
             pEntry->Notify(&sInfo);
-            pEntry->AddToDrawChain(pCmd, &sInfo, 1 << lLayer, lDrawDestination, lTransparencyMask, false);
+            pEntry->AddToDrawChain(pCmd, static_cast<uint8_t>(sInfo.lLODMask), 1 << lLayer, lDrawDestination, lTransparencyMask, false);
         }
 
         SortRenderObjectInstances(reinterpret_cast<ZRenderObjectInstance**>(pCmd + 1), pCmd->m_lNrObjects);

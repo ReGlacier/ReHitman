@@ -1,3 +1,7 @@
+#include <Glacier/Render/Material/ZRenderMaterialInstance.h>
+#include <Glacier/Render/Material/ZRenderMaterialBuffer.h>
+#include <Glacier/Render/Object/ZRenderObjectInstance.h>
+#include <Glacier/Render/Object/ZRenderObject.h>
 #include <Glacier/Render/Entry/ZRenderEntry.h>
 #include <Glacier/Render/Entry/SRenderEntryNotifyInfo.h>
 #include <Glacier/Render/Entry/SRenderEntryInstance.h>
@@ -18,11 +22,17 @@ namespace Glacier
 
     ZRenderEntry::~ZRenderEntry()
     {
-        // TODO: Finish me
+        m_lGeomListsControl = 0;
+        ZASSERT(!m_lEntryListsMask);
 
         if (m_lNumRenderEntryInstances)
         {
-            // TODO: Finish me
+            for (int i = 0; i < m_lNumRenderEntryInstances; ++i)
+            {
+                auto* pEntry = m_pRenderEntryInstances[i];
+                m_pRenderEntryInstances[i] = nullptr;
+                IDraw::Instance<ZRenderDraw>()->DestroyRenderEntryInstance(pEntry);
+            }
         }
 
         // Cleanup possible alloc (lmao wat?)
@@ -68,9 +78,35 @@ namespace Glacier
 
     void ZRenderEntry::EndFrame()
     {
-        // TODO: Finish me
         m_lControl &= ~(RE_NOTIFIED | RE_NEEDUPDATE | RE_UPDATELIGHT | RE_CREATEDTHISFRAME | RE_HASMOVED);
-        // TODO: Finish me
+
+        const auto lAvailableLODLevels = m_lLODLevelsActive & m_lLODLevelsWanted;
+        if (lAvailableLODLevels)
+        {
+            int i = 0;
+
+            do
+            {
+                auto* ppInstances = m_pRenderEntryInstances;
+                auto* pEntry = ppInstances[i];
+
+                if ((pEntry->lBoneIndexMask & static_cast<uint8_t>(lAvailableLODLevels)) == 0 || (pEntry->lBoneIndexMask & m_lLODLevelsWanted) != 0 || (pEntry->lTransparencyMask & 1) != 0)
+                {
+                    ppInstances[i++] = pEntry;
+                }
+                else
+                {
+                    ppInstances[i++] = nullptr;
+                    IDraw::Instance<ZRenderDraw>()->DestroyRenderEntryInstance(pEntry);
+                }
+            }
+            while (i < m_lNumRenderEntryInstances);
+
+            m_lNumRenderEntryInstances = i;
+        }
+
+        m_lLODLevelsActive = m_lLODLevelsWanted;
+        m_lLODLevelsWanted = 0u;
     }
 
     void ZRenderEntry::GetDrawInstances(SRenderEntryInstance** ppEntries, SRenderEntryNotifyInfo* pEntry)
@@ -113,7 +149,7 @@ namespace Glacier
                     }
                     else
                     {
-                        bWantPrimHide = pGeomBase->GetGeom()->WantViewPrimHide(pCurrentEntry->lBoneIndexMask);
+                        bWantPrimHide = pGeomBase->GetGeom()->WantViewPrimHide(pCurrentEntry->lBoneIndexMask, pEntry->bFirstPersonCamera);
                     }
                 }
 
@@ -305,11 +341,125 @@ namespace Glacier
 
     void ZRenderEntry::InitRenderEntryInstance(SRenderEntryInstance *pRenderEntryInstance, uint8_t lLODMask, uint8_t lDrawDestination, uint32_t lFlags, uint32_t lBoneIndexMask)
     {
-        // TODO: Finish me
+        auto pMaterialInstance = pRenderEntryInstance->pRenderObjectInstance->m_pRenderObject->m_pMaterialInstance;
+        auto lRemapValue = pMaterialInstance->m_lRemapValue;
+        auto lNumOpaqueMaterials = ZRenderMaterialBuffer::g_pMaterialBufferInstance->m_lNumOpaqueMaterials;
+        auto bEnoughMaterialsToRemap = ZRenderMaterialBuffer::g_pMaterialBufferInstance->m_lNumFullyOpaqueMaterials >= lRemapValue;
+        pRenderEntryInstance->lBoneIndexMask = lLODMask;
+
+        auto lDrawDestinationOverride = m_lDrawDestinationOverride;
+        auto bEnoughOpaqueMaterialsToRemap = lNumOpaqueMaterials >= lRemapValue;
+        if (!lDrawDestinationOverride)
+        {
+            lDrawDestinationOverride = lDrawDestination;
+        }
+
+        pRenderEntryInstance->lLODMask = lDrawDestinationOverride;
+        pRenderEntryInstance->lSortValue = pMaterialInstance->m_lLayerMask;
+        uint32_t lNewDrawDestination = 0;
+        if (bEnoughMaterialsToRemap)
+        {
+            lNewDrawDestination = 1;
+        }
+        else
+        {
+            lNewDrawDestination = 2 * !bEnoughOpaqueMaterialsToRemap + 2;
+        }
+
+        pRenderEntryInstance->lDrawDestination = lNewDrawDestination;
+        pRenderEntryInstance->lTransparencyMask = lFlags;
+        pRenderEntryInstance->lLayerMask = lBoneIndexMask;
+
+        auto pBaseGeom = GetBaseGeom();
+        if (pBaseGeom)
+        {
+            if ((pBaseGeom->Control() & 0x10000) == 0)
+            {
+                pRenderEntryInstance->lSortValue &= ~4u;
+            }
+
+            if ((pBaseGeom->Control() & 0x20000) == 0)
+            {
+                pRenderEntryInstance->lSortValue &= ~8u;
+            }
+        }
     }
 
-    void ZRenderEntry::AddToDrawChain(ZCmdList::ZCmd* pCmd, SRenderEntryNotifyInfo* pNotifyInfo, uint32_t lLayerMask, uint8_t lDrawDestination, uint8_t lTransparencyMask, bool bFirstPersonCamera)
+    void ZRenderEntry::AddToDrawChain(ZCmdList::ZCmd* pCmd, uint8_t lLODLevels, uint32_t lLayerMask, uint8_t lDrawDestination, uint8_t lTransparencyMask, bool bFirstPersonCamera)
     {
-        // TODO: Finish me
+        if ((lLODLevels & m_lLODLevelsWanted) == 0)
+            return; // Do not draw this thing (culled by LOD)
+
+        const uint32_t lHiddenBoneIndices = GetHiddenBoneIndices();
+
+        if ((m_lControl & RE_WANT_VIEW_NOTIFY) != 0)
+        {
+            ZBaseGeom* pBaseGeom = GetBaseGeom();
+
+            for (uint32_t i = 0; i < m_lNumRenderEntryInstances; ++i)
+            {
+                auto* pEntry = m_pRenderEntryInstances[i];
+
+                if ((lLayerMask & pEntry->lSortValue) == 0 ||
+                    (lTransparencyMask & pEntry->lDrawDestination) == 0 ||
+                    (lHiddenBoneIndices & pEntry->lLayerMask) != 0)
+                {
+                    continue;
+                }
+
+                uint8_t lLODMask = m_lDrawDestinationOverride;
+                if (!lLODMask)
+                {
+                    lLODMask = pEntry->lLODMask;
+                }
+
+                if ((lLODMask & lDrawDestination) == 0)
+                {
+                    continue;
+                }
+
+                if (pBaseGeom)
+                {
+                    const bool bWantPrimHide = (lDrawDestination & 8) != 0
+                        ? pBaseGeom->GetGeom()->WantViewPrimHideMirrors(pEntry->lBoneIndexMask)
+                        : pBaseGeom->GetGeom()->WantViewPrimHide(pEntry->lBoneIndexMask, bFirstPersonCamera);
+
+                    if (bWantPrimHide)
+                    {
+                        continue;
+                    }
+                }
+
+                pCmd->AddObject(pEntry->pRenderObjectInstance);
+            }
+        }
+        else
+        {
+            for (uint32_t i = 0; i < m_lNumRenderEntryInstances; ++i)
+            {
+                auto* pEntry = m_pRenderEntryInstances[i];
+
+                if ((lLODLevels & pEntry->lBoneIndexMask) == 0 ||
+                    (lLayerMask & pEntry->lSortValue) == 0 ||
+                    (lTransparencyMask & pEntry->lDrawDestination) == 0 ||
+                    (lHiddenBoneIndices & pEntry->lLayerMask) != 0)
+                {
+                    continue;
+                }
+
+                uint8_t lLODMask = m_lDrawDestinationOverride;
+                if (!lLODMask)
+                {
+                    lLODMask = pEntry->lLODMask;
+                }
+
+                if ((lLODMask & lDrawDestination) == 0)
+                {
+                    continue;
+                }
+
+                pCmd->AddObject(pEntry->pRenderObjectInstance);
+            }
+        }
     }
 }

@@ -493,10 +493,10 @@ namespace Glacier
         return false;
     }
 
-    bool ZLNKOBJ::WantViewPrimHide(uint8_t lLODControl) const
+    bool ZLNKOBJ::WantViewPrimHide(uint8_t lLODControl, bool bFirstPersonCamera) const
     {
         // TODO: Finish this place after ZHM3ItemWeapon will be reversed
-        // return Parent()->IsDerivedFrom<ZHM3ItemWeapon>() && Parent()->WantViewPrimHide(lLODControl);
+        // return Parent()->IsDerivedFrom<ZHM3ItemWeapon>() && Parent()->WantViewPrimHide(lLODControl, bFirstPersonCamera);
         return false;
     }
 

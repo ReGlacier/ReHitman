@@ -59,6 +59,7 @@ namespace Glacier
     STATIC_GLOBAL_CLASS_INSTANCE_IMPL(TIMETYPE, g_ttLastTime, 0x008C39F8, {});
     STATIC_GLOBAL_CLASS_INSTANCE_IMPL(uint32_t, g_lTrisPerSecFlags, 0x008C39FC, 0);
     STATIC_GLOBAL_CLASS_INSTANCE_IMPL(uint32_t, g_lNumTris, 0x008C3A00, 0);
+    STATIC_GLOBAL_CLASS_INSTANCE_IMPL(bool, g_PC_XBOX_EnableDotFadeDropShadows, 0x0090DE74, false);
 
     // stuff
     using SMapper = ZRenderMaterialBinderParser::SMapper;

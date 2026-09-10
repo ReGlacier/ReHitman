@@ -621,7 +621,7 @@ namespace Glacier
         return false;
     }
 
-    bool ZGEOM::WantViewPrimHide(uint8_t lLODControl) const
+    bool ZGEOM::WantViewPrimHide(uint8_t lLODControl, bool bFirstPersonCamera) const
     {
         return false;
     }

@@ -8,6 +8,7 @@ namespace Glacier
 {
     struct ZRenderEntryGeom;
     struct ZRenderView;
+    class ZRenderObjectInstance;
 
     struct  ZCmdList
     {
@@ -94,6 +95,7 @@ namespace Glacier
             // methods
             void* AddData(uint32_t lDataSize);
             void* AddData(void* pData, uint32_t lDataSize);
+            void AddObject(ZRenderObjectInstance* pRenderObjectInstance);
             ZCmd* Next() const;
 
             // members

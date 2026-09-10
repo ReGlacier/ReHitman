@@ -26,6 +26,11 @@ namespace Glacier
         return pResult;
     }
 
+    void ZCmdList::ZCmd::AddObject(ZRenderObjectInstance* pRenderObjectInstance)
+    {
+        AddData(&pRenderObjectInstance, sizeof(pRenderObjectInstance));
+    }
+
     ZCmdList::ZCmd* ZCmdList::ZCmd::Next() const
     {
         return const_cast<ZCmdList::ZCmd*>(reinterpret_cast<const ZCmdList::ZCmd*>(reinterpret_cast<const char*>(this) + sizeof(std::intptr_t) * m_lNrObjects + sizeof(ZCmdList::ZCmd)));

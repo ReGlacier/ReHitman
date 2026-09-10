@@ -154,7 +154,7 @@ namespace Glacier
         virtual bool DrawBufferViewUpdate(ZDrawBuffer* pDrawBuffer, ZCameraSpace* pCameraSpace);
         virtual bool DrawBufferViewUpdate(ZDrawBuffer* pDrawBuffer, ZBaseGeom* pOwnerBaseGeom, uint32_t lBoneId);
         virtual bool WantViewPrimHideUnhideRequest() const;
-        virtual bool WantViewPrimHide(uint8_t lLODControl) const;
+        virtual bool WantViewPrimHide(uint8_t lLODControl, bool bFirstPersonCamera) const;
         virtual bool WantViewPrimHideMirrors(uint8_t lLODControl) const;
         virtual bool WantViewUseAllLOD() const;
         virtual uint8_t GetLODMaskOverride() const;

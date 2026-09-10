@@ -90,6 +90,7 @@ namespace Glacier
     STATIC_GLOBAL_CLASS_INSTANCE(TIMETYPE, g_ttLastTime);       // 0x008C39F8 - last update timestamp of the FPS counter
     STATIC_GLOBAL_CLASS_INSTANCE(uint32_t, g_lTrisPerSecFlags); // 0x008C39FC - FPS counter init flag (bit 0)
     STATIC_GLOBAL_CLASS_INSTANCE(uint32_t, g_lNumTris);         // 0x008C3A00 - accumulated triangle counter
+    STATIC_GLOBAL_CLASS_INSTANCE(bool, g_PC_XBOX_EnableDotFadeDropShadows); // PC 0090DE74
 
     extern ZRenderMaterialBinderParser::SMapper g_TranslatorMapper[68];
 }

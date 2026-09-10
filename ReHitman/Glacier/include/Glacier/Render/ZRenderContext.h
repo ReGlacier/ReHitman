@@ -43,7 +43,7 @@ namespace Glacier
         ZMat4x4 m_ProjectionMatrix; // +0x198 Main projection matrix (render command 0 / push-pop commands 0x2A-0x2C)
         ZMat4x4 m_aLightClipMatrix[3]; // +0x1D8 Per-light clip/projection matrices (render commands 3/4/6)
     };
-    RE_VERIFY_SIZE(ZRenderContext, 0x298);
+    RE_VERIFY_SIZE(ZRenderContext, 0x298); // Verified PC alloc at ZRenderWintelD3D::Init
 
     RE_VERIFY_OFFSET(ZRenderContext, m_pRenderView, 0x0); // Verified
     RE_VERIFY_OFFSET(ZRenderContext, m_pRender, 0x4); // Verified

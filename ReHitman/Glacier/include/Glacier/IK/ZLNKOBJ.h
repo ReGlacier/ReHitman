@@ -260,7 +260,7 @@ namespace Glacier
         int AnimCallBackToId(ActiveAnimCB pCallback) override;
         ActiveAnimCB AnimCallBackFromId(int) override;
         bool WantViewPrimHideUnhideRequest() const override;
-        bool WantViewPrimHide(uint8_t lLODControl) const override;
+        bool WantViewPrimHide(uint8_t lLODControl, bool bFirstPersonCamera) const override;
         bool WantViewPrimHideMirrors(uint8_t lLODControl) const override;
         uint8_t GetLODMaskOverride() const override;
         void ClassInit() override;

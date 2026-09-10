@@ -4,6 +4,7 @@
 #include <Glacier/Render/Material/ZRenderMaterialSubClass.h>
 #include <Glacier/Render/Material/ZRenderMaterialLayer.h>
 #include <Glacier/Render/Material/ZRenderMaterialBinderList.h>
+#include <Glacier/Render/Material/ZRenderMaterialClassD3D.h>
 #include <Glacier/Render/Material/ZRenderMaterialClass.h>
 #include <Glacier/Render/Material/SMATHeader.h>
 #include <Glacier/Render/Material/ZRenderBinderTexture.h>
@@ -433,7 +434,9 @@ namespace Glacier
 
     ZRenderMaterialClass* ZRenderMaterialBufferD3D::CreateMaterialClass(uint32_t lMaterialClass, const SRMaterialProperties* pProperties)
     {
-        // TODO: Finish me after ZRenderMaterialClassD3D::GetFactory()  will be reversed
+        // TODO: Finish me (PC 00494370)
+        // ZRenderMaterialClassD3D::GetFactory().Find("test") - but name must be extracted from pProperties!!!
+
         return nullptr;
     }
 }

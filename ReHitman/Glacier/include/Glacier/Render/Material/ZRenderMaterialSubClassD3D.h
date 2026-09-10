@@ -21,6 +21,7 @@ namespace Glacier
 
         // methods
         ZRenderMaterialSubClassD3D(const char* pszName, ZRenderMaterialClass* pMaterialClass, uint16_t lObjectType, uint16_t lObjectSubType, uint32_t lMaterialFlags);
+        void SetBinderValidators(const ZRPropertyReader* pBindList);
 
         // members
         uint32_t m_lNumBinderValidators;

@@ -2,6 +2,7 @@
 #include <Glacier/Render/Material/ZRenderMaterialEffectD3DFX.h>
 #include <Glacier/Render/ZRenderContext.h>
 #include <Glacier/Render/ZRender.h>
+#include <Glacier/Render/ZRenderX86.h>
 #include <Glacier/Render/Globals.h>
 #include <cstring>
 
@@ -160,10 +161,10 @@ namespace Glacier
         {
             D3DCULL dwCull = m_eCullMode;
 
-            // TODO: Finish this place after ZRender will be reversed
-            // Expected decompiled call:
-            //   if (dwCull == D3DCULL_CW && *reinterpret_cast<const uint8_t*>(reinterpret_cast<const char*>(pContext->m_pRender) + 0x133D))
-            //       dwCull = D3DCULL_CCW;
+            if (dwCull == D3DCULL_CW && static_cast<const ZRenderX86*>(pContext->m_pRender)->m_bCullingReversed)
+            {
+                dwCull = D3DCULL_CCW;
+            }
 
             pD3DXEffect->SetInt(m_hCullMode, dwCull);
         }

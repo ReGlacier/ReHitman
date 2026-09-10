@@ -11,7 +11,7 @@ namespace Glacier
     {
     public:
         // constants
-        static constexpr int MAX_NUM_SUB_CLASSES = 0x20;
+        static constexpr int MAX_NUM_SUB_CLASSES = 0x80; // Verified PC ZRenderMaterialClassD3D::CreateMaterialInstance
 
         // vtbl
         virtual ~ZRenderMaterialClass();
@@ -27,4 +27,5 @@ namespace Glacier
         ZRenderMaterialSubClass* m_pSubClasses[MAX_NUM_SUB_CLASSES]{nullptr};
         uint32_t m_lNumSubClasses{0};
     };
+    RE_VERIFY_SIZE(ZRenderMaterialClass, 0x214); // Verified PC ZRenderMaterialClassD3D::Dtor
 }

@@ -2,6 +2,7 @@
 #include <Glacier/Render/Draw/ZRenderDrawBase.h>
 #include <Glacier/Render/ZDirect3DDevice.h>
 #include <Glacier/Render/ZSharedResourcesD3D.h>
+#include <Glacier/Render/ZRenderContext.h>
 #include <Glacier/Render/ZRD3DStaticVB.h>
 #include <Glacier/Render/Globals.h>
 #include <Glacier/Render/ZRenderBaseDll.h>
@@ -26,6 +27,22 @@
 
 namespace Glacier
 {
+    namespace VendorID
+    {
+        constexpr uint32_t ATI_AMD   = 0x1002;
+        constexpr uint32_t Matrox    = 0x102B;
+        constexpr uint32_t SiS       = 0x1039;
+        constexpr uint32_t Macronix  = 0x10D9;
+        constexpr uint32_t Alliance  = 0x1142;
+        constexpr uint32_t _3DFX     = 0x121A;
+    }
+
+    namespace DeviceID
+    {
+        constexpr uint32_t Matrox_G550    = 0x0527;
+        constexpr uint32_t Radeon_7500_RV200 = 0x5157;
+    }
+
     // Minimal stand-in for the engine's ZExceptionRenderD3D (thrown from Init), derived from
     // the Wintel exception (module + description).
     class ZExceptionRenderD3D : public stlp::exception
@@ -846,7 +863,7 @@ namespace Glacier
             InitSwapChain();
 
         if (!m_pContext)
-            m_pContext = static_cast<ZRenderContext*>(ZUniMemory::Allocate(664));
+            m_pContext = ZUniMemory::New<ZRenderContext>();
 
         // EMBM / DXT capability checks (the PC calls the texture manager's virtuals).
         auto* pTexCon = static_cast<ZTextureManagerD3D*>(g_pRenderDll->m_pTexCon);
@@ -867,21 +884,28 @@ namespace Glacier
         g_pd3dInterface->GetAdapterIdentifier(uActiveAdapter, 0, &sAdapterIdentifier);
 
         m_field1708 = 8;
-        if (sAdapterIdentifier.VendorId == 0x1039)
+        if (sAdapterIdentifier.VendorId == VendorID::SiS)
         {
             m_field1708 = 0;
         }
-        else if (sAdapterIdentifier.VendorId == 0x102B)
+        else if (sAdapterIdentifier.VendorId == VendorID::Matrox)
         {
-            if (sAdapterIdentifier.DeviceId == 0x527)
+            if (sAdapterIdentifier.DeviceId == DeviceID::Matrox_G550)
+            {
                 field_1526 = 1;
+            }
         }
         else
         {
-            if (sAdapterIdentifier.VendorId == 0x1142 || sAdapterIdentifier.VendorId == 0x10D9 || sAdapterIdentifier.VendorId == 0x121A)
+            if (sAdapterIdentifier.VendorId == VendorID::Alliance || sAdapterIdentifier.VendorId == VendorID::Macronix || sAdapterIdentifier.VendorId == VendorID::_3DFX)
+            {
                 g_pRenderDll->m_bDisableDXT = 1;
-            if (sAdapterIdentifier.VendorId == 0x1002 && sAdapterIdentifier.DeviceId == 20823)
+            }
+
+            if (sAdapterIdentifier.VendorId == VendorID::ATI_AMD && sAdapterIdentifier.DeviceId == DeviceID::Radeon_7500_RV200)
+            {
                 ZSharedResourcesD3D::g_pInstance->m_lShaderQuality = 0;
+            }
         }
 
         g_dwTextureUnits = static_cast<uint32_t>(sCaps.MaxSimultaneousTextures);

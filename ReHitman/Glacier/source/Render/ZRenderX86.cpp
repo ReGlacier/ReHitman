@@ -2,6 +2,7 @@
 #include <Glacier/Render/Draw/IDraw.h>
 #include <Glacier/System/ZSysInterface.h>
 #include <Glacier/Render/ZRenderBaseDll.h>
+#include <Glacier/Render/ZRenderContext.h>
 
 
 namespace Glacier
@@ -37,7 +38,7 @@ namespace Glacier
 
         if (m_pContext)
         {
-            operator delete(m_pContext);
+            ZUniMemory::Delete(m_pContext);
             m_pContext = nullptr;
         }
     }
