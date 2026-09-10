@@ -36,11 +36,11 @@ namespace Glacier
         auto* pEditable = CreateEditable(lNumTriangles, pFirstSubMesh->lNumVertices);
         pEditable->Lock(2u);
         
-        auto* pVertices = (void*)GetVertices(); // Weird, I know
-        pEditable->GetVerticesRaw(0, pFirstSubMesh->lNumVertices, pVertices);
+        auto* pVertices = (void*)pEditable->GetVertices();
+        GetVerticesRaw(0, pFirstSubMesh->lNumVertices, pVertices);
 
         auto* pRWIndices = GetIndicesReadWrite();
-        memcpy(GetIndices(), pRWIndices, 6 * lNumTriangles + 4);
+        memcpy(pEditable->GetIndices(), pRWIndices, 6 * lNumTriangles + 4);
 
         pEditable->Unlock();
         
@@ -53,6 +53,20 @@ namespace Glacier
         return (pMesh->lProperties & SPrimMesh::PROPERTY_FLAGS::PROPERTY_ISEDITABLE) != 0;
     }
 
+    void ZPrimAccessMesh::GetTriangles(uint32_t lStartTriangle, uint32_t lNumTriangles, uint16_t* plVertices)
+    {
+        ZASSERT(lStartTriangle + lNumTriangles <= GetNumTriangles());
+        if (lNumTriangles == 0 || !plVertices)
+        {
+            return;
+        }
+
+        const uint16_t* pIndices = GetIndicesConst();
+        const uint32_t lStartIndex = 3 * lStartTriangle + 2;
+        const uint32_t lIndexCount = 3 * lNumTriangles;
+        memcpy(plVertices, &pIndices[lStartIndex], lIndexCount * sizeof(uint16_t));
+    }
+
     void ZPrimAccessMesh::SetTriangles(uint32_t lStartTriangle, uint32_t lNumTriangles,const uint16_t* plVertices)
     {
         ZASSERT(lStartTriangle + lNumTriangles <= GetNumTriangles());
@@ -62,7 +76,7 @@ namespace Glacier
         }
 
         uint16_t* pIndices = GetIndicesReadWrite();
-        const uint32_t lStartIndex = 3 * lStartTriangle;
+        const uint32_t lStartIndex = 3 * lStartTriangle + 2;
         const uint32_t lIndexCount = 3 * lNumTriangles;
         memcpy(&pIndices[lStartIndex], plVertices, lIndexCount * sizeof(uint16_t));
     }
