@@ -11,6 +11,17 @@ namespace Glacier
     class ZROOM;
     class ZBaseGeom;
 
+    struct ZBaseGeomVolume
+    {
+        ZMatrix m_RootPosition;                // 0x00
+        ZVector3 m_vSize;                      // 0x30
+        ZVector3 m_vCenter;                    // 0x3C
+        float m_fRadius;                       // 0x48
+        ZBaseGeom* m_pBaseGeom;                // 0x4C
+        ZBaseGeom* m_pBaseGeomEnvironment;     // 0x50
+    };
+    RE_VERIFY_SIZE(ZBaseGeomVolume, 0x54);
+
     class ZRoomGeomVolumes
     {
     public:
@@ -22,8 +33,8 @@ namespace Glacier
             uint32_t m_lNumGeoms;
             uint32_t m_lNumLights;
             uint32_t m_lNumEnvironments;
-            uint32_t m_Pad;
         };
+        RE_VERIFY_SIZE(ZHeader, 0xC);
 
         struct ZAttachedGeom
         {

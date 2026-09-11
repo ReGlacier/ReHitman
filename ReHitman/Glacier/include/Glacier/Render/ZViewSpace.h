@@ -2,6 +2,7 @@
 
 #include <Glacier/ReGlacier.h>
 #include <Glacier/Geom/ZRoomGeomVolumes.h>
+#include <Glacier/Render/ZVolumeList.h>
 #include <Glacier/ZSTL/ZStackArray.h>
 #include <Glacier/ZSTL/ZMath.h>
 
@@ -11,7 +12,6 @@ namespace Glacier
     // fwds
     class ZCameraSpace;
     class ZRenderEntry;
-    class ZVolumeList;
 
     class ZViewSpace
     {
@@ -60,8 +60,8 @@ namespace Glacier
         void SetPositionInnerRoom(const float* pPosition);
         void GetPositionInnerRoom(float* pPosition) const;
         void Reset();
-        uint32_t GetVisibleVolumes(ZVolumeList* pVolumeList, bool bIncludeBackdrop, ZRenderEntry* pRenderEntry);
-        bool GetVisibleVolumesIncludingBackdrop(ZVolumeList* pVolumeList, ZRenderEntry* pRenderEntry, bool bIncludeBackdrop);
+        void GetVisibleVolumes(ZVolumeList* pVolumeList, bool bLightsEnabled, ZVolumeList* pVolumeListCheck);
+        bool GetVisibleVolumesIncludingBackdrop(ZVolumeList* pVolumeList, ZRenderEntry* pRenderEntry, bool bLightsEnabled);
 
         // members
         ZVector3 m_vPosition;                                   // 0x0000
@@ -80,10 +80,19 @@ namespace Glacier
         float m_fFieldOfView;                                   // 0x3111C
 
     private:
-        uint32_t GetClipPlaneDistances(float* pPlanes) const;
+        uint32_t GetEnabledClipPlanes(float* pPlanes) const;
+        void InitVisibCheck(const float* pCamPlanes, int iNPlanes, const ZVisibleExit* pVisibleExit, const float* m0, const float* p0);
+        bool IsVisible(ZBaseGeomVolume* pVolume);
+        void CheckAndAddGeomsInRoom(ZVolumeList* pVolumeList, const float* pPlanes, uint32_t lNrPlanes, ZVisibleRoom* pRoom, bool bLightsEnabled, bool bBackdrop);
+        void CreatePlane(ZVector3* pOut, const ZVector3* pA, const ZVector3* pB) const;
+        bool InitializeExit(ZVector3* pPlaneOut, ZVector3* pCorners, const ZMat3x3& mRoom, const ZVector3& vRoomPos, const ZVector3* pExit, const float* pPlanes, uint32_t lNrPlanes) const;
+        bool ExitVZExitPlanesChck(ZVector3* pOut, const ZVector3* pCorners, const ZVector3* pPlanes) const;
         void LocateRoomsAndExits();
         void GetVisibleRoomsRecursive(ZGROUP* pGroup, const float* pPlanes, uint32_t lNrPlanes, const float* pMat, const float* pPos);
         void CheckExitsInRoom(ZVisibleRoom* pRoom, ZVisibleExit* pFirstExit, bool bEnabled, const float* pPlanes, uint32_t lNrPlanes);
+
+        // static
+        static float m_Planes[48 + 16 * MAX_ENTRIES_NR];
     };
     RE_VERIFY_SIZE(ZViewSpace, 0x31120);
     RE_VERIFY_OFFSET(ZViewSpace, m_vPosition, 0x0);

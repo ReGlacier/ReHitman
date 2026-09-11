@@ -121,6 +121,7 @@ namespace Glacier
         void CalcBoundFromExit(const ZROOM::ZExit* pExit, ZMat3x3& mMat, ZVector3& vPos, ZVector3& vSize);
         uint32_t GetExitsIndicesInsideBox(uint16_t* pExitIndices, uint32_t maxCount, const ZMat3x3& mMat, const ZVector3& vPos, const ZVector3& vSize);
         void SetFogColor(uint32_t lColor);
+        ZBaseGeom** GetDynamicDrawGeomsLists(ZBaseGeom** pDrawGeomsList, ZBaseGeom** pDrawGeomsListEnd) const;
 
         // members
         uint32_t m_lNrExits;

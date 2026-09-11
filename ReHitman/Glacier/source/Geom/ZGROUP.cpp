@@ -1407,4 +1407,12 @@ namespace Glacier
 
         return pBaseGeom->IsDerivedFrom<ZGROUP>();
     }
+
+    bool ForNotGroupsCheck(ZBaseGeom* pBaseGeom)
+    {
+        if (!pBaseGeom)
+            return false;
+
+        return !pBaseGeom->IsDerivedFrom<ZGROUP>();
+    }
 }

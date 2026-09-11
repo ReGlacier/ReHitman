@@ -118,4 +118,5 @@ namespace Glacier
     RE_VERIFY_SIZE(ZGROUP, 0x4C); // Verified
 
     bool ForGroupsCheck(ZBaseGeom* pBaseGeom);
+    bool ForNotGroupsCheck(ZBaseGeom* pBaseGeom);
 }

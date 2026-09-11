@@ -257,6 +257,39 @@ namespace Glacier
         return pDrawGeomsList;
     }
 
+    ZBaseGeom** ZROOM::GetDynamicDrawGeomsLists(ZBaseGeom** pDrawGeomsList, ZBaseGeom** pDrawGeomsListEnd) const
+    {
+        SGeomPairRecursion sRecur {};
+        sRecur.InitPair(m_lDynamicGeomsDrawList);
+
+        while (sRecur.DpInsertList && sRecur.m_cCur != sRecur.m_cCurEnd)
+        {
+            auto* pPayload = reinterpret_cast<uintptr_t*>(
+                reinterpret_cast<char*>(sRecur.DpInsertList) + sizeof(SBaseGeomListHeader));
+
+            const auto pFirstGeom = reinterpret_cast<ZBaseGeom*>(pPayload[sRecur.m_cCur] & ~uintptr_t(7));
+            const auto pLastGeom = reinterpret_cast<ZBaseGeom*>(pPayload[sRecur.m_cCur + 1] & ~uintptr_t(7));
+            sRecur.m_cCur += 2;
+
+            for (ZBaseGeom* pGeom = pFirstGeom; pGeom <= pLastGeom; pGeom = reinterpret_cast<ZBaseGeom*>(reinterpret_cast<char*>(pGeom) + sizeof(ZBaseGeom)))
+            {
+                if (pDrawGeomsList >= pDrawGeomsListEnd)
+                {
+                    return pDrawGeomsList;
+                }
+
+                if ((pGeom->m_lControl & 0x10000000) == 0)
+                {
+                    *pDrawGeomsList++ = pGeom;
+                }
+            }
+
+            sRecur.NextPair();
+        }
+
+        return pDrawGeomsList;
+    }
+
     ZBaseGeom** ZROOM::GetStaticPrimDrawGeomsListsRecur(ZBaseGeom** pDrawGeomsList, ZBaseGeom** pDrawGeomsListEnd)
     {
         SGeomPairRecursion sRecur {};

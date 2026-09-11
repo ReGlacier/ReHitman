@@ -4,15 +4,20 @@
 #include <Glacier/Geom/ZROOM.h>
 #include <Glacier/Geom/ZGROUP.h>
 #include <Glacier/Geom/ZBaseGeom.h>
+#include <Glacier/Geom/ZENVIRONMENT.h>
 #include <Glacier/Physics/ZCollisionBase.h>
 #include <Glacier/Data/ZEngineDataBase.h>
 #include <Glacier/System/ZSysInterface.h>
+#include <xmmintrin.h>
+#include <emmintrin.h>
 
 
 namespace Glacier
 {
+    float ZViewSpace::m_Planes[48 + 16 * MAX_ENTRIES_NR];
+
     // PC 00479CF0: vcross + normalize
-    void CalcPlaneNormal(ZVector3* pOut, const ZVector3* pA, const ZVector3* pB)
+    void ZViewSpace::CreatePlane(ZVector3* pOut, const ZVector3* pA, const ZVector3* pB) const
     {
         vcross(pOut->Get(), pA->Get(), pB->Get());
         vnorm(pOut->Get());
@@ -21,14 +26,14 @@ namespace Glacier
     // PC 0047A360: checks whether an exit portal is facing the viewer and inside
     // the frustum planes. Outputs the portal plane (normal + distance) and the
     // four portal corners expressed in the room-local (viewer) space.
-    bool CheckExitVisible(
-        Glacier::ZVector3* pPlaneOut,
-        Glacier::ZVector3* pCorners,
-        const Glacier::ZMat3x3& mRoom,
-        const Glacier::ZVector3& vRoomPos,
-        const Glacier::ZVector3* pExit,
+    bool ZViewSpace::InitializeExit(
+        ZVector3* pPlaneOut,
+        ZVector3* pCorners,
+        const ZMat3x3& mRoom,
+        const ZVector3& vRoomPos,
+        const ZVector3* pExit,
         const float* pPlanes,
-        uint32_t lNrPlanes)
+        uint32_t lNrPlanes) const
     {
         ZVector3 v12;
         ZVector3 v11;
@@ -85,7 +90,7 @@ namespace Glacier
     // PC 00479D20: clips the incoming portal quad (4 corners) against an existing
     // portal (4 corner "planes") and stores the clipped quad. Returns false when
     // the quad lies entirely on one side of a portal plane (no intersection).
-    bool ClipExitQuad(Glacier::ZVector3* pOut, const Glacier::ZVector3* pCorners, const Glacier::ZVector3* pPlanes)
+    bool ZViewSpace::ExitVZExitPlanesChck(ZVector3* pOut, const ZVector3* pCorners, const ZVector3* pPlanes) const
     {
         uint8_t lFlags[4] = { 0, 0, 0, 0 };
 
@@ -117,10 +122,10 @@ namespace Glacier
         const uint8_t lEdge23 = lFlags[2] & lFlags[3];
         const uint8_t lEdge30 = lFlags[3] & lFlags[0];
 
-        if (lEdge01 == 0) CalcPlaneNormal(&pOut[0], &pCorners[0], &pCorners[1]);
-        if (lEdge12 == 0) CalcPlaneNormal(&pOut[1], &pCorners[1], &pCorners[2]);
-        if (lEdge23 == 0) CalcPlaneNormal(&pOut[2], &pCorners[2], &pCorners[3]);
-        if (lEdge30 == 0) CalcPlaneNormal(&pOut[3], &pCorners[3], &pCorners[0]);
+        if (lEdge01 == 0) CreatePlane(&pOut[0], &pCorners[0], &pCorners[1]);
+        if (lEdge12 == 0) CreatePlane(&pOut[1], &pCorners[1], &pCorners[2]);
+        if (lEdge23 == 0) CreatePlane(&pOut[2], &pCorners[2], &pCorners[3]);
+        if (lEdge30 == 0) CreatePlane(&pOut[3], &pCorners[3], &pCorners[0]);
 
         for (uint32_t iPlane = 0; iPlane < 4; ++iPlane)
         {
@@ -260,7 +265,7 @@ namespace Glacier
         pPosition[2] = m_vPositionInnerRoom.z;
     }
 
-    uint32_t ZViewSpace::GetClipPlaneDistances(float* pPlanes) const
+    uint32_t ZViewSpace::GetEnabledClipPlanes(float* pPlanes) const
     {
         uint32_t lNrPlanes = 0;
 
@@ -302,7 +307,7 @@ namespace Glacier
         Reset();
 
         float vPlanes[48];
-        uint32_t lNrPlanes = GetClipPlaneDistances(vPlanes);
+        uint32_t lNrPlanes = GetEnabledClipPlanes(vPlanes);
 
         if (m_bExitsEnabled)
         {
@@ -509,7 +514,7 @@ namespace Glacier
                 ZVector3 vPlane[2];
                 ZVector3 vCorners[4];
 
-                if (CheckExitVisible(vPlane, vCorners, mRoom, vRoomPos, &pExit->p1, pPlanes, lNrPlanes))
+                if (InitializeExit(vPlane, vCorners, mRoom, vRoomPos, &pExit->p1, pPlanes, lNrPlanes))
                 {
                     ZVisibleExit* pExitList = pRoom->m_pFirstExit;
 
@@ -520,7 +525,7 @@ namespace Glacier
                             while (true)
                             {
                                 ZVector3 vClipped[4];
-                                if (ClipExitQuad(vClipped, vCorners, reinterpret_cast<const ZVector3*>(&pExitList->m_Exit)))
+                                if (ExitVZExitPlanesChck(vClipped, vCorners, reinterpret_cast<const ZVector3*>(&pExitList->m_Exit)))
                                 {
                                     ZROOM* pNeighbor = pExit->m_pNeighbor;
                                     if (pLastNeighbor != pNeighbor)
@@ -601,10 +606,10 @@ namespace Glacier
                         ZVector3 vCross12;
                         ZVector3 vCross23;
                         ZVector3 vCross30;
-                        CalcPlaneNormal(&vCross01, &vCorners[0], &vCorners[1]);
-                        CalcPlaneNormal(&vCross12, &vCorners[1], &vCorners[2]);
-                        CalcPlaneNormal(&vCross23, &vCorners[2], &vCorners[3]);
-                        CalcPlaneNormal(&vCross30, &vCorners[3], &vCorners[0]);
+                        CreatePlane(&vCross01, &vCorners[0], &vCorners[1]);
+                        CreatePlane(&vCross12, &vCorners[1], &vCorners[2]);
+                        CreatePlane(&vCross23, &vCorners[2], &vCorners[3]);
+                        CreatePlane(&vCross30, &vCorners[3], &vCorners[0]);
 
                         ZASSERT(m_Exits.m_lNrEntries < MAX_ENTRIES_NR);
                         ZVisibleExit* pNewExit = &m_Exits.m_Array[m_Exits.m_lNrEntries];
@@ -639,25 +644,243 @@ namespace Glacier
         }
     }
 
-    uint32_t ZViewSpace::GetVisibleVolumes(ZVolumeList* pVolumeList, bool bIncludeBackdrop, ZRenderEntry* pRenderEntry)
+    void ZViewSpace::InitVisibCheck(const float* pCamPlanes, int iNPlanes, const ZVisibleExit* pVisibleExit, const float* m0, const float* p0)
     {
-        // TODO: Finish me after ZVolumeList reversed (PC 0047C640)
-        //
-        // LocateRoomsAndExits();
-        // float vPlanes[48];
-        // uint32_t lNrPlanes = GetClipPlaneDistances(vPlanes);
-        // for (uint32_t i = 0; i < m_Rooms.m_lNrEntries; ++i)
-        //     FillRoomVolumes(pVolumeList, vPlanes, lNrPlanes, &m_Rooms.m_Array[i], bIncludeBackdrop);
-        // for (uint32_t i = 0; i < m_Rooms.m_lNrEntries; ++i)
-        //     m_Rooms.m_Array[i].m_pRoom->m_pTempRoom = nullptr;
-        // return m_Rooms.m_lNrEntries;
+        m_iNumExists = 0;
+        memset(m_Planes, 0, 0xC0);
 
-        return 0;
+        // Transform the camera clip planes into the SoA scratch buffer, four at a time.
+        for (int iPlane = 0; iPlane < iNPlanes; ++iPlane)
+        {
+            const float* n = &pCamPlanes[4 * iPlane];
+            const int iBase = (iPlane >> 2) * 16 + (iPlane & 3);
+
+            m_Planes[iBase]      = m0[6] * n[0] + m0[7] * n[1] + m0[8] * n[2];
+            m_Planes[iBase + 4]  = m0[3] * n[0] + m0[4] * n[1] + m0[5] * n[2];
+            m_Planes[iBase + 8]  = m0[0] * n[0] + m0[1] * n[1] + m0[2] * n[2];
+            m_Planes[iBase + 12] = p0[0] * n[0] + p0[1] * n[1] + p0[2] * n[2] + n[3];
+        }
+
+        m_iNumUserPlanes = (iNPlanes + 3) & ~3;
+
+        // Transform each exit portal's four corners into four side planes (SoA).
+        float* pPlane = &m_Planes[4 * m_iNumUserPlanes];
+        static constexpr int lOrder[4] = { 0, 2, 1, 3 };  // pl1, pl3, pl2, pl4
+
+        for (const ZVisibleExit* pExit = pVisibleExit; pExit != nullptr; pExit = pExit->m_pNext)
+        {
+            ++m_iNumExists;
+
+            const ZVector3* pCorners = reinterpret_cast<const ZVector3*>(&pExit->m_Exit);
+            for (int iCorner = 0; iCorner < 4; ++iCorner)
+            {
+                const ZVector3& corner = pCorners[lOrder[iCorner]];
+
+                pPlane[iCorner]      = m0[6] * corner.x + m0[7] * corner.y + m0[8] * corner.z;
+                pPlane[iCorner + 4]  = m0[3] * corner.x + m0[4] * corner.y + m0[5] * corner.z;
+                pPlane[iCorner + 8]  = m0[0] * corner.x + m0[1] * corner.y + m0[2] * corner.z;
+                pPlane[iCorner + 12] = p0[0] * corner.x + p0[1] * corner.y + p0[2] * corner.z;
+            }
+
+            pPlane += 16;
+        }
     }
 
-    bool ZViewSpace::GetVisibleVolumesIncludingBackdrop(ZVolumeList* pVolumeList, ZRenderEntry* pRenderEntry, bool bIncludeBackdrop)
+    bool ZViewSpace::IsVisible(ZBaseGeomVolume* pVolume)
     {
-        // TODO: Finish me after ZVolumeList reversed (PC 0047C6F0)
+        const __m128 absMask = _mm_castsi128_ps(_mm_set1_epi32(0x7FFFFFFF));
+
+        const __m128 vCenterX = _mm_set1_ps(pVolume->m_vSize.x);
+        const __m128 vCenterY = _mm_set1_ps(pVolume->m_vSize.y);
+        const __m128 vCenterZ = _mm_set1_ps(pVolume->m_vSize.z);
+        const __m128 vRadius = _mm_set1_ps(pVolume->m_fRadius);
+
+        const float* pMat = pVolume->m_RootPosition.m0.data;
+        const __m128 vCol0X = _mm_set1_ps(pMat[0]);
+        const __m128 vCol0Y = _mm_set1_ps(pMat[1]);
+        const __m128 vCol0Z = _mm_set1_ps(pMat[2]);
+        const __m128 vCol1X = _mm_set1_ps(pMat[3]);
+        const __m128 vCol1Y = _mm_set1_ps(pMat[4]);
+        const __m128 vCol1Z = _mm_set1_ps(pMat[5]);
+        const __m128 vCol2X = _mm_set1_ps(pMat[6]);
+        const __m128 vCol2Y = _mm_set1_ps(pMat[7]);
+        const __m128 vCol2Z = _mm_set1_ps(pMat[8]);
+
+        const __m128 vExtent0 = _mm_set1_ps(pVolume->m_vCenter.x);
+        const __m128 vExtent1 = _mm_set1_ps(pVolume->m_vCenter.y);
+        const __m128 vExtent2 = _mm_set1_ps(pVolume->m_vCenter.z);
+
+        const __m128* pPlane = reinterpret_cast<const __m128*>(m_Planes);
+        const __m128* pPlaneEnd = reinterpret_cast<const __m128*>(m_Planes + 4 * m_iNumUserPlanes);
+
+        // Sphere test against the camera planes.
+        while (pPlane != pPlaneEnd)
+        {
+            const __m128 vDot = _mm_add_ps(_mm_add_ps(_mm_mul_ps(vCenterX, pPlane[0]), _mm_mul_ps(vCenterY, pPlane[1])), _mm_mul_ps(vCenterZ, pPlane[2]));
+            const __m128 vTest = _mm_sub_ps(_mm_sub_ps(vRadius, pPlane[3]), vDot);
+            if (_mm_movemask_ps(vTest))
+            {
+                return false;
+            }
+            pPlane += 4;
+        }
+
+        // Oriented bounding box test against the camera planes.
+        for (const __m128* i = reinterpret_cast<const __m128*>(m_Planes); i != pPlaneEnd; i += 4)
+        {
+            const __m128 dotCol0 = _mm_add_ps(_mm_add_ps(_mm_mul_ps(vCol0X, i[0]), _mm_mul_ps(vCol0Y, i[1])), _mm_mul_ps(vCol0Z, i[2]));
+            const __m128 dotCol1 = _mm_add_ps(_mm_add_ps(_mm_mul_ps(vCol1X, i[0]), _mm_mul_ps(vCol1Y, i[1])), _mm_mul_ps(vCol1Z, i[2]));
+            const __m128 dotCol2 = _mm_add_ps(_mm_add_ps(_mm_mul_ps(vCol2X, i[0]), _mm_mul_ps(vCol2Y, i[1])), _mm_mul_ps(vCol2Z, i[2]));
+
+            const __m128 term0 = _mm_and_ps(_mm_mul_ps(vExtent0, dotCol2), absMask);
+            const __m128 term1 = _mm_and_ps(_mm_mul_ps(vExtent1, dotCol1), absMask);
+            const __m128 term2 = _mm_and_ps(_mm_mul_ps(vExtent2, dotCol0), absMask);
+
+            const __m128 center = _mm_add_ps(_mm_add_ps(_mm_add_ps(i[3], _mm_mul_ps(vCenterX, i[0])), _mm_mul_ps(vCenterY, i[1])), _mm_mul_ps(vCenterZ, i[2]));
+
+            const __m128 result = _mm_add_ps(_mm_add_ps(term0, term1), _mm_add_ps(term2, center));
+            if (_mm_movemask_ps(result))
+            {
+                return false;
+            }
+        }
+
+        if (m_iNumExists == 0)
+        {
+            return true;
+        }
+
+        // Exit portal test: visible if fully inside any exit's four side planes.
+        const __m128* pExitEnd = pPlaneEnd + (static_cast<size_t>(m_iNumExists) * 4);
+        for (const __m128* i = pPlaneEnd; i != pExitEnd; i += 4)
+        {
+            const __m128 vDot = _mm_add_ps(_mm_add_ps(_mm_mul_ps(vCenterX, i[0]), _mm_mul_ps(vCenterY, i[1])), _mm_mul_ps(vCenterZ, i[2]));
+            const __m128 vSphere = _mm_sub_ps(_mm_sub_ps(vRadius, i[3]), vDot);
+            if (_mm_movemask_ps(vSphere))
+            {
+                continue;
+            }
+
+            const __m128 dotCol0 = _mm_add_ps(_mm_add_ps(_mm_mul_ps(vCol0X, i[0]), _mm_mul_ps(vCol0Y, i[1])), _mm_mul_ps(vCol0Z, i[2]));
+            const __m128 dotCol1 = _mm_add_ps(_mm_add_ps(_mm_mul_ps(vCol1X, i[0]), _mm_mul_ps(vCol1Y, i[1])), _mm_mul_ps(vCol1Z, i[2]));
+            const __m128 dotCol2 = _mm_add_ps(_mm_add_ps(_mm_mul_ps(vCol2X, i[0]), _mm_mul_ps(vCol2Y, i[1])), _mm_mul_ps(vCol2Z, i[2]));
+
+            const __m128 term0 = _mm_and_ps(_mm_mul_ps(vExtent0, dotCol2), absMask);
+            const __m128 term1 = _mm_and_ps(_mm_mul_ps(vExtent1, dotCol1), absMask);
+            const __m128 term2 = _mm_and_ps(_mm_mul_ps(vExtent2, dotCol0), absMask);
+
+            const __m128 center = _mm_add_ps(_mm_add_ps(_mm_add_ps(i[3], _mm_mul_ps(vCenterX, i[0])), _mm_mul_ps(vCenterY, i[1])), _mm_mul_ps(vCenterZ, i[2]));
+
+            const __m128 result = _mm_add_ps(_mm_add_ps(term0, term1), _mm_add_ps(term2, center));
+            if (!_mm_movemask_ps(result))
+            {
+                return true;
+            }
+        }
+
         return false;
+    }
+
+    void ZViewSpace::CheckAndAddGeomsInRoom(ZVolumeList* pVolumeList, const float* pPlanes, uint32_t lNrPlanes, ZVisibleRoom* pRoom, bool bLightsEnabled, bool bBackdrop)
+    {
+        ZROOM* pRoomGeom = pRoom->m_pRoom;
+
+        if (pRoom->m_lNumExits > 0x40)
+        {
+            return;
+        }
+
+        ZRoomGeomVolumes::ZHeader* pHeader = m_RoomGeomVolumes.GetVolumesHeader(pRoomGeom, m_bExitsEnabled);
+        if (!pHeader)
+        {
+            return;
+        }
+
+        ZBaseGeomVolume* pVolumes = reinterpret_cast<ZBaseGeomVolume*>(pHeader + 1);
+        const uint32_t lNumGeoms = pHeader->m_lNumGeoms;
+
+        ZMat3x3 mMat;
+        mMat.Reset();
+        ZVector3 vNegPos = m_vPosition;
+        vneg(vNegPos.Get());
+        InitVisibCheck(pPlanes, static_cast<int>(lNrPlanes), pRoom->m_pFirstExit, mMat.Get(), vNegPos.Get());
+
+        ZBaseGeomVolume** pList = pVolumeList->BeginRoom(pRoomGeom);
+        uint32_t lCount = 0;
+
+        for (uint32_t i = 0; i < lNumGeoms; ++i)
+        {
+            if (IsVisible(&pVolumes[i]))
+            {
+                pList[lCount++] = &pVolumes[i];
+            }
+        }
+
+        // TODO: Finish me (PC 0047C2E0): reorder/emit lights, environments and the
+        // IDraw AllocateDeviceBuffers backdrop path separately.
+
+        pVolumeList->EndGroup(lCount);
+    }
+
+    void ZViewSpace::GetVisibleVolumes(ZVolumeList* pVolumeList, bool bLightsEnabled, ZVolumeList* pVolumeListCheck)
+    {
+        LocateRoomsAndExits();
+
+        float vPlanes[48];
+        const uint32_t lNrPlanes = GetEnabledClipPlanes(vPlanes);
+
+        for (uint32_t i = 0; i < m_Rooms.m_lNrEntries; ++i)
+        {
+            CheckAndAddGeomsInRoom(pVolumeList, vPlanes, lNrPlanes, &m_Rooms.m_Array[i], bLightsEnabled, false);
+        }
+
+        for (uint32_t i = 0; i < m_Rooms.m_lNrEntries; ++i)
+        {
+            m_Rooms.m_Array[i].m_pRoom->m_pTempRoom = nullptr;
+        }
+    }
+
+    bool ZViewSpace::GetVisibleVolumesIncludingBackdrop(ZVolumeList* pVolumeList, ZRenderEntry* pRenderEntry, bool bLightsEnabled)
+    {
+        float vPlanes[48];
+        const uint32_t lNrPlanes = GetEnabledClipPlanes(vPlanes);
+
+        if (!m_pTopNode || m_pTopNode->IsDerivedFrom<ZROOM>())
+        {
+            LocateRoomsAndExits();
+
+            // TODO: Finish me (PC 0047C6F0): collect the room's attached draw base
+            // geoms (m_rAttachedDrawBaseGeoms) and their render entries (IDraw),
+            // then re-emit them as backdrop volumes after disabling clip plane 1.
+
+            for (uint32_t i = 0; i < m_Rooms.m_lNrEntries; ++i)
+            {
+                CheckAndAddGeomsInRoom(pVolumeList, vPlanes, lNrPlanes, &m_Rooms.m_Array[i], bLightsEnabled, false);
+            }
+
+            for (uint32_t i = 0; i < m_Rooms.m_lNrEntries; ++i)
+            {
+                m_Rooms.m_Array[i].m_pRoom->m_pTempRoom = nullptr;
+            }
+
+            return false;
+        }
+
+        if (!m_bExitsEnabled)
+        {
+            ZRoomGeomVolumes::ZHeader* pHeader = m_RoomGeomVolumes.CreateGroupVolumes(m_pTopNode);
+            if (pHeader)
+            {
+                ZBaseGeomVolume** pList = pVolumeList->BeginGroup(m_pTopNode);
+                ZBaseGeomVolume* pVolumes = reinterpret_cast<ZBaseGeomVolume*>(pHeader + 1);
+                for (uint32_t i = 0; i < pHeader->m_lNumGeoms; ++i)
+                {
+                    pList[i] = &pVolumes[i];
+                }
+                pVolumeList->EndGroup(pHeader->m_lNumGeoms);
+            }
+        }
+
+        return m_bExitsEnabled;
     }
 }
