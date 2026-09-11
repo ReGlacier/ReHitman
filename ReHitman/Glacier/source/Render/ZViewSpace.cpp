@@ -805,19 +805,46 @@ namespace Glacier
         vneg(vNegPos.Get());
         InitVisibCheck(pPlanes, static_cast<int>(lNrPlanes), pRoom->m_pFirstExit, mMat.Get(), vNegPos.Get());
 
+        const uint32_t lNumLights = pHeader->m_lNumLights;
+        const uint32_t lNumEnvironments = pHeader->m_lNumEnvironments;
+        const uint32_t lNumRegularGeoms = lNumGeoms - lNumLights;
+        const uint32_t lNumActualLights = lNumLights - lNumEnvironments;
+
         ZBaseGeomVolume** pList = pVolumeList->BeginRoom(pRoomGeom);
         uint32_t lCount = 0;
 
-        for (uint32_t i = 0; i < lNumGeoms; ++i)
+        for (uint32_t i = 0; i < lNumRegularGeoms; ++i)
         {
-            if (IsVisible(&pVolumes[i]))
+            ZBaseGeomVolume* pVolume = &pVolumes[i];
+            ZASSERT(!pVolume->m_pBaseGeom || !pVolume->m_pBaseGeom->IsDerivedFrom<ZENVIRONMENT>());
+
+            if (IsVisible(pVolume))
             {
-                pList[lCount++] = &pVolumes[i];
+                pList[lCount++] = pVolume;
             }
         }
 
-        // TODO: Finish me (PC 0047C2E0): reorder/emit lights, environments and the
-        // IDraw AllocateDeviceBuffers backdrop path separately.
+        if (bLightsEnabled)
+        {
+            for (uint32_t i = lNumRegularGeoms; i < lNumRegularGeoms + lNumActualLights; ++i)
+            {
+                ZBaseGeomVolume* pVolume = &pVolumes[i];
+                ZASSERT(!pVolume->m_pBaseGeom || !pVolume->m_pBaseGeom->IsDerivedFrom<ZENVIRONMENT>());
+
+                if (IsVisible(pVolume))
+                {
+                    pList[lCount++] = pVolume;
+                }
+            }
+        }
+
+        for (uint32_t i = 0; i < lNumEnvironments; ++i)
+        {
+            ZBaseGeomVolume* pVolume = &pVolumes[lNumGeoms - 1 - i];
+            ZASSERT(pVolume->m_pBaseGeom && pVolume->m_pBaseGeom->IsDerivedFrom<ZENVIRONMENT>());
+
+            pList[lCount++] = pVolume;
+        }
 
         pVolumeList->EndGroup(lCount);
     }
