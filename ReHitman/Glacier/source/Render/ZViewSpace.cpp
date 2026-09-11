@@ -876,19 +876,76 @@ namespace Glacier
         {
             LocateRoomsAndExits();
 
-            // TODO: Finish me (PC 0047C6F0): collect the room's attached draw base
-            // geoms (m_rAttachedDrawBaseGeoms) and their render entries (IDraw),
-            // then re-emit them as backdrop volumes after disabling clip plane 1.
+            // Collect this room's attached draw base geoms (backdrops). A room carries at most
+            // two refs, each flagged via bit 0x80 of m_lGroupCon (the transient bit also wiped
+            // by ZROOM's ~0xFCFFFFFF mask). The collected list is capped at 16 across all rooms.
+            ZROOM* pAttached[16];
+            uint32_t lNrAttached = 0;
 
             for (uint32_t i = 0; i < m_Rooms.m_lNrEntries; ++i)
             {
-                CheckAndAddGeomsInRoom(pVolumeList, vPlanes, lNrPlanes, &m_Rooms.m_Array[i], bLightsEnabled, false);
+                ZROOM* pRoom = m_Rooms.m_Array[i].m_pRoom;
+
+                for (int j = 0; j < 2; ++j)
+                {
+                    ZGEOM* pGeom = ZGEOM::RefToPtr(pRoom->m_rAttachedDrawBaseGeoms[j]);
+                    if (pGeom != nullptr)
+                    {
+                        ZROOM* pAttachedRoom = static_cast<ZROOM*>(pGeom);
+
+                        if ((pAttachedRoom->m_lGroupCon & 0x80u) == 0)
+                        {
+                            pAttachedRoom->m_lGroupCon |= 0x80u;
+
+                            ZASSERT(lNrAttached < 16);
+                            pAttached[lNrAttached++] = pAttachedRoom;
+
+                            pRoom->m_pTempRoom = nullptr;
+                        }
+                    }
+                }
+            }
+
+            // TODO: Finish me (PC 0047C820): while m_bExitsEnabled is set, refresh the render
+            // entries of the attached geoms and of every visible room. For each attached draw base
+            // geom read its m_lDrawId, look up IDraw::Instance<ZRenderDraw>()->m_apRenderEntryLookup[m_lDrawId]
+            // and update its geom list (sub_4771B0 / PC 004771B0), otherwise create it via
+            // ZRenderDraw::GetOrCreateRenderEntry (PC 00473D40), then set its m_lControl bit 0.
+            // Requires reversing sub_4771B0 and ZRenderDraw::GetOrCreateRenderEntry first:
+            // if (m_bExitsEnabled) { IDraw* pIDraw = IDraw::Instance(); ... }
+
+            // Regular volumes: emit every room that is not a collected backdrop.
+            for (uint32_t i = 0; i < m_Rooms.m_lNrEntries; ++i)
+            {
+                if ((m_Rooms.m_Array[i].m_pRoom->m_lGroupCon & 0x80u) == 0)
+                {
+                    CheckAndAddGeomsInRoom(pVolumeList, vPlanes, lNrPlanes, &m_Rooms.m_Array[i], bLightsEnabled, false);
+                }
+            }
+
+            // Backdrop volumes: re-emit the attached draw base geoms with clip plane 1 disabled.
+            const bool bSavedClipPlane1 = m_bClipPlanesEnabled[1];
+            m_bClipPlanesEnabled[1] = false;
+            const uint32_t lBackdropNrPlanes = GetEnabledClipPlanes(vPlanes);
+
+            for (uint32_t i = 0; i < lNrAttached; ++i)
+            {
+                pAttached[i]->m_lGroupCon &= ~0x80u;
+
+                ZVisibleRoom backdropRoom;
+                backdropRoom.m_pRoom = pAttached[i];
+                backdropRoom.m_lNumExits = 0;
+                backdropRoom.m_pFirstExit = nullptr;
+
+                CheckAndAddGeomsInRoom(pVolumeList, vPlanes, lBackdropNrPlanes, &backdropRoom, bLightsEnabled, false);
             }
 
             for (uint32_t i = 0; i < m_Rooms.m_lNrEntries; ++i)
             {
                 m_Rooms.m_Array[i].m_pRoom->m_pTempRoom = nullptr;
             }
+
+            m_bClipPlanesEnabled[1] = bSavedClipPlane1;
 
             return false;
         }
