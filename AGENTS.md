@@ -19,3 +19,11 @@
 - Prefer `stlp::` explicitly in Glacier headers and sources for original STL containers. Do not alias `stlp` to `std`, and do not use host `std::` containers in binary-compatible Glacier layouts.
 - Never use ordinary `new`, `new[]`, `delete`, or `delete[]` in project code. Use `ZUniMemory::Allocate`/`ZUniMemory::Free` instead; placement-new construction through the project's placement-new mechanism is the only exception.
 - Never use `goto` in project code. Rewrite decompiled control flow that relies on `goto` with structured constructs (loops, `break`/`continue`, early `return`, or small helpers) while preserving the original semantics.
+- At the end of your work, you MUST verify that the code compiles. Follow these build rules strictly:
+  - **Never invent or guess build commands.** This project is built exclusively with CMake. Use only the documented CMake workflow below.
+  - **Always build in the `build` directory.** It already exists and is configured; do not reconfigure it or build in any other directory unless the user explicitly asks.
+  - **Regenerate when new `.cpp` files are added.** If the session created new C++ source files, CMake must regenerate the build system before building, otherwise the new files will not be compiled.
+  - **Steps:**
+    1. Regenerate (only if new `.cpp` files were added this session): `cmake -B build -G "Visual Studio 17 2022" -A Win32`
+    2. Build: `cmake --build build --config Debug -j`
+  - If a build command is missing or unclear, ask the user for it rather than guessing.
