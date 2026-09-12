@@ -7,6 +7,8 @@
 #include <Glacier/Geom/ZENVIRONMENT.h>
 #include <Glacier/Physics/ZCollisionBase.h>
 #include <Glacier/Data/ZEngineDataBase.h>
+#include <Glacier/Render/Draw/ZRenderDraw.h>
+#include <Glacier/Render/Entry/ZRenderEntryRoom.h>
 #include <Glacier/System/ZSysInterface.h>
 #include <xmmintrin.h>
 #include <emmintrin.h>
@@ -906,13 +908,34 @@ namespace Glacier
                 }
             }
 
-            // TODO: Finish me (PC 0047C820): while m_bExitsEnabled is set, refresh the render
-            // entries of the attached geoms and of every visible room. For each attached draw base
-            // geom read its m_lDrawId, look up IDraw::Instance<ZRenderDraw>()->m_apRenderEntryLookup[m_lDrawId]
-            // and update its geom list (sub_4771B0 / PC 004771B0), otherwise create it via
-            // ZRenderDraw::GetOrCreateRenderEntry (PC 00473D40), then set its m_lControl bit 0.
-            // Requires reversing sub_4771B0 and ZRenderDraw::GetOrCreateRenderEntry first:
-            // if (m_bExitsEnabled) { IDraw* pIDraw = IDraw::Instance(); ... }
+            // PC 0047C6F0: while exits are enabled, refresh the render entries attached to the
+            // collected draw base geoms and to every visible room. Each entry is looked up by the
+            // geom's draw id; when present its movable-geom list is refreshed (UpdateMovedGeoms)
+            // and the NOTIFIED flag is set so the entry is rebuilt for this frame.
+            if (m_bExitsEnabled)
+            {
+                ZRenderDraw* pRenderDraw = IDraw::Instance<ZRenderDraw>();
+
+                for (uint32_t i = 0; i < lNrAttached; ++i)
+                {
+                    ZRenderEntry* pEntry = pRenderDraw->GetOrCreateRenderEntry(pAttached[i]->m_baseGeom);
+                    if (pEntry != nullptr)
+                    {
+                        static_cast<ZRenderEntryRoom*>(pEntry)->UpdateMovedGeoms();
+                        pEntry->m_lControl |= ZRenderEntry::RE_NOTIFIED;
+                    }
+                }
+
+                for (uint32_t i = 0; i < m_Rooms.m_lNrEntries; ++i)
+                {
+                    ZRenderEntry* pEntry = pRenderDraw->GetOrCreateRenderEntry(m_Rooms.m_Array[i].m_pRoom->m_baseGeom);
+                    if (pEntry != nullptr)
+                    {
+                        static_cast<ZRenderEntryRoom*>(pEntry)->UpdateMovedGeoms();
+                        pEntry->m_lControl |= ZRenderEntry::RE_NOTIFIED;
+                    }
+                }
+            }
 
             // Regular volumes: emit every room that is not a collected backdrop.
             for (uint32_t i = 0; i < m_Rooms.m_lNrEntries; ++i)

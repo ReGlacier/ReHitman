@@ -569,6 +569,37 @@ namespace Glacier
         return nullptr;
     }
 
+    ZRenderEntry* ZRenderDraw::GetOrCreateRenderEntry(ZBaseGeom* pBaseGeom)
+    {
+        const uint16_t lDrawId = pBaseGeom->m_lDrawId;
+        if (lDrawId != 0)
+        {
+            return m_apRenderEntryLookup[lDrawId];
+        }
+
+        // TODO: Finish me after the ZRenderEntry factory and reuse pool are reversed.
+        // Reference (PC 0x473D40):
+        // ZRenderEntry* pEntry = CreateRenderEntryFromFactories(pBaseGeom, 0, nullptr);
+        // if (pEntry != nullptr)
+        // {
+        //     if ((pEntry->m_lControl & ZRenderEntry::RE_CONSTRUCTION_FAILED) == 0)
+        //     {
+        //         const uint16_t lId = static_cast<uint16_t>((m_RenderEntryIndex.New() + 1u) & 0x7FFFu);
+        //         ZASSERT(lId != 0);
+        //         m_apRenderEntryLookup[lId] = pEntry;
+        //         pBaseGeom->m_lDrawId = lId;
+        //         ZASSERT(m_lRenderEntriesCount + 1u <= 0x8000u);
+        //         m_apRenderEntries[m_lRenderEntriesCount++] = pEntry;
+        //     }
+        //     else
+        //     {
+        //         ZUniMemory::Delete(pEntry);
+        //     }
+        // }
+        // return pEntry;
+        return nullptr;
+    }
+
     void ZRenderDraw::UpdateBoneModifiers(ZRenderEntryLists* pLists)
     {
         ZStackArray<ELEMENTS_IN_RENDER_ENTRY_LIST_COUNT, ZRenderEntryGeom*> aGeneric, aOwners;
