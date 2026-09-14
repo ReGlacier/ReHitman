@@ -7,8 +7,15 @@
 #include <Glacier/Render/Entry/ZRenderEntrySpriteD3D.h>
 #include <Glacier/Render/Entry/ZRenderEntryGeomD3D.h>
 #include <Glacier/Render/Entry/ZRenderEntryCamera.h>
+#include <Glacier/Render/Entry/ZRenderEntryCameraD3D.h>
 #include <Glacier/Render/Entry/ZRenderEntryBones.h>
+#include <Glacier/Render/Entry/ZRenderEntryBonesD3D.h>
+#include <Glacier/Render/Entry/ZRenderEntryBonesRigid.h>
+#include <Glacier/Render/Entry/ZRenderEntryBonesRigidD3D.h>
+#include <Glacier/Render/Entry/ZRenderEntryDeformer.h>
+#include <Glacier/Render/Entry/ZRenderEntryDeformerD3D.h>
 #include <Glacier/Render/Entry/ZRenderEntryLight.h>
+#include <Glacier/Render/Entry/ZRenderEntryLightD3D.h>
 #include <Glacier/Render/Entry/SRenderEntryNotifyInfo.h>
 #include <Glacier/Render/Material/ZRenderMaterialBuffer.h>
 #include <Glacier/Render/Material/ZRenderMaterialInstance.h>
@@ -18,6 +25,9 @@
 #include <Glacier/Geom/GeomControlMasks.h>
 #include <Glacier/Geom/ZBaseGeom.h>
 #include <Glacier/Geom/ZGEOM.h>
+#include <Glacier/Geom/ZEnvSampler.h>
+#include <Glacier/Render/Entry/ZRenderEntryEnvSamplerD3D.h>
+#include <Glacier/Render/Entry/ZRenderEntryReflectorD3D.h>
 #include <Glacier/IK/ZLNKOBJ.h>
 #include <Glacier/System/ZSysMem.h>
 #include <Glacier/ZUniMemory.h>
@@ -50,27 +60,22 @@ namespace Glacier
 
         ZRenderEntry* CreateBonesD3D(ZRenderEntryGeomCreateInfo& sInfo)
         {
-            // The D3D callback's concrete class is present, but its Create symbol is
-            // not linked by the test target. The available base equivalent preserves
-            // the PC callback slot without introducing a layout.
-            return ZRenderEntryBones::Create(sInfo);
+            return ZRenderEntryBonesD3D::Create(sInfo);
         }
 
         ZRenderEntry* CreateBonesRigidD3D(ZRenderEntryGeomCreateInfo& sInfo)
         {
-            // TODO: Finish me after ZRenderEntryBonesRigidD3D is reversed.
-            (void)sInfo;
-            return nullptr;
+            return ZRenderEntryBonesRigidD3D::Create(sInfo);
         }
 
         ZRenderEntry* CreateCameraD3D(ZRenderEntryGeomCreateInfo& sInfo)
         {
-            return ZUniMemory::New<ZRenderEntryCamera>(sInfo);
+            return ZRenderEntryCameraD3D::Create(sInfo);
         }
 
         ZRenderEntry* CreateLight(ZRenderEntryGeomCreateInfo& sInfo)
         {
-            return ZRenderEntryLight::Create(sInfo);
+            return ZRenderEntryLightD3D::Create(sInfo);
         }
 
         ZRenderEntry* CreateSpriteD3D(ZRenderEntryGeomCreateInfo& sInfo)
@@ -80,23 +85,17 @@ namespace Glacier
 
         ZRenderEntry* CreateEnvSamplerD3D(ZRenderEntryGeomCreateInfo& sInfo)
         {
-            // TODO: Finish me after ZRenderEntryEnvSamplerD3D is reversed.
-            (void)sInfo;
-            return nullptr;
+            return ZRenderEntryEnvSamplerD3D::Create(sInfo);
         }
 
         ZRenderEntry* CreateReflectorD3D(ZRenderEntryGeomCreateInfo& sInfo)
         {
-            // TODO: Finish me after ZRenderEntryReflectorD3D is reversed.
-            (void)sInfo;
-            return nullptr;
+            return ZRenderEntryReflectorD3D::Create(sInfo);
         }
 
         ZRenderEntry* CreateDeformerD3D(ZRenderEntryGeomCreateInfo& sInfo)
         {
-            // TODO: Finish me after ZRenderEntryDeformerD3D is reversed.
-            (void)sInfo;
-            return nullptr;
+            return ZRenderEntryDeformerD3D::Create(sInfo);
         }
 
         ZRenderEntry* CreateRenderEntryFromFactories(
@@ -604,59 +603,80 @@ namespace Glacier
 
     void ZRenderDraw::CalcBoneLightSources(ZRenderEntryBones* pRenderEntryBones, float* pDirectLights)
     {
-        // TODO: Finish this place after ZRenderEntryBones and ZRenderDrawD3D::CalcBoneLightSources will be reversed.
-        // Reference (PC 0x4744C0):
-        // ZBaseGeom* pBaseGeom = pRenderEntryBones->GetBaseGeom();
-        // ... validates ZLNKOBJ, then calls the pure virtual
-        // CalcBoneLightSources(pBaseGeom, pDirectLights) (vtbl[47]).
+        ZBaseGeom* pBaseGeom = pRenderEntryBones->GetBaseGeom();
+        ZGEOM* pGeom = pBaseGeom->m_pExtraGeom;
+        const bool bIsLnkObj = pGeom
+            ? (pGeom->GetObjectId() & ZLNKOBJ::m_Mask) == ZLNKOBJ::m_Id
+            : pBaseGeom->IsDerivedFromStdObj(ZLNKOBJ::m_Id);
+        ZASSERT(bIsLnkObj);
+
+        const uint16_t lDrawId = pBaseGeom->m_lDrawId;
+        if (lDrawId)
+        {
+            ZRenderEntry* pEntry = m_apRenderEntryLookup[lDrawId];
+            if (pEntry)
+            {
+                CalcBoneLightSources(pBaseGeom, pDirectLights);
+            }
+        }
     }
 
     ZRenderEntry* ZRenderDraw::AddRenderEntryArray(uint32_t lPrim, const SDrawArray* pDrawArray)
     {
-        // TODO: Finish this place after ZRenderEntry factory and reuse pool will be reversed.
-        // Reference (PC 0x4741D0):
-        // ZRenderEntry* pEntry = <reuse-pool extract>(lPrim);
-        // if (!pEntry)
-        // {
-        //     pEntry = CreateRenderEntryFromFactories(nullptr, lPrim, nullptr);
-        //     if (!pEntry) return nullptr;
-        //     if (pEntry->m_lGeomListsControl & 0x10) { delete pEntry; return nullptr; }
-        //     ZASSERT(m_lRenderEntriesCount + 1 <= 0x8000);
-        //     m_apRenderEntries[m_lRenderEntriesCount++] = pEntry;
-        // }
-        // ZASSERT((pEntry->m_lControl & ZRenderEntry::RE_NOTIFIED) == 0);
-        // pEntry->m_lControl |= ZRenderEntry::RE_NOTIFIED | ZRenderEntry::RE_ADDTOREUSE;
-        // pEntry->m_pDrawArray = pDrawArray;
-        // SRenderEntryNotifyInfo notifyInfo = {};
-        // pEntry->Notify(&notifyInfo);
-        // return pEntry;
-        return nullptr;
+        ZRenderEntry* pEntry = m_pEntryReuse->GetAndRemove(lPrim);
+        if (!pEntry)
+        {
+            pEntry = CreateRenderEntryFromFactories(nullptr, lPrim, nullptr);
+            if (!pEntry)
+                return nullptr;
+
+            if ((pEntry->m_lControl & ZRenderEntry::RE_CONSTRUCTION_FAILED) != 0)
+            {
+                ZUniMemory::Delete(pEntry);
+                return nullptr;
+            }
+
+            ZASSERT(m_lRenderEntriesCount + 1u <= 0x8000u);
+            m_apRenderEntries[m_lRenderEntriesCount++] = pEntry;
+        }
+
+        ZASSERT((pEntry->m_lControl & ZRenderEntry::RE_NOTIFIED) == 0);
+        pEntry->m_lControl |= ZRenderEntry::RE_NOTIFIED | ZRenderEntry::RE_ADDTOREUSE;
+        pEntry->m_pDrawArray = pDrawArray;
+        SRenderEntryNotifyInfo notifyInfo{};
+        pEntry->Notify(&notifyInfo);
+        return pEntry;
     }
 
     ZRenderEntrySprite* ZRenderDraw::AddRenderEntrySprite(uint32_t lPrim)
     {
-        // TODO: Finish this place after ZRenderEntry factory and reuse pool will be reversed.
-        // Reference (PC 0x4740E0):
-        // ZRenderEntry* pEntry = <reuse-pool extract>(lPrim);
-        // if (!pEntry)
-        // {
-        //     pEntry = CreateRenderEntryFromFactories(nullptr, lPrim, nullptr);
-        //     if (!pEntry) return nullptr;
-        //     if (pEntry->m_lGeomListsControl & 0x10) { delete pEntry; return nullptr; }
-        //     ZASSERT(m_lRenderEntriesCount + 1 <= 0x8000);
-        //     m_apRenderEntries[m_lRenderEntriesCount++] = pEntry;
-        // }
-        // else
-        // {
-        //     ZASSERT(((ZRenderEntrySprite*)pEntry)->m_lPrim == lPrim);
-        // }
-        // ZASSERT((pEntry->m_lControl & ZRenderEntry::RE_NOTIFIED) == 0);
-        // ZASSERT(pEntry->GetType() == ZRenderEntry::RT_SPRITE);
-        // pEntry->m_lControl |= ZRenderEntry::RE_NOTIFIED | ZRenderEntry::RE_ADDTOREUSE;
-        // SRenderEntryNotifyInfo notifyInfo = {};
-        // pEntry->Notify(&notifyInfo);
-        // return (ZRenderEntrySprite*)pEntry;
-        return nullptr;
+        ZRenderEntry* pEntry = m_pEntryReuse->GetAndRemove(lPrim);
+        if (!pEntry)
+        {
+            pEntry = CreateRenderEntryFromFactories(nullptr, lPrim, nullptr);
+            if (!pEntry)
+                return nullptr;
+
+            if ((pEntry->m_lControl & ZRenderEntry::RE_CONSTRUCTION_FAILED) != 0)
+            {
+                ZUniMemory::Delete(pEntry);
+                return nullptr;
+            }
+
+            ZASSERT(m_lRenderEntriesCount + 1u <= 0x8000u);
+            m_apRenderEntries[m_lRenderEntriesCount++] = pEntry;
+        }
+        else
+        {
+            ZASSERT(static_cast<ZRenderEntrySprite*>(pEntry)->m_lPrim == lPrim);
+        }
+
+        ZASSERT((pEntry->m_lControl & ZRenderEntry::RE_NOTIFIED) == 0);
+        ZASSERT(pEntry->GetType() == ZRenderEntry::RT_SPRITE);
+        pEntry->m_lControl |= ZRenderEntry::RE_NOTIFIED | ZRenderEntry::RE_ADDTOREUSE;
+        SRenderEntryNotifyInfo notifyInfo{};
+        pEntry->Notify(&notifyInfo);
+        return static_cast<ZRenderEntrySprite*>(pEntry);
     }
 
     ZRenderEntry* ZRenderDraw::GetOrCreateRenderEntry(ZBaseGeom* pBaseGeom)

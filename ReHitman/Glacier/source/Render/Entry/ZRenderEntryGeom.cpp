@@ -398,4 +398,26 @@ namespace Glacier
     {
         return m_lPrimId;
     }
+
+    void ZRenderEntryGeom::CalcLODMask(SRenderEntryNotifyInfo* pEntry)
+    {
+        if (m_lUnknown98)
+        {
+            auto* pDraw = IDraw::Instance<ZRenderDraw>();
+            const auto lIndex = *reinterpret_cast<const uint16_t*>(
+                reinterpret_cast<const char*>(m_lUnknown98) + 0x58);
+            if (lIndex)
+            {
+                auto* pSelected = pDraw->m_apRenderEntryLookup[lIndex];
+                if (pSelected)
+                {
+                    pSelected->CalcLODMask(pEntry);
+                    pEntry->lDrawDestinationOverride = pSelected->m_lDrawDestinationOverride;
+                    return;
+                }
+            }
+        }
+
+        ZRenderEntry::CalcLODMask(pEntry);
+    }
 }

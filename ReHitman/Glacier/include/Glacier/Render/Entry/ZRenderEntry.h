@@ -83,14 +83,14 @@ namespace Glacier
         void AddToDrawChain(ZCmdList::ZCmd* pCmd, uint8_t lLODLevels, uint32_t lLayerMask, uint8_t lDrawDestination, uint8_t lTransparencyMask, bool bFirstPersonCamera);
 
         // members
-        RE_ADD_PADDING(0x10);                           // 0x04 - 0x14. TODO: Unknown; never initialized in ctors and no reads found in examined code paths
-        uint32_t m_unk14;                               // 0x14. TODO: Unknown; zeroed in ZRenderEntry ctor (PC, inlined in ZRenderEntrySprite::Ctor & ZRenderEntryGeom::Ctor)
-        RE_ADD_PADDING(0x10);                           // 0x18 - 0x28. TODO: Unknown; never initialized in ctors and no reads found in examined code paths
+        RE_ADD_PADDING(0x10);                           // 0x04 - 0x14. Unknown; never initialized in ctors and no reads found in examined code paths
+        uint32_t m_unk14;                               // 0x14. Unknown; zeroed in ZRenderEntry ctor (PC, inlined in ZRenderEntrySprite::Ctor & ZRenderEntryGeom::Ctor)
+        RE_ADD_PADDING(0x10);                           // 0x18 - 0x28. Unknown; never initialized in ctors and no reads found in examined code paths
         uint8_t m_lLODLevelsActive;                     // 0x28. Verified by ZRenderEntry::EndFrame & ZRenderEntryGeom::Notify (PC). Name from XBox MiniNinjas PDB
         uint8_t m_lLODLevelsWanted;                     // 0x29. Verified by ZRenderEntry::EndFrame & ZRenderEntrySprite::Notify (PC)
         uint8_t m_lVariantId;                           // 0x2A. Verified by ZRenderEntryGeom::Notify & ZRenderEntryBones ctor (PC). Name from XBox MiniNinjas PDB
         uint8_t m_lEntryListsMask;                      // 0x2B. Verified by ZRenderEntryLists::Add & ZRenderEntry dtor (PC). Name from XBox MiniNinjas PDB
-        uint8_t m_unk2C;                                // 0x2C. TODO: Unknown; zeroed in ZRenderEntry ctor (PC). XBox candidates: m_lChildView / m_lExtraFlags
+        uint8_t m_unk2C;                                // 0x2C. Unknown; zeroed in ZRenderEntry ctor (PC). XBox candidates: m_lChildView / m_lExtraFlags
         uint8_t m_lDrawDestinationOverride;             // 0x2D. Verified by ZRenderEntry::InitRenderEntryInstance & ZRenderEntryGeom ctor (PC). Name from XBox MiniNinjas PDB
         uint8_t m_lGeomListsControl;                    // 0x2E. Bitmask of (1 << ZRenderEntryLists::LISTTYPES). Verified by ZRenderEntryLists::Add & ZRenderEntryGeom ctor (PC). Name from XBox MiniNinjas PDB
         uint8_t m_lFade;                                // 0x2F. 0xFF = no fade, else m_fObjectFade = m_lFade * (1.f / 254.f) * 0.85f + 0.15f clamped to 1.f. Verified by ZRenderEntryGeom::SetRenderContext & ZRenderEntryBones::SetRenderContext (PC)

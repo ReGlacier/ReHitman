@@ -20,6 +20,7 @@ namespace Glacier
         RENDERENTRY_BASETYPE GetType() const override;
         ZBaseGeom* GetBaseGeom() const override;
         uint32_t GetPrim() const override;
+        void CalcLODMask(SRenderEntryNotifyInfo* pEntry) override;
 
         // methods
         ZRenderEntryGeom(const ZRenderEntryGeomCreateInfo& sInfo);

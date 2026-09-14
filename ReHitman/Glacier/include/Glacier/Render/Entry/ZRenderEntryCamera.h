@@ -20,4 +20,6 @@ namespace Glacier
         // members
         uint32_t m_lDrawConForbid;
     };
+    RE_VERIFY_OFFSET(ZRenderEntryCamera, m_lDrawConForbid, 0x9C);
+    RE_VERIFY_SIZE(ZRenderEntryCamera, 0xA0);
 }

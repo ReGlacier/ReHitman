@@ -24,6 +24,12 @@ namespace Glacier
     STATIC_GLOBAL_CLASS_INSTANCE_IMPL(IDirect3DVertexBuffer9*, g_pVBPDT2, 0x0090DC7C, nullptr);
     STATIC_GLOBAL_CLASS_INSTANCE_IMPL(IDirect3DVertexBuffer9*, g_pVBPDT3, 0x0090DC80, nullptr);
     STATIC_GLOBAL_CLASS_INSTANCE_IMPL(IDirect3DVertexBuffer9*, g_pVBPDT4, 0x0090DC84, nullptr);
+    STATIC_GLOBAL_CLASS_INSTANCE_IMPL(IDirect3DCubeTexture9*, g_pNormalizedCubeMap, 0x0090ADAC, nullptr);
+    STATIC_GLOBAL_CLASS_INSTANCE_IMPL(IDirect3DTexture9*, g_pAnisotropicMap, 0x0090AD64, nullptr);
+    STATIC_GLOBAL_CLASS_INSTANCE_IMPL(IDirect3DTexture9*, g_pSpecularMap, 0x0090AD1C, nullptr);
+    STATIC_GLOBAL_CLASS_INSTANCE_IMPL(IDirect3DTexture9*, g_pScatterMap, 0x0090ACD4, nullptr);
+    STATIC_GLOBAL_CLASS_INSTANCE_IMPL(IDirect3DTexture9*, g_pghPhaseMap, 0x0090AC8C, nullptr);
+    STATIC_GLOBAL_CLASS_INSTANCE_IMPL(IDirect3DTexture9*, g_pRefractionMap, 0x0090AC44, nullptr);
     STATIC_GLOBAL_CLASS_INSTANCE_IMPL(IDirect3DSurface9*, g_pShadowMapDepthBuffers, 0x0090AA70, nullptr);
     STATIC_GLOBAL_CLASS_INSTANCE_IMPL(SpotMapArray_t, g_pSpotAttenuationMap, 0x0090AA14, {});
     STATIC_GLOBAL_CLASS_INSTANCE_IMPL(SpotMapArray_t, g_pSpotAttenuationMap2, 0x0090A98C, {});

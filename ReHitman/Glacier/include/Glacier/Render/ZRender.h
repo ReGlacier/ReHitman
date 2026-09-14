@@ -7,8 +7,8 @@
 
 namespace Glacier
 {
-    struct ZRenderDrawBase;
-    struct ZBoneModifyBase;
+    class ZRenderDrawBase;
+    class ZBoneModifyBase;
     struct SPrims;
     class IView;
     class ZCAMERA;

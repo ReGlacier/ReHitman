@@ -89,7 +89,7 @@ namespace Glacier
         }
 
         ZRenderEntryLists::m_lActiveListIds |= 1 << lFreeBit;
-        m_lListId = ZRenderEntryLists::m_lActiveListIds;
+        m_lListId = lFreeBit;
     }
 
     STATIC_CLASS_VAR_IMPL(ZRenderEntryLists, uint8_t, m_lActiveListIds, 0x008EC160, 0);

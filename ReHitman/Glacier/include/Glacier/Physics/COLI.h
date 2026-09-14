@@ -20,7 +20,7 @@ namespace Glacier
         ZVector3 cp;
         float t;
         uint32_t m_BoneId;
-        uint32_t m_Unknown2C; // Really idk, this is padding in PS2
+        RE_ADD_PADDING(4); // KL1: Confirmed padding by 4 bytes due COLI aligned by 8?
         STempStripsUniqueId m_HitCache;
         uint32_t m_iColiMaterialDescId;
         uint32_t ColiRef;
@@ -31,5 +31,4 @@ namespace Glacier
         RE_ADD_PADDING(3);
     };
     RE_VERIFY_SIZE(COLI, 0x68);
-    RE_VERIFY_OFFSET(COLI, m_Unknown2C, 0x2C);
 }

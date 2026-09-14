@@ -56,7 +56,8 @@ namespace Glacier
         float fLODScale,
         uint32_t lLayer,
         uint32_t lDrawDestination,
-        uint32_t lTransparencyMask
+        uint32_t lTransparencyMask,
+        bool bMirror
     )
     {
         ZCmdList::ZCmd* pCmd = pCmdList->Current();
@@ -74,7 +75,7 @@ namespace Glacier
         sInfo.vObserver[0] = vObserver.x;
         sInfo.vObserver[1] = vObserver.y;
         sInfo.vObserver[2] = vObserver.z;
-        sInfo.bMirror = false;
+        sInfo.bMirror = bMirror;
         sInfo.bFirstPersonCamera = false;
         sInfo.lDrawDestinationOverride = 0;
 

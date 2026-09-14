@@ -1502,7 +1502,23 @@ namespace Glacier
 
     inline void ConvertZMatrixToMat44(ZMat4x4& m, const ZMatrix& mp)
     {
-        // TODO: Finish me
+        // ZMatrix stores basis vectors in Glacier's transposed 3x3 layout.
+        m.data[0] = mp.m0.data[6];
+        m.data[1] = mp.m0.data[3];
+        m.data[2] = mp.m0.data[0];
+        m.data[3] = 0.0f;
+        m.data[4] = mp.m0.data[7];
+        m.data[5] = mp.m0.data[4];
+        m.data[6] = mp.m0.data[1];
+        m.data[7] = 0.0f;
+        m.data[8] = mp.m0.data[8];
+        m.data[9] = mp.m0.data[5];
+        m.data[10] = mp.m0.data[2];
+        m.data[11] = 0.0f;
+        m.data[12] = mp.p0.x;
+        m.data[13] = mp.p0.y;
+        m.data[14] = mp.p0.z;
+        m.data[15] = 1.0f;
     }
 
     inline void pcpy(float* vres, const float* v0)

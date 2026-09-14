@@ -48,22 +48,18 @@ namespace Glacier
 
     void ZRenderEntry::Notify(const SRenderEntryNotifyInfo* pEntry)
     {
-        // Do nothing
     }
 
     void ZRenderEntry::Update()
     {
-        // Do nothing
     }
 
     void ZRenderEntry::AttachUpdate()
     {
-        // Do nothing
     }
 
     void ZRenderEntry::GetVisible(ZCmdList* pCmdList, ZRenderEntryGeom* pGeomEntry, ZViewSpace* pViewSpace, ZRenderView* pView, ZRenderEntryLists* pEntryList)
     {
-        // Do nothing
     }
 
     uint32_t ZRenderEntry::GetInstanceRepeat(const ZRenderObjectInstance* pObjInstance)
@@ -79,30 +75,29 @@ namespace Glacier
     void ZRenderEntry::EndFrame()
     {
         m_lControl &= ~(RE_NOTIFIED | RE_NEEDUPDATE | RE_UPDATELIGHT | RE_CREATEDTHISFRAME | RE_HASMOVED);
+        m_pEnvironment = nullptr;
 
-        const auto lAvailableLODLevels = m_lLODLevelsActive & m_lLODLevelsWanted;
-        if (lAvailableLODLevels)
+        const auto lRemovedLODLevels = m_lLODLevelsActive & ~m_lLODLevelsWanted;
+        if (lRemovedLODLevels)
         {
-            int i = 0;
-
-            do
+            uint32_t lWriteIndex = 0;
+            for (uint32_t lReadIndex = 0; lReadIndex < m_lNumRenderEntryInstances; ++lReadIndex)
             {
-                auto* ppInstances = m_pRenderEntryInstances;
-                auto* pEntry = ppInstances[i];
+                auto* pEntry = m_pRenderEntryInstances[lReadIndex];
 
-                if ((pEntry->lBoneIndexMask & static_cast<uint8_t>(lAvailableLODLevels)) == 0 || (pEntry->lBoneIndexMask & m_lLODLevelsWanted) != 0 || (pEntry->lTransparencyMask & 1) != 0)
+                if ((pEntry->lBoneIndexMask & static_cast<uint8_t>(lRemovedLODLevels)) == 0 ||
+                    (pEntry->lBoneIndexMask & m_lLODLevelsWanted) != 0 ||
+                    (pEntry->lTransparencyMask & 1) != 0)
                 {
-                    ppInstances[i++] = pEntry;
+                    m_pRenderEntryInstances[lWriteIndex++] = pEntry;
                 }
                 else
                 {
-                    ppInstances[i++] = nullptr;
+                    m_pRenderEntryInstances[lReadIndex] = nullptr;
                     IDraw::Instance<ZRenderDraw>()->DestroyRenderEntryInstance(pEntry);
                 }
             }
-            while (i < m_lNumRenderEntryInstances);
-
-            m_lNumRenderEntryInstances = i;
+            m_lNumRenderEntryInstances = static_cast<uint16_t>(lWriteIndex);
         }
 
         m_lLODLevelsActive = m_lLODLevelsWanted;
@@ -253,7 +248,6 @@ namespace Glacier
 
     void ZRenderEntry::GetAttachedBaseGeoms(ZStackArray<1024, ZRenderEntry::ZAttachedBaseGeom>* pArray)
     {
-        // Do nothing
     }
 
     void* ZRenderEntry::AllocateMemory(uint32_t lSize)
@@ -265,7 +259,7 @@ namespace Glacier
 
         {
             PUSH_MEMORY_COLOR(0xF00000u);
-            return ZUniMemory::Allocate(sizeof(uint32_t) * lSize);
+            return ZUniMemory::Allocate(sizeof(SRenderEntryInstance*) * lSize, RENDERCPU_MEM);
         }
     }
 
@@ -319,7 +313,7 @@ namespace Glacier
             {
                 if (m_pRenderEntryInstances != m_RenderEntryInstanceTable)
                 {
-                    ZUniMemory::Delete(m_pRenderEntryInstances);
+                    ZUniMemory::Free(m_pRenderEntryInstances);
                 }
             }
 

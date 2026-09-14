@@ -184,7 +184,14 @@ namespace Glacier
 
     ZRenderEntryCameraD3D* ZRenderEntryCameraD3D::Create(const ZRenderEntryGeomCreateInfo& sInfo)
     {
-        if (!sInfo.m_pBaseGeom->IsDerivedFrom<ZCAMERA>())
+        if (!sInfo.m_pBaseGeom)
+            return nullptr;
+
+        const auto* pGeom = sInfo.m_pBaseGeom->GetGeom();
+        const bool bCamera = pGeom
+            ? pGeom->IsDerivedFrom<ZCAMERA>()
+            : sInfo.m_pBaseGeom->IsDerivedFromStdObj(ZCAMERA::m_Id);
+        if (!bCamera)
             return nullptr;
 
         return ZUniMemory::New<ZRenderEntryCameraD3D>(sInfo);

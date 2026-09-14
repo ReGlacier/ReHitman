@@ -87,13 +87,13 @@ namespace Glacier
         m_lNumMovableGeomVolumes = lNumMovable;
         if (lNumMovable)
         {
-            m_pMovableGeomVolumes = static_cast<ZRoomGeomVolumes**>(
-                ZUniMemory::Allocate(sizeof(ZRoomGeomVolumes*) * lNumMovable));
+            m_pMovableGeomVolumes = static_cast<ZBaseGeomVolume**>(
+                ZUniMemory::Allocate(sizeof(ZBaseGeomVolume*) * lNumMovable));
             if (m_pMovableGeomVolumes)
             {
                 for (uint32_t i = 0; i < lNumMovable; ++i)
                 {
-                    m_pMovableGeomVolumes[i] = reinterpret_cast<ZRoomGeomVolumes*>(
+                    m_pMovableGeomVolumes[i] = reinterpret_cast<ZBaseGeomVolume*>(
                         reinterpret_cast<char*>(m_pStaticVolumesHeader) + sizeof(ZRoomGeomVolumes::ZHeader)
                         + sizeof(ZBaseGeomVolume) * aMovable[i]);
                 }
@@ -189,7 +189,7 @@ namespace Glacier
         auto* pRoomBaseGeom = pGeom->BaseGeom();
         for (uint32_t i = 0; i < m_lNumMovableGeomVolumes; ++i)
         {
-            auto* pVolume = reinterpret_cast<ZBaseGeomVolume*>(m_pMovableGeomVolumes[i]);
+            auto* pVolume = m_pMovableGeomVolumes[i];
             auto* pBaseGeom = pVolume->m_pBaseGeom;
             if ((pBaseGeom->m_lControl & ZCHASMOVED) != 0 || pBaseGeom->IsMovingObject())
             {

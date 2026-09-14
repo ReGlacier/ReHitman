@@ -48,7 +48,7 @@ namespace Glacier
     struct ZPrimHandle;
 
     // Legacy
-    class ZOldDrawInfo;
+    struct ZOldDrawInfo;
     class ZRender;
     class IView;
     class IDraw;
@@ -60,17 +60,20 @@ namespace Glacier
     class ZRenderEntry;
     class ZRenderEntryGeom;
     class ZRenderEntryBones;
+    class ZRenderEntryBonesRigid;
+    class ZRenderEntryBonesRigidD3D;
+    class ZRenderEntryReflectorD3D;
+    class ZRenderEntryDeformer;
     class ZRenderEntrySprite;
     class ZRenderEntryLists;
     struct SRenderEntryInstance;
 
     // Others
     class ZRenderBaseDll;
-    struct ZRenderDrawBase;
-    struct ZBoneModifyBase;
+    class ZRenderDrawBase;
+    class ZBoneModifyBase;
     class ZTextureBase;
     class ZBitmap;
-    class ZBoneModifyBase; // rly here?
     class ZRagdollContainer;
     class ZPrimControlBase;
     class ZRenderMaterialBuffer;

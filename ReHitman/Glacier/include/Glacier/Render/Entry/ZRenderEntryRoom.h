@@ -24,9 +24,13 @@ namespace Glacier
 
         // members
         ZRoomGeomVolumes::ZHeader* m_pStaticVolumesHeader;
-        ZRoomGeomVolumes** m_pMovableGeomVolumes;
+        ZBaseGeomVolume** m_pMovableGeomVolumes;
         uint32_t m_lNumMovableGeomVolumes;
         uint32_t m_lLastFrameUpdate;
     };
+    RE_VERIFY_OFFSET(ZRenderEntryRoom, m_pStaticVolumesHeader, 0x9C);
+    RE_VERIFY_OFFSET(ZRenderEntryRoom, m_pMovableGeomVolumes, 0xA0);
+    RE_VERIFY_OFFSET(ZRenderEntryRoom, m_lNumMovableGeomVolumes, 0xA4);
+    RE_VERIFY_OFFSET(ZRenderEntryRoom, m_lLastFrameUpdate, 0xA8);
     RE_VERIFY_SIZE(ZRenderEntryRoom, 0xACu); // Verified PC alloc
 }

@@ -24,4 +24,6 @@ namespace Glacier
         // members
         ZPrimHandle m_hPrimLight;
     };
+    RE_VERIFY_OFFSET(ZRenderEntryLight, m_hPrimLight, 0x9C);
+    RE_VERIFY_SIZE(ZRenderEntryLight, 0xA0);
 }

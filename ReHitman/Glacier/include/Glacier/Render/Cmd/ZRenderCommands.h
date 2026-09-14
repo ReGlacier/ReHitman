@@ -22,7 +22,8 @@ namespace Glacier
         float fLODScale,
         uint32_t lLayer,
         uint32_t lDrawDestination,
-        uint32_t lTransparencyMask
+        uint32_t lTransparencyMask,
+        bool bMirror = false
     );
     void CmdScissorSetup(ZCmdList* pCmdList, ZRenderView* pRenderView, const ZVector4& vScissor, bool bUnk);
 

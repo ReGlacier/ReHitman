@@ -11,7 +11,10 @@
 #include <Glacier/ZSTL/ZOffsetAlloc.h>
 #include <Glacier/ZSTL/REFTAB.h>
 #define XMD_H   // avoid INT16/INT32 typedefs from jmorecfg.h conflicting with other headers
+extern "C"
+{
 #include <jpeglib.h>
+}
 #undef XMD_H
 #include <Glacier/ZSTL/STLport.h>
 #include <Glacier/System/ZSysInterface.h>
@@ -431,6 +434,18 @@ namespace Glacier
         }
 
         g_pd3dDevice->Clear(0, nullptr, lClearFlags, lClearColor, 1.0f, 0);
+    }
+
+    // PC 0x00489160 (retn 0x1C; empty stub)
+    void ZRenderWintelD3D::SetProjection(const float, const float, const float, const float, const float, const float, const bool)
+    {
+        // Do nothing
+    }
+
+    // PC 0x0042A470 (retn 0x10; empty stub)
+    void ZRenderWintelD3D::SetModelView(const float*, const float*, const float, const float)
+    {
+        // Do nothing
     }
 
     // PC 0x00489170. Sets the fog table render states. The game uses the legacy D3D8 fog-table

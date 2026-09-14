@@ -1,4 +1,5 @@
 #include <Glacier/Render/Decal/ZDecalMarkController.h>
+#include <Glacier/Render/Prim/ZPrimAccessMesh.h>
 #include <Glacier/Geom/ZBaseGeom.h>
 #include <Glacier/Geom/GeomControlMasks.h>
 #include <cstring>
@@ -129,26 +130,25 @@ namespace Glacier
 
     void ZDecalMarkController::Modify(ZDecalMarkController::ZDecalMark* pDecalMark, float fOpacity)
     {
-        // TODO: Finish this place after ZPrimAccessMesh will be reversed
         // Reference (PC 0x47CFE0):
-        // uint32_t lAlpha = static_cast<uint32_t>((1.0f - fOpacity) * 255.0f);
-        // if (lAlpha > 0xFF)
-        // {
-        //     lAlpha = 0xFF;
-        // }
-        // const uint32_t lColor = (lAlpha << 24) | 0xFFFFFF;
-        //
-        // for (ZLink* pLink = pDecalMark->m_pLinks; pLink; pLink = pLink->m_pNext)
-        // {
-        //     ZPrimAccessMesh* pMesh = pLink->m_pPrimAccessMesh;
-        //     pMesh->Lock(2);
-        //     const uint32_t lNumVertices = pMesh->GetNumVertices();
-        //     uint32_t* pColors = static_cast<uint32_t*>(_alloca(sizeof(uint32_t) * lNumVertices));
-        //     pMesh->GetVertexData(0, lNumVertices, pColors);
-        //     memset32(pColors, lColor, lNumVertices);
-        //     pMesh->SetVertexData(0, lNumVertices, pColors);
-        //     pMesh->Unlock();
-        // }
+        uint32_t lAlpha = static_cast<uint32_t>((1.0f - fOpacity) * 255.0f);
+        if (lAlpha > 0xFF)
+        {
+            lAlpha = 0xFF;
+        }
+        const uint32_t lColor = (lAlpha << 24) | 0xFFFFFF;
+
+        for (ZLink* pLink = pDecalMark->m_pLinks; pLink; pLink = pLink->m_pNext)
+        {
+            ZPrimAccessMesh* pMesh = pLink->m_pPrimAccessMesh;
+            pMesh->Lock(2);
+            const uint32_t lNumVertices = pMesh->GetNumVertices();
+            uint32_t* pColors = static_cast<uint32_t*>(_alloca(sizeof(uint32_t) * lNumVertices));
+            pMesh->GetColors(0, lNumVertices, pColors);
+            memset(pColors, lColor, lNumVertices);
+            pMesh->SetColors(0, lNumVertices, pColors);
+            pMesh->Unlock();
+        }
     }
 
     void ZDecalMarkController::Remove(ZDecalMarkController::ZDecalMark* pDecalMark)
@@ -184,8 +184,7 @@ namespace Glacier
         {
             for (ZLink* pLink = pNode->m_Value; pLink && lCount != lMaxNumObjects; pLink = pLink->m_pNextSameGeom)
             {
-                // TODO: Finish this place after ZPrimAccessMesh will be reversed
-                // pObjects[lCount] = pLink->m_pPrimAccessMesh->m_hPrim;
+                pObjects[lCount] = pLink->m_pPrimAccessMesh->m_hPrim;
                 ++lCount;
             }
         }

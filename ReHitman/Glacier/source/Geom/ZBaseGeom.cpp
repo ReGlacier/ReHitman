@@ -15,6 +15,7 @@
 #include <Glacier/Geom/ZGateLightSpot.h>
 #include <Glacier/Geom/ZGateLightSpotSquare.h>
 #include <Glacier/IK/ZLNKOBJ.h>
+#include <Glacier/IK/ZIKLNKOBJ.h>
 #include <Glacier/Geom/ZROOM.h>
 #include <Glacier/Geom/ZTreeGroup.h>
 #include <Glacier/Physics/ZCollisionBase.h>
@@ -2775,6 +2776,7 @@ void ZBaseGeom::RemoveDynamicParent()
     template bool ZBaseGeom::IsDerivedFrom<ZGROUP>() const;
     template bool ZBaseGeom::IsDerivedFrom<ZLIGHT>() const;
     template bool ZBaseGeom::IsDerivedFrom<ZLNKOBJ>() const;
+    template bool ZBaseGeom::IsDerivedFrom<ZIKLNKOBJ>() const;
     template bool ZBaseGeom::IsDerivedFrom<ZWINOBJ>() const;
     template bool ZBaseGeom::IsDerivedFrom<ZCHAROBJ>() const;
     template bool ZBaseGeom::IsDerivedFrom<ZWINGROUP>() const;
