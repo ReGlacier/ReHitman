@@ -296,6 +296,7 @@ namespace Glacier
 
             const uint32_t lDrawGeomCount = static_cast<uint32_t>(pRoom->GetDynamicDrawGeomsLists(pBaseGeoms, pListEnd) - pBaseGeoms);
             const uint32_t lTotal = static_cast<uint32_t>(pRoom->GetDynamicLightsInRoom(pBaseGeoms + lDrawGeomCount, pListEnd) - pBaseGeoms);
+            lNumGeoms = 0;
 
             for (uint32_t i = 0; i < lTotal; ++i)
             {
@@ -308,8 +309,7 @@ namespace Glacier
                 ZBaseGeom* pEnv = nullptr;
                 if (pGeom->IsDerivedFrom<ZLNKOBJ>())
                 {
-                    // TODO: Finish me after ZGEOM PreSaveGame exposed (PC 0047B860):
-                    // pEnv = (ZBaseGeom*)pGeom->...->PreSave; character-environment id.
+                    pEnv = GetCharacterEnvironment(pEnvironment);
 
                     ZBaseGeom* pParent = pGeom->m_pParent;
                     if ((pParent->m_lControl & 0x40000) != 0 && (pParent->m_lControl & 0x40000000) == 0)
@@ -320,8 +320,7 @@ namespace Glacier
                             ZBaseGeom* pRoomEnv = pRoomList->m_pRooms[0]->m_pEnvironment;
                             if (pRoomEnv)
                             {
-                                // TODO: pEnv = (ZBaseGeom*)pRoomEnv->...->PreSave;
-                                pEnv = pRoomEnv;
+                                pEnv = GetCharacterEnvironment(pRoomEnv);
                             }
                         }
                     }

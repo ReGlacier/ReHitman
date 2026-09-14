@@ -15,6 +15,7 @@ namespace Glacier
 {
     // fwds
     class ZBaseGeom;
+    class ZVolumeList;
 
     class ZRenderDraw : public ZRenderDrawBase
     {
@@ -84,6 +85,14 @@ namespace Glacier
         ZRenderEntry* AddRenderEntryArray(uint32_t lPrim, const SDrawArray* pDrawArray);
         ZRenderEntrySprite* AddRenderEntrySprite(uint32_t lPrim);
         ZRenderEntry* GetOrCreateRenderEntry(ZBaseGeom* pBaseGeom);
+        uint32_t CreateRenderEntries(
+            ZRenderEntry** pRenderEntries,
+            uint32_t lMaxNumEntries,
+            ZVolumeList* pVolumeList,
+            ZRenderEntryLists* pGeomList,
+            ZRenderEntry* pObserverEntry,
+            float* vObserver,
+            float fLODScale);
         void UpdateBoneModifiers(ZRenderEntryLists* pLists);
         void UpdateBoneModifiersList(ZStackArray<ELEMENTS_IN_RENDER_ENTRY_LIST_COUNT, ZRenderEntryGeom*>& sList);
         void UpdateBoneModifiersListIK(ZStackArray<ELEMENTS_IN_RENDER_ENTRY_LIST_COUNT, ZRenderEntryGeom*>& sList);

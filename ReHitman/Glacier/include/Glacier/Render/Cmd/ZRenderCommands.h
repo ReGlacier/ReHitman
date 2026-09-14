@@ -25,4 +25,5 @@ namespace Glacier
         uint32_t lTransparencyMask
     );
     void CmdScissorSetup(ZCmdList* pCmdList, ZRenderView* pRenderView, const ZVector4& vScissor, bool bUnk);
+
 }

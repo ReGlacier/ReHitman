@@ -811,5 +811,36 @@ namespace Glacier
         return !m_pDynamicsExt && (!m_pRagdoll || !m_pRagdoll->IsActive()) && !m_bPassive;
     }
 
+    bool ZBoneModifyBase::CheckPointInside(const ZVector3& vPoint, const ZVector3& vBone, const SBoneDefinition *pBoneDefinition) const
+    {
+        const auto* pBones = reinterpret_cast<const ZBone*>(&vBone);
+        ZVector3 vResult = vPoint - m_vCenter;
+        vResult.x = std::fabs(vResult.x);
+        vResult.y = std::fabs(vResult.y);
+        vResult.z = std::fabs(vResult.z);
+        if (m_vSize.x < vResult.x || m_vSize.y < vResult.y || m_vSize.z < vResult.z)
+            return false;
+
+        const ZVector3 vTolerance(5.0f);
+        for (uint32_t i = 0; i < m_lNumActiveBones; ++i)
+        {
+            if (pBoneDefinition[i].Size.x == 0.0f && pBoneDefinition[i].Size.y == 0.0f && pBoneDefinition[i].Size.z == 0.0f)
+                continue;
+
+            vResult = vPoint - pBones[i]._Pos;
+            vmtmul(vResult, pBones[i]._Mat);
+            vResult -= pBoneDefinition[i].Center;
+            vResult.x = std::fabs(vResult.x);
+            vResult.y = std::fabs(vResult.y);
+            vResult.z = std::fabs(vResult.z);
+
+            const ZVector3 vBounds = pBoneDefinition[i].Size + vTolerance;
+            if (vBounds.x > vResult.x && vBounds.y > vResult.y && vBounds.z > vResult.z)
+                return true;
+        }
+
+        return false;
+    }
+
     STATIC_GLOBAL_CLASS_INSTANCE_IMPL(int32_t, lDecalLookup, 0x008EBE58, 0);
 }

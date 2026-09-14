@@ -8,6 +8,7 @@
 namespace Glacier
 {
     class ZCAMERA;
+    class ZCameraSpace;
 
     // PC vtable 0x007638EC (160 slots). The Direct3D9 render implementation. Owns the D3D device,
     // swap chain, offscreen/antialias surfaces, Bink video texture and the present parameters.
@@ -69,6 +70,8 @@ namespace Glacier
         void InitSwapChain();   // PC 0x004885D0
         void sub_48AB70();      // PC 0x0048AB70 (post-device-reset reallocation)
         static void HandleOverrideSLIOption(); // PC 0x00488420 (NVCPL SLI override)
+        void CreateFrustumFromCameraSpace(ZMat4x4* pMatProj, ZCameraSpace* pCameraSpace,
+            const uint32_t* pViewport, bool bInfiniteFar, bool bFirstPersonMode); // PC 0x00488F00
 
         // members
         char m_field1524;                // +0x1524

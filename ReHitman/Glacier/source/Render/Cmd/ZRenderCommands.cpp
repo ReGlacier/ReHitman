@@ -109,4 +109,5 @@ namespace Glacier
         pData->z = vScissor.z;
         pData->w = vScissor.w;
     }
+
 }

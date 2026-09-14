@@ -18,6 +18,7 @@
 #include <Glacier/System/ZRX86AllocIf.h>
 #include <Glacier/Input/SysInput.h>
 #include <Glacier/Input/ZSysInputWintel.h>
+#include <Glacier/Camera/ZCameraSpace.h>
 
 #include <cmath>
 #include <cstdio>
@@ -132,6 +133,74 @@ namespace Glacier
             m_field16FC->Release();
             m_field16FC = nullptr;
         }
+    }
+
+    void ZRenderWintelD3D::CreateFrustumFromCameraSpace(ZMat4x4* pMat, ZCameraSpace* pCameraSpace,
+        const uint32_t* pViewport, bool bInfiniteFar, bool bFirstPersonMode)
+    {
+        const float fViewportWidth = static_cast<float>(pViewport[2] - pViewport[0]);
+        const float fViewportHeight = static_cast<float>(pViewport[3] - pViewport[1]);
+        const float fAspect = static_cast<float>(GetSizeX()) / static_cast<float>(GetSizeY());
+        const float fViewportAspect = fViewportWidth / fViewportHeight;
+        const float fViewportScale = fAspect / fViewportAspect * pCameraSpace->GetViewAspect();
+        const float fInvAspect = 1.0f / fAspect;
+        const float fInvPixelAspect = 1.0f / PixelAspectXY();
+        float fNear = pCameraSpace->GetNear();
+        if (fNear < 5.0f)
+            fNear = 5.0f;
+        const float fFar = pCameraSpace->GetFar();
+
+        if (pCameraSpace->IsMain())
+        {
+            const float fLeft = -1.0f / (pCameraSpace->GetScaleX() + pCameraSpace->GetScaleX());
+            const float fRight = -fLeft;
+            const float fHalfHeight = fInvAspect * pCameraSpace->GetScaleY();
+            const float fTop = fInvAspect / (fHalfHeight + fHalfHeight) * fViewportScale;
+            const float fBottom = -fTop;
+            pMat->data[0] = 2.0f / (fRight - fLeft);
+            pMat->data[1] = pMat->data[2] = pMat->data[3] = 0.0f;
+            pMat->data[4] = 0.0f;
+            pMat->data[5] = 2.0f / (fTop - fBottom);
+            pMat->data[6] = pMat->data[7] = pMat->data[8] = pMat->data[9] = 0.0f;
+            pMat->data[10] = 1.0f / (fTop - fBottom);
+            pMat->data[11] = 0.0f;
+            pMat->data[12] = -(fLeft + fRight) / (fRight - fLeft);
+            pMat->data[13] = -(fBottom + fTop) / (fTop - fBottom);
+            pMat->data[14] = -fNear / (fTop - fBottom);
+            pMat->data[15] = 1.0f;
+            return;
+        }
+
+        const float fFov = bFirstPersonMode
+            ? pCameraSpace->CalcFieldOfViewXFirstPerson()
+            : pCameraSpace->CalcFieldOfViewX();
+        const float fTanHalfFov = std::tan(fFov * 0.5f);
+        const float fRight = fNear * fTanHalfFov;
+        const float fTop = fTanHalfFov * fInvAspect * fViewportScale * fNear / fInvPixelAspect;
+        pMat->data[0] = (fNear + fNear) / (fRight - (-fRight));
+        pMat->data[1] = 0.0f;
+        pMat->data[2] = 0.0f;
+        pMat->data[3] = 0.0f;
+        pMat->data[4] = 0.0f;
+        pMat->data[5] = (fNear + fNear) / (fTop - (-fTop));
+        pMat->data[6] = 0.0f;
+        pMat->data[7] = 0.0f;
+        pMat->data[8] = 0.0f;
+        pMat->data[9] = 0.0f;
+        pMat->data[11] = 1.0f;
+        pMat->data[12] = 0.0f;
+        pMat->data[13] = 0.0f;
+        if (!bInfiniteFar)
+        {
+            pMat->data[10] = fFar / (fFar - fNear);
+            pMat->data[14] = -fFar * fNear / (fFar - fNear);
+        }
+        else
+        {
+            pMat->data[10] = 1.0f;
+            pMat->data[14] = -fNear;
+        }
+        pMat->data[15] = 0.0f;
     }
 
     // PC 0x004885D0. Creates the swap chain, back buffer and offscreen surfaces.

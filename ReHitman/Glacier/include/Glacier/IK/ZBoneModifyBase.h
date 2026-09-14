@@ -59,6 +59,7 @@ namespace Glacier
         bool DoAnimations() const;
         void LoadSave(ISerializerStream& stream, bool bSaving);
         bool ActivateRagdoll(ZLNKOBJ* pLnkObj, bool bActive, bool bEnableTimeout, bool bUseDamping);
+        bool CheckPointInside(const ZVector3& vPoint, const ZVector3& vBone, const SBoneDefinition *pBoneDefinition) const;
 
         // members
         bool m_bIsPlayer;

@@ -449,13 +449,12 @@ namespace Glacier
                     vmmul(vCenter.Get(), pChild->m_vCen.Get(), pChild->m_mMat.Get());
                     vadd(vCenter.Get(), pChild->m_vPos.Get());
 
-                    // TODO: Verify the group bound-tree flag test (PC 0047AEA0,
-                    // a virtual call result whose bit 15 gates the sphere test).
-                    // Decompiled control flow skips the sphere test when the flag
-                    // is set; treat every child as cullable for now.
+                    // PC slot 140 on the ZGROUP vtable is GroupControl().
+                    const bool bSkipSphereTest =
+                        (pChildGroup->GroupControl() & ZGROUP::ZGRPCF_INVALID_BOUNDS) != 0;
                     const float fRadius = pChild->m_fRadius;
 
-                    bool bVisible = (lNrPlanes == 0);
+                    bool bVisible = bSkipSphereTest || (lNrPlanes == 0);
                     for (uint32_t i = 0; i < lNrPlanes && !bVisible; ++i)
                     {
                         const float* pPlane = &vLocalPlanes[4 * i];
@@ -667,8 +666,6 @@ namespace Glacier
 
         // Transform each exit portal's four corners into four side planes (SoA).
         float* pPlane = &m_Planes[4 * m_iNumUserPlanes];
-        static constexpr int lOrder[4] = { 0, 2, 1, 3 };  // pl1, pl3, pl2, pl4
-
         for (const ZVisibleExit* pExit = pVisibleExit; pExit != nullptr; pExit = pExit->m_pNext)
         {
             ++m_iNumExists;
@@ -676,7 +673,7 @@ namespace Glacier
             const ZVector3* pCorners = reinterpret_cast<const ZVector3*>(&pExit->m_Exit);
             for (int iCorner = 0; iCorner < 4; ++iCorner)
             {
-                const ZVector3& corner = pCorners[lOrder[iCorner]];
+                const ZVector3& corner = pCorners[iCorner];
 
                 pPlane[iCorner]      = m0[6] * corner.x + m0[7] * corner.y + m0[8] * corner.z;
                 pPlane[iCorner + 4]  = m0[3] * corner.x + m0[4] * corner.y + m0[5] * corner.z;
@@ -740,7 +737,7 @@ namespace Glacier
 
             const __m128 center = _mm_add_ps(_mm_add_ps(_mm_add_ps(i[3], _mm_mul_ps(vCenterX, i[0])), _mm_mul_ps(vCenterY, i[1])), _mm_mul_ps(vCenterZ, i[2]));
 
-            const __m128 result = _mm_add_ps(_mm_add_ps(term0, term1), _mm_add_ps(term2, center));
+            const __m128 result = _mm_sub_ps(_mm_add_ps(_mm_add_ps(term0, term1), term2), center);
             if (_mm_movemask_ps(result))
             {
                 return false;
@@ -773,7 +770,7 @@ namespace Glacier
 
             const __m128 center = _mm_add_ps(_mm_add_ps(_mm_add_ps(i[3], _mm_mul_ps(vCenterX, i[0])), _mm_mul_ps(vCenterY, i[1])), _mm_mul_ps(vCenterZ, i[2]));
 
-            const __m128 result = _mm_add_ps(_mm_add_ps(term0, term1), _mm_add_ps(term2, center));
+            const __m128 result = _mm_sub_ps(_mm_add_ps(_mm_add_ps(term0, term1), term2), center);
             if (!_mm_movemask_ps(result))
             {
                 return true;

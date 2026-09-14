@@ -61,7 +61,7 @@ namespace Glacier
         virtual void Init() = 0; // pure (PC _purecall, slot 143)
         virtual void CreateRGBPalette(HDC hdc); // PC 0x00484540
         virtual void GetUserRect(SZVRECT* pRect); // PC 0x00484470
-        virtual uint32_t Slot146(); // PC slot 146 (returns 0; TODO: name)
+        virtual uint32_t Slot146(); // PC slot 146 (returns 0; TODO: name) | BackupBufferExists?
         virtual void MakeBackupBuffer(); // PC slot 147 (stub; iOS 0x1002412F4)
         virtual void FreeBackupBuffer(); // PC slot 148 (stub; iOS 0x1002412F8)
         virtual void RestoreBackupBuffer(); // PC slot 149 (stub; iOS 0x1002412FC)
