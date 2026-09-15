@@ -20,6 +20,18 @@ namespace Glacier
 {
     ZRenderEntry::ZRenderEntry() = default;
 
+    void ZRenderEntry::CopyAttachedRenderStateFrom(const ZRenderEntry& pSource)
+    {
+        const uint32_t lCount = pSource.m_unk14;
+        ZASSERT(lCount <= 4);
+        for (uint32_t i = 0; i < lCount; ++i)
+        {
+            m_lAttachedRenderState[i] = pSource.m_lAttachedRenderState[i];
+            m_lAttachedRenderStateSource[i] = pSource.m_lAttachedRenderStateSource[i];
+        }
+        m_unk14 = lCount;
+    }
+
     ZRenderEntry::~ZRenderEntry()
     {
         m_lGeomListsControl = 0;

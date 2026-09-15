@@ -29,6 +29,83 @@
 
 namespace Glacier
 {
+    const ZBone* ZRenderEntryBones::GetBones() const
+    {
+        return m_lNumAllocatedBones
+            ? reinterpret_cast<const ZBone*>(m_pBoneData + 144 + 48 * m_lNumAllocatedBones)
+            : nullptr;
+    }
+
+    float* ZRenderEntryBones::GetBonesLightData() const
+    {
+        return m_pLightData ? m_pLightData : reinterpret_cast<float*>(m_pBoneData + 32);
+    }
+
+    void ZRenderEntryBones::SetBonesLightData(float* pLightData)
+    {
+        m_pLightData = pLightData;
+    }
+
+    void ZRenderEntryBones::CreateDefaultBones(uint32_t lFirstBoneNum)
+    {
+        auto* pBaseGeom = m_pBaseGeom;
+        auto* pGeom = pBaseGeom ? pBaseGeom->GetGeom() : nullptr;
+        if (!pGeom || !pGeom->Is<ZLNKOBJ>() || !m_pBoneData || !m_lNumAllocatedBones)
+            return;
+
+        auto* pLinkObject = static_cast<ZLNKOBJ*>(pGeom);
+        auto* pBones = reinterpret_cast<ZBone*>(m_pBoneData + 144 + 48 * m_lNumAllocatedBones);
+        pLinkObject->GetDefaultBones(pBones, lFirstBoneNum);
+    }
+
+    void ZRenderEntryBones::UpdateActiveNumBones()
+    {
+        if (!m_lLODLevelsWanted || !m_pBaseGeom)
+            return;
+
+        auto* pGeom = m_pBaseGeom->GetGeom();
+        if (!pGeom || !pGeom->Is<ZLNKOBJ>())
+            return;
+
+        auto* pLinkObject = static_cast<ZLNKOBJ*>(pGeom);
+        if (!pLinkObject->m_pBoneModify)
+            return;
+
+        auto* pPrimControl = g_pRenderDll && g_pRenderDll->m_pPrimControl
+            ? g_pRenderDll->m_pPrimControl
+            : nullptr;
+        if (!pPrimControl)
+            return;
+
+        const auto* pHeader = static_cast<const SPrimObjectHeader*>(
+            pPrimControl->GetPrimData(m_pBaseGeom->m_lPrim));
+        const auto* pProperty = pHeader
+            ? static_cast<const SPropertyBones*>(pPrimControl->GetPrimData(pHeader->lPropertyData))
+            : nullptr;
+        const auto* pBones = pProperty
+            ? static_cast<const SPropertyBones*>(pPrimControl->GetPrimData(pProperty->lBoneDefinitions))
+            : nullptr;
+        if (!pBones)
+            return;
+
+        uint32_t lNumActiveBones = 0;
+        uint8_t lLODLevels = m_lLODLevelsWanted;
+        for (uint32_t i = 0; i < 8 && lLODLevels; ++i, lLODLevels <<= 1)
+        {
+            if ((lLODLevels & 0x80u) != 0)
+                lNumActiveBones = std::max<uint32_t>(lNumActiveBones, pBones->lNumBonesUsedLOD[i]);
+        }
+
+        lNumActiveBones = std::min(lNumActiveBones, m_lNumAllocatedBones);
+        const uint32_t lPreviousActiveBones = pLinkObject->m_pBoneModify->m_lNumActiveBones;
+        if (lNumActiveBones == lPreviousActiveBones)
+            return;
+
+        pLinkObject->m_pBoneModify->m_lNumActiveBones = static_cast<uint16_t>(lNumActiveBones);
+        if (lNumActiveBones > lPreviousActiveBones)
+            CreateDefaultBones(lPreviousActiveBones);
+    }
+
     ZRenderEntryBones::ZRenderEntryBones(const ZRenderEntryGeomCreateInfo& sInfo)
         : ZRenderEntryGeom(sInfo)
     {
@@ -95,6 +172,7 @@ namespace Glacier
             std::memset(m_pBoneData, 0, lSize);
             pLinkObject->m_pBoneModify->m_lNumActiveBones =
                 static_cast<uint16_t>(m_lNumAllocatedBones);
+            CreateDefaultBones(0);
             pLinkObject->m_Model->Init(
                 pLinkObject,
                 reinterpret_cast<ZBone*>(m_pBoneData + 144

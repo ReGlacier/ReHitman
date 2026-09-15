@@ -2,6 +2,7 @@
 
 #include <Glacier/ReGlacier.h>
 #include <Glacier/Render/Entry/ZRenderEntryGeom.h>
+#include <Glacier/Animation/ZBone.h>
 
 
 namespace Glacier
@@ -23,6 +24,14 @@ namespace Glacier
         ZRenderEntryBones(const ZRenderEntryGeomCreateInfo& sInfo);
 
         static ZRenderEntryBones* Create(const ZRenderEntryGeomCreateInfo& sInfo);
+
+        const ZBone* GetBones() const;
+        float* GetBonesLightData() const;
+        void SetBonesLightData(float* pLightData);
+
+        // internal methods
+        void UpdateActiveNumBones();
+        void CreateDefaultBones(uint32_t lFirstBoneNum);
 
         // members
         char* m_pBoneData;

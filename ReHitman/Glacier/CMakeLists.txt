@@ -43,6 +43,7 @@ set(GLACIER_COMMON_LIBS
         HF::Core
         stlport
         BinkVideoInterface
+        Quazal
 )
 
 set(GLACIER_COMMON_INCLUDE_DIRS)

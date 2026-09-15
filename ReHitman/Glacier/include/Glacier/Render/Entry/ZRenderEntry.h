@@ -78,14 +78,15 @@ namespace Glacier
         ZRenderEntry();
         void* AllocateMemory(uint32_t lSize);
         void SetObjectToWorldMatrix(const ZMatrix& mMatrix);
+        void CopyAttachedRenderStateFrom(const ZRenderEntry& pSource);
         bool AddRenderEntryInstances(SRenderEntryInstance** pInstances, uint32_t lNumRenderEntryInstances);
         void InitRenderEntryInstance(SRenderEntryInstance *pRenderEntryInstance, uint8_t lLODMask, uint8_t lDrawDestination, uint32_t lFlags, uint32_t lBoneIndexMask);
         void AddToDrawChain(ZCmdList::ZCmd* pCmd, uint8_t lLODLevels, uint32_t lLayerMask, uint8_t lDrawDestination, uint8_t lTransparencyMask, bool bFirstPersonCamera);
 
         // members
-        RE_ADD_PADDING(0x10);                           // 0x04 - 0x14. Unknown; never initialized in ctors and no reads found in examined code paths
-        uint32_t m_unk14;                               // 0x14. Unknown; zeroed in ZRenderEntry ctor (PC, inlined in ZRenderEntrySprite::Ctor & ZRenderEntryGeom::Ctor)
-        RE_ADD_PADDING(0x10);                           // 0x18 - 0x28. Unknown; never initialized in ctors and no reads found in examined code paths
+        uint32_t m_lAttachedRenderState[4];             // 0x04 - 0x14. Destination of PC sub_473BE0
+        uint32_t m_unk14;                               // 0x14. Source count copied by PC sub_473BE0
+        uint32_t m_lAttachedRenderStateSource[4];       // 0x18 - 0x28. Source of PC sub_473BE0
         uint8_t m_lLODLevelsActive;                     // 0x28. Verified by ZRenderEntry::EndFrame & ZRenderEntryGeom::Notify (PC). Name from XBox MiniNinjas PDB
         uint8_t m_lLODLevelsWanted;                     // 0x29. Verified by ZRenderEntry::EndFrame & ZRenderEntrySprite::Notify (PC)
         uint8_t m_lVariantId;                           // 0x2A. Verified by ZRenderEntryGeom::Notify & ZRenderEntryBones ctor (PC). Name from XBox MiniNinjas PDB
@@ -103,7 +104,7 @@ namespace Glacier
         const SDrawArray* m_pDrawArray;                 // 0x7C. Verified by ZRenderDraw::AddRenderEntryArray & ZRenderEntryBones::SetRenderContext (PC). Name from XBox MiniNinjas PDB (there it is m_pDrawArray[2], PC keeps a single pointer)
     };
 
-    RE_VERIFY_OFFSET(ZRenderEntry, m_unk14, 0x14);                    // Verified by ZRenderEntry ctor (PC, inlined in ZRenderEntrySprite::Ctor & ZRenderEntryGeom::Ctor)
+    RE_VERIFY_OFFSET(ZRenderEntry, m_unk14, 0x14);                    // PC sub_473BE0
     RE_VERIFY_OFFSET(ZRenderEntry, m_lLODLevelsActive, 0x28);         // Verified by ZRenderEntry::EndFrame (PC)
     RE_VERIFY_OFFSET(ZRenderEntry, m_lLODLevelsWanted, 0x29);
     RE_VERIFY_OFFSET(ZRenderEntry, m_lVariantId, 0x2A);               // Verified by ZRenderEntryGeom::Notify (PC)

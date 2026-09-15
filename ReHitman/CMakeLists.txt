@@ -15,6 +15,7 @@ add_subdirectory(Modules/zlib)
 add_subdirectory(Modules/stlport)
 add_subdirectory(Modules/jpeg-6b)
 add_subdirectory(Modules/BinkVideoInterface)
+add_subdirectory(Modules/Quazal)
 
 add_subdirectory(Glacier)
 add_subdirectory(BloodMoney)

@@ -60,9 +60,20 @@ namespace Glacier
         return pCurrent;
     }
 
-    ZRoomGeomVolumes::ZRoomGeomVolumes() = default;
+    ZRoomGeomVolumes::ZRoomGeomVolumes()
+    {
+        m_Rooms.m_lNrEntries = 0;
+        m_DefaultBlock.m_pNext = nullptr;
+        m_DefaultBlock.m_pCurrent = m_DefaultBlock.m_Memory;
+        m_pFirstBlock = &m_DefaultBlock;
+    }
 
     ZRoomGeomVolumes::~ZRoomGeomVolumes()
+    {
+        Reset();
+    }
+
+    void ZRoomGeomVolumes::Reset()
     {
         while (m_pFirstBlock != &m_DefaultBlock)
         {

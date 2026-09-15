@@ -14,6 +14,7 @@
 #include <Glacier/Physics/CRagdoll2.h>
 #include <Glacier/Animation/Model.h>
 #include <Glacier/Animation/ZBone.h>
+#include <Glacier/EventBase/ZPhysicsLinkage.h>
 #include <Glacier/IK/ZLNKOBJ.h>
 #include <Glacier/Geom/ZGeomBuffer.h>
 #include <cstring>
@@ -68,6 +69,20 @@ namespace Glacier
     bool ZBoneModifyBase::IsRagdollMoving() const
     {
         return m_pRagdoll && m_pRagdoll->IsMoving();
+    }
+
+    void ZBoneModifyBase::UpdateConnectedPhysics(const ZBone* pBones)
+    {
+        for (uint32_t i = 0; i < m_ConnectedPhysics.Count(); ++i)
+        {
+            auto* pGeom = ZGEOM::RefToPtr(*m_ConnectedPhysics.Get(i));
+            if (!pGeom || (pGeom->GetObjectId() & ZGEOM::m_Mask) != ZGEOM::m_Id)
+                continue;
+
+            auto* pLinkage = static_cast<ZPhysicsLinkage*>(pGeom->FindEvent(ZPhysicsLinkage::NAME));
+            if (pLinkage)
+                pLinkage->Update(pBones);
+        }
     }
 
     uint8_t ZBoneModifyBase::DecalLookup() const
@@ -841,6 +856,7 @@ namespace Glacier
 
         return false;
     }
+
 
     STATIC_GLOBAL_CLASS_INSTANCE_IMPL(int32_t, lDecalLookup, 0x008EBE58, 0);
 }

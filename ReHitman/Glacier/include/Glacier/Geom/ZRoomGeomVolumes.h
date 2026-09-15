@@ -62,6 +62,7 @@ namespace Glacier
         // methods
         ZRoomGeomVolumes();
         ~ZRoomGeomVolumes();
+        void Reset();
         ZRoomGeomVolumes::ZHeader* CreateGroupVolumes(ZGROUP* pGroup);
         ZRoomGeomVolumes::ZHeader* GetVolumesHeader(ZROOM* pRoom, bool bExitsEnabled);
         uint32_t GetGroupGeomsEnvironmentsRecursive(ZGROUP* pGroup, ZBaseGeom** pBaseGeoms, ZBaseGeom** pBaseGeomEnvironments, ZBaseGeom* pRoomEnvironment, ZBaseGeom* pRoomCharacterEnvironment);

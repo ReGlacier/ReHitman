@@ -32,7 +32,7 @@ namespace Glacier
                 auto* pEntry = *pCurrent->Get(j);
                 ZSAFE_ASSERT(pEntry);
 
-                pEntry->m_lGeomListsControl &= ~lCtlMask;
+                pEntry->m_lEntryListsMask &= static_cast<uint8_t>(~lCtlMask);
             }
         }
 

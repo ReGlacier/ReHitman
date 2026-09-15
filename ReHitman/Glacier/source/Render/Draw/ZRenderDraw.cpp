@@ -27,12 +27,20 @@
 #include <Glacier/Geom/GeomControlMasks.h>
 #include <Glacier/Geom/ZBaseGeom.h>
 #include <Glacier/Geom/ZGEOM.h>
+#include <Glacier/Geom/ZGROUP.h>
+#include <Glacier/Geom/ZGeomBuffer.h>
+#include <Glacier/Render/Globals.h>
+#include <Glacier/Render/ZRenderBaseDll.h>
+#include <Glacier/Render/Prim/SBoneDefinition.h>
+#include <Glacier/Geom/ZENVIRONMENT.h>
 #include <Glacier/Geom/ZEnvSampler.h>
 #include <Glacier/Render/Entry/ZRenderEntryEnvSamplerD3D.h>
 #include <Glacier/Render/Entry/ZRenderEntryReflectorD3D.h>
 #include <Glacier/IK/ZLNKOBJ.h>
 #include <Glacier/IK/ZBoneModifyBase.h>
 #include <Glacier/Animation/Model.h>
+#include <Glacier/Data/ZEngineDataBase.h>
+#include <Glacier/System/ZSysInterface.h>
 #include <Glacier/System/ZSysMem.h>
 #include <Glacier/ZUniMemory.h>
 #include <cstring>
@@ -206,6 +214,11 @@ namespace Glacier
         memset(m_apRenderEntries, 0, sizeof(m_apRenderEntries));
         memset(m_apToBeDeleted, 0, sizeof(m_apToBeDeleted));
         // m_RenderObjects default-constructs an empty stlp::map
+    }
+
+    void ZRenderDraw::BeginFrame()
+    {
+        SetMemColor(0xFFFFFFu);
     }
 
     void ZRenderDraw::Flush()
@@ -864,14 +877,252 @@ namespace Glacier
                 UpdateBoneModifiersList(aOwners);
 
                 // Move to next element
-                aOwners.m_Array[0] = aOwners.m_Array[lStep];
+                ++lStep;
+                if (lStep < lOriginalCap)
+                    aOwners.m_Array[0] = aOwners.m_Array[lStep];
             }
             while (lStep < lOriginalCap);
         }
     }
 
+    bool ZRenderDraw::UpdateAttachedBaseGeomsPositions(ZRenderEntryBones* pOwnerEntry, bool bFirstPerson)
+    {
+        if (!pOwnerEntry || !pOwnerEntry->m_pBaseGeom)
+            return false;
+
+        auto* pOwnerGeom = pOwnerEntry->m_pBaseGeom->GetGeom();
+        auto* pLinkObject = pOwnerGeom ? geom_cast<ZLNKOBJ>(pOwnerGeom) : nullptr;
+        if (!pLinkObject || !pLinkObject->m_pBoneModify)
+            return false;
+
+        auto* pPrimControl = g_pRenderDll ? g_pRenderDll->m_pPrimControl : nullptr;
+        const uint32_t lPrim = pOwnerEntry->m_lPrimId;
+        if (!pPrimControl || !lPrim)
+            return false;
+
+        const ZBone* pBones = pOwnerEntry->GetBones();
+        const float* pConvBones = pPrimControl->GetConvBones(lPrim);
+        const uint8_t* pBoneIdToIndex = pPrimControl->GetBoneIdToIndexLookup(lPrim);
+        const SBoneDefinition* pBoneDefinitions = pPrimControl->GetBoneDefinitions(lPrim);
+        if (!pBones || !pConvBones || !pBoneIdToIndex || !pBoneDefinitions)
+            return false;
+
+        const uint32_t lActiveBones = pLinkObject->m_pBoneModify->m_lNumActiveBones;
+        const auto getBoneIndex = [&](uint32_t lBoneId)
+        {
+            uint32_t lBoneIndex = pBoneIdToIndex[lBoneId];
+            if (lBoneIndex == 0xFFu)
+                return 0u;
+
+            while (lBoneIndex >= lActiveBones)
+            {
+                lBoneIndex = pBoneDefinitions[lBoneIndex].lPrevBoneNr;
+                if (lBoneIndex == 0xFFu)
+                    return 0u;
+            }
+            return lBoneIndex;
+        };
+
+        const auto updateEntry = [&](ZBaseGeom* pBaseGeom, const ZMat3x3& mat, const ZVector3& pos,
+                                     uint32_t lBoneId, bool bCorrectOwnerDraw)
+        {
+            if (!pBaseGeom || !pBaseGeom->m_lPrim || !pBaseGeom->m_lDrawId
+                || (pBaseGeom->m_lControl & 0x2C00u) != 0)
+                return;
+
+            auto* pEntry = m_apRenderEntryLookup[pBaseGeom->m_lDrawId & 0x7FFFu];
+            if (!pEntry)
+                return;
+
+            ZMat3x3 correctedMat = mat;
+            ZVector3 correctedPos = pos;
+            if (bCorrectOwnerDraw && pBaseGeom->GetGeom())
+                pBaseGeom->GetGeom()->CorrectOwnerDrawMatrix(correctedMat, correctedPos,
+                                                              pOwnerEntry->m_pBaseGeom, lBoneId);
+
+            ZMatrix objectToWorld = pEntry->m_ObjectToWorldMatrix;
+            objectToWorld.m0 = correctedMat;
+            objectToWorld.p0 = correctedPos;
+            pEntry->SetObjectToWorldMatrix(objectToWorld);
+            const float fOwnerFade = pOwnerEntry->m_lFade == 0xFF
+                ? 2.0f
+                : static_cast<float>(pOwnerEntry->m_lFade) * 0.0039370079f;
+            pEntry->m_lFade = static_cast<uint8_t>(fOwnerFade * 254.0f);
+            pEntry->Update();
+            pEntry->CopyAttachedRenderStateFrom(*pOwnerEntry);
+            if ((pEntry->m_lControl & ZRenderEntry::RE_ATTACH_UPDATE) != 0)
+                pEntry->AttachUpdate();
+
+            if (auto* pAttachedBones = dynamic_cast<ZRenderEntryBones*>(pEntry))
+            {
+                if (pOwnerGeom->Is<ZLNKOBJ>())
+                    pAttachedBones->SetBonesLightData(pOwnerEntry->GetBonesLightData());
+            }
+        };
+
+        const auto updateAttached = [&](ZBaseGeom* pBaseGeom,
+                                        const ZBoneModifyBase::ZAttachGeom* pAttached)
+        {
+            if (!pBaseGeom || !pAttached)
+                return;
+
+            const uint32_t lBoneIndex = getBoneIndex(pAttached->m_lBoneId);
+            ZMat3x3 boneMat;
+            ZVector3 bonePos;
+            pLinkObject->m_pBoneModify->GetIKBone(pBones, pConvBones, lBoneIndex, boneMat, bonePos);
+
+            ZMat3x3 ownerMat;
+            ZVector3 ownerPos;
+            pOwnerGeom->GetRootTM(ownerMat, ownerPos);
+            vmmul(bonePos, ownerMat);
+            bonePos += ownerPos;
+            mmmul(boneMat, ownerMat);
+
+            ZVector3 offset;
+            vmmul(offset, pAttached->m_vOffset, boneMat);
+            bonePos += offset;
+            ZMat3x3 attachedMat;
+            mmmul(attachedMat, pAttached->m_mOffset, boneMat);
+
+            if (pBaseGeom->GetGeom())
+                pBaseGeom->GetGeom()->CorrectOwnerDrawMatrix(attachedMat, bonePos,
+                                                              pOwnerEntry->m_pBaseGeom,
+                                                              pAttached->m_lBoneId);
+
+            if (auto* pGroup = pBaseGeom->GetGeom() ? geom_cast<ZGROUP>(pBaseGeom->GetGeom()) : nullptr)
+            {
+                for (ZBaseGeom* pChild = pGroup->m_pGroupFirst; pChild; pChild = pChild->Next())
+                {
+                    auto* pChildGeom = pChild->GetGeom();
+                    if (pChildGeom && pChildGeom->Is<ZGROUP>())
+                        continue;
+
+                    ZMat3x3 childMat;
+                    ZVector3 childPos;
+                    pChild->GetLocalMatPos(childMat, childPos);
+                    vmmul(childPos, attachedMat);
+                    childPos += bonePos;
+                    mmmul(childMat, attachedMat);
+                    updateEntry(pChild, childMat, childPos, pAttached->m_lBoneId, true);
+                }
+                return;
+            }
+            updateEntry(pBaseGeom, attachedMat, bonePos, pAttached->m_lBoneId, false);
+        };
+
+        uint32_t i = 0;
+        while (i < pLinkObject->m_pBoneModify->m_AttachedGeoms.Count())
+        {
+            auto* pAttached = pLinkObject->m_pBoneModify->m_AttachedGeoms.Get(i);
+            auto* pBaseGeom = ZGeomBuffer::Instance().GeomRefToBasePtr(pAttached->m_rBaseGeom);
+            if (!pBaseGeom)
+            {
+                *pAttached = *pLinkObject->m_pBoneModify->m_AttachedGeoms.Get(
+                    pLinkObject->m_pBoneModify->m_AttachedGeoms.Count() - 1);
+                pLinkObject->m_pBoneModify->m_AttachedGeoms.Remove(
+                    pLinkObject->m_pBoneModify->m_AttachedGeoms.Count() - 1);
+                continue;
+            }
+            updateAttached(pBaseGeom, pAttached);
+            ++i;
+        }
+
+        const auto updateGroupChildren = [&](ZGROUP* pGroup, auto&& updateGroupChildrenRef) -> void
+        {
+            for (ZBaseGeom* pChild = pGroup->m_pGroupFirst; pChild; pChild = pChild->Next())
+            {
+                auto* pChildGeom = pChild->GetGeom();
+                if (!pChildGeom || pChildGeom->Is<ZGROUP>())
+                {
+                    if (pChildGeom && pChildGeom->Is<ZGROUP>())
+                        updateGroupChildrenRef(static_cast<ZGROUP*>(pChildGeom), updateGroupChildrenRef);
+                    continue;
+                }
+
+                ZMat3x3 childMat;
+                ZVector3 childPos;
+                pChild->GetRootTM(childMat, childPos);
+                updateEntry(pChild, childMat, childPos, 0, false);
+            }
+        };
+
+        for (uint32_t j = 0; j < pLinkObject->m_pBoneModify->m_ConnectedPhysics.Count(); ++j)
+        {
+            auto* pConnected = ZGEOM::RefToPtr(*pLinkObject->m_pBoneModify->m_ConnectedPhysics.Get(j));
+            if (!pConnected)
+                continue;
+
+            auto* pConnectedBase = pConnected->BaseGeom();
+            if (!pConnectedBase)
+                continue;
+            if (auto* pGroup = geom_cast<ZGROUP>(pConnected))
+                updateGroupChildren(pGroup, updateGroupChildren);
+            else
+            {
+                ZMat3x3 mat;
+                ZVector3 pos;
+                pConnected->GetRootTM(mat, pos);
+                updateEntry(pConnectedBase, mat, pos, 0, false);
+            }
+        }
+
+        if (!bFirstPerson)
+            pLinkObject->m_pBoneModify->UpdateConnectedPhysics(pBones);
+
+        // PC 0x4749FA, 0x474B0D and 0x474D9D transfer this typed
+        // ZRenderEntry state immediately after each attached entry update.
+        // Expected call at PC 0x474D9D: sub_473BE0(target, pOwnerEntry).
+        (void)bFirstPerson;
+        return true;
+    }
+
+    void ZRenderDraw::UpdateLightList(ZRenderEntryLists* pLists)
+    {
+        if (!pLists)
+            return;
+
+        auto* pLightList = pLists->GetList(ZRenderEntryLists::LT_LIGHT);
+        for (uint32_t i = 0; i < pLightList->Count(); ++i)
+        {
+            auto* pEntry = *pLightList->Get(i);
+            if (!pEntry)
+                continue;
+
+            auto* pBaseGeom = pEntry->GetBaseGeom();
+            if (!pBaseGeom)
+                continue;
+
+            auto* pGeom = pBaseGeom->GetGeom();
+            const bool bEnvironment = pGeom
+                ? (pGeom->GetObjectId() & ZENVIRONMENT::m_Mask) == ZENVIRONMENT::m_Id
+                : pBaseGeom->IsDerivedFromStdObj(ZENVIRONMENT::m_Id);
+
+            if (!bEnvironment)
+            {
+                if ((pBaseGeom->m_lControl & ZCLIGHTCHANGED) != 0)
+                {
+                    pBaseGeom->LightNotifyPotentialDetachment(false);
+                    pBaseGeom->UpdateLightListForLight();
+                }
+                else if (pGeom && (pGeom->m_lGeomControl & 0x8u) != 0)
+                {
+                    if (g_pSysInterface && g_pSysInterface->m_pEngineData
+                        && g_pSysInterface->m_pEngineData->GetListUser())
+                    {
+                        g_pSysInterface->m_pEngineData->GetListUser()->NotifyAllMembers(pBaseGeom);
+                    }
+                }
+            }
+
+            if (pGeom)
+                pGeom->m_lGeomControl = static_cast<uint16_t>(pGeom->m_lGeomControl & ~0x8u);
+        }
+    }
+
     void ZRenderDraw::UpdateBoneModifiersList(ZStackArray<ELEMENTS_IN_RENDER_ENTRY_LIST_COUNT, ZRenderEntryGeom*>& sList)
     {
+        UpdateBoneModifiersListIK(sList);
+
         for (uint32_t i = 0; i < sList.Count(); ++i)
         {
             auto* pEntry = sList.Get(i) ? *sList.Get(i) : nullptr;
@@ -894,11 +1145,121 @@ namespace Glacier
 
     void ZRenderDraw::UpdateBoneModifiersListIK(ZStackArray<ELEMENTS_IN_RENDER_ENTRY_LIST_COUNT, ZRenderEntryGeom*>& sList)
     {
-
+        for (uint32_t i = 0; i < sList.Count(); ++i)
+        {
+            ZStackArray<ELEMENTS_IN_RENDER_ENTRY_LIST_COUNT, ZRenderEntryGeom*>::iterator it {
+                reinterpret_cast<ZRenderEntryGeom***>(&sList.m_Array[i]) };
+            UpdateBoneModifiersListIK(&it);
+        }
     }
 
     void ZRenderDraw::UpdateBoneModifiersListIK(ZStackArray<ELEMENTS_IN_RENDER_ENTRY_LIST_COUNT, ZRenderEntryGeom*>::iterator* pIt)
     {
+        if (!pIt || !pIt->current || !*pIt->current || !**pIt->current)
+            return;
+
+        UpdateBoneModifiersListIK_IMPL(pIt);
+    }
+
+    void ZRenderDraw::UpdateBoneModifiersListIK_IMPL(
+        ZStackArray<ELEMENTS_IN_RENDER_ENTRY_LIST_COUNT, ZRenderEntryGeom*>::iterator* pIt)
+    {
+        if (!pIt || !pIt->current || !*pIt->current || !**pIt->current)
+            return;
+
+        auto* pEntry = **pIt->current;
+        auto* pBonesEntry = dynamic_cast<ZRenderEntryBones*>(pEntry);
+        if (!pBonesEntry || !pBonesEntry->m_pBaseGeom)
+            return;
+
+        auto* pGeom = pBonesEntry->m_pBaseGeom->GetGeom();
+        auto* pLinkObject = pGeom ? geom_cast<ZLNKOBJ>(pGeom) : nullptr;
+        if (!pLinkObject || !pLinkObject->m_pBoneModify || !pLinkObject->m_Model)
+            return;
+
+        auto* pModel = pLinkObject->m_Model;
+        auto* pModifier = pLinkObject->m_pBoneModify;
+        auto* pBones = pModel->m_Bones;
+        if (!pBones)
+            return;
+
+        if (pModel->m_State)
+            pBonesEntry->UpdateActiveNumBones();
+
+        const uint32_t lPrim = pBonesEntry->m_lPrimId;
+        if (pModel->m_BoneCount != static_cast<int>(pModifier->m_lNumActiveBones))
+            pModel->m_BoneCount = pModifier->m_lNumActiveBones;
+
+        const bool bDoAnimations = pModifier->DoAnimations();
+        const bool bNeedsAnimation = pModel->m_Animated || pModel->m_State
+            || (pModel->m_ActiveAnims[0].mode & 7) != 0
+            || pModifier->m_fGlobalScale != 1.0f;
+
+        if (bDoAnimations && bNeedsAnimation)
+        {
+            ZMat3x3 rootMat;
+            ZVector3 rootPos;
+            pLinkObject->GetRootTM(rootMat, rootPos);
+            pBones[0]._Mat = rootMat;
+            pBones[0]._Pos = rootPos;
+
+            pModel->PrepareAnim();
+
+            // Blend bones are the animation-space result produced by PrepareAnim.
+            // Preserve the root transform above; the engine does the same before
+            // evaluating human state and quaternion blending.
+            if (pModel->m_BlendBones)
+            {
+                for (int i = 1; i < pModel->m_BoneCount; ++i)
+                {
+                    pBones[i]._Quat = pModel->m_BlendBones[i].m_Quat;
+                    pBones[i]._Pos = pModel->m_BlendBones[i].m_Pos;
+                }
+            }
+
+            if (pModel->m_State)
+            {
+                if (pModel->m_Poses.m_PoseIdx)
+                    pModel->BlendOutPoseWeights();
+
+                const ZHumanState state = *pModel->m_State;
+                pModel->AnimateState(g_pSysInterface->m_pEngineData->m_AnimationManager,
+                                     g_pSysInterface->DeltaFrameTime);
+                if (pModel->m_Animated)
+                {
+                    if (pModel->m_BoneCount > 70)
+                    {
+                        Animation::ZAngelBone angelPose;
+                        pModel->LookAt(&angelPose,
+                                       g_pSysInterface->m_pEngineData->m_AnimationManager,
+                                       g_pSysInterface->DeltaFrameTime);
+                        pModel->Bank(g_pSysInterface->DeltaFrameTime);
+                        pModel->StateFit(&angelPose);
+                    }
+                }
+                *pModel->m_State = state;
+            }
+
+            pModel->AnimateQuats(g_pSysInterface->m_pEngineData->m_AnimationManager);
+            pModel->BlendQuats();
+
+            if (pModel->m_PoseWeights && pModel->m_Poses.m_PoseIdx)
+                pModel->PoseRotationAndTranslation();
+
+            pBones[0]._Mat.Reset();
+            pBones[0]._Pos.Reset();
+            pModel->ModelSpaceBones();
+            pModifier->UpdateGlobalIK(pBones, lPrim, pLinkObject);
+        }
+        else
+        {
+            // Even when animation is stopped, constraints and active physics must
+            // still be reflected in the render pose.
+            pModel->ModelSpaceBones();
+            pModifier->UpdateGlobalIK(pBones, lPrim, pLinkObject);
+        }
+
+        UpdateAttachedBaseGeomsPositions(pBonesEntry, false);
 
     }
 }

@@ -10,7 +10,9 @@ namespace Glacier
     {
     public:
         // vtbl
+        void InitAllocation() override;
         void BeginFrame() override;
+        void __thiscall Update(ZRender* pRender) override;
         ZRenderViewBase* NewView(ZRender* pRender, uint32_t lViewNumber, uint32_t lViewId) override;
         void CalcBoneLightSources(ZBaseGeom* pBaseGeom, float* pDirectLights) override;
 

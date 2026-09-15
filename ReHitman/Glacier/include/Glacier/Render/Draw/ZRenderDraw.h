@@ -49,6 +49,7 @@ namespace Glacier
         };
 
         // vtbl
+        void BeginFrame() override;
         void Flush() override;
         uint32_t AddMark(
             const float* vPosition,
@@ -94,9 +95,13 @@ namespace Glacier
             float* vObserver,
             float fLODScale);
         void UpdateBoneModifiers(ZRenderEntryLists* pLists);
+        bool UpdateAttachedBaseGeomsPositions(ZRenderEntryBones* pOwnerEntry, bool bFirstPerson);
+        void UpdateLightList(ZRenderEntryLists* pLists);
         void UpdateBoneModifiersList(ZStackArray<ELEMENTS_IN_RENDER_ENTRY_LIST_COUNT, ZRenderEntryGeom*>& sList);
         void UpdateBoneModifiersListIK(ZStackArray<ELEMENTS_IN_RENDER_ENTRY_LIST_COUNT, ZRenderEntryGeom*>& sList);
         void UpdateBoneModifiersListIK(ZStackArray<ELEMENTS_IN_RENDER_ENTRY_LIST_COUNT, ZRenderEntryGeom*>::iterator* pIt);
+
+        void UpdateBoneModifiersListIK_IMPL(ZStackArray<ELEMENTS_IN_RENDER_ENTRY_LIST_COUNT, ZRenderEntryGeom*>::iterator* pIt);
 
         // members
         ZDecalMarkController m_DecalMarks;                        // +0x12C. Name approved by XBox PDB & ZRenderEntryGeom::AttachUpdate
