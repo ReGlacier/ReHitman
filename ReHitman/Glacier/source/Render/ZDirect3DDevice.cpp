@@ -9,6 +9,12 @@ namespace Glacier
 {
     namespace
     {
+        // IID of ID3DXEffectStateManager ({79AAB587-6DBC-4FA7-82DE-37FA1781C5CE}).
+        // Defined here because the symbol normally comes from the DirectX SDK's
+        // dxguid.lib, which is not available in every build environment.
+        const GUID kIID_ID3DXEffectStateManager =
+            {0x79AAB587, 0x6DBC, 0x4FA7, {0x82, 0xDE, 0x37, 0xFA, 0x17, 0x81, 0xC5, 0xCE}};
+
         // State-filtering caches of the original ZDirect3DDevice (live in game .data).
         // Layout: SStateCacheEntry records are shared by the render-state and sampler-state tables.
         struct SStateCacheEntry
@@ -186,7 +192,7 @@ namespace Glacier
 
     STDMETHODIMP ZDirect3DDevice::QueryInterface(REFIID riid, void** ppvObject)
     {
-        if (riid == IID_IUnknown || riid == IID_ID3DXEffectStateManager)
+        if (riid == IID_IUnknown || riid == kIID_ID3DXEffectStateManager)
         {
             *ppvObject = this;
             AddRef();
