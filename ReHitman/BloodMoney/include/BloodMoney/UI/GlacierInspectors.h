@@ -4,11 +4,11 @@
 #include <BloodMoney/Game/ZHM3Actor.h>
 #include <BloodMoney/UI/ImGuiInspector.h>
 
-#include <Glacier/ZHumanBoid.h>
-#include <Glacier/CInventory.h>
-#include <Glacier/ZCAMERA.h>
-#include <Glacier/ZSysInterfaceWintel.h>
-#include <Glacier/ZEngineDataBase.h>
+#include <Glacier/GameBase/Boid/ZHumanBoid.h>
+#include <Glacier/GameBase/CInventory.h>
+#include <Glacier/Geom/ZCAMERA.h>
+#include <Glacier/System/ZSysInterfaceWintel.h>
+#include <Glacier/Data/ZEngineDataBase.h>
 
 #include <Glacier/Geom/ZGROUP.h>
 #include <Glacier/Geom/ZGEOM.h>
@@ -97,23 +97,26 @@ namespace ImGui
             auto st = (Glacier::EBoidState)*state;
             switch (st)
             {
-                case Glacier::EBoidState::Moving:
-                    ImGui::Text("EBoidState::Moving");
+                case Glacier::EBoidState::eFollowPath:
+                    ImGui::Text("EBoidState::eFollowPath");
                     break;
-                case Glacier::EBoidState::Staying:
-                    ImGui::Text("EBoidState::Staying");
+                case Glacier::EBoidState::eControlled:
+                    ImGui::Text("EBoidState::eControlled");
                     break;
-                case Glacier::EBoidState::ParentActorDestroyed:
-                    ImGui::Text("EBoidState::ParentActorDestroyed (Dead)");
+                case Glacier::EBoidState::eSoftObstacle:
+                    ImGui::Text("EBoidState::eSoftObstacle");
                     break;
-                case Glacier::EBoidState::Sitting:
-                    ImGui::Text("EBoidState::Sitting");
+                case Glacier::EBoidState::eHardObstacle:
+                    ImGui::Text("EBoidState::eHardObstacle");
                     break;
-                case Glacier::EBoidState::Unk6:
-                    ImGui::Text("EBoidState::Unk6");
+                case Glacier::EBoidState::ePassivePushable:
+                    ImGui::Text("EBoidState::ePassivePushable");
                     break;
-                default:
-                    ImGui::Text("Unknown EBoidState (%.8X)", st);
+                case Glacier::EBoidState::eInActive:
+                    ImGui::Text("EBoidState::eInActive");
+                    break;
+                case Glacier::EBoidState::eHero:
+                    ImGui::Text("EBoidState::eHero");
                     break;
             }
         }
@@ -130,28 +133,34 @@ namespace ImGui
                     return;
                 }
 
-                ImGui::Inspector<Glacier::EBoidState>::Draw("Boid state", &boid->m_boidState);
-                ImGui::Inspector<Glacier::ZVector3>::Draw("Boid Position", &boid->m_Position);
-                ImGui::Text("Actual speed: %f / Speed: %f / Speed2: %f", boid->m_ActualSpeed, boid->m_speed, boid->m_speed2);
+                ImGui::Inspector<Glacier::EBoidState>::Draw("Boid state", &boid->m_eState);
+                ImGui::Inspector<Glacier::ZVector3>::Draw("Boid Position", &boid->m_kPosition);
+                ImGui::Text("Actual speed: %f / Max speed: %f", boid->m_ActualSpeed, boid->m_fMaxSpeed);
             }
         }
     };
 
-    template <> struct Inspector<Glacier::ZEntityLocator>
+    template <> struct Inspector<Glacier::ZBaseGeom>
     {
-        static void Draw(const char*, Glacier::ZEntityLocator* entity)
+        static void Draw(const char*, Glacier::ZBaseGeom* entity)
         {
             if (!entity)
             {
-                ImGui::TextColored(ImVec4 { 1.f, 0.f, 0.f, 1.f }, "INVALID ZEntityLocator INSTANCE");
+                ImGui::TextColored(ImVec4 { 1.f, 0.f, 0.f, 1.f }, "INVALID ZBaseGeom INSTANCE");
                 return;
             }
 
-            ImGui::Text("ID: %X", entity->m_Instance);
-            ImGui::Text("Name: "); ImGui::SameLine(0.f, 0.4f); ImGui::TextColored(ImVec4 { 0.f, 1.f, 0.f, 1.f }, "%s", entity->entityName);
-            ImGui::Inspector<Glacier::ZMat3x3>::Draw("Transform", &entity->m_transform);
-            ImGui::Inspector<Glacier::ZVector3>::Draw("Position", &entity->position);
-            ImGui::Text("Primitive ID: %d", entity->m_primitive);
+            ImGui::Text("Name: "); ImGui::SameLine(0.f, 0.4f); ImGui::TextColored(ImVec4 { 0.f, 1.f, 0.f, 1.f }, "%s", entity->m_Name);
+            ImGui::Inspector<Glacier::ZMat3x3>::Draw("Transform", &entity->m_mMat);
+            ImGui::Inspector<Glacier::ZVector3>::Draw("Position", &entity->m_vPos);
+            ImGui::Inspector<Glacier::ZVector3>::Draw("Center", &entity->m_vCen);
+            ImGui::DragFloat("Radius", &entity->m_fRadius);
+            ImGui::Text("ListID: %d", entity->m_uListID); ImGui::SameLine();
+            ImGui::Text("PLLC: %d", entity->m_lPotentialLightListChange); ImGui::SameLine();
+            ImGui::Text("Freeze: %d", entity->m_bFreezeLightList);
+            ImGui::Text("Draw id: %d", entity->m_lDrawId); ImGui::SameLine();
+            ImGui::Text("Draw entry id: %d", entity->m_lDrawId);
+            ImGui::Text("Primitive ID: %d", entity->m_lPrim);
         }
     };
 
@@ -168,7 +177,7 @@ namespace ImGui
             ImGui::Text(" GROUP INFO ");
             ImGui::Separator();
 
-            ImGui::Text("Name   : %s", group->m_baseGeom->entityName);
+            ImGui::Text("Name   : %s", group->m_baseGeom->m_Name);
             ImGui::Text("Depth  : %d", group->GroupDepth()); // await jump to 004EA2D0
             ImGui::Text("IsRoot : %s", (group->IsRoot() ? "YES" : "NO"));
 
@@ -178,7 +187,7 @@ namespace ImGui
                 // Show parent node
                 if (parentGroup && ImGui::TreeNode("Parent"))
                 {
-                    ImGui::Inspector<Glacier::ZGROUP>::Draw(parentGroup->m_baseGeom->entityName, parentGroup);
+                    ImGui::Inspector<Glacier::ZGROUP>::Draw(parentGroup->m_baseGeom->m_Name, parentGroup);
                     ImGui::TreePop();
                 }
             }
@@ -226,8 +235,8 @@ namespace ImGui
             float aspect = camera->GetViewAspect();
             float fov = camera->GetFOV(), fovOld = camera->GetFOV();
 
-            camera->GetMatPos(&matrix, &position);
-            camera->GetMatPos(&matrixOld, &positionOld);
+            camera->GetMatPos(matrix, position);
+            camera->GetMatPos(matrixOld, positionOld);
 
             ImGui::Inspector<Glacier::ZMat3x3>::Draw("Transform", &matrix);
             ImGui::Inspector<Glacier::ZVector3>::Draw("Position", &position);
@@ -235,11 +244,11 @@ namespace ImGui
             ImGui::Inspector<float>::Draw("FOV", &fov);
 
             if (matrix != matrixOld) {
-                camera->SetMat(&matrix);
+                camera->SetMat(matrix);
             }
 
             if (position != positionOld) {
-                camera->SetPos(&position);
+                camera->SetPos(position);
             }
 
             if (fov != fovOld) {
@@ -267,11 +276,6 @@ namespace ImGui
              * @todo: Do something ...
              */
         }
-    };
-
-    template <> struct Inspector<Glacier::ESuitMask>
-    {
-        static void Draw(const char* id, Glacier::ESuitMask* mask);
     };
 
     /// BloodMoney stuff

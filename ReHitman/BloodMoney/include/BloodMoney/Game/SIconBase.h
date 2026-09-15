@@ -1,12 +1,15 @@
 #pragma once
 
+#include <Glacier/ReGlacier.h>
 #include <Glacier/GlacierFWD.h>
 
 namespace Hitman::BloodMoney
 {
-    struct SIconBase
+    struct SIconBase 
     {
-        Glacier::ZREF m_iIconREF;
-        bool          m_bIsVisible;
+        Glacier::ZREF rGeomObj;
+        bool bVisible;
+        RE_ADD_PADDING(3);
     };
+    RE_VERIFY_SIZE(SIconBase, 0x8); // Verified
 }

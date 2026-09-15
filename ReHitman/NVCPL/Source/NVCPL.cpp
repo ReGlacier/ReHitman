@@ -41,7 +41,11 @@ extern "C" __declspec(dllexport) bool __cdecl NvCplGetDataInt(int, int*) {
 	WriteProcessMemory(GetCurrentProcess(), (LPVOID*)kFreeLibraryCodeAddr, &patch[0], 7, nullptr);
 
 	// Load library
-	LoadLibraryA(kTargetDllName);
+	if (LoadLibraryA(kTargetDllName) == NULL)
+	{
+		MessageBoxA(nullptr, "LoadLibraryA failed inside process", "Failed to load ReHitman.dll! Please, make sure that library is valid", MB_OK);
+		return false; // Kill us
+	}
 
 	// Wait for init
 	Sleep(kWaitMillisecondsUntilTargetInited);

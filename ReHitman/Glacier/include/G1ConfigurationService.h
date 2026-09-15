@@ -101,5 +101,8 @@ namespace Glacier
         static std::intptr_t G1API_InstanceAddress_ZEventBase_m_DefaultStatus;
 
         static std::intptr_t G1API_InstanceAddress_CCom_g_globalCom;
+
+        static std::intptr_t G1API_FunctionAddress_ZGeomBuffer_GeomPtrToRef_ZGEOM;
+        static std::intptr_t G1API_FunctionAddress_ZGeomBuffer_GeomPtrToRef_ZGeomBase;
     };
 }

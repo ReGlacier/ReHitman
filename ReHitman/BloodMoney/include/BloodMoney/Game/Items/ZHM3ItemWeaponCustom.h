@@ -2,9 +2,12 @@
 
 #include <BloodMoney/Game/Items/ZHM3ItemWeapon.h>
 #include <BloodMoney/Game/Items/ESilencerType.h>
+#include <Glacier/ZSTL/ZStackArray.h>
 
 namespace Hitman::BloodMoney
 {
+    using ZStackArrayVisibleBones = Glacier::ZStackArray<20, uint32_t>;
+
     class ZHM3ItemWeaponCustom : public ZHM3ItemWeapon
     {
     public:
@@ -19,30 +22,11 @@ namespace Hitman::BloodMoney
         void SetSilencerType(ESilencerType type);
 
         // data (new size is 0x1C0)
-        int m_field15C;
-        int m_field160;
-        int m_field164;
-        int m_field168;
-        int m_field16C;
-        int m_field170;
-        int m_field174;
-        int m_field178;
-        int m_field17C;
-        int m_field180;
-        int m_field184;
-        int m_field188;
-        int m_field18C;
-        int m_field190;
-        int m_field194;
-        int m_field198;
-        int m_field19C;
-        int m_field1A0;
-        int m_field1A4;
-        int m_field1A8;
-        ESilencerType m_eSilencerType;
-        int m_anim_Reload_Bolt;
-        int m_anim_Reload_DoubleClip;
-        int m_anim_Reload_100shot;
-        int m_field1BC;
+        ZStackArrayVisibleBones m_VisibleBones;
+        Glacier::Animation::Header* m_pAnimReloadBoltAction;
+        Glacier::Animation::Header* m_pAnimReloadDoubleCapMag;
+        Glacier::Animation::Header* m_pAnimReloadBeltFeeding;
+        int32_t m_nNumOfReloads;
     };
+    RE_VERIFY_SIZE(ZHM3ItemWeaponCustom, 0x1C0); // Verified
 }

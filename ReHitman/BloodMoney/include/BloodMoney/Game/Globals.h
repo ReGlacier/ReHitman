@@ -2,6 +2,17 @@
 
 #include <cstdint>
 
+
+namespace Glacier
+{
+    class ZSysInterfaceWintel;
+}
+
+namespace Hitman::BloodMoney
+{
+    class ZHM3GameData;
+}
+
 namespace Hitman::BloodMoney::Globals
 {
     static constexpr std::uintptr_t kSysInterfaceAddr  = 0x00820820;
@@ -12,3 +23,6 @@ namespace Hitman::BloodMoney::Globals
     static constexpr std::uintptr_t kD3DDllAddr        = 0x008ACA30;
     static constexpr std::uintptr_t kSysInputAddr      = 0x008ACAA0;
 }
+
+// NEW: I will try to migrate to global vars like in G1HBM
+extern Glacier::ZSysInterfaceWintel*& g_pSysInterface;

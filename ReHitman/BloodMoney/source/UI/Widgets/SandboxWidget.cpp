@@ -9,31 +9,26 @@
 
 #include <BloodMoney/Game/UI/ZHM3MenuElements.h>
 #include <BloodMoney/Game/UI/ZHM3MenuFactory.h>
-#include <BloodMoney/Game/UI/ZXMLGUISystem.h>
-#include <BloodMoney/Game/UI/ZWINDOWS.h>
-#include <BloodMoney/Game/UI/ZGUIBase.h>
 
 #include <BloodMoney/Game/Globals.h>
 
-#include <Glacier/ZSysInterfaceWintel.h>
-#include <Glacier/ZEngineDataBase.h>
-#include <Glacier/Geom/ZEntityLocator.h>
+#include <Glacier/System/ZSysInterfaceWintel.h>
+#include <Glacier/Data/ZEngineDataBase.h>
+#include <Glacier/Geom/ZBaseGeom.h>
 #include <Glacier/Geom/ZGeomBuffer.h>
 #include <Glacier/Glacier.h>
 #include <Glacier/Geom/ZGROUP.h>
 #include <Glacier/Geom/ZGEOM.h>
 #include <Glacier/IK/ZLNKOBJ.h>
-#include <Glacier/CInventory.h>
-#include <Glacier/CConfiguration.h>
+#include <Glacier/GameBase/CInventory.h>
+#include <Glacier/System/CConfiguration.h>
 #include <Glacier/ZSTL/REFTAB32.h>
 #include <Glacier/Items/ZItem.h>
 #include <Glacier/Items/ZItemTemplate.h>
 #include <Glacier/Geom/ZROOM.h>
 #include <Glacier/Geom/ZTreeGroup.h>
 #include <Glacier/ZTypeTraits.h>
-#include <Glacier/ZRenderWintelD3D.h>
-#include <Glacier/ZPrimControlWintel.h>
-#include <Glacier/ZSTL/ZLIST.h>
+#include <Glacier/Geom/ZLIST.h>
 #include <Glacier/Items/ZItemTemplateAmmo.h>
 #include <Glacier/Items/ZItemTemplateWeapon.h>
 #include <Glacier/Items/ZItemWeapon.h>
@@ -44,19 +39,12 @@
 #include <BloodMoney/Game/ZHM3HmAs.h>
 #include <BloodMoney/Game/ZHM3ClothBundle.h>
 #include <BloodMoney/Game/ZHM3BriefingControl.h>
-#include <BloodMoney/Game/UI/ZCHAROBJ.h>
-#include <BloodMoney/Game/UI/ZWINOBJ.h>
-#include <BloodMoney/Game/UI/ZXMLGUISystem.h>
 
-#include <BloodMoney/Game/ZCloth.h>
 #include <BloodMoney/Game/ZTie.h>
-#include <BloodMoney/Game/UI/ZLINEOBJ.h>
 
 #include <HF/HackingFramework.hpp>
-#include <Glacier/ZRenderWintelD3DDll.h>
-#include <Glacier/ZPrimControlWintel.h>
-#include <Glacier/ZEngineGeomControl.h>
-#include <Glacier/CCom.h>
+#include <Glacier/Geom/ZEngineGeomControl.h>
+#include <Glacier/Com/CCom.h>
 #include <Glacier/EventBase/ZEventBuffer.h>
 
 #include <BloodMoney/Game/OnLevel/ZVCR.h>
@@ -80,14 +68,11 @@ namespace Hitman::BloodMoney
         auto sysInterface = Glacier::getInterface<Glacier::ZSysInterfaceWintel>(Globals::kSysInterfaceAddr);
         if (!sysInterface) { return; }
 
-        auto engineDb = sysInterface->m_engineDataBase;
+        auto engineDb = sysInterface->m_pEngineData;
         if (!engineDb) { return; }
 
         auto sceneCom = engineDb->GetSceneCom();
         if (!sceneCom) { return; }
-
-        auto renderDll = Glacier::getInterface<Glacier::ZRenderWintelD3DDll>(Globals::kD3DDllAddr);
-        if (!renderDll) { return; }
 
         auto geomBuffer = Glacier::getInterface<Glacier::ZGeomBuffer>(Globals::kGeomBufferAddr);
         if (!geomBuffer) { return; }
@@ -96,26 +81,6 @@ namespace Hitman::BloodMoney
         if (!hitman) return;
 
         ImGui::Begin("Test script");
-        if (ImGui::Button("Try to dump few prims")) {
-            spdlog::info("Hitman   prim {:08X}", (int)renderDll->m_primControlWintel->GetPrimData(reinterpret_cast<Glacier::ZGEOM*>(gameData->m_Hitman3)->m_baseGeom->m_primitive));
-            spdlog::info("Actor[0] prim {:08X}", (int)renderDll->m_primControlWintel->GetPrimData(gameData->m_ActorsPool[0]->m_baseGeom->m_primitive));
-            spdlog::info("Actor[1] prim {:08X}", (int)renderDll->m_primControlWintel->GetPrimData(gameData->m_ActorsPool[1]->m_baseGeom->m_primitive));
-
-            char buffer[512] { 0 };
-
-            using GetPrimStats_t = int(__thiscall*)(int, char*, int, int);
-            auto GetPrimStats = (GetPrimStats_t)0x00487740;
-
-            auto r = GetPrimStats((int)renderDll->m_primControlWintel, &buffer[0], 511, reinterpret_cast<Glacier::ZGEOM*>(gameData->m_Hitman3)->m_baseGeom->m_primitive);
-            spdlog::info("R: {:08X}| {}", r, buffer);
-            std::memset(&buffer[0], 0x0, 512);
-
-            for (int i = 0; i < gameData->m_ActorsInPoolCount; i++) {
-                GetPrimStats((int)renderDll->m_primControlWintel, &buffer[0], 511, gameData->m_ActorsPool[i]->m_baseGeom->m_primitive);
-                spdlog::info("Actor[{}]: {}", i, buffer);
-                std::memset(&buffer[0], 0x0, 512);
-            }
-        }
 
 		{
 			static int g_typeId { 0 };
@@ -131,11 +96,11 @@ namespace Hitman::BloodMoney
 				}
 				else
 				{
-					spdlog::info("Found type '{}' (of id {})", tp->m_psName, g_typeId);
+					spdlog::info("Found type '{}' (of id {})", tp->ClassInfoName(), g_typeId);
 
-					spdlog::info("TypeID : {}", tp->m_iTypeId);
-					spdlog::info("Mask   : {}", *tp->m_piMask);
-					spdlog::info("ID     : {}", *tp->m_piID);
+					spdlog::info("TypeID : {}", tp->Type());
+					spdlog::info("Mask   : {}", tp->GetMaskId());
+					spdlog::info("ID     : {}", tp->GetClassId());
 				}
 
 				g_typeId = 0;
@@ -148,7 +113,7 @@ namespace Hitman::BloodMoney
         ImGui::Begin("TEST");
 
         if (ImGui::Button("Give MP7 with tranquilizer ammo")) {
-            auto engineDB = sysInterface->m_engineDataBase;
+            auto engineDB = sysInterface->m_pEngineData;
             if (!engineDB) {
                 return;
             }
@@ -183,13 +148,13 @@ namespace Hitman::BloodMoney
                     return;
                 }
 
-                Glacier::ZEntityLocator* pCurrentEnt = pGroup->m_baseGeom;
+                Glacier::ZBaseGeom* pCurrentEnt = pGroup->m_baseGeom;
                 Glacier::ZGEOM* pCurrentGeom = nullptr;
 
                 do {
-                    pCurrentGeom = reinterpret_cast<Glacier::ZGEOM*>(pCurrentEnt->m_assignedTo);
+                    pCurrentGeom = pCurrentEnt->m_pExtraGeom;
 
-                    const bool isAcceptable = (sEntityName.empty() ? true : (std::string_view { pCurrentEnt->entityName } == sEntityName)) && (((*pMask) & pCurrentGeom->GetObjectId()) == *(pId));
+                    const bool isAcceptable = (sEntityName.empty() ? true : (std::string_view { pCurrentEnt->m_Name } == sEntityName)) && (((*pMask) & pCurrentGeom->GetObjectId()) == *(pId));
                     if (isAcceptable) {
                         result.emplace_back(pCurrentGeom);
                     }
@@ -223,13 +188,11 @@ namespace Hitman::BloodMoney
 
                     auto pGun = reinterpret_cast<Glacier::ZItemWeapon*>(pGunItem);
 
-                    spdlog::info("PWPNO: {:08X}", reinterpret_cast<Glacier::ZItemTemplateWeapon*>(pGun->GetItemTemplate())->m_pWeaponOperations);
-
-                    reinterpret_cast<Glacier::ZItemTemplateWeapon*>(pGun->GetItemTemplate())->m_pWeaponOperations = Glacier::EWeaponOperation::WO_FULLAUTO;
+                    reinterpret_cast<Glacier::ZItemTemplateWeapon*>(pGun->GetItemTemplate())->m_WeaponOperations = Glacier::EWeaponOperation::WO_FULLAUTO;
                     //spdlog::info("GT: {:08X}", reinterpret_cast<Glacier::ZItemTemplateWeapon*>(pGun->GetItemTemplate())->m_weaponType);
-                    reinterpret_cast<Glacier::ZItemTemplateWeapon*>(pGun->GetItemTemplate())->m_weaponType = 0;
+                    reinterpret_cast<Glacier::ZItemTemplateWeapon*>(pGun->GetItemTemplate())->m_eWeaponType = Glacier::WEAPONTYPE::WT_PISTOL;
 
-                    pGun->m_nextOperation = Glacier::EWeaponOperation::WO_FULLAUTO;
+                    pGun->m_eWeaponOperation = Glacier::EWeaponOperation::WO_FULLAUTO;
 
                     pGun->SetProjectilesInMagazine(999);
                 }
@@ -252,7 +215,7 @@ namespace Hitman::BloodMoney
 		if (ImGui::Button("T6")) { gameData->m_OSD->m_field8F0 = 6; }
 
 		if (ImGui::Button("DEBUG")) {
-			spdlog::info("AUX: {:08X}", gameData->m_OSD->m_pHealthFrame);
+			spdlog::info("AUX: {:08X}", reinterpret_cast<std::intptr_t>(gameData->m_OSD->m_pHealthFrame));
 		}
 
         if (ImGui::Button("Toggle AIM")) {
@@ -260,15 +223,11 @@ namespace Hitman::BloodMoney
             *reinterpret_cast<bool*>(((std::intptr_t)gameData->m_Hitman3) + 0xB58) = !v;
         }
 
-        if (ImGui::Button("Dump render draw")) {
-            spdlog::info("RenderDraw at {:08X}", sysInterface->m_renderer->m_pRenderDraw);
-        }
-
         if (ImGui::Button("Dump actor #0 matpos")) {
             Glacier::ZMat3x3 mat;
             Glacier::ZVector3 pos;
 
-            gameData->m_ActorsPool[0]->GetRootMatPos(&mat, &pos);
+            reinterpret_cast<Glacier::ZGEOM*>(gameData->m_ActorsPool[0])->GetRootMatPos(mat, pos);
 
             spdlog::info("Actor #0: ");
             spdlog::info("Pos     : {};{};{}", pos.x, pos.y, pos.z);
@@ -277,170 +236,31 @@ namespace Hitman::BloodMoney
             spdlog::info("        : {};{};{}", mat.data[6], mat.data[7], mat.data[8]);
         }
 
-        if (ImGui::Button("Test bone dumper")) {
-            spdlog::info("--------------- BEGIN DUMP -----------------");
-
-            auto pD3DDll = Glacier::getInterface<Glacier::ZRenderWintelD3DDll>(Globals::kD3DDllAddr);
-            auto pPrimControl = pD3DDll->m_primControlWintel;
-
-            auto pActor = gameData->m_ActorsPool[0];
-            const int iBonesCount = HF::Hook::VFHook<Glacier::ZPrimControlWintel>::invoke<int, int>(pPrimControl, 41, pActor->m_baseGeom->m_primitive);
-            spdlog::info("Bones count: {}", iBonesCount);
-
-            for (int boneIx = 0; boneIx < iBonesCount; boneIx++) {
-                Glacier::Matrix3x3 mat {};
-                Glacier::Vector3 cenPos, pos;
-
-                pActor->GetBoneCenter(boneIx, &cenPos);
-                pActor->GetBoneMatPos(&mat, &pos, boneIx);
-
-                spdlog::info("Bone[{}] = {}", boneIx, pActor->GetBoneName(boneIx));
-                spdlog::info("Center: {};{};{}", cenPos.x, cenPos.y, cenPos.z);
-                spdlog::info("Pos   : {};{};{}", pos.x, pos.y, pos.z);
-                spdlog::info("Mat   : {};{};{}", mat.data[0], mat.data[1], mat.data[2]);
-                spdlog::info("        {};{};{}", mat.data[3], mat.data[4], mat.data[5]);
-                spdlog::info("        {};{};{}", mat.data[6], mat.data[7], mat.data[8]);
-            }
-        }
-
 //        if (gameData->m_LevelControl && ImGui::Button("Arrive enemies")) {
 //            // ZHM3LevelControlM05::GetMoreGuards()
 //            ((void(__thiscall*)(Hitman::BloodMoney::ZHM3LevelControl*))0x006BF540)(gameData->m_LevelControl);
 //        }
 
-        if (ImGui::Button("Test extract vars")) {
-            auto& ccom = *engineDb->GetSceneCom();
-            Glacier::REFTAB* ccomVars = &engineDb->GetSceneCom()->m_variables;
+		// if (gameData->m_OSD && gameData->m_OSD->m_pCheatsMenu && ImGui::Begin("Cheat Menu Editor Demo")) {
+		// 	if (ImGui::Button("Add menu entry")) {
+		// 		Glacier::REFTAB* pEntries = &gameData->m_OSD->m_pCheatsMenu->m_rtCommands;
 
-            for (int i = 0; i < ccomVars->Count(); i++) {
-                auto pEnt = reinterpret_cast<Glacier::CCom::Ent*>(ccomVars->operator[](i));
-                const char* sEntName = pEnt->GetKey();
-                std::intptr_t iValue = pEnt->GetValue();
+		// 		auto onZombieModActivation = []() {
+		// 			auto gameData = Glacier::getInterface<Hitman::BloodMoney::ZHM3GameData>(Globals::kGameDataAddr);
+		// 			if (gameData && gameData->m_LevelControl)
+		// 			{
+		// 				gameData->m_LevelControl->Command(0x952, nullptr);
+		// 			}
+		// 		};
 
-                switch (pEnt->m_pTypeInfo->m_eKind) {
-                    case Glacier::CCom::Ent::TypeInfo::EKind::Bool:
-                        spdlog::info("[{}] '{}' = {}", i, sEntName, static_cast<bool>(iValue));
-                        break;
-                    case Glacier::CCom::Ent::TypeInfo::EKind::Char:
-                        spdlog::info("[{}] '{}' = {}", i, sEntName, static_cast<char>(iValue));
-                        break;
-                    case Glacier::CCom::Ent::TypeInfo::EKind::Long:
-                        spdlog::info("[{}] '{}' = {}", i, sEntName, static_cast<int>(iValue));
-                        break;
-                    case Glacier::CCom::Ent::TypeInfo::EKind::Float32:
-                        spdlog::info("[{}] '{}' = {}", i, sEntName, static_cast<float>(iValue));
-                        break;
-                    case Glacier::CCom::Ent::TypeInfo::EKind::Real:
-                        spdlog::info("[{}] '{}' = {:X} (REAL)", i, sEntName, iValue);
-                        break;
-                    case Glacier::CCom::Ent::TypeInfo::EKind::P:
-                        spdlog::info("[{}] '{}' = {:X}", i, sEntName, static_cast<std::intptr_t>(iValue));
-                        break;
-                    case Glacier::CCom::Ent::TypeInfo::EKind::Vec3:
-                        spdlog::info("[{}] '{}' = VEC3? {:X}", i, sEntName, static_cast<std::intptr_t>(iValue));
-                        break;
-                    case Glacier::CCom::Ent::TypeInfo::EKind::Vec3F:
-                        spdlog::info("[{}] '{}' = VEC3F? {:X}", i, sEntName, static_cast<std::intptr_t>(iValue));
-                        break;
-                    case Glacier::CCom::Ent::TypeInfo::EKind::Mat33:
-                        spdlog::info("[{}] '{}' = MAT3x3? {:X}", i, sEntName, static_cast<std::intptr_t>(iValue));
-                        break;
-                    case Glacier::CCom::Ent::TypeInfo::EKind::Mat33F:
-                        spdlog::info("[{}] '{}' = MAT3x3F? {:X}", i, sEntName, static_cast<std::intptr_t>(iValue));
-                        break;
-                    case Glacier::CCom::Ent::TypeInfo::EKind::Str:
-                        spdlog::info("[{}] '{}' = {}", i, sEntName, reinterpret_cast<const char*>(&iValue));
-                        break;
-                    case Glacier::CCom::Ent::TypeInfo::EKind::Blk:
-                        spdlog::info("[{}] '{}' = BLK? {:X}", i, sEntName, static_cast<std::intptr_t>(iValue));
-                        break;
-                    case Glacier::CCom::Ent::TypeInfo::EKind::File:
-                        spdlog::info("[{}] '{}' = FILE? {:X}", i, sEntName, static_cast<std::intptr_t>(iValue));
-                        break;
-                    case Glacier::CCom::Ent::TypeInfo::EKind::Data:
-                        spdlog::info("[{}] '{}' = DATA? {:X}", i, sEntName, static_cast<std::intptr_t>(iValue));
-                        break;
-                    case Glacier::CCom::Ent::TypeInfo::EKind::GREF:
-                        spdlog::info("[{}] '{}' = {:8X} (GEOM REF)", i, sEntName, reinterpret_cast<std::intptr_t>(Glacier::ZGEOM::RefToPtr(iValue)));
-                        break;
-                    case Glacier::CCom::Ent::TypeInfo::EKind::GRFT:
-                        spdlog::info("[{}] '{}' = {:8X} (REF TAB)", i, sEntName, reinterpret_cast<std::intptr_t>(Glacier::ZGEOM::RefToPtr(iValue)));
-                        break;
-                    case Glacier::CCom::Ent::TypeInfo::EKind::ZMSG:
-                        spdlog::info("[{}] '{}' = {} (ZMSG)", i, sEntName, iValue);
-                        break;
-                    case Glacier::CCom::Ent::TypeInfo::EKind::SREF:
-                        spdlog::info("[{}] '{}' = {:X} (SREF?)", i, sEntName, iValue);
-                        break;
-                    default:
-                        spdlog::info("[{}] '{}' = <Bad type info> {:8X}, got type mask: '{:4X}'", i, sEntName, reinterpret_cast<std::intptr_t>(pEnt), pEnt->m_pTypeInfo->m_eKind);
-                        break;
-                }
-            }
-        }
+		// 		auto ent = reinterpret_cast<ZCheatMenu::SEntry*>(pEntries->Add(0));
+		// 		ent->pName = "Run Zombie Mode";
+		// 		ent->eType = ZCheatMenu::ECheatMenuEntryType::MENU_TOGGLE_CALLABLE_OPTION;
+		// 		ent->uOption.pFunction = onZombieModActivation;
+		// 	}
 
-		if (gameData->m_Hitman3 && ImGui::Begin("Camera offset & focus demo"))
-		{
-			auto pCamera = reinterpret_cast<Hitman::BloodMoney::ZHM3Camera*>(*reinterpret_cast<uint8_t**>(reinterpret_cast<uint8_t*>(gameData->m_Hitman3) + 0xB50));
-			if (pCamera) {
-				ImGui::Text("Common");
-
-				if (pCamera->m_geom) {
-					if (ImGui::Button("Set")) {
-						reinterpret_cast<Glacier::ZCAMERA *>(pCamera->m_geom)->m_field1C |= 0x1000000u;
-					}
-					ImGui::SameLine(0.f, 5.f);
-					if (ImGui::Button("UnSet")) {
-						reinterpret_cast<Glacier::ZCAMERA *>(pCamera->m_geom)->m_field1C &= ~0x1000000u;
-					}
-				}
-
-				ImGui::Checkbox("IsFreeCam", &pCamera->m_bIsFreeCam);
-				ImGui::Checkbox("IsActive", &pCamera->m_bIsActive);
-				ImGui::Checkbox("IsEnabled", &pCamera->m_bEnabled);
-
-				ImGui::InputFloat3("m_vPos", &pCamera->m_vPos.x);
-				ImGui::InputFloat3("m_vPoseOffset", &pCamera->m_vPoseOffset.x);
-				ImGui::InputFloat3("m_vCurrentLookAtPoint", &pCamera->m_vCurrentLookAtPoint.x);
-
-				ImGui::DragFloat("m_fAngleYaw", &pCamera->m_fAngleYaw, 0.5f, 0.f, 360.f);
-				ImGui::DragFloat("m_fAnglePitch", &pCamera->m_fAnglePitch, 0.5f, 0.f, 360.f);
-				ImGui::DragFloat("m_fAngleRoll", &pCamera->m_fAngleRoll, 0.5f, 0.f, 360.f);
-
-				if (pCamera->m_pCameraConsole)
-				{
-					ImGui::Separator();
-
-					ImGui::InputFloat3("m_pCameraConsole->m_vFocalPoint", &pCamera->m_pCameraConsole->m_vFocalPoint.x);
-					ImGui::InputFloat3("m_pCameraConsole->m_vField17C", &pCamera->m_pCameraConsole->m_vField17C.x);
-				}
-			} else {
-				ImGui::TextColored(ImVec4 { 1.f, 1.f, 0.f, 1.f }, "No camera instance!");
-			}
-
-			ImGui::End();
-		}
-
-		if (gameData->m_OSD && gameData->m_OSD->m_pCheatMenu && ImGui::Begin("Cheat Menu Editor Demo")) {
-			if (ImGui::Button("Add menu entry")) {
-				Glacier::REFTAB* pEntries = &gameData->m_OSD->m_pCheatMenu->m_options;
-
-				auto onZombieModActivation = []() {
-					auto gameData = Glacier::getInterface<Hitman::BloodMoney::ZHM3GameData>(Globals::kGameDataAddr);
-					if (gameData && gameData->m_LevelControl)
-					{
-						gameData->m_LevelControl->Command(0x952, nullptr);
-					}
-				};
-
-				auto ent = reinterpret_cast<ZCheatMenu::SEntry*>(pEntries->Add(0));
-				ent->pName = "Run Zombie Mode";
-				ent->eType = ZCheatMenu::ECheatMenuEntryType::MENU_TOGGLE_CALLABLE_OPTION;
-				ent->uOption.pFunction = onZombieModActivation;
-			}
-
-			ImGui::End();
-		}
+		// 	ImGui::End();
+		// }
 
         ImGui::End();
     }

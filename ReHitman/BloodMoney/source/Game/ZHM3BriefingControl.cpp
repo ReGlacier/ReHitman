@@ -21,7 +21,6 @@ namespace Hitman::BloodMoney {
     }
 
     void ZHM3BriefingControl::StopSpeech() {
-        if (!m_bIsSpeechPlaying) return;
         assert(BMConfigurationService::BMAPI_FunctionAddress_ZHM3BriefingControl_StopSpeech != BMConfigurationService::kNotConfiguredOption);
 
         if (BMConfigurationService::BMAPI_FunctionAddress_ZHM3BriefingControl_StopSpeech != BMConfigurationService::kNotConfiguredOption) {

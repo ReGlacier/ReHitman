@@ -7,49 +7,14 @@ namespace Glacier
         BITMAP_PAL_OPAC = 0x50414C4F,
         BITMAP_32       = 0x52474241,
         BITMAP_U8V8     = 0x55385638,
-        BITMAP_DXT1     = 0x44585431
+        BITMAP_DXT1     = 0x44585431,
+        BITMAP_DXT3     = 0x44585433,
+        BITMAP_I8       = 0x49382020,
 
-        //Declared but values not recognized yet
-        //BITMAP_DXT3,
-        //BITMAP_I8,
-
+        // Pseudo types assigned from ZBitmap params in ZTextureManagerD3D::CreateTexture
+        TEXTURE_EMBM    = 0x454D424D, // 'EMBM' (params & 0x80)
+        TEXTURE_CUBE    = 0x43425545, // PC cube marker (params & 0x400); the iOS build uses 'CUBE' = 0x43554245
+        TEXTURE_DMAP    = 0x444D4150, // 'DMAP' (params & 0x800)
+        TEXTURE_DOT3    = 0x444F5433  // 'DOT3'
     };
-
-
-    /**
-     * @note Conditions for DX3 and I8 formats in loader code
-
-      v16 = type - 0x44585431;
-          if ( !v16 )
-          {
-            v21 = ZSysMem::allocate(0x30, "engine\\drawing\\_wintel\\renderd3d\\renderwinteld3dtex.cpp", 778);
-            LOBYTE(v54) = 12;
-            if ( !v21 )
-              goto LABEL_46;
-            v19 = ZBitmapDXT1::Ctor((int)v21);
-            goto LABEL_47;
-          }
-          v17 = v16 - 2;
-          if ( !v17 )
-          {
-            v20 = ZSysMem::allocate(0x30, "engine\\drawing\\_wintel\\renderd3d\\renderwinteld3dtex.cpp", 781);
-            LOBYTE(v54) = 13;
-            if ( !v20 )
-              goto LABEL_46;
-            v19 = ZBitmapDXT3::Ctor((int)v20);
-            goto LABEL_47;
-          }
-          if ( v17 == 0x4DFCBED )
-          {
-            v18 = ZSysMem::allocate(0x30, "engine\\drawing\\_wintel\\renderd3d\\renderwinteld3dtex.cpp", 769);
-            LOBYTE(v54) = 9;
-            if ( !v18 )
-              goto LABEL_46;
-            v19 = ZBitmapI8::Ctor((int)v18);
-LABEL_47:
-            LOBYTE(v54) = 6;
-            v45[v12] = v19;
-            goto LABEL_48;
-          }
-     */
 }

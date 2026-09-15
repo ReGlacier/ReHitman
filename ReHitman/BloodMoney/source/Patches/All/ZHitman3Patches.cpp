@@ -3,8 +3,8 @@
 #include <BloodMoney/Game/Globals.h>
 
 #include <Glacier/Glacier.h>
-#include <Glacier/ZSysInterfaceWintel.h>
-#include <Glacier/ZEngineDataBase.h>
+#include <Glacier/System/ZSysInterfaceWintel.h>
+#include <Glacier/Data/ZEngineDataBase.h>
 
 #include <spdlog/spdlog.h>
 
@@ -22,6 +22,7 @@ namespace Hitman::BloodMoney
     namespace Consts
     {
         static constexpr std::intptr_t kZHitman3Ctor = 0x00604CF1;
+        static constexpr std::intptr_t kZHM3GameDataCtor = 0x0069ED01;
 
         static constexpr std::intptr_t kZGuardQuarterControllerCtor = 0x00657BC5;
         static constexpr std::intptr_t kZGuardQuarterControllerDtor = 0x00657349;
@@ -32,8 +33,13 @@ namespace Hitman::BloodMoney
         void __stdcall OnZHitman3Constructed(std::intptr_t instance)
         {
             auto pSysInterface = Glacier::getInterface<Glacier::ZSysInterfaceWintel>(Globals::kSysInterfaceAddr);
-            spdlog::info("Current scene: {}", pSysInterface->m_engineDataBase->GetSceneName());
+            spdlog::info("Current scene: {}", pSysInterface->m_pEngineData->GetSceneName());
             spdlog::info("ZHitman3 constructed at {:08X}", instance);
+        }
+
+        void __stdcall OnZHM3GameDataConstructed(std::intptr_t instance)
+        {
+            spdlog::info("ZHM3GameData constructed at {:08X}", instance);
         }
 
         void __stdcall OnZGuardQuarterControllerConstructed(ZGuardQuarterController* pInstance) {

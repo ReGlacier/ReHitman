@@ -3,7 +3,7 @@
 #include <Glacier/Geom/ZGEOM.h>
 #include <Glacier/Geom/ZGROUP.h>
 #include <Glacier/Geom/ZSNDOBJ.h>
-#include <Glacier/ZCAMERA.h>
+#include <Glacier/Geom/ZCAMERA.h>
 
 #include <BloodMoney/Game/ZHM3Actor.h>
 

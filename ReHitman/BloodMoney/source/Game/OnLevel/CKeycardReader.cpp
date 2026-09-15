@@ -4,11 +4,11 @@
 
 namespace Hitman::BloodMoney
 {
-    Glacier::ZEntityLocator* CKeycardReader::GetNearestDoor(unsigned int iDoorsCount, Glacier::ZEntityLocator** ppDoors) {
+    Glacier::ZBaseGeom* CKeycardReader::GetNearestDoor(unsigned int iDoorsCount, Glacier::ZBaseGeom** ppDoors) {
         assert(BMConfigurationService::BMAPI_FunctionAddress_CKeycardReader_GetNearestDoor != BMConfigurationService::kNotConfiguredOption);
         if (BMConfigurationService::BMAPI_FunctionAddress_CKeycardReader_GetNearestDoor != BMConfigurationService::kNotConfiguredOption)
         {
-            return ((Glacier::ZEntityLocator*(__thiscall*)(CKeycardReader*, unsigned int, Glacier::ZEntityLocator**))BMConfigurationService::BMAPI_FunctionAddress_CKeycardReader_GetNearestDoor)(this, iDoorsCount, ppDoors);
+            return ((Glacier::ZBaseGeom*(__thiscall*)(CKeycardReader*, unsigned int, Glacier::ZBaseGeom**))BMConfigurationService::BMAPI_FunctionAddress_CKeycardReader_GetNearestDoor)(this, iDoorsCount, ppDoors);
         }
         return nullptr;
     }

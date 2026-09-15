@@ -16,7 +16,7 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         submodules: "recursive"
 
@@ -26,17 +26,55 @@ jobs:
     - name: Get latest CMake
       uses: lukka/get-cmake@latest
 
+    # --- 1. Установка DirectX SDK (x86) через vcpkg ---
+    - name: Install DirectX SDK (x86) via vcpkg
+      shell: pwsh
+      run: |
+        vcpkg install directxsdk:x86-windows
+
+    # --- 2. Генерация CMake с указанием тулчейна vcpkg ---
     - name: Generate projects
+      shell: pwsh
       run: |
         mkdir build
         cd build
         cmake --version
-        cmake -A Win32 -G "Visual Studio 18 2026" ..
+        cmake -A Win32 -G "Visual Studio 18 2026" `
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" `
+          -DVCPKG_TARGET_TRIPLET=x86-windows `
+          ..
     
     - name: Build
       run: |
         cd build
         cmake --build . --config Release
+
+    - name: Build Glacier tests
+      run: |
+        cd build
+        cmake --build . --config Release --target GlacierTests
+
+    - name: Run Glacier tests
+      shell: pwsh
+      run: |
+        cd build
+        $failed = $false
+        for ($i = 1; $i -le 5; $i++) {
+          Write-Host "Glacier test run $i/5"
+          ctest -C Release --output-on-failure -R Glacier
+          if ($LASTEXITCODE -ne 0) {
+            $failed = $true
+          }
+        }
+        if ($failed) {
+          exit 1
+        }
+
+    - name: Check STLport layout probe
+      run: |
+        cd build
+        cmake --build . --config Release --target STLportLayoutProbe
+        ctest -C Release --output-on-failure -R STLportLayoutProbe
 
     - name: Prepare artifact
       shell: pwsh
@@ -47,7 +85,7 @@ jobs:
         Copy-Item build/ReHitman/NVCPL/Release/NVCPL.dll artifact/
 
     - name: Upload build artifact - ReHitman
-      uses: actions/upload-artifact@v7
+      uses: actions/upload-artifact@v4
       with:
         name: "ReHitman"
         path: "artifact"
@@ -64,7 +102,7 @@ jobs:
       run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
 
     - name: Download artifact
-      uses: actions/download-artifact@v8
+      uses: actions/download-artifact@v4
       with:
         name: ReHitman
         path: ReHitman

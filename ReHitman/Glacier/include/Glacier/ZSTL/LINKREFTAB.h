@@ -1,68 +1,68 @@
 #pragma once
 
 #include <Glacier/GlacierFWD.h>
+#include <Glacier/ReGlacier.h>
+#include <Glacier/ZSTL/REFTAB.h>
 
 namespace Glacier
 {
-    class LINKREFTAB
+    struct PrevNext
     {
-    public:
-        /// === vftable ===
-        virtual void Release(bool);
-        virtual void Add(uint);
-        virtual void AddUnique(uint);
-        virtual void Clear();
-        virtual void ClearThis();
-        virtual int Count();
-        virtual int Size();
-        virtual size_t GetEleSize();
-        virtual size_t PoolSize();
-        virtual void DelRefPtr(uint *);
-        virtual bool Exists(uint);
-        virtual bool Exists(uint *);
-        virtual void* Find(uint);
-        virtual uint GetRefNr(int) const;
-        virtual void* GetRefPtrNr(int) const;
-        virtual int GetIndex(uint);
-        virtual void Remove(uint);
-        virtual void RemoveIfExists(uint);
-        virtual void RunDelRef(void*);
-        virtual void RunInitNxtRef(void *);
-        virtual void RunInitNxtRef(void *) const;
-        virtual void RunInitPrevRef(void *);
-        virtual void RunInitPrevRef(void *) const;
-        virtual void RunNxtRef(void *);
-        virtual void RunNxtRef(void *) const;
-        virtual void RunNxtRefPtr(void *);
-        virtual void RunNxtRefPtr(void *) const;
-        virtual void RunPrevRef(void *);
-        virtual void RunPrevRef(void *) const;
-        virtual void RunPrevRefPtr(void *);
-        virtual void RunPrevRefPtr(void *) const;
-        virtual void* operator[](int);
-        virtual void RunToRefPtr(void *);
-        virtual void DeleteBlock(void *);
-        virtual void* NewBlock(void);
-        virtual void RemoveFreeStack(void);
-        virtual void CreateFreeStack(void);
-        virtual void AddStart(uint);
-        virtual void AddEnd(uint);
-        virtual void InsertBefore(uint *,uint);
-        virtual int GetPrevRefPtr(uint *);
-        virtual int GetNextRefPtr(uint *);
-        virtual int GetRefPtrNr(int);
-        virtual int GetRefNr(int);
-
-        /// === members ===
-        int field_4;
-        int field_8;
-        int field_c;
-        int field_10;
-        int field_14;
-        int field_18;
-        int field_1c;
-        int field_20;
-        int field_24;
+        PrevNext *Prev;
+        PrevNext *Next;
     };
 
+    class LINKREFTAB : public REFTAB
+    {
+    public:
+        // methods
+        LINKREFTAB(int RefsPrBlk, int Exsize);
+
+        // vtbl override
+        virtual ~LINKREFTAB();
+        uint32_t* Add(uint32_t) override;
+        void Clear() override;
+        void ClearThis() override;
+        int Count() const override;
+        void DelRefPtr(uint32_t*) override;
+        void RunDelRef(RefRun *) override;
+        void RunInitNxtRef(RefRun *) const override;
+        void RunInitNxtRef(RefRun *) override;
+        void RunInitPrevRef(RefRun *) const override;
+        void RunInitPrevRef(RefRun *) override;
+        const uint32_t* RunNxtRefPtr(RefRun *) const override;
+        uint32_t* RunNxtRefPtr(RefRun *) override;
+        const uint32_t* RunPrevRefPtr(RefRun *) const override;
+        uint32_t* RunPrevRefPtr(RefRun *) override;
+        const uint32_t* RunToRefPtr(RefRun *) const override;
+        // vtbl new methods
+        virtual void RemoveFreeStack();
+        virtual void CreateFreeStack();
+        virtual uint32_t* AddStart(uint32_t);
+        virtual uint32_t* AddEnd(uint32_t);
+        virtual uint32_t* InsertBefore(uint32_t *pBefore, uint32_t rRef);
+        virtual uint32_t* GetPrevRefPtr(uint32_t *);
+        virtual uint32_t* GetNextRefPtr(uint32_t *);
+        virtual uint32_t* GetRefPtrNr(int);
+        virtual uint32_t  GetRefNr(int);
+
+        /// === members ===
+        PrevNext *First;
+        PrevNext *Last;
+        REFTAB *FreeStack;
+
+    private:
+        PrevNext* GetPrevNext(uint32_t* pRecord)
+        {
+            return reinterpret_cast<PrevNext*>(pRecord + EleSize - 2);
+        }
+
+        uint32_t* GetRecord(PrevNext* pNode)
+        {
+            return reinterpret_cast<uint32_t*>(pNode) + (2 - EleSize);
+        }
+
+        uint32_t* AllocateRecord(uint32_t rRef);
+    };
+    RE_VERIFY_SIZE(LINKREFTAB, 0x28); // Verified
 }

@@ -1,4 +1,11 @@
 cmake-build*
-build
+build*/*
 .idea
 .vscode
+.cache
+.zed
+**/__pycache__/
+compile_commands.json
+Tools/PFViewer/Examples
+Tools/ida_dump/result
+Tools/TextureCapture/Result

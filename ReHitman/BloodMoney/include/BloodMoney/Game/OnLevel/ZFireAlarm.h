@@ -1,19 +1,21 @@
 #pragma once
 
-#include <Glacier/EventBase/ZEventBase.h>
+#include <Glacier/CBaseEvent.h>
+#include <Glacier/Geom/ZGEOM.h>
 #include <Glacier/GlacierFWD.h>
 
 namespace Hitman::BloodMoney
 {
-    class ZFireAlarm : public Glacier::ZEventBase
+    class ZFireAlarm : public Glacier::CBaseEvent<Glacier::ZGEOM>
     {
         /// vftable - no custom vftable
         /// data (total size : 0x48, ZEventBase size: 0x30)
-        int m_field30;
-        int m_field34;
-        int m_field38;
-        Glacier::REFTAB* m_listeners;
-        Glacier::REFTAB* m_reftab40;
-        int m_field44;
+        Glacier::ZREF m_rAlarmArea;
+        Glacier::ZREF m_rPanicArea;
+        int m_iTime;
+        Glacier::REFTAB* m_pSwitches;
+        Glacier::REFTAB* m_pBells;
+        float m_fTimeOutCounter;
     };
+    RE_VERIFY_SIZE(ZFireAlarm, 0x48); // Verified
 }

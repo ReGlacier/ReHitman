@@ -4,11 +4,11 @@
 #include <BloodMoney/Game/ZHM3GameData.h>
 #include <BloodMoney/Game/Globals.h>
 
-#include <Glacier/ZSysInterfaceWintel.h>
-#include <Glacier/ZEngineDataBase.h>
+#include <Glacier/System/ZSysInterfaceWintel.h>
+#include <Glacier/Data/ZEngineDataBase.h>
 #include <Glacier/EventBase/ZEventBase.h>
-#include <Glacier/CInventory.h>
-#include <Glacier/Geom/ZEntityLocator.h>
+#include <Glacier/GameBase/CInventory.h>
+#include <Glacier/Geom/ZBaseGeom.h>
 #include <Glacier/Geom/ZGROUP.h>
 #include <Glacier/Geom/ZGEOM.h>
 
@@ -55,7 +55,7 @@ namespace Hitman::BloodMoney {
                 return;
             }
 
-            auto eWeaponType = ZHM3WeaponUpgradeControl::GetWeaponType(pAddedItem->m_baseGeom->entityName);
+            auto eWeaponType = ZHM3WeaponUpgradeControl::GetWeaponType(pAddedItem->m_baseGeom->m_Name);
             if (eWeaponType != EWeaponType::EW_UNKNOWN) { //TODO: Add fix for WA-2000 (It's not classified as 'custom' weapon but it is)
                 auto pCustomItem = reinterpret_cast<ZHM3ItemWeaponCustom*>(pAddedItem);
                 pCustomItem->SetSilencerType(ESilencerType::eSilentOver20); // Just for test
@@ -68,16 +68,16 @@ namespace Hitman::BloodMoney {
     }
 
     void CCheat::GiveItem(Glacier::ZGROUP *pWeaponsGroup, std::string_view sItemName) {
-        Glacier::ZEntityLocator* pCurrentEnt = pWeaponsGroup->m_baseGeom;
+        Glacier::ZBaseGeom* pCurrentEnt = pWeaponsGroup->m_baseGeom;
         Glacier::ZGEOM* pCurrentGeom = nullptr;
 
         do {
-            pCurrentGeom = reinterpret_cast<Glacier::ZGEOM*>(pCurrentEnt->m_assignedTo);
+            pCurrentGeom = reinterpret_cast<Glacier::ZGEOM*>(pCurrentEnt->m_pExtraGeom);
 
             auto kZItemTemplate_Id = reinterpret_cast<std::intptr_t*>(0x0099BF30);
             auto kZItemTemplate_Mask = reinterpret_cast<std::intptr_t*>(0x0099BF34);
             const bool isItemTemplate = ((*kZItemTemplate_Mask) & pCurrentGeom->GetObjectId() )== *(kZItemTemplate_Id);
-            const std::string_view sCurrentItemName { pCurrentEnt->entityName };
+            const std::string_view sCurrentItemName { pCurrentEnt->m_Name };
 
             if (sCurrentItemName == sItemName) {
                 if (!isItemTemplate) {
@@ -105,7 +105,7 @@ namespace Hitman::BloodMoney {
             return;
         }
 
-        auto engineDB = sysInterface->m_engineDataBase;
+        auto engineDB = sysInterface->m_pEngineData;
         if (!engineDB) {
             return;
         }
@@ -128,16 +128,16 @@ namespace Hitman::BloodMoney {
             return;
         }
 
-        Glacier::ZEntityLocator* pCurrentEnt = pWeaponsGroup->m_baseGeom;
+        Glacier::ZBaseGeom* pCurrentEnt = pWeaponsGroup->m_baseGeom;
         Glacier::ZGEOM* pCurrentGeom = nullptr;
 
         do {
-            pCurrentGeom = reinterpret_cast<Glacier::ZGEOM*>(pCurrentEnt->m_assignedTo);
+            pCurrentGeom = reinterpret_cast<Glacier::ZGEOM*>(pCurrentEnt->m_pExtraGeom);
 
             auto kZItemTemplate_Id = reinterpret_cast<std::intptr_t*>(0x0099BF30);
             auto kZItemTemplate_Mask = reinterpret_cast<std::intptr_t*>(0x0099BF34);
             const bool isItemTemplate = ((*kZItemTemplate_Mask) & pCurrentGeom->GetObjectId() )== *(kZItemTemplate_Id);
-            const std::string_view sCurrentItemName { pCurrentEnt->entityName };
+            const std::string_view sCurrentItemName { pCurrentEnt->m_Name };
 
             if (sCurrentItemName == sItemName) {
                 if (!isItemTemplate) {
@@ -163,7 +163,7 @@ namespace Hitman::BloodMoney {
             return;
         }
 
-        auto engineDB = sysInterface->m_engineDataBase;
+        auto engineDB = sysInterface->m_pEngineData;
         if (!engineDB) {
             return;
         }

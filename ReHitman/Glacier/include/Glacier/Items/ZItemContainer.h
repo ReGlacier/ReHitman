@@ -21,11 +21,12 @@ namespace Glacier
         bool IsContainerFull();
 
         //data (total size is 0xC8, ZItem size is 0x84)
-        ZAction* m_actionsHolder;
-        ZMSGID m_MSG_REMOVEITEMFROMINVENTORY;
-        ZMSGID field_8A; // not message, just alignment
-        REFTAB* m_containedItems;
-        REFTAB m_items;
-        REFTAB m_reftabAC;
+        ZAction* m_pActionPlaceItem;
+        ZMSGID m_msgRemoveItemFromInventory;
+        RE_ADD_PADDING(2);
+        REFTAB* m_prtContainedItems;
+        REFTAB m_rDelayedInsertItem;
+        REFTAB m_rPlacePoses;
     };
+    RE_VERIFY_SIZE(ZItemContainer, 0xC8); // Verified
 }

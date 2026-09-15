@@ -1,9 +1,10 @@
 #pragma once
 
-#include <Glacier/EventBase/ZEventBase.h>
+#include <Glacier/CBaseEvent.h>
+#include <Glacier/Geom/ZGEOM.h>
 
 namespace Glacier {
-    class ZSetZDefine : public ZEventBase {
+    class ZSetZDefine : public CBaseEvent<ZGEOM> {
     public:
         //vftable (no changes)
         //data (total size is 0x38, base size is 0x30)

@@ -1,0 +1,80 @@
+# clang-format configuration for the ReHitman project.
+# Derived from the existing code style in Glacier/include and Glacier/source
+# (e.g. ZActionManager.cpp, ZUniMemory.h, ZLNKOBJ.h, ActiveAnimation.cpp).
+#
+# Note: Modules/ ships its own per-library .clang-format that takes precedence
+# over this file inside those directories.
+
+BasedOnStyle: LLVM
+Language: Cpp
+
+# --- Indentation -----------------------------------------------------------
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+ContinuationIndentWidth: 4
+ColumnLimit: 0
+
+# --- Braces: Allman, opening brace on its own line --------------------------
+BreakBeforeBraces: Allman
+
+# Indent the body inside namespace blocks (including top-level).
+NamespaceIndentation: All
+
+# Access specifiers sit at the class-body level (one indent in).
+AccessModifierOffset: -4
+
+# --- Pointers and references bind to the type --------------------------------
+PointerAlignment: Left
+DerivePointerAlignment: false
+
+# --- Wrapped parameter/argument lists ----------------------------------------
+# Once a list is broken, put one item per line (no bin-packing) and indent
+# the continuation by ContinuationIndentWidth instead of aligning to '('.
+BinPackArguments: false
+BinPackParameters: false
+AlignAfterOpenBracket: DontAlign
+AlignOperands: DontAlign
+
+# Constructor and inheritance initializer lists break before the colon and
+# put one member per line (never packed onto a single line).
+BreakConstructorInitializers: BeforeColon
+ConstructorInitializerIndentWidth: 4
+PackConstructorInitializers: Never
+BreakInheritanceList: BeforeColon
+
+# --- Short statements/functions -------------------------------------------------
+# Only short in-class inline functions may stay on a single line
+# (e.g. `const T* GetX() const { return m_x; }`). Non-inline definitions
+# and empty bodies keep the Allman layout.
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortBlocksOnASingleLine: Never
+AllowShortIfStatementsOnASingleLine: Never
+
+# --- Spacing --------------------------------------------------------------------
+# Control statements get a space before '(', calls/definitions do not.
+SpaceBeforeParens: ControlStatements
+
+# Keep binary operators at the end of the line when an expression is broken.
+BreakBeforeBinaryOperators: None
+
+# --- Comments ---------------------------------------------------------------------
+AlignTrailingComments: true
+ReflowComments: true
+FixNamespaceComments: false
+
+# --- Includes ----------------------------------------------------------------------
+# Sort includes within each block, keep blank-line separated include blocks.
+SortIncludes: true
+IncludeBlocks: Preserve
+
+# --- Miscellaneous ----------------------------------------------------------------
+# Preserve the two blank lines after the include block.
+MaxEmptyLinesToKeep: 2
+
+# Case labels are indented one level inside the switch body.
+IndentCaseLabels: false
+IndentCaseBlocks: false
+
+# Line endings are detected per file (CRLF is kept on Windows).
+DeriveLineEnding: true

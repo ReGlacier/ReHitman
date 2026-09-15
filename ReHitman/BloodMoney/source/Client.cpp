@@ -20,6 +20,7 @@
 #include <BloodMoney/Patches/All/FreeFileSystemPatch.h>
 #include <BloodMoney/Patches/All/RenderScenePatch.h>
 #include <BloodMoney/Patches/Mods/SkinChanger.h>
+#include <BloodMoney/Patches/All/FixFuckedLoaderScreens.h>
 
 
 namespace Hitman::BloodMoney
@@ -162,6 +163,11 @@ namespace Hitman::BloodMoney
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZEventBase_ActivateTimeUpdate        = 0x004E1520;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZActorCommunication_RegisterRadioUser    = 0x00654920;
         Glacier::G1ConfigurationService::G1API_FunctionAddress_ZBaseConRout_GetFactory              = 0x004E15F0;
+
+        // ZGeomBuffer
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZGeomBuffer_GeomPtrToRef_ZGEOM      = 0x00462A00;
+        Glacier::G1ConfigurationService::G1API_FunctionAddress_ZGeomBuffer_GeomPtrToRef_ZGeomBase  = 0x004629E0;
+
 #pragma endregion
 #pragma region BloodMoney Configuration Table
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZPathFollower_GetClosestWaypoint      = 0x00654450;
@@ -173,6 +179,7 @@ namespace Hitman::BloodMoney
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_CMetalDetector_DoAlarm                = 0x005D5B50;
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZHM3Actor_PreparePath                 = 0x00505570;
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZHM3Actor_ActivateBloodSpurt          = 0x0063D210;
+        BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZHM3Actor_InitMapIcon                 = 0x00637460;
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZTie_HideTie                          = 0x00580470;
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZTie_HideTieInMirror                  = 0x00580480;
         BloodMoney::BMConfigurationService::BMAPI_FunctionAddress_ZXMLGUISystem_GetTopWindow            = 0x005665E0;
@@ -288,6 +295,7 @@ namespace Hitman::BloodMoney
         m_patches->RegisterPatch<ZCutSequencePlayerPatch>();
         m_patches->RegisterPatch<SkinChanger>();
         m_patches->RegisterPatch<FreeFileSystemPatch>();
+        m_patches->RegisterPatch<FixFuckedLoaderScreens>();
 
         // temporary disabled
         //m_patches->RegisterPatch<RenderScenePatch>();

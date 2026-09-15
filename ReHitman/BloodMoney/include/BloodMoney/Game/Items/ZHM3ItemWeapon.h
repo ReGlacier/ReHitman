@@ -2,10 +2,14 @@
 
 #include <Glacier/GlacierFWD.h>
 #include <Glacier/Items/ZItemWeapon.h>
+#include <Glacier/ZSTL/ZStackArray.h>
 #include <BloodMoney/Game/Items/EHM3ItemType.h>
 
 namespace Hitman::BloodMoney
 {
+    using ZStackArrayItemWeaponMetaKeyEvents = Glacier::ZStackArrayInsert<5, int, float>;
+    RE_VERIFY_SIZE(ZStackArrayItemWeaponMetaKeyEvents, 44);
+
     class ZHM3ItemWeapon : public Glacier::ZItemWeapon
     {
     public:
@@ -24,38 +28,25 @@ namespace Hitman::BloodMoney
         virtual bool IsDetectable(); //always true
 
         //data (total size is 0x15C, ZItemWeapon size is 0xDC)
-        int m_fieldDC;
-        int m_fieldE0;
-        int m_fieldE4;
-        int m_fieldE8;
-        int m_fieldEC;
-        int m_fieldF0;
-        int m_fieldF4;
-        int m_fieldF8;
-        int m_fieldFC;
-        int m_field100;
-        int m_field104;
-        int m_field108;
-        int m_clipBoneNr;
-        int m_field110;
-        int m_field114;
-        int m_field118;
-        int m_field11C;
-        int m_field120;
-        Glacier::ZGEOM* m_pRootGeom;
-        int m_field128;
-        int m_field12C;
-        int m_field130;
-        int m_field134;
-        int m_field138;
-        int m_field13C;
-        int m_field140;
-        int m_field144;
-        int m_field148;
-        int m_field14C;
-        int m_field150;
-        int m_field154;
-        int m_field158;
+        float m_fRecoilValues[5];
+        float m_fRecoilDamping;
+        float m_fRecoilShotImpact;
+        float m_fRecoilMasterValue;
+        Glacier::Animation::Header* m_pAnimReload;
+        Glacier::Animation::Header* m_pAnimFire;
+        Glacier::Animation::Header* m_pAnimChamber;
+        Glacier::Animation::Header* m_pAnimUse;
+        int32_t m_iClipBoneNr;
+        int32_t m_nCurFrame;
+        Glacier::ZVector3 m_vClipPosOld;
+        bool m_bDualWeapon;
+        bool m_bBeingReloaded;
+        bool m_bSixShooter;
+        RE_ADD_PADDING(1);
+        Glacier::ZLNKOBJ* m_pGround;
+        Glacier::ZREF m_rCurrentSound;
+        Glacier::Animation::ActiveAnimation* m_pBoneAnim;
+        ZStackArrayItemWeaponMetaKeyEvents m_MetaKeyEvents;
     };
-
+    RE_VERIFY_SIZE(ZHM3ItemWeapon, 0x15C); // Verified
 }

@@ -10,3 +10,6 @@
 [submodule "ReHitman/Modules/gtest"]
 	path = ReHitman/Modules/gtest
 	url = https://github.com/google/googletest
+[submodule "ReHitman/Modules/zlib/impl"]
+	path = ReHitman/Modules/zlib/impl
+	url = https://github.com/madler/zlib.git

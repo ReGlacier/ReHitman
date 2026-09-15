@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PF4 NavMesh Viewer</title>
+<style>
+    :root { color-scheme: dark; }
+    html, body { margin: 0; height: 100%; overflow: hidden; background: #101418;
+                 font: 13px/1.4 "Segoe UI", system-ui, sans-serif; color: #dde; }
+    #view { position: fixed; inset: 0; }
+    .panel { position: fixed; z-index: 5; background: rgba(18,22,28,.9);
+             border: 1px solid #2a313c; border-radius: 8px; padding: 10px 12px;
+             box-shadow: 0 4px 18px rgba(0,0,0,.45); backdrop-filter: blur(4px); }
+    #topbar { left: 12px; top: 12px; right: 12px; display: flex; gap: 10px; align-items: center; }
+    #topbar h1 { font-size: 14px; margin: 0; font-weight: 600; letter-spacing: .3px; }
+    #topbar .file { margin-left: auto; }
+    #drop { position: absolute; inset: 0; z-index: 20; display: none;
+            background: rgba(30,60,120,.28); align-items: center; justify-content: center;
+            font-size: 20px; border: 2px dashed #6cf; box-sizing: border-box;
+            border-radius: 12px; pointer-events: none; }
+    #stats { left: 12px; bottom: 12px; min-width: 200px; }
+    #info { right: 12px; top: 12px; max-width: 300px; display: none; }
+    #log  { right: 12px; bottom: 12px; max-width: 320px; max-height: 140px; overflow: auto; }
+    button, .btn { background:#263042; color:#dfe; border:1px solid #3a4a63; border-radius:6px;
+                   padding:6px 12px; cursor:pointer; }
+    button:hover { background:#2f3e55; }
+    input[type=file] { display:none; }
+    label.btn { cursor:pointer; }
+    .stat { display:flex; justify-content:space-between; gap:16px; }
+    .stat b { color:#fff; font-variant-numeric: tabular-nums; }
+    .row { display:flex; gap:8px; align-items:center; margin:6px 0; }
+    .legend { display:flex; gap:6px; align-items:center; margin-top:8px; flex-wrap:wrap; }
+    .swatch { width:14px; height:14px; border-radius:3px; display:inline-block; }
+    a { color:#7cb8ff; }
+</style>
+</head>
+<body>
+
+<div id="view"></div>
+
+<div id="topbar" class="panel">
+    <h1>PF4 NavMesh Viewer</h1>
+    <label class="btn">Open .GMS<input type="file" id="file" accept=".gms,.bin,application/octet-stream"></label>
+    <button id="fit">Frame</button>
+    <button id="wire">Wireframe: ON</button>
+    <div class="row" style="margin:0 0 0 auto;">
+        <input type="checkbox" id="showComps" checked> <label for="showComps">components</label>
+        <input type="checkbox" id="showLinks"> <label for="showLinks">links</label>
+        <input type="checkbox" id="showActions" checked> <label for="showActions">actions</label>
+    </div>
+</div>
+
+<div id="drop">Drop a .GMS level file to load its pathfinder data</div>
+<div id="info" class="panel"></div>
+<div id="stats" class="panel"></div>
+<div id="log" class="panel"></div>
+
+<script src="./three.min.js"></script>
+<script src="./OrbitControls.js"></script>
+<script src="./pako.min.js"></script>
+<script>
+"use strict";
+
+/* ------------------------------------------------------------------ *
+ *  PF4 (pathfinder4) data viewer for Hitman: Blood Money .GMS files.  *
+ *                                                                     *
+ *  Reads a .GMS the same way the engine / the reference dumper does:  *
+ *    header    : i32 uncompressedSize, i32 bufferSize, i8 notCompressed*
+ *    payload   : raw-deflate data (wbits=-15) or plain bytes          *
+ *    [0x34]    : u32 offset of the PF4 chunk inside the payload       *
+ *    chunk     : u32 size, then the SPF4DataBlock + packed arrays     *
+ *                                                                     *
+ *  Then it parses the block layout reversed from the PC binary        *
+ *  (SPF4DataBlock -> splits/heighttrees/planes/components/graphs/     *
+ *  nodes/vertices/links/exitdists/corners/subnodes/obstacles) and     *
+ *  renders every walkable component polygon in 3D using vertex        *
+ *  heights.                                                           *
+ * ------------------------------------------------------------------ */
+
+const PALETTE = [
+  0x4fc3f7, 0xffb74d, 0xaed581, 0xf06292, 0x9575cd, 0x4dd0e1,
+  0xffd54f, 0x90a4ae, 0xef8a8a, 0x81c784, 0xba68c8, 0xff8a65,
+  0x4db6ac, 0xfff176, 0xb0bec5, 0xce93d8, 0xa1887f, 0x7986cb
+];
+
+/* ----------------------------- GMS -------------------------------- */
+function parseGMS(buf) {
+    const bytes = new Uint8Array(buf);
+    const view = new DataView(buf);
+    if (bytes.length < 9) throw new Error("File too small to be a GMS");
+    const uncompressedSize = view.getInt32(0, true);
+    const bufferSize       = view.getInt32(4, true);
+    const notCompressed    = view.getInt8(8);
+
+    let payload;
+    if (!notCompressed) {
+        payload = pako.inflate(bytes.subarray(9), { raw: true });
+    } else {
+        payload = bytes.subarray(9);
+    }
+    if (payload.length < 0x38) throw new Error("Decompressed payload too small");
+
+    const pv = new DataView(payload.buffer, payload.byteOffset, payload.byteLength);
+    const pf4Offset = pv.getUint32(0x34, true);
+    if (pf4Offset + 4 > payload.length) throw new Error("Bad PF4 offset in payload");
+
+    const chunkSize = pv.getUint32(pf4Offset, true);
+    if (chunkSize === 0xFFFFFFFC || chunkSize === 0) {
+        throw new Error("PF4 chunk has an unexpected header (0x" + chunkSize.toString(16) + ")");
+    }
+    if (pf4Offset + 4 + chunkSize > payload.length) throw new Error("PF4 chunk is truncated");
+    return payload.subarray(pf4Offset + 4, pf4Offset + 4 + chunkSize);
+}
+
+/* ---------------------------- PF4 block --------------------------- */
+function parsePF4(u8) {
+    const S16 = () => { const v = u8[o] | (u8[o + 1] << 8); o += 2; return (v << 16) >> 16; };
+    const U16 = () => { const v = u8[o] | (u8[o + 1] << 8); o += 2; return v; };
+    const U32 = () => { const v = (u8[o] | u8[o+1]<<8 | u8[o+2]<<16 | u8[o+3]<<24) >>> 0; o += 4; return v; };
+    const F32 = () => { const v = new DataView(u8.buffer, u8.byteOffset + o, 4).getFloat32(0, true); o += 4; return v; };
+
+    let o = 0;
+    const count = {
+        splitTree: S16(), heightTree: S16(), planeEquation: S16(), component: S16(),
+        graph: S16(), node: S16(), vertex: S16(), link: S16(), exitDist: S16(),
+        corner: S16(), subNode: S16(), staticObstacleId: S16(), staticObstacle: S16()
+    };
+    o += 2; // alignment padding to 0x1C
+
+    // Split trees, height trees and plane equations come first in the block and
+    // are not needed for rendering; skip over them (same order as LoadDataBlock).
+    o += count.splitTree * 0x10 + count.heightTree * 0x10 + count.planeEquation * 0xC;
+
+    const components = [];
+    for (let i = 0; i < count.component; ++i) {
+        // ZComponent (0x14): corners, subNodes, obstacleIds, pad, meta-pointer,
+        // graph, firstCorner, firstSubNode, firstObstacleId, firstHeightTree, pad.
+        const ci = components.length;
+        components.push({
+            corners: u8[o], subNodes: u8[o + 1], obstacleIds: u8[o + 2],
+            graph: (u8[o + 8] | (u8[o + 9] << 8)) << 16 >> 16,
+            firstCorner: (u8[o + 10] | (u8[o + 11] << 8)) << 16 >> 16,
+            firstSubNode: (u8[o + 12] | (u8[o + 13] << 8)) << 16 >> 16,
+            firstObstacleId: (u8[o + 14] | (u8[o + 15] << 8)) << 16 >> 16,
+            firstHeightTree: (u8[o + 16] | (u8[o + 17] << 8)) << 16 >> 16
+        });
+        o += 20;
+    }
+
+    const graphs = [];
+    for (let i = 0; i < count.graph; ++i) {
+        graphs.push({
+            nodes: S16(), vertices: S16(), components: S16(), exits: S16(), entrances: S16(),
+            firstNode: S16(), firstVertex: S16(), firstComponent: S16(),
+            firstExitDist: U16(), splitTree: S16(), heightTree: S16(), equations: S16(),
+            min: [F32(), F32(), F32()], max: [F32(), F32(), F32()]
+        });
+    }
+
+    const nodes = [];
+    for (let i = 0; i < count.node; ++i) {
+        nodes.push({ x: F32(), z: F32(), height: F32(),
+                     firstLink: S16(), lastLink: S16(), component: S16(), graph: S16() });
+    }
+
+    const vertices = [];
+    for (let i = 0; i < count.vertex; ++i) {
+        vertices.push({ x: F32(), z: F32(), h: F32(), nx: F32(), nz: F32() });
+    }
+
+    const links = [];
+    for (let i = 0; i < count.link; ++i) {
+        // ZLink (0x10): cost, node, graph, type, action, keyMask, door, pad.
+        links.push({
+            cost: S16(), node: S16(), graph: S16(),
+            type: u8[o], action: u8[o + 1]
+        });
+        o += 2;                  // skip the raw type/action bytes
+        links[i].keyMask = U16();
+        links[i].door = U32();
+        o += 2;                  // trailing padding of the 0x10 struct
+    }
+
+    const exitDists = [];
+    for (let i = 0; i < count.exitDist; ++i) exitDists.push(S16());
+
+    const corners = [];
+    for (let i = 0; i < count.corner; ++i) {
+        corners.push({ component: S16(), vertex: S16() });
+    }
+
+    const subNodes = [];
+    for (let i = 0; i < count.subNode; ++i) {
+        subNodes.push({ node: S16(), divider: S16(), sourceComponent: S16(), component: S16() });
+    }
+
+    for (let i = 0; i < count.staticObstacleId; ++i) S16();
+    for (let i = 0; i < count.staticObstacle; ++i) { S16(); S16(); }
+
+    // Basic sanity: graph component ranges must line up with the count table.
+    return { count, graphs, components, nodes, vertices, links, corners, subNodes };
+}
+
+/* --------------------------- Rendering ---------------------------- */
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.getElementById("view").appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x101418);
+const camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 1, 200000);
+camera.position.set(0, 0, 1);
+
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+
+const raycaster = new THREE.Raycaster();
+const pointer = new THREE.Vector2();
+const overlay = new THREE.Group();
+scene.add(overlay);
+
+const gObjects = [];      // per-graph fill meshes
+const gWire = [];         // per-graph wireframe object
+let gLinkGroup = null;    // non-door link lines
+let gActionGroup = null;  // door gates + action markers/labels
+let gExtraStats = null;   // doors / action counts (shown in the stats panel)
+
+const $ = id => document.getElementById(id);
+
+// EPathWayActions labels/colors used by the navmesh links.
+const ACTION_INFO = {
+    1: ["CLIMB", 0xff5252], 2: ["FALL", 0x40c4ff], 3: ["JUMP", 0xffab40],
+    4: ["WALK", 0x81c784],  5: ["STOP", 0xe0e0e0], 6: ["RAPEL", 0x7e57c2],
+    7: ["DOOR", 0xffd54f],  8: ["ENTER LIFT", 0x4dd0e1], 9: ["EXIT LIFT", 0x00bcd4]
+};
+
+function makeLabelSprite(text, color) {
+    // Build the label at a 2x pixel ratio; the sprite keeps the exact canvas
+    // aspect so the text never looks stretched.
+    const fontPx = 44;
+    const padX = 18;
+    const lineH = 64;
+    const dpr = 2;
+
+    const measure = document.createElement("canvas").getContext("2d");
+    measure.font = "bold " + fontPx + "px Segoe UI, Arial, sans-serif";
+    const textW = measure.measureText(text).width;
+
+    const w = Math.ceil(textW) + padX * 2;
+    const h = lineH;
+    const canvas = document.createElement("canvas");
+    canvas.width = w * dpr;
+    canvas.height = h * dpr;
+    const ctx = canvas.getContext("2d");
+    ctx.scale(dpr, dpr);
+
+    ctx.fillStyle = "rgba(8,12,16,0.85)";
+    ctx.strokeStyle = "#" + (color >>> 16).toString(16).padStart(2, "0")
+        + ((color >> 8) & 255).toString(16).padStart(2, "0")
+        + (color & 255).toString(16).padStart(2, "0");
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.roundRect ? ctx.roundRect(0, 0, w, h, 10) : ctx.rect(0, 0, w, h);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.font = "bold " + fontPx + "px Segoe UI, Arial, sans-serif";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = "#fff";
+    ctx.fillText(text, padX, h * 0.5 + 2);
+
+    const mat = new THREE.SpriteMaterial({
+        map: new THREE.CanvasTexture(canvas), depthTest: false, transparent: true
+    });
+    const sprite = new THREE.Sprite(mat);
+    sprite.userData.labelW = w;
+    sprite.userData.labelH = h;
+    return sprite;
+}
+
+// Thin callout line from the bottom-center of a label down to its anchor point.
+function makeLeaderLine(color) {
+    const mat = new THREE.LineBasicMaterial({
+        color, transparent: true, opacity: 0.8, depthTest: false
+    });
+    return new THREE.Line(new THREE.BufferGeometry(), mat);
+}
+
+function clearScene() {
+    for (const o of gObjects) { scene.remove(o); }
+    for (const w of gWire) { scene.remove(w); }
+    gObjects.length = 0; gWire.length = 0;
+    if (gLinkGroup) { scene.remove(gLinkGroup); gLinkGroup = null; }
+    if (gActionGroup) { scene.remove(gActionGroup); gActionGroup = null; }
+    gExtraStats = null;
+    overlay.clear();
+}
+
+function buildGeometry(pf) {
+    const bounds = { min: [1e30, 1e30, 1e30], max: [-1e30, -1e30, -1e30] };
+    const extend = (x, y, z) => {
+        if (x < bounds.min[0]) bounds.min[0] = x;
+        if (y < bounds.min[1]) bounds.min[1] = y;
+        if (z < bounds.min[2]) bounds.min[2] = z;
+        if (x > bounds.max[0]) bounds.max[0] = x;
+        if (y > bounds.max[1]) bounds.max[1] = y;
+        if (z > bounds.max[2]) bounds.max[2] = z;
+    };
+
+    // Component polygons, grouped per graph.
+    for (let gi = 0; gi < pf.graphs.length; ++gi) {
+        const g = pf.graphs[gi];
+        const tris = [];
+        const wires = [];
+
+        for (let c = 0; c < g.components; ++c) {
+            const ci = g.firstComponent + c;
+            const comp = pf.components[ci];
+            if (!comp || comp.corners < 3) continue;
+
+            const ring = [];
+            for (let k = 0; k < comp.corners; ++k) {
+                const corner = pf.corners[comp.firstCorner + k];
+                if (!corner) continue;
+                const v = pf.vertices[corner.vertex];
+                // The engine uses a mirrored world axis; flip X for display so the
+                // level matches its in-game left/right orientation.
+                const gx = -v.x;
+                ring.push([gx, v.h, v.z]);
+                extend(gx, v.h, v.z);
+            }
+            if (ring.length < 3) continue;
+
+            // fan triangulation from the first ring vertex
+            const a = ring[0];
+            for (let k = 1; k + 1 < ring.length; ++k) {
+                tris.push(a, ring[k], ring[k + 1]);
+            }
+            for (let k = 0; k < ring.length; ++k) {
+                wires.push(ring[k], ring[(k + 1) % ring.length]);
+            }
+        }
+        if (tris.length) {
+            const pos = new Float32Array(tris.length * 3);
+            tris.forEach((p, i) => { pos[i * 3] = p[0]; pos[i * 3 + 1] = p[1]; pos[i * 3 + 2] = p[2]; });
+            const geo = new THREE.BufferGeometry();
+            geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+            geo.computeVertexNormals();
+
+            const color = PALETTE[gi % PALETTE.length];
+            const mat = new THREE.MeshBasicMaterial({
+                color, transparent: true, opacity: 0.6, side: THREE.DoubleSide, depthWrite: false
+            });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.userData = { graph: gi, color };
+            scene.add(mesh);
+            gObjects.push(mesh);
+        }
+        if (wires.length) {
+            const pos = new Float32Array(wires.length * 3);
+            wires.forEach((p, i) => { pos[i * 3] = p[0]; pos[i * 3 + 1] = p[1]; pos[i * 3 + 2] = p[2]; });
+            const geo = new THREE.BufferGeometry();
+            geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+            const line = new THREE.LineSegments(geo, new THREE.LineBasicMaterial({
+                color: 0xffffff, transparent: true, opacity: 0.22
+            }));
+            scene.add(line);
+            gWire.push(line);
+        }
+    }
+
+    // bounds fallback from graphs (X mirrored to match the rendered geometry)
+    for (const g of pf.graphs) { extend(-g.min[0], g.min[1], g.min[2]); extend(-g.max[0], g.max[1], g.max[2]); }
+
+    // ------------------------------------------------------------------
+    // Links & actions
+    // ------------------------------------------------------------------
+    // A navmesh link connects a source node to a node of another graph. Links of
+    // type 1 are door links: their m_iAction stores the divider index of the
+    // door's component (see the -1 case of the path reconstruction), so we can
+    // draw the actual gate segment across the component polygon.
+    const span = Math.max(bounds.max[0] - bounds.min[0], bounds.max[2] - bounds.min[2], 1.0);
+
+    gLinkGroup = new THREE.Group();
+    gActionGroup = new THREE.Group();
+    scene.add(gLinkGroup);
+    scene.add(gActionGroup);
+    gLinkGroup.visible = $("showLinks").checked;
+    gActionGroup.visible = $("showActions").checked;
+
+    const linkSeen = new Set();
+    const plainSegs = [];
+    const doorSegs = [];
+    const actionPts = [];   // { x,y,z, action, keyMask, door }
+    let iDoors = 0;
+
+    for (let ni = 0; ni < pf.nodes.length; ++ni) {
+        const node = pf.nodes[ni];
+        if (!node || node.firstLink < 0) continue;
+        const iLast = Math.min(node.lastLink, pf.links.length);
+        for (let li = node.firstLink; li < iLast; ++li) {
+            if (linkSeen.has(li)) continue;
+            linkSeen.add(li);
+            const link = pf.links[li];
+            if (!link) continue;
+            const sx = -node.x, sy = node.height, sz = node.z;
+
+            if (link.type === 1) {
+                // Door gate across the component divider stored in link.action.
+                const comp = pf.components[node.component];
+                if (comp && link.action >= 0 && link.action < comp.corners) {
+                    const c0 = pf.corners[comp.firstCorner + link.action];
+                    const c1Idx = comp.firstCorner + link.action + 1;
+                    const c1 = pf.corners[c1Idx >= comp.firstCorner + comp.corners
+                        ? comp.firstCorner : c1Idx];
+                    const v0 = c0 && pf.vertices[c0.vertex];
+                    const v1 = c1 && pf.vertices[c1.vertex];
+                    if (v0 && v1) {
+                        doorSegs.push(-v0.x, v0.h, v0.z, -v1.x, v1.h, v1.z);
+                        actionPts.push({
+                            x: (-v0.x - v1.x) * 0.5, y: (v0.h + v1.h) * 0.5 + span * 0.004,
+                            z: (v0.z + v1.z) * 0.5, action: link.action === 0 ? 7 : -1,
+                            keyMask: link.keyMask, door: link.door, isDoor: true
+                        });
+                        ++iDoors;
+                    }
+                }
+            } else {
+                // Plain / exit link: source node -> target node line.
+                const tg = pf.graphs[link.graph];
+                const target = tg && pf.nodes[tg.firstNode + link.node];
+                if (target) {
+                    plainSegs.push(sx, sy, sz, -target.x, target.height, target.z);
+                }
+                if (link.action > 0 && ACTION_INFO[link.action]) {
+                    actionPts.push({
+                        x: (-target.x + sx) * 0.5, y: (target.height + sy) * 0.5 + span * 0.004,
+                        z: (target.z + sz) * 0.5, action: link.action,
+                        keyMask: link.keyMask, door: link.door, isDoor: false
+                    });
+                }
+            }
+        }
+    }
+
+    const addSegs = (group, segs, color, opacity) => {
+        if (!segs.length) return;
+        const geo = new THREE.BufferGeometry();
+        geo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(segs), 3));
+        group.add(new THREE.LineSegments(geo, new THREE.LineBasicMaterial({
+            color, transparent: opacity < 1, opacity, depthTest: opacity >= 1
+        })));
+    };
+    addSegs(gLinkGroup, plainSegs, 0x6db3f2, 0.35);  // normal links
+    addSegs(gActionGroup, doorSegs, 0xffd54f, 1.0);  // doors
+
+    // Labels for non-door action links (doors are already drawn as their gold
+    // gate segment above). A thin leader line points from under the text to the
+    // exact action position.
+    const pxWorld = span * 0.00042;   // uniform pixel -> world scale
+    let iLabels = 0;
+    const MAX_LABELS = 1500;
+    for (const p of actionPts) {
+        if (p.isDoor) continue;
+        const info = ACTION_INFO[p.action];
+        if (!info) continue;
+        if (iLabels >= MAX_LABELS) continue;
+
+        const sp = makeLabelSprite(info[0], info[1]);
+        const w = sp.userData.labelW * pxWorld;
+        const h = sp.userData.labelH * pxWorld;
+        // The label floats one label-height above the point; the leader connects
+        // the bottom-center of the text down to the action position.
+        const yTop = p.y + h;
+        sp.position.set(p.x, yTop + h * 0.5, p.z);
+        sp.scale.set(w, h, 1);
+        gActionGroup.add(sp);
+
+        const line = makeLeaderLine(info[1]);
+        const pos = new Float32Array([p.x, yTop, p.z, p.x, p.y, p.z]);
+        line.geometry.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+        gActionGroup.add(line);
+        ++iLabels;
+    }
+
+    gExtraStats = { doors: iDoors, actionLinks: actionPts.length - iDoors, labels: iLabels };
+    return bounds;
+}
+
+function frame(bounds) {
+    const cx = (bounds.min[0] + bounds.max[0]) / 2;
+    const cy = (bounds.min[1] + bounds.max[1]) / 2;
+    const cz = (bounds.min[2] + bounds.max[2]) / 2;
+    const size = Math.max(bounds.max[0] - bounds.min[0], bounds.max[2] - bounds.min[2],
+                          (bounds.max[1] - bounds.min[1]) * 1.2, 10);
+    camera.near = Math.max(size / 10000, 0.01);
+    camera.far = size * 200;
+    camera.position.set(cx + size * 1.1, cy + size * 0.9, cz + size * 1.1);
+    controls.target.set(cx, cy, cz);
+    controls.update();
+    return { cx, cy, cz, size };
+}
+
+/* ---------------------------- UI state ---------------------------- */
+let pfData = null;
+let bounds = null;
+let lastBlock = null;
+let lastFileName = "";
+let center = { x: 0, y: 0, z: 0, size: 10 };
+
+function setLog(msg) { $("log").textContent = msg; }
+
+function rebuildFromBlock(block, name) {
+    try {
+        pfData = parsePF4(block);
+    } catch (e) {
+        setLog("Failed to parse: " + e.message);
+        return;
+    }
+    clearScene();
+    bounds = buildGeometry(pfData);
+    center = frame(bounds);
+    showStats();
+    setLog("Loaded " + name + "  |  " + pfData.count.graph + " graph(s), " +
+           pfData.count.component + " component(s), " + pfData.count.vertex + " verts");
+}
+
+function loadGMS(arrayBuffer, name) {
+    try {
+        lastBlock = parseGMS(arrayBuffer);
+    } catch (e) {
+        setLog("Failed to read GMS: " + e.message);
+        return;
+    }
+    lastFileName = name;
+    rebuildFromBlock(lastBlock, name);
+}
+
+function showStats() {
+    const s = pfData ? pfData.count : null;
+    if (!s) { $("stats").innerHTML = "No data loaded"; return; }
+    const lines = [
+        ["Graphs", s.graph], ["Components", s.component], ["Vertices", s.vertex],
+        ["Nodes", s.node], ["Links", s.link], ["Corners", s.corner],
+        ["Sub nodes", s.subNode], ["Split trees", s.splitTree], ["Height trees", s.heightTree]
+    ];
+    if (gExtraStats) {
+        lines.push(["Doors (type 1)", gExtraStats.doors], ["Action links", gExtraStats.actionLinks]);
+    }
+    $("stats").innerHTML = lines.map(([k, v]) =>
+        `<div class="stat"><span>${k}</span><b>${v}</b></div>`).join("")
+        + `<div style="margin-top:8px;opacity:.75">gold = door gate · markers = actions<br>(labels capped at 1500)</div>`;
+}
+
+function renderScene() { renderer.render(scene, camera); }
+
+function animate() {
+    requestAnimationFrame(animate);
+    controls.update();
+    renderer.render(scene, camera);
+}
+
+$("file").addEventListener("change", e => {
+    const f = e.target.files && e.target.files[0];
+    if (f) f.arrayBuffer().then(b => loadGMS(b, f.name));
+    e.target.value = "";
+});
+
+let dragDepth = 0;
+window.addEventListener("dragenter", e => {
+    if (e.dataTransfer.types.includes("Files")) { ++dragDepth; $("drop").style.display = "flex"; }
+});
+window.addEventListener("dragleave", () => { if (--dragDepth <= 0) { dragDepth = 0; $("drop").style.display = "none"; } });
+window.addEventListener("dragover", e => e.preventDefault());
+window.addEventListener("drop", e => {
+    e.preventDefault();
+    dragDepth = 0;
+    $("drop").style.display = "none";
+    const f = e.dataTransfer.files && e.dataTransfer.files[0];
+    if (f) f.arrayBuffer().then(b => loadGMS(b, f.name));
+});
+
+$("fit").addEventListener("click", () => { if (bounds) frame(bounds); });
+$("wire").addEventListener("click", () => {
+    const on = gWire[0] && gWire[0].visible;
+    gWire.forEach(w => w.visible = !on);
+    gObjects.forEach(m => { m.material.opacity = on ? 0.85 : 0.6; });
+    $("wire").textContent = "Wireframe: " + (on ? "OFF" : "ON");
+});
+$("showComps").addEventListener("change", () => {
+    const on = $("showComps").checked;
+    gObjects.forEach(m => m.visible = on);
+    gWire.forEach(w => w.visible = on);
+});
+$("showLinks").addEventListener("change", () => {
+    if (gLinkGroup) gLinkGroup.visible = $("showLinks").checked;
+});
+$("showActions").addEventListener("change", () => {
+    if (gActionGroup) gActionGroup.visible = $("showActions").checked;
+});
+
+window.addEventListener("resize", () => {
+    camera.aspect = innerWidth / innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(innerWidth, innerHeight);
+});
+
+// Click a component to inspect it.
+renderer.domElement.addEventListener("pointerdown", e => {
+    if (e.button !== 0) return;
+    pointer.x = (e.clientX / innerWidth) * 2 - 1;
+    pointer.y = -(e.clientY / innerHeight) * 2 + 1;
+    raycaster.setFromCamera(pointer, camera);
+    const hit = raycaster.intersectObjects(gObjects, false)[0];
+    const info = $("info");
+    if (!hit || !hit.object.userData) { info.style.display = "none"; return; }
+    const gi = hit.object.userData.graph;
+    const g = pfData.graphs[gi];
+    info.style.display = "block";
+    info.innerHTML =
+        `<b>Graph ${gi}</b>  <span style="opacity:.6">(${g.nodes} nodes, ${g.components} comps)</span>
+         <br>firstNode ${g.firstNode} · firstVertex ${g.firstVertex}
+         <br>exits ${g.exits} · splitTree ${g.splitTree}`;
+});
+
+setLog("Open a .GMS level file (or drop it anywhere) to view its pathfinder mesh.");
+animate();
+</script>
+</body>
+</html>
