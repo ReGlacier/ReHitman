@@ -44,11 +44,9 @@ namespace Glacier
         // methods
         ZRenderMaterialBinderParserD3DFX(ZRenderMaterialEffectD3DFX* pEffect, D3DXHANDLE hTechnique);
 
-        // TODO: Finish me
-
         // members
         ZRenderMaterialEffectD3DFX* m_pEffect { nullptr }; // +0x8
         D3DXHANDLE m_hTechnique { nullptr }; // +0xC
     };
-    // ZRenderMaterialBinderParserD3DFX
+    RE_VERIFY_SIZE(ZRenderMaterialBinderParserD3DFX, 0x10);
 }

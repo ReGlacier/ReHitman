@@ -703,7 +703,7 @@ namespace Glacier
         // Do nothing
     }
 
-    // PC slot 146 (returns 0; TODO: name)
+    // PC slot 146: shared zero-return stub; semantic name is not present in the binary.
     uint32_t ZRenderWintel::Slot146()
     {
         return 0;
@@ -745,7 +745,7 @@ namespace Glacier
         return false;
     }
 
-    // PC slot 154 (stub; TODO: name)
+    // PC slot 154: shared no-op stub used by custom window-message dispatch.
     void ZRenderWintel::Slot154(uint32_t)
     {
         // Do nothing

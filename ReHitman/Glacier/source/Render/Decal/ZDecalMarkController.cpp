@@ -1,8 +1,17 @@
 #include <Glacier/Render/Decal/ZDecalMarkController.h>
 #include <Glacier/Render/Prim/ZPrimAccessMesh.h>
+#include <Glacier/Render/Prim/ZPrimControlBase.h>
+#include <Glacier/Render/Draw/ZRenderDraw.h>
+#include <Glacier/Render/ZRenderBaseDll.h>
 #include <Glacier/Geom/ZBaseGeom.h>
 #include <Glacier/Geom/GeomControlMasks.h>
+#include <Glacier/Physics/ZCollisionBase.h>
+#include <Glacier/IK/ZLNKOBJ.h>
+#include <Glacier/System/ZSysMem.h>
+#include <Glacier/ZUniMemory.h>
 #include <cstring>
+#include <algorithm>
+#include <cmath>
 
 
 namespace Glacier
@@ -194,59 +203,44 @@ namespace Glacier
 
     void ZDecalMarkController::RemoveBaseGeom(ZBaseGeom* pBaseGeom)
     {
-        // TODO: Finish this place after ZPrimAccessMesh and IDraw render entries will be reversed
-        // Reference (PC 0x47DC50):
-        // if ((pBaseGeom->m_lControl & ZCRENDERATTACHED) == 0)
-        // {
-        //     return;
-        // }
-        //
-        // if (pBaseGeom->IsDerivedFrom<ZLNKOBJ>()) // via m_pExtraGeom class id check
-        // {
-        //     RemoveBoneDecalBaseGeom((ZLNKOBJ*)pBaseGeom->m_pExtraGeom);
-        //     return;
-        // }
-        //
-        // RecreateObjects(pBaseGeom);
-        //
-        // ZLink* pLink = RemoveLink(pBaseGeom);
-        // if (!pLink)
-        // {
-        //     ZASSERT(false); // geom has ZCRENDERATTACHED but no registered links
-        // }
-        // while (pLink)
-        // {
-        //     ZLink* pNextSameGeom = pLink->m_pNextSameGeom;
-        //     ZASSERT(pLink->m_pBaseGeom == pBaseGeom);
-        //     pLink->m_pPrimAccessMesh->Destroy();
-        //     if (pLink->m_pStoredUV)
-        //     {
-        //         operator delete(pLink->m_pStoredUV);
-        //     }
-        //
-        //     // Unlink from the mark's list
-        //     if (pLink->m_pPrev)
-        //     {
-        //         pLink->m_pPrev->m_pNext = pLink->m_pNext;
-        //         if (pLink->m_pNext)
-        //         {
-        //             pLink->m_pNext->m_pPrev = pLink->m_pPrev;
-        //         }
-        //     }
-        //     else
-        //     {
-        //         pLink->m_pDecalMark->m_pLinks = pLink->m_pNext;
-        //         if (pLink->m_pNext)
-        //         {
-        //             pLink->m_pNext->m_pPrev = nullptr;
-        //         }
-        //     }
-        //
-        //     m_Links.Remove(pLink);
-        //     pLink = pNextSameGeom;
-        // }
-        //
-        // pBaseGeom->SetControl(0, ZCRENDERATTACHED);
+        if ((pBaseGeom->m_lControl & ZCRENDERATTACHED) == 0)
+            return;
+
+        if (pBaseGeom->IsDerivedFrom<ZLNKOBJ>())
+        {
+            RemoveBoneDecalBaseGeom(static_cast<ZLNKOBJ*>(pBaseGeom->m_pExtraGeom));
+            return;
+        }
+
+        RecreateObjects(pBaseGeom);
+        ZLink* pLink = RemoveLink(pBaseGeom);
+        if (!pLink)
+        {
+            ZASSERT(false);
+            pBaseGeom->SetControl(0, ZCRENDERATTACHED);
+            return;
+        }
+
+        while (pLink)
+        {
+            ZLink* pNext = pLink->m_pNextSameGeom;
+            ZASSERT(pLink->m_pBaseGeom == pBaseGeom);
+            pLink->m_pPrimAccessMesh->Destroy();
+            if (pLink->m_pStoredUV)
+                ISysMem::Instance().Delete(pLink->m_pStoredUV);
+
+            if (pLink->m_pPrev)
+                pLink->m_pPrev->m_pNext = pLink->m_pNext;
+            else
+                pLink->m_pDecalMark->m_pLinks = pLink->m_pNext;
+            if (pLink->m_pNext)
+                pLink->m_pNext->m_pPrev = pLink->m_pPrev;
+
+            m_Links.Remove(pLink);
+            pLink = pNext;
+        }
+
+        pBaseGeom->SetControl(0, ZCRENDERATTACHED);
     }
 
     void ZDecalMarkController::RemoveAllDecals()
@@ -270,41 +264,172 @@ namespace Glacier
 
     void ZDecalMarkController::Create(ZDecalMarkController::ZDecalMark* pDecalMark)
     {
-        // TODO: Finish this place after ZCollisionBase will be reversed
-        // Reference (PC 0x47E2E0):
-        // float fMaxRadius = std::max(std::max(pDecalMark->m_fRadius.x, 1.0f), std::max(pDecalMark->m_fRadius.y, 1.0f));
-        // ZVector3 vExtents(fMaxRadius, fMaxRadius, fMaxRadius);
-        //
-        // Query ZCollisionBase::s_pCollisionBase for the geoms inside the box around m_vPosition,
-        // then for each geom (skip ZLNKOBJ-derived):
-        //     ZVector3 vLocalPos = pDecalMark->m_vPosition;
-        //     ZVector3 vLocalDir = pDecalMark->m_vDirection;
-        //     pGeom->GetLocalPoint(vLocalPos);
-        //     pGeom->GetLocalVect(vLocalDir);
-        //     vnorm(vLocalDir.Get(), vLocalDir.Get());
-        //
-        //     ZPrimAccessMesh* pMesh = CreateDecal(pGeom, pDecalMark->m_lSourcePrim, vLocalPos.Get(), vLocalDir.Get(), fMaxRadius, pDecalMark->m_fRotation, pDecalMark->m_fExtraTextureSize.Get());
-        //     if (pMesh)
-        //     {
-        //         if (!RegisterDecalMesh(pDecalMark, pGeom, pMesh))
-        //         {
-        //             pMesh->Destroy();
-        //         }
-        //         else if (++lNumRegistered == 8)
-        //         {
-        //             return; // at most 8 meshes per mark
-        //         }
-        //     }
+        if (!ZCollisionBase::s_pCollisionBase)
+            return;
+
+        const float fMaxRadius = (std::max)(1.0f, (std::max)(pDecalMark->m_fRadius.x, pDecalMark->m_fRadius.y));
+        const ZVector3 vExtents(fMaxRadius, fMaxRadius, fMaxRadius);
+        ZMat3x3 mIdentity;
+        mIdentity.Reset();
+        ZBaseGeom* aGeoms[ZCollisionBase::MAX_GEOMS_NR];
+        const uint32_t lNumGeoms = ZCollisionBase::s_pCollisionBase->GetGeomsInBox(
+            aGeoms, aGeoms + ZCollisionBase::MAX_GEOMS_NR, GT_StdObjs,
+            mIdentity.Get(), pDecalMark->m_vPosition.Get(), vExtents.Get(), 6, true, true, true);
+
+        uint32_t lNumRegistered = 0;
+        for (uint32_t i = 0; i < lNumGeoms && lNumRegistered < 8; ++i)
+        {
+            ZBaseGeom* pGeom = aGeoms[i];
+            if (!pGeom || pGeom->IsDerivedFrom<ZLNKOBJ>())
+                continue;
+
+            ZVector3 vLocalPos = pDecalMark->m_vPosition;
+            ZVector3 vLocalDir = pDecalMark->m_vDirection;
+            pGeom->GetLocalPoint(vLocalPos);
+            pGeom->GetLocalVect(vLocalDir);
+            vnorm(vLocalDir.Get());
+            ZPrimAccessMesh* pMesh = CreateDecal(pGeom, pDecalMark->m_lSourcePrim,
+                vLocalPos.Get(), vLocalDir.Get(), fMaxRadius, pDecalMark->m_fRotation,
+                &pDecalMark->m_fExtraTextureSize.x);
+            if (!pMesh)
+                continue;
+            if (!RegisterDecalMesh(pDecalMark, pGeom, pMesh))
+                pMesh->Destroy();
+            else
+                ++lNumRegistered;
+        }
     }
 
     ZPrimAccessMesh* ZDecalMarkController::CreateDecal(ZBaseGeom* pBaseGeom, uint32_t lSourcePrim, const float* pvPosition, const float* pvDirection, float fRadius, float fRotation, const float* pvExtraTextureSize)
     {
-        // TODO: Finish this place after ZPrimAccessMesh will be reversed
-        // Reference (PC 0x47D150): clips the source prim polygons against the decal
-        // box (MakeInclusivePolygon/ClipLinePlane), projects UVs with ZUVProject and
-        // bakes the result into a new dynamic prim created via ZPrimAccess::Create
-        // (at most 32 triangles per decal). Returns nullptr when no decal mesh was built.
-        return nullptr;
+        const ZPrimHandle hSource{ pBaseGeom->m_lPrim };
+        auto* pSourceAccess = ZPrimAccess::Create(hSource);
+        auto* pSourceMesh = pSourceAccess ? dynamic_cast<ZPrimAccessMesh*>(pSourceAccess) : nullptr;
+        if (!pSourceMesh)
+        {
+            if (pSourceAccess)
+                pSourceAccess->Destroy();
+            return nullptr;
+        }
+
+        ZMat3x3 mBasis;
+        createmat(mBasis.Get(), pvDirection, nullptr);
+        ZMat3x3 mRotation;
+        mrotaxis(mRotation.Get(), fRotation + 90.0f, mBasis.data[0], mBasis.data[1], mBasis.data[2]);
+        mBasis *= mRotation;
+
+        struct Vertex { ZVector3 p; ZVector3 n; ZVector2 uv; };
+        Vertex aVertices[96];
+        uint16_t aIndices[96];
+        uint32_t lVertices = 0;
+        uint32_t lTriangles = 0;
+        const float fDepth = fRadius;
+        const float fU = pvExtraTextureSize[0] + 1.0f;
+        const float fV = pvExtraTextureSize[1] + 1.0f;
+
+        pSourceMesh->Lock(ZPrimAccess::LF_READONLY);
+        const uint32_t lSourceTriangles = pSourceMesh->GetNumTriangles();
+        const uint16_t* pIndices = pSourceMesh->GetIndicesConst();
+        for (uint32_t triangle = 0; triangle < lSourceTriangles && lTriangles < 32; ++triangle)
+        {
+            Vertex polygon[8];
+            uint32_t lPolygon = 3;
+            for (uint32_t corner = 0; corner < 3; ++corner)
+            {
+                float position[3];
+                pSourceMesh->GetPositions(pIndices[3 * triangle + 2 + corner], 1, position);
+                polygon[corner].p = position;
+            }
+            ZVector3 edge0 = polygon[1].p - polygon[0].p;
+            ZVector3 edge1 = polygon[2].p - polygon[0].p;
+            vcross(polygon[0].n.Get(), edge1.Get(), edge0.Get());
+            if (vnorm(polygon[0].n.Get()) < 0.0001f || vdot(polygon[0].n.Get(), pvDirection) > -0.2f)
+                continue;
+            polygon[1].n = polygon[0].n;
+            polygon[2].n = polygon[0].n;
+
+            for (int axis = 0; axis < 3 && lPolygon >= 3; ++axis)
+            {
+                for (int side = -1; side <= 1 && lPolygon >= 3; side += 2)
+                {
+                    Vertex clipped[8];
+                    uint32_t lClipped = 0;
+                    for (uint32_t j = 0; j < lPolygon; ++j)
+                    {
+                        const Vertex& a = polygon[j];
+                        const Vertex& b = polygon[(j + 1) % lPolygon];
+                        ZVector3 localA = a.p - ZVector3(pvPosition);
+                        ZVector3 localB = b.p - ZVector3(pvPosition);
+                        vmtmul(localA.Get(), mBasis.Get());
+                        vmtmul(localB.Get(), mBasis.Get());
+                        const float da = side * localA.Get()[axis] - fDepth;
+                        const float db = side * localB.Get()[axis] - fDepth;
+                        const bool ina = da <= 0.0f;
+                        const bool inb = db <= 0.0f;
+                        if (ina)
+                            clipped[lClipped++] = a;
+                        if (ina != inb)
+                        {
+                            const float t = da / (da - db);
+                            clipped[lClipped].p = a.p + (b.p - a.p) * t;
+                            clipped[lClipped].n = a.n;
+                            ++lClipped;
+                        }
+                    }
+                    memcpy(polygon, clipped, sizeof(Vertex) * lClipped);
+                    lPolygon = lClipped;
+                }
+            }
+            for (uint32_t j = 1; j + 1 < lPolygon && lTriangles < 32; ++j)
+            {
+                const Vertex* corners[3] = { &polygon[0], &polygon[j], &polygon[j + 1] };
+                for (const Vertex* corner : corners)
+                {
+                    ZVector3 local = corner->p - ZVector3(pvPosition);
+                    vmtmul(local.Get(), mBasis.Get());
+                    aVertices[lVertices] = *corner;
+                    aVertices[lVertices].uv = { local.x / (2.0f * fRadius) + 0.5f,
+                        local.y / (2.0f * fRadius) + 0.5f };
+                    aVertices[lVertices].uv.x *= fU;
+                    aVertices[lVertices].uv.y *= fV;
+                    aIndices[3 * lTriangles + (lVertices % 3)] = static_cast<uint16_t>(lVertices++);
+                }
+                ++lTriangles;
+            }
+        }
+        pSourceMesh->Unlock();
+        pSourceAccess->Destroy();
+        if (!lTriangles)
+            return nullptr;
+
+        const ZPrimHandle hTarget{ g_pRenderDll->m_pPrimControl->GetSubPrim(lSourcePrim, 0) };
+        auto* pTargetAccess = ZPrimAccess::Create(hTarget);
+        auto* pTargetMesh = pTargetAccess ? dynamic_cast<ZPrimAccessMesh*>(pTargetAccess) : nullptr;
+        if (!pTargetMesh)
+        {
+            if (pTargetAccess)
+                pTargetAccess->Destroy();
+            return nullptr;
+        }
+        auto* pResult = pTargetMesh->CreateEditable(lTriangles, lVertices);
+        if (!pResult)
+        {
+            pTargetAccess->Destroy();
+            return nullptr;
+        }
+        pResult->Lock(ZPrimAccess::LF_WRITEONLY);
+        for (uint32_t i = 0; i < lVertices; ++i)
+        {
+            pResult->SetPositions(i, 1, aVertices[i].p.Get());
+            pResult->SetNormals(i, 1, aVertices[i].n.Get());
+            pResult->SetTexCoords(i, 1, &aVertices[i].uv.x);
+            const uint32_t color = 0xFFFFFFFFu;
+            pResult->SetColors(i, 1, &color);
+        }
+        pResult->SetTriangles(0, lTriangles, aIndices);
+        pResult->Unlock();
+        pTargetAccess->Destroy();
+        return pResult;
     }
 
     bool ZDecalMarkController::RegisterDecalMesh(ZDecalMarkController::ZDecalMark* pDecalMark, ZBaseGeom* pBaseGeom, ZPrimAccessMesh* pMesh)
@@ -333,19 +458,15 @@ namespace Glacier
 
         if (pDecalMark->m_bStoreUV)
         {
-            // TODO: Finish this place after ZSysMem::AllocateSpecificMem will be reversed
-            // const uint32_t lPrevColor = SetMemColor(0xFF);
-            // RenderMemAllocator::SetFileAndLine(__FILE__, __LINE__);
-            // const uint32_t lNumVertices = pMesh->GetNumVertices();
-            // pLink->m_pStoredUV = static_cast<float*>(ZSysMem::AllocateSpecificMem(sizeof(float) * 2 * lNumVertices, RENDERPRIMACCESS_MEM));
-            // if (pLink->m_pStoredUV)
-            // {
-            //     pMesh->Lock(1);
-            //     pMesh->GetVertexData(0, lNumVertices, pLink->m_pStoredUV);
-            //     pMesh->Unlock();
-            // }
-            // SetMemColor(lPrevColor);
-            pLink->m_pStoredUV = nullptr;
+            const uint32_t lNumVertices = pMesh->GetNumVertices();
+            pLink->m_pStoredUV = static_cast<float*>(ISysMem::Instance().New(
+                RENDERPRIMACCESS_MEM, sizeof(float) * 2 * lNumVertices));
+            if (pLink->m_pStoredUV)
+            {
+                pMesh->Lock(ZPrimAccess::LF_READONLY);
+                pMesh->GetTexCoords(0, lNumVertices, pLink->m_pStoredUV);
+                pMesh->Unlock();
+            }
         }
         else
         {
@@ -389,11 +510,7 @@ namespace Glacier
 
         pBaseGeom->SetControl(ZCRENDERATTACHED, 0);
 
-        // TODO: Finish this place after IDraw render entries will be reversed (inlined RecreateObjects)
-        // if (pBaseGeom->m_lDrawId)
-        // {
-        //     IDraw::Instance()-><render entry>[pBaseGeom->m_lDrawId].m_lFlags |= 0x400;
-        // }
+        RecreateObjects(pBaseGeom);
 
         return true;
     }
@@ -421,19 +538,14 @@ namespace Glacier
         {
             ZLink* pNext = pLink->m_pNext;
 
-            // TODO: Finish this place after ZPrimAccessMesh will be reversed
-            // pLink->m_pPrimAccessMesh->Destroy();
+            pLink->m_pPrimAccessMesh->Destroy();
 
             if (pLink->m_pStoredUV)
             {
-                operator delete(pLink->m_pStoredUV);
+                ISysMem::Instance().Delete(pLink->m_pStoredUV);
             }
 
-            // TODO: Finish this place after IDraw render entries will be reversed
-            // if (pLink->m_pBaseGeom->m_lDrawId)
-            // {
-            //     IDraw::Instance()-><render entry>[pLink->m_pBaseGeom->m_lDrawId].m_lFlags |= 0x400;
-            // }
+            RecreateObjects(pLink->m_pBaseGeom);
 
             // Unlink from the per-geom chain
             const int lGeomKey = static_cast<int>(reinterpret_cast<uintptr_t>(pLink->m_pBaseGeom));
@@ -484,11 +596,6 @@ namespace Glacier
 
     void ZDecalMarkController::RecreateObjects(ZBaseGeom* pBaseGeom)
     {
-        // TODO: Finish this place after IDraw render entries will be reversed
-        // Reference (XBOX 0x82134270):
-        // if (pBaseGeom->m_lDrawId)
-        // {
-        //     IDraw::Instance()-><render entry>[pBaseGeom->m_lDrawId].m_lFlags |= 0x400;
-        // }
+        pBaseGeom->SetAttachUpdate();
     }
 }

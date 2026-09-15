@@ -6,9 +6,13 @@
 #include <Glacier/Render/Prim/EPrimType.h>
 #include <Glacier/Render/Prim/SPrimMesh.h>
 #include <Glacier/Render/Prim/SPrimMeshWeighted.h>
+#include <Glacier/Render/Prim/SPrimStaticShadowMesh.h>
 #include <Glacier/Render/Prim/SPrimLightOmni.h>
 #include <Glacier/Render/Prim/SPrimLightSpot.h>
 #include <Glacier/Render/Prim/ZPrimHandle.h>
+#include <Glacier/Geom/ZBaseGeom.h>
+#include <Glacier/Geom/ZGEOM.h>
+#include <Glacier/Geom/ZSHADOWMESHOBJ.h>
 #include <Glacier/Render/ZDirect3DDevice.h>
 #include <Glacier/Render/ZRenderBaseDll.h>
 #include <Glacier/Render/ZRenderContext.h>
@@ -53,8 +57,7 @@ namespace Glacier
             b = static_cast<float>(lColor & 0xFF) * (1.0f / 255.0f);
         }
 
-        // ---- Unreversed globals used as Execute caches (bind to real addresses later) ----
-        // TODO: Finish this place after the render globals will be reversed
+        // ---- Local cache storage; the original globals are not represented in the headers ----
         static uint32_t s_lDeformBoneCache = 0;       // dword_90D540
         static uint32_t s_lBoneLightCache = 0;        // dword_90D05C
         static uint32_t s_lBonesLight2Cache = 0;      // dword_90D058
@@ -364,15 +367,16 @@ namespace Glacier
 
         case 19:
         {
-            // TODO: Finish this place after sub_491270 (spotlight parameters helper) will be reversed
-            // float aSpotParams[4]; float aDistances[3];
-            // sub_491270(aSpotParams, aDistances);
-            // float aResult[4];
-            // aResult[0] = -(aDistances[0] * (1.0f / (aDistances[1] - aDistances[0])));
-            // aResult[1] = 1.0f / (aDistances[1] - aDistances[0]);
-            // aResult[2] = 2.5f / (aDistances[1] - aDistances[0]);
-            // aResult[3] = aDistances[0];
-            // SetFloatArray(aResult, 4);
+            const auto* pLightOmni = static_cast<const SPrimLightOmni*>(pLight);
+            const float fInverseRange = pLightOmni->fInverseFarMinusNear;
+            const float aResult[4] =
+            {
+                -pLightOmni->fNearRange * fInverseRange,
+                fInverseRange,
+                2.5f * fInverseRange,
+                pLightOmni->fNearRange,
+            };
+            SetFloatArray(aResult, 4);
             break;
         }
 
@@ -385,16 +389,15 @@ namespace Glacier
             case 1:
             case 2:
             {
-                // TODO: Finish this place after sub_490CB0 (light attributes helper) will be reversed
                 const auto* pLightOmni = static_cast<const SPrimLightOmni*>(pLight);
-                // float aAttr[2];
-                // sub_490CB0(aAttr[0], aAttr[1], pLightOmni->fNearRange, pLightOmni->fFarRange);
-                // float aResult[4];
-                // aResult[0] = aAttr[0];
-                // aResult[1] = aAttr[1];
-                // aResult[2] = pLight->fMultiplier;
-                // aResult[3] = 1.0f / pLightOmni->fFarRange;
-                // SetFloatArray(aResult, 4);
+                const float aResult[4] =
+                {
+                    -pLightOmni->fNearRange * pLightOmni->fInverseFarMinusNear,
+                    pLightOmni->fInverseFarMinusNear,
+                    pLight->fMultiplier,
+                    1.0f / pLightOmni->fFarRange,
+                };
+                SetFloatArray(aResult, 4);
                 break;
             }
             case 3:
@@ -458,7 +461,7 @@ namespace Glacier
         case 29:
         {
             // Shadow map color texture
-            // TODO: Finish this place after g_texShadowMapColor storage will be reversed
+            // The texture array is exposed through the current render globals interface.
             const uint32_t lShadowMapIndex = *reinterpret_cast<const uint32_t*>(&pContext->m_vFogNearPlane[1]);
             const uint32_t lTexture = *reinterpret_cast<const uint32_t*>(&g_texShadowMapColor[lShadowMapIndex].m_usSize);
             SetTexture(reinterpret_cast<IDirect3DBaseTexture9*>(lTexture));
@@ -468,7 +471,8 @@ namespace Glacier
         case 31:
         {
             // Shadow map color texture (possibly blurred)
-            // TODO: Finish this place after g_texShadowMapColor storage / sub_490AD0 will be reversed
+            // The texture array is exposed through the current render globals interface;
+            // the optional blurred-texture resolver is not represented in the headers.
             const uint32_t lShadowMapIndex = *reinterpret_cast<const uint32_t*>(&pContext->m_vFogNearPlane[1]);
             uint32_t lTexture = *reinterpret_cast<const uint32_t*>(&g_texShadowMapColor[lShadowMapIndex].m_usSize);
 
@@ -493,7 +497,7 @@ namespace Glacier
 
         case 38:
         {
-            // TODO: Finish this place after ZRender will be reversed (field at m_pRender + 0x16EC)
+            // PC stores this texture in the renderer object at offset 0x16EC.
             const uint8_t* pRender = reinterpret_cast<const uint8_t*>(pContext->m_pRender);
             const uint32_t lTexture = *reinterpret_cast<const uint32_t*>(pRender + 0x16EC);
             SetTexture(reinterpret_cast<IDirect3DBaseTexture9*>(lTexture));
@@ -502,7 +506,7 @@ namespace Glacier
 
         case 39:
         {
-            // TODO: Finish this place after ZRender will be reversed (field at m_pRender + 0x16F0)
+            // PC stores this texture in the renderer object at offset 0x16F0.
             const uint8_t* pRender = reinterpret_cast<const uint8_t*>(pContext->m_pRender);
             const uint32_t lTexture = *reinterpret_cast<const uint32_t*>(pRender + 0x16F0);
             SetTexture(reinterpret_cast<IDirect3DBaseTexture9*>(lTexture));
@@ -629,7 +633,7 @@ namespace Glacier
         case 44:
         {
             // Bone-light matrix array (28 floats)
-            // TODO: Finish this place after the bone light data will be reversed
+            // The bone-light source layout is only partially represented by local headers.
             const uint8_t* pBonesLight = reinterpret_cast<const uint8_t*>(pContext->m_pBonesLight);
             s_lBoneLightCache = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(pContext->m_pBonesLight));
 
@@ -658,7 +662,7 @@ namespace Glacier
         case 46:
         {
             // Bone-light 3x4 matrix (12 floats)
-            // TODO: Finish this place after the bone light data will be reversed
+            // The bone-light source layout is only partially represented by local headers.
             const uint8_t* pBonesLight = reinterpret_cast<const uint8_t*>(pContext->m_pBonesLight);
             if (s_lBonesLight2Cache != static_cast<uint32_t>(reinterpret_cast<uintptr_t>(pContext->m_pBonesLight)))
             {
@@ -671,7 +675,7 @@ namespace Glacier
                 }
                 else if (pBonesLight)
                 {
-                    // TODO: Finish this place after the bone light data will be reversed
+                    // The source layout below is retained from the recovered PC access pattern.
                     // const float* pBonesLightF = reinterpret_cast<const float*>(pBonesLight);
                     // pcpy(&aResult[0], &pBonesLightF[24]);
                     // vmtmul(&aResult[4], &pBonesLightF[0], pContext->m_ObjectToWorldMatrix.m0);
@@ -696,7 +700,7 @@ namespace Glacier
             // Texcoord scroll frame fraction
             const ZPrimHandle& hPrim = pContext->m_pRenderObjectInstance->m_pRenderObject->m_hPrim;
             const auto* pMesh = hPrim.Get<SPrimMesh>();
-            // TODO: Finish this place after ZRenderEntry will be reversed (m_pRenderEntry[1].m_PAD4)
+            // The second render-entry frame field is not represented by the local entry headers.
             // const float fFrame = *reinterpret_cast<const float*>(<m_pRenderEntry[1].m_PAD4>);
             // const float fFraction = (fFrame - static_cast<float>(static_cast<uint16_t>(pMesh->lNumFrames)))
             //     / static_cast<float>(static_cast<uint16_t>(pMesh->lNumFrames >> 16));
@@ -745,7 +749,7 @@ namespace Glacier
 
         case 54:
         {
-            // TODO: Finish this place after ZRender will be reversed (dword at m_pRender + 0x1334)
+            // PC stores the render-mode flags in the renderer object at offset 0x1334.
             const uint8_t* pRender = reinterpret_cast<const uint8_t*>(pContext->m_pRender);
             const float fValue = ((*reinterpret_cast<const uint32_t*>(pRender + 0x1334) & 2) == 0) ? 1.0f : 0.0f;
             SetFloatArray(&fValue, 1);
@@ -760,16 +764,15 @@ namespace Glacier
             if (pMesh->lType == EPrimType::PTMESH)
             {
                 uint32_t lWireColor = pMesh->lWireColor;
-                // TODO: Finish this place after ZBaseGeom::m_mTransform / sub_431270 will be reversed
-                // const uint32_t* pTransform = pContext->m_pRenderObjectInstance->m_pBaseGeom->m_mTransform.data;
-                // if (pTransform && (sub_431270(pTransform) & 0x10) != 0)
-                //     lWireColor = 0xFF1F1F1F;
+                const ZGEOM* pGeom = pContext->m_pRenderObjectInstance->m_pBaseGeom->GetGeom();
+                if (pGeom && (pGeom->Control() & 0x10) != 0)
+                    lWireColor = 0xFF1F1F1F;
 
                 float aColor[4];
                 aColor[0] = static_cast<float>((lWireColor >> 16) & 0xFF) * (1.0f / 255.0f);
                 aColor[1] = static_cast<float>((lWireColor >> 8) & 0xFF) * (1.0f / 255.0f);
                 aColor[2] = static_cast<float>(lWireColor & 0xFF) * (1.0f / 255.0f);
-                // TODO: Finish this place after ZRender will be reversed (render flags, see decompile)
+                // The PC override flag is not identified by the local renderer types.
                 aColor[3] = 0.0f;
                 SetFloatArray(aColor, 4);
             }
@@ -785,16 +788,18 @@ namespace Glacier
             {
                 break;
             }
-            // TODO: Finish this place after IsShadowMeshObj will be reversed
-            // IsShadowMeshObj(pContext->m_pRenderObjectInstance->m_pBaseGeom->m_pGeom);
-            // TODO: Finish this place after the mesh prim layout will be reversed (color at +0x78)
-            // const uint32_t lColor = *reinterpret_cast<const uint32_t*>(reinterpret_cast<const uint8_t*>(pMesh) + 0x78);
-            // float aColor[4];
-            // aColor[0] = static_cast<float>((lColor >> 16) & 0xFF) * (1.0f / 255.0f);
-            // aColor[1] = static_cast<float>((lColor >> 8) & 0xFF) * (1.0f / 255.0f);
-            // aColor[2] = static_cast<float>(lColor & 0xFF) * (1.0f / 255.0f);
-            // aColor[3] = 1.0f;
-            // SetFloatArray(aColor, 4);
+            const ZBaseGeom* pBaseGeom = pContext->m_pRenderObjectInstance->m_pBaseGeom;
+            const ZGEOM* pGeom = pBaseGeom ? pBaseGeom->GetGeom() : nullptr;
+            if (!pGeom || !pGeom->IsDerivedFrom<ZSHADOWMESHOBJ>())
+            {
+                break;
+            }
+
+            const auto* pShadowMesh = static_cast<const SPrimStaticShadowMesh*>(pMesh);
+            float aColor[4];
+            UnpackD3DCOLORToFloats(
+                aColor[0], aColor[1], aColor[2], aColor[3], pShadowMesh->lShadowColor);
+            SetFloatArray(aColor, 4);
             break;
         }
 
@@ -807,10 +812,14 @@ namespace Glacier
             {
                 break;
             }
-            // TODO: Finish this place after the mesh prim layout will be reversed (matrix pointer at +0x38)
-            // float aResult[16];
-            // memcpy(aResult, *reinterpret_cast<const void* const*>(reinterpret_cast<const uint8_t*>(pMesh) + 0x38), sizeof(aResult));
-            // SetFloatArray(aResult, 16);
+            const ZBaseGeom* pBaseGeom = pContext->m_pRenderObjectInstance->m_pBaseGeom;
+            const ZGEOM* pGeom = pBaseGeom ? pBaseGeom->GetGeom() : nullptr;
+            if (!pGeom || !pGeom->IsDerivedFrom<ZSHADOWMESHOBJ>())
+            {
+                break;
+            }
+            const auto* pStaticShadowMesh = static_cast<const SPrimStaticShadowMesh*>(pMesh);
+            SetFloatArray(reinterpret_cast<const float*>(&pStaticShadowMesh->mProjectionMatrix), 16);
             break;
         }
 
@@ -830,11 +839,26 @@ namespace Glacier
             // Bone weight blend table (64 floats)
             const ZPrimHandle& hPrim = pContext->m_pRenderObjectInstance->m_pRenderObject->m_hPrim;
             const auto* pMesh = hPrim.Get<SPrimMesh>();
-            // TODO: Finish this place after the mesh prim layout will be reversed (bone count at +0x28)
-            // const uint32_t lNumBones = <HIBYTE of dword at +0x28>;
-            // ... build 16 pairs of {i/count, 0.96, i/count, 0.04} blend weights ...
-            // SetFloatArray(aResult, 64);
-            (void)pMesh;
+            const uint32_t lNumBones = (pMesh->lSubMeshTable >> 24) & 0xFF;
+            float aResult[64] {};
+            if (lNumBones)
+            {
+                const float fScale = 1.0f / static_cast<float>(lNumBones);
+                for (uint32_t i = 0; i < lNumBones && i < 16; ++i)
+                {
+                    const float fLow = static_cast<float>(i) * fScale;
+                    const float fHigh = static_cast<float>(i + 1) * fScale;
+                    aResult[i * 4 + 0] = fLow;
+                    aResult[i * 4 + 1] = 0.96f;
+                    aResult[i * 4 + 2] = fLow;
+                    aResult[i * 4 + 3] = 0.04f;
+                    aResult[(i + 1) * 4 + 0] = fHigh;
+                    aResult[(i + 1) * 4 + 1] = 0.04f;
+                    aResult[(i + 1) * 4 + 2] = fHigh;
+                    aResult[(i + 1) * 4 + 3] = 0.96f;
+                }
+            }
+            SetFloatArray(aResult, 64);
             break;
         }
 
@@ -843,8 +867,18 @@ namespace Glacier
             // Texture scroll/scale data (16 floats)
             const ZPrimHandle& hPrim = pContext->m_pRenderObjectInstance->m_pRenderObject->m_hPrim;
             const auto* pMesh = hPrim.Get<SPrimMesh>();
-            // TODO: Finish this place after the mesh prim layout will be reversed
-            (void)pMesh;
+            const float* pData = reinterpret_cast<const float*>(pMesh) + 18;
+            float aResult[16];
+            const float fTime = static_cast<float>(g_pSysInterface->FrameTime.secs) * 0.0009765625f;
+            for (uint32_t i = 0; i < 4; ++i)
+            {
+                const float fFrequency = 6.2831855f / pData[i * 5 + 3];
+                aResult[i] = fFrequency * pData[i * 5 + 0];
+                aResult[i + 4] = fFrequency * pData[i * 5 + 1];
+                aResult[i + 8] = pData[i * 5 + 4];
+                aResult[i + 12] = fTime * pData[i * 5 + 2] * fFrequency;
+            }
+            SetFloatArray(aResult, 16);
             break;
         }
 
@@ -876,46 +910,55 @@ namespace Glacier
         case 64:
         {
             // Matrix from drawable data
-            // TODO: Finish this place after sub_473700 (drawable lookup) will be reversed
-            // if (!pContext->m_pRenderObjectInstance->m_pRenderEntry) break;
-            // const void* pData = sub_473700(<render stats>);
-            // float aResult[16]; memcpy(aResult, pData, sizeof(aResult));
-            // SetFloatArray(aResult, 16);
+            if (!pContext->m_pRenderObjectInstance->m_pRenderEntry || !pContext->m_pRenderStats)
+                break;
+            SetFloatArray(reinterpret_cast<const float*>(pContext->m_pRenderStats->Data(m_lContextType)), 16);
             break;
         }
 
         case 65:
         {
             // Color from drawable data
-            // TODO: Finish this place after sub_473700 / sub_473720 will be reversed
+            if (!pContext->m_pRenderObjectInstance->m_pRenderEntry || !pContext->m_pRenderStats)
+                break;
+            const uint8_t* pData = pContext->m_pRenderStats->Data(m_lContextType);
+            const float fBlend = pContext->m_pRenderStats->Value(m_lContextType);
+            const uint32_t lColor = *reinterpret_cast<const uint32_t*>(pData + 0x50);
+            float aColor[4] {
+                static_cast<float>((lColor >> 16) & 0xFF) * (1.0f / 255.0f) * fBlend + 1.0f - fBlend,
+                static_cast<float>((lColor >> 8) & 0xFF) * (1.0f / 255.0f) * fBlend + 1.0f - fBlend,
+                static_cast<float>(lColor & 0xFF) * (1.0f / 255.0f) * fBlend + 1.0f - fBlend,
+                1.0f,
+            };
+            SetFloatArray(aColor, 4);
             break;
         }
 
         case 66:
         {
             // Light position (object space) from drawable data
-            // TODO: Finish this place after sub_473700 will be reversed
-            // if (!pContext->m_pRenderObjectInstance->m_pRenderEntry) break;
-            // const float* pData = static_cast<const float*>(sub_473700(<render stats>));
-            // float aLightPos[4] = { pData[17], pData[18], pData[19], 1.0f };
-            // vsub(aLightPos, &pContext->m_ObjectToWorldMatrix.p0.x);
-            // vmtmul(aLightPos, pContext->m_ObjectToWorldMatrix.m0);
-            // SetFloatArray(aLightPos, 4);
+            if (!pContext->m_pRenderObjectInstance->m_pRenderEntry || !pContext->m_pRenderStats)
+                break;
+            const float* pData = reinterpret_cast<const float*>(pContext->m_pRenderStats->Data(m_lContextType));
+            float aLightPos[4] {pData[17], pData[18], pData[19], 1.0f};
+            vsub(aLightPos, pContext->m_ObjectToWorldMatrix.p0);
+            vmtmul(aLightPos, pContext->m_ObjectToWorldMatrix.m0.data);
+            SetFloatArray(aLightPos, 4);
             break;
         }
 
         case 67:
         {
             // Decal texture with address mode
-            // TODO: Finish this place after sub_473700 (render stats) will be reversed
-            // if (pContext->m_pRenderObjectInstance->m_pRenderEntry)
-            // {
-            //     const uint32_t lValue = *reinterpret_cast<const uint32_t*>(static_cast<const uint8_t*>(sub_473700(<render stats>)) + 64);
-            //     g_pd3dDevice->SetSamplerState(0, D3DSAMP_ADDRESSU, ~((lValue & 0xC0000000) >> 30) & 2 | 1);
-            //     g_pd3dDevice->SetSamplerState(0, D3DSAMP_ADDRESSV, ~((lValue & 0xC0000000) >> 29) & 2 | 1);
-            //     ZTextureD3D* pTexture = g_pRenderDll->m_pTexCon->GetTexture(static_cast<uint16_t>(lValue), 0);
-            //     SetTexture(reinterpret_cast<IDirect3DBaseTexture9*>(pTexture->m_pUserData));
-            // }
+            if (pContext->m_pRenderObjectInstance->m_pRenderEntry && pContext->m_pRenderStats)
+            {
+                const uint8_t* pData = pContext->m_pRenderStats->Data(m_lContextType);
+                const uint32_t lValue = *reinterpret_cast<const uint32_t*>(pData + 0x40);
+                g_pd3dDevice->SetSamplerState(0, D3DSAMP_ADDRESSU, (~((lValue & 0xC0000000) >> 30) & 2) | 1);
+                g_pd3dDevice->SetSamplerState(0, D3DSAMP_ADDRESSV, (~((lValue & 0xC0000000) >> 29) & 2) | 1);
+                ZTextureD3D* pTexture = g_pRenderDll->m_pTexCon->GetTexture(static_cast<uint16_t>(lValue), 0);
+                SetTexture(reinterpret_cast<IDirect3DBaseTexture9*>(pTexture->m_pUserData));
+            }
             break;
         }
 

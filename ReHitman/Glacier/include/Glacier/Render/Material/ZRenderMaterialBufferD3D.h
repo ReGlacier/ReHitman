@@ -34,7 +34,8 @@ namespace Glacier
         void FreeSubClasses();
 
         // members
-        uint8_t m_D3DSpecificShit[8192]; // TODO: Finish me
+        // The internal 0x2000-byte D3D block is unresolved, but the surrounding PC layout is proven.
+        uint8_t m_D3DSpecificShit[8192];
         uint32_t m_lNumMaterialClasses { 0u };
         ZRenderMaterialClass* m_pMaterialClasses[MAX_MATERIAL_CLASSES_NR];
         int m_lNumMaterialInstances{ 0 };

@@ -12,6 +12,7 @@
 #include <Glacier/Render/ZSharedResourcesD3D.h>
 #include <Glacier/Render/ZDirect3DDevice.h>
 #include <Glacier/Render/ZRenderContext.h>
+#include <Glacier/Render/Entry/ZRenderEntryGeom.h>
 #include <Glacier/Render/Prim/ZPrimHandle.h>
 #include <Glacier/ZUniAssert.h>
 
@@ -57,28 +58,41 @@ namespace Glacier
         }
 
         const SPrimMesh* pMesh = pObject->m_hPrim;
-        if (pMesh->lType != EPrimType::PTSTRIPBONES)
+        auto* pVertexBuffer = ZSharedResourcesD3D::g_pInstance->m_pSVB->Interface();
+        if (pMesh->lSubType == SPrimObject::SUBTYPE_TWEENED)
         {
-            // Not PTSTRIPBONES here
             const uint32_t lSubMeshTable = pMesh->lSubMeshTable;
             const uint32_t* pSubMeshTable = ZPrimHandle{lSubMeshTable};
             const uint32_t lSubMesh = pSubMeshTable[0];
             const SPrimSubMesh* pSubMesh = ZPrimHandle{lSubMesh};
 
-            // TODO: Finish me
-            // Field +0x84 of ZRenderEntry as float? Or... idk
+            const float fFrame = static_cast<ZRenderEntryGeom*>(m_pRenderEntry)->m_fVertexFrameNumber;
+            uint32_t lFrame = fFrame > 0.0f ? static_cast<uint32_t>(fFrame) : 0u;
+            if (lFrame >= pMesh->lNumFrames)
+            {
+                lFrame = pMesh->lNumFrames - 1;
+            }
+
+            uint32_t lNextFrame = lFrame + 1;
+            if (lNextFrame >= pMesh->lNumFrames)
+            {
+                lNextFrame = pMesh->lNumFrames - 1;
+            }
+
+            const uint32_t lFrameVertexSize = pSubMesh->lNumVertices * sizeof(SD3DRenderVertex);
+            const uint32_t lFrameColorSize = pSubMesh->lNumVertices * sizeof(SVertexColorD3D);
+            g_pd3dDevice->SetStreamSource(0u, pVertexBuffer, pObject->m_VertexContainer.m_lVertexOffset + lFrame * lFrameVertexSize, sizeof(SD3DRenderVertex));
+            g_pd3dDevice->SetStreamSource(1u, pVertexBuffer, m_VertexContrainer.m_lVertexOffset + lFrame * lFrameColorSize, sizeof(SVertexColorD3D));
+            g_pd3dDevice->SetStreamSource(2u, pVertexBuffer, pObject->m_VertexContainer.m_lVertexOffset + lNextFrame * lFrameVertexSize, sizeof(SD3DRenderVertex));
+            g_pd3dDevice->SetStreamSource(3u, pVertexBuffer, m_VertexContrainer.m_lVertexOffset + lNextFrame * lFrameColorSize, sizeof(SVertexColorD3D));
         }
         else
         {
-            // PTSTRIPBONES here
-            auto* pVB0 = ZSharedResourcesD3D::g_pInstance->m_pSVB->Interface();
-            g_pd3dDevice->SetStreamSource(0u, pVB0, pObject->m_VertexContainer.m_lVertexOffset, sizeof(SD3DRenderVertex));
-
-            auto* pVB1 = ZSharedResourcesD3D::g_pInstance->m_pSVB->Interface();
-            g_pd3dDevice->SetStreamSource(1u, pVB0, m_VertexContrainer.m_lVertexOffset, 0x4); // ???
+            g_pd3dDevice->SetStreamSource(0u, pVertexBuffer, pObject->m_VertexContainer.m_lVertexOffset, sizeof(SD3DRenderVertex));
+            g_pd3dDevice->SetStreamSource(1u, pVertexBuffer, m_VertexContrainer.m_lVertexOffset, sizeof(SVertexColorD3D));
         }
 
-        ZRenderObjectInstanceD3D::DrawIndexedTriangles(&pObject->m_IndexContainer, pObject->m_VertexContainer.m_lNumVertices, pRender, 0);
+        ZRenderObjectInstanceD3D::DrawIndexedTriangles(&pObject->m_IndexContainer, pObject->m_VertexContainer.m_lNumVertices, pRender, 0u);
     }
 
     void ZRenderObjectInstanceOldMeshD3D::UpdateLight(const SUpdateLightData* pUpdateLightData, uint32_t lNumLights)

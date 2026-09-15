@@ -434,9 +434,43 @@ namespace Glacier
 
     ZRenderMaterialClass* ZRenderMaterialBufferD3D::CreateMaterialClass(uint32_t lMaterialClass, const SRMaterialProperties* pProperties)
     {
-        // TODO: Finish me (PC 00494370)
-        // ZRenderMaterialClassD3D::GetFactory().Find("test") - but name must be extracted from pProperties!!!
+        // PC 0x494270.
+        (void)lMaterialClass;
 
-        return nullptr;
+        ZRPropertyReader sRoot{};
+        sRoot.m_pBuffer = this;
+        sRoot.m_pProperty = fuck_cast<ZRPropertyReader::SProperty>(GetData(pProperties->lNameOffset));
+
+        ZRPropertyReader sName{};
+        sRoot.GetNamedListElement('NAME', sName);
+        ZASSERT(sName.m_pProperty->lType == ZRPropertyReader::PROPERTY_TYPE::PT_CHAR);
+        const char* pszMaterialClassName = static_cast<const char*>(sName.m_pBuffer->GetData(sName.m_pProperty->lData));
+
+        ZRenderMaterialClassD3D* pMaterialClass = ZRenderMaterialClassD3D::GetFactory().Create(pszMaterialClassName);
+        ZASSERT(pMaterialClass);
+        if (!pMaterialClass)
+        {
+            return nullptr;
+        }
+
+        pMaterialClass->Initialize();
+
+        ZRPropertyReader sSubClassList{};
+        if (sRoot.TryGetNamedListElement('SUBC', sSubClassList))
+        {
+            ZASSERT(sSubClassList.m_pProperty->lType == ZRPropertyReader::PROPERTY_TYPE::PT_LIST);
+            const auto* pSubClassElements = static_cast<const ZRPropertyReader::SProperty*>(
+                sSubClassList.m_pBuffer->GetData(sSubClassList.m_pProperty->lData));
+
+            for (uint32_t i = 0; i < sSubClassList.m_pProperty->lSize; ++i)
+            {
+                ZRPropertyReader sSubClass{};
+                sSubClass.m_pBuffer = sSubClassList.m_pBuffer;
+                sSubClass.m_pProperty = const_cast<ZRPropertyReader::SProperty*>(&pSubClassElements[i]);
+                pMaterialClass->AddMaterialSubClassTemplate(&sSubClass);
+            }
+        }
+
+        return pMaterialClass;
     }
 }

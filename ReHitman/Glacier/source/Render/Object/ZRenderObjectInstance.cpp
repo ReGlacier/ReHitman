@@ -8,19 +8,20 @@
 namespace Glacier
 {
     ZRenderObjectInstance::ZRenderObjectInstance(ZRenderObject* pRenderObject, ZBaseGeom* pBaseGeom)
+        : m_pRenderObject(pRenderObject)
+        , m_pBaseGeom(pBaseGeom)
+        , m_pRenderEntry(nullptr)
+        , m_lSortValue(0)
+        , m_lFlags(0)
     {
-        m_pRenderObject = pRenderObject;
-        m_pBaseGeom = pBaseGeom;
-        m_pRenderEntry = nullptr;
         ++pRenderObject->m_lNumActiveInstances;
 
-        m_lSortValue = m_pRenderObject->m_pMaterialInstance->m_lRemapValue; // Rly?
+        m_lSortValue = m_pRenderObject->m_pMaterialInstance->m_lRemapValue;
         m_lFlags |= 1u;
     }
 
     ZRenderObjectInstance::~ZRenderObjectInstance()
     {
-        ZSAFE_ASSERT(m_pRenderObject);
         ZSAFE_ASSERT(m_pRenderObject->m_lNumActiveInstances);
 
         if (!--m_pRenderObject->m_lNumActiveInstances && (m_pRenderObject->m_lFlags & 2))

@@ -1,5 +1,6 @@
 #include <Glacier/Render/Draw/ZDrawSurfaceD3D.h>
 #include <Glacier/Render/ZDirect3DDevice.h>
+#include <Glacier/Render/ZRenderWintelD3D.h>
 #include <Glacier/Render/Globals.h>
 
 
@@ -27,7 +28,7 @@ namespace Glacier
         D3D_SAFE_RELEASE(m_pColorSurface)
         D3D_SAFE_RELEASE(m_pDepthSurface)
         D3D_SAFE_RELEASE(m_pColorTexture)
-        // Other fields are not deallocated here, idk why
+        // Saved device state is owned by the active Begin/End pair.
     }
 
     void ZDrawSurfaceD3D::Begin()
@@ -62,10 +63,13 @@ namespace Glacier
         D3D_SAFE_RELEASE(m_pColorTexture);
 
         g_pd3dDevice->CreateTexture(w, h, 1u, 1u, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &m_pColorTexture, nullptr);
+        if (!m_pColorTexture)
+            return;
+
         m_pColorTexture->GetSurfaceLevel(0, &m_pColorSurface);
 
-        // TODO: Finish me after ZRenderWintelD3D will be finished (format use from )
-        // const D3DPRESENT_PARAMETERS* pPresentParams = &m_pRender->D3DPRESENT_PARAMETERS;
-        // g_pd3dDevice->CreateDepthStencilSurface(w, h, pPresentParams->AutoDepthStencilFormat, D3DMULTISAMPLE_NONE, 0, true, &m_pDepthSurface, nullptr);
+        g_pd3dDevice->CreateDepthStencilSurface(
+            w, h, m_pRender->m_d3dPresentParameters.AutoDepthStencilFormat,
+            D3DMULTISAMPLE_NONE, 0, true, &m_pDepthSurface, nullptr);
     }
 }

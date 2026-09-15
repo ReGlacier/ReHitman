@@ -16,4 +16,5 @@ namespace Glacier
 
         // members
     };
+    RE_VERIFY_SIZE(ZRenderObjectD3D, 0x10);
 }

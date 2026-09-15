@@ -19,8 +19,10 @@ namespace Glacier
         ZRenderObjectOldMeshWeightedD3D(const ZPrimHandle& hPrim, ZRenderMaterialInstance* pMaterialInstance);
 
         // members
-        ZRIndexContainer m_IndexContainer;
-        ZRVertexContainer m_VertexContainer;
+        ZRIndexContainer m_IndexContainer; // +0x10
+        ZRVertexContainer m_VertexContainer; // +0x2C
     };
     RE_VERIFY_SIZE(ZRenderObjectOldMeshWeightedD3D, 0x44);
+    RE_VERIFY_OFFSET(ZRenderObjectOldMeshWeightedD3D, m_IndexContainer, 0x10);
+    RE_VERIFY_OFFSET(ZRenderObjectOldMeshWeightedD3D, m_VertexContainer, 0x2C);
 }

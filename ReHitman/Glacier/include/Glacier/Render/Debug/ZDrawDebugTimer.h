@@ -75,7 +75,7 @@ namespace Glacier
         ZStackArray<512,ZDrawDebugTimer::ZTimer*> m_DrawTimers;
         ZTimer* m_HashLookup[256];
         TIMERTYPE m_eOldTimerType;
-        ZStrHash<uint32_t> m_PositionHash;
+        ZPStrHash<uint32_t> m_PositionHash;
         uint32_t m_iHighPos;
         uint32_t m_iFramesSinceClear;
         TimerInfo_t m_aSingleTimers[32];

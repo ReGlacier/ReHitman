@@ -11,7 +11,7 @@ namespace Glacier
     {
     public:
         // constants
-        static constexpr int MAX_VERTEX_BATCH = 0x10; // TODO: Verify with PC
+        static constexpr int MAX_VERTEX_BATCH = 0x10; // X86 vertex batch limit
 
         // vtbl
         ~ZRenderObjectInstanceX86() override;

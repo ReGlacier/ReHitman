@@ -1,6 +1,9 @@
 #include <Glacier/Render/Debug/ZDrawDebugRender.h>
 #include <Glacier/Render/Debug/ZDrawDebugText.h>
+#include <Glacier/Render/Debug/ZDrawDebugTimer.h>
 #include <Glacier/Render/Debug/Globals.h>
+#include <Glacier/Render/ZRender.h>
+#include <Glacier/Render/View/IView.h>
 #include <Glacier/System/ZSysInterface.h>
 #include <Glacier/ZSTL/StringUtils.h>
 #include <Glacier/ZUniAssert.h>
@@ -39,6 +42,9 @@ namespace Glacier
         , m_bInitialized(false)
         , m_bSelectorMenu(false)
         , m_bLocked(false)
+        , m_lSelectedIndex(0)
+        , m_pActiveMenu(nullptr)
+        , m_pRender(nullptr)
     {
         m_Menus.Clear();
         g_pDrawDebugText = this;
@@ -46,14 +52,16 @@ namespace Glacier
 
     void ZDrawDebugText::Update(ZDrawDebugRender* pRender)
     {
-        if (g_pDrawDebugText == this)
-        {
-            // TODO: Finish me
-        }
+        if (g_pDrawDebugText != this)
+            return;
+
+        m_pRender = pRender;
+        if (!m_pRender)
+            return;
 
         m_pRender->xReset();
         Update();
-        // TODO: Finish me
+        m_pRender->xFlush();
     }
 
     void ZDrawDebugText::TextPlot(uint32_t x, uint32_t y, const char* pText, uint32_t dwTextColor)
@@ -87,6 +95,7 @@ namespace Glacier
         ZDrawDebugText::ZMenu sNewMenu {};
         sNewMenu.m_CallBack = CallBack;
         sNewMenu.m_pName = pName;
+        sNewMenu.m_pData = pData;
         sNewMenu.m_pMenu = nullptr;
         m_Menus.Add(&sNewMenu);
     }
@@ -124,9 +133,6 @@ namespace Glacier
 
         ZDrawDebugRegion::Set(0, 0, g_pSysInterface->m_lResolution[0], g_pSysInterface->m_lResolution[1]);
         g_RenderDebugMenu.Init();
-
-        // TODO: Finish me
-        // TODO: Other debug menus here
     }
 
     void ZDrawDebugText::End()
@@ -136,7 +142,6 @@ namespace Glacier
 
     void ZDrawDebugText::Update()
     {
-        // TODO: Finish me
         DrawInfo();
 
         for (int i = 0; i < m_Menus.Count(); ++i)
@@ -146,7 +151,9 @@ namespace Glacier
                 pMenu->m_pMenu->DrawAlways();
             }
         }
-        // TODO: Finish me
+
+        if (m_pActiveMenu && m_pActiveMenu->m_pMenu)
+            m_pActiveMenu->m_pMenu->Update();
     }
 
     void ZDrawDebugText::Lock()
@@ -166,33 +173,59 @@ namespace Glacier
 
         auto* pFrame = AddFrame();
 
-        SetPosSizeText(1, 1, 20, 20);
+        SetPosSizeText(1, 1, 42, 8);
         Fill(0x80202080u);
         DrawFocus();
 
-        // TODO: Finish me
+        ZRender* pRender = nullptr;
+        if (m_pRender->m_pIView)
+            pRender = const_cast<IView*>(m_pRender->m_pIView)->Render();
+
+        if (!pRender || !g_pSysInterface)
+            return;
+
+        ZDebugFrame sFrame { pFrame };
+        sFrame.Plot(0, 0, "FPS: %d  Frame: %.2f ms", pRender->m_FPS,
+            g_pSysInterface->DeltaFrameTime * 1000.0f);
+        sFrame.Plot(0, 1, "Triangles: %u  Primitives: %u", pRender->m_lTriangleCount,
+            pRender->m_lPrimitiveCount);
+        sFrame.Plot(0, 2, "Textures: %u  Bones: %u", pRender->m_lTextureCount,
+            pRender->m_lBoneCount);
+        sFrame.Plot(0, 3, "Sprites: %u  SubPrims: %u", pRender->m_lSpriteCount,
+            pRender->m_lSubPrimitiveCount);
+        sFrame.Plot(0, 4, "Tex memory: %u  Draw mode: %u", pRender->m_lTextureSize,
+            g_RenderDebugMenu.m_lDrawModeIndex);
+        sFrame.Plot(0, 5, "Camera mode: %u  Timer: %u", g_RenderDebugMenu.m_lCameraModeIndex,
+            g_pDrawDebugTimer ? g_pDrawDebugTimer->m_lTimerType : NONE);
     }
 
     void ZDrawDebugText::DrawText(uint32_t x, uint32_t y, const char* pszText, uint32_t lColor)
     {
         ZASSERT(m_pRender);
 
-        auto lPosY = m_pRender->m_Viewport.y - y;
-        // TODO: Finish me
+        const auto viewport = m_pRender->Viewport();
+        const ZVector3 position {
+            static_cast<float>(viewport.x + x),
+            static_cast<float>(viewport.y + viewport.h - y),
+            0.0f,
+        };
+        m_pRender->xDrawText(position, pszText, lColor, 0);
     }
 
     void ZDrawDebugText::DrawRect(uint32_t lPosX, int lPosY, int lSizeX, int lSizeY, uint32_t lColor)
     {
         ZASSERT(m_pRender);
 
-        auto vp = m_pRender->Viewport();
-        vp.x = vp.x + 12 - lPosY;
-
         m_pRender->xSetTexture(0u);
         m_pRender->xSetDrawMode(0x60001u);
         m_pRender->xColor(lColor);
         m_pRender->xBegin(ZDrawDebugRender::PRIMTYPE::PT_TRIANGLES);
-        // TODO: Finish me
+        m_pRender->xVertex2(static_cast<float>(lPosX), static_cast<float>(lPosY));
+        m_pRender->xVertex2(static_cast<float>(lPosX + lSizeX), static_cast<float>(lPosY));
+        m_pRender->xVertex2(static_cast<float>(lPosX + lSizeX), static_cast<float>(lPosY + lSizeY));
+        m_pRender->xVertex2(static_cast<float>(lPosX), static_cast<float>(lPosY));
+        m_pRender->xVertex2(static_cast<float>(lPosX + lSizeX), static_cast<float>(lPosY + lSizeY));
+        m_pRender->xVertex2(static_cast<float>(lPosX), static_cast<float>(lPosY + lSizeY));
         m_pRender->xEnd();
     }
 
@@ -204,7 +237,8 @@ namespace Glacier
         m_pRender->xSetDrawMode(0x60001u);
         m_pRender->xColor(lColor);
         m_pRender->xBegin(ZDrawDebugRender::PRIMTYPE::PT_LINES);
-        // TODO: Finish me
+        m_pRender->xVertex2(fStartX, fStartY);
+        m_pRender->xVertex2(fEndX, fEndY);
         m_pRender->xEnd();
     }
 }

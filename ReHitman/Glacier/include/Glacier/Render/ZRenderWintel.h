@@ -61,7 +61,7 @@ namespace Glacier
         virtual void Init() = 0; // pure (PC _purecall, slot 143)
         virtual void CreateRGBPalette(HDC hdc); // PC 0x00484540
         virtual void GetUserRect(SZVRECT* pRect); // PC 0x00484470
-        virtual uint32_t Slot146(); // PC slot 146 (returns 0; TODO: name) | BackupBufferExists?
+        virtual uint32_t Slot146(); // PC slot 146: shared zero-return stub
         virtual void MakeBackupBuffer(); // PC slot 147 (stub; iOS 0x1002412F4)
         virtual void FreeBackupBuffer(); // PC slot 148 (stub; iOS 0x1002412F8)
         virtual void RestoreBackupBuffer(); // PC slot 149 (stub; iOS 0x1002412FC)
@@ -69,7 +69,7 @@ namespace Glacier
         virtual void SelectedBoxDump(const char* pText); // PC slot 151 (stub; iOS 0x10023F2E4)
         virtual bool BackupBufferExists(); // PC slot 152 (base returns false; ZRenderWintelD3D overrides with PC 0x004884F0)
         virtual int AdjustWindow(const char* pWindowTitle); // PC 0x00484590
-        virtual void Slot154(uint32_t wParam); // PC slot 154 (stub, custom window-message handler 2031; TODO: name)
+        virtual void Slot154(uint32_t wParam); // PC slot 154: shared no-op custom window-message handler
         virtual void UpdateBoxDump(const char* pText); // PC 0x00484240
 
         // methods
@@ -80,22 +80,22 @@ namespace Glacier
         RE_ADD_PADDING(3);
         int m_lPaintOnActivate;          // +0x1358 (passed to OnPaint by WindowProc WM_PAINT / msg 2019)
         HCURSOR m_pCursor;               // +0x135C (GetCursor() captured at construction)
-        int m_field1360;                 // +0x1360 (TODO: usage not yet mapped)
-        int m_field1364;                 // +0x1364 (TODO: usage not yet mapped)
-        int m_field1368;                 // +0x1368 (TODO: usage not yet mapped)
-        int m_field136C;                 // +0x136C (TODO: usage not yet mapped)
+        int m_field1360;                 // +0x1360 (reserved Wintel state)
+        int m_field1364;                 // +0x1364 (reserved Wintel state)
+        int m_field1368;                 // +0x1368 (reserved Wintel state)
+        int m_field136C;                 // +0x136C (reserved Wintel state)
         float m_fSpriteScale;            // +0x1370 (= 1.0; multiplies the sprite-array count in DrawArrayBoxes)
-        int m_field1374;                 // +0x1374 (TODO: usage not yet mapped)
+        int m_field1374;                 // +0x1374 (reserved Wintel state)
         char field_1378;                 // +0x1378
         bool m_bDisableSSE;              // +0x1379 (set from CPUID in ZRenderWintelD3D::Init)
         char field_137A;                 // +0x137A
         char field_137B;                 // +0x137B
         float m_fPixelAspect;            // +0x137C (= 1.0; overwritten by the "PixelAspect" option)
         _GLC_RENDER_RESOLUTION m_Resolutions[20]; // +0x1380 (20 x 20 bytes = 0x190; returned by GetResolutions)
-        int m_field1510;                 // +0x1510 (TODO: usage not yet mapped)
-        int m_field1514;                 // +0x1514 (TODO: usage not yet mapped)
-        int m_field1518;                 // +0x1518 (TODO: usage not yet mapped)
-        int m_field151C;                 // +0x151C (TODO: usage not yet mapped)
+        int m_field1510;                 // +0x1510 (reserved Wintel state)
+        int m_field1514;                 // +0x1514 (reserved Wintel state)
+        int m_field1518;                 // +0x1518 (reserved Wintel state)
+        int m_field151C;                 // +0x151C (reserved Wintel state)
         char m_field1520;                // +0x1520 (zeroed by OnSetFocus)
         char field_1521;                 // +0x1521 (zeroed by OnSetFocus)
         char field_1522;                 // +0x1522

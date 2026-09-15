@@ -12,6 +12,7 @@ namespace Glacier
     public:
         // vtbl
         ~ZRenderObjectInstanceD3D() override = default;
+        void Draw(ZRenderContext* pCtx) override;
 
         // methods
         using ZRenderObjectInstanceX86::ZRenderObjectInstanceX86;

@@ -185,67 +185,45 @@ namespace Glacier
             return;
         }
 
-        // TODO: Finish this place after ZPrimControlBase will be reversed
-        // const uint8_t lDecalLookup = pBoneModify->DecalLookup();
-        //
-        // ZMatrix rootTM;
-        // pLnkObj->GetRootTM(rootTM.m0, rootTM.p0);
-        //
-        // const ZBone* pBones = pLnkObj->GetBones();
-        // const uint8_t* pBoneIdLookup = g_pRenderDll->m_pPrimControl->GetBoneIdToIndexLookup(pLnkObj->Prim());
-        // const ZBone* pBone = &pBones[pBoneIdLookup[lBoneId]];
-        //
-        // // Bring the mark into bone-local space and back through the global prim bones
-        // ZVector3 vPosition;
-        // MatrixTransformInverse(vPosition.Get(), pvPosition, rootTM);
-        // vsub(vPosition.Get(), pBone->_Pos.Get());
-        // vmtmul(vPosition.Get(), pBone->_Mat.Get());
-        //
-        // ZVector3 vDirection;
-        // vmtmul(vDirection.Get(), pvDirection, rootTM.m0.Get());
-        // vmtmul(vDirection.Get(), pBone->_Mat.Get());
-        //
-        // const ZBone* pGlobalBone = &pLnkObj->GetGlobalPrimBones()[pBoneIdLookup[lBoneId]];
-        // vmmul(vPosition.Get(), pGlobalBone->_Mat.Get());
-        // vadd(vPosition.Get(), pGlobalBone->_Pos.Get());
-        // vmmul(vDirection.Get(), pGlobalBone->_Mat.Get());
-        //
-        // ZBonesDecal* pDecal;
-        // if (m_BoneDecals.Count() == m_BoneDecals.TotalNrEntries())
-        // {
-        //     pDecal = GetAvailBoneDecal();
-        // }
-        // else
-        // {
-        //     pDecal = m_BoneDecals.Add();
-        // }
-        //
-        // pDecal->m_vPosition = vPosition;
-        // vnorm(pDecal->m_vDirection.Get(), vDirection.Get());
-        // pDecal->m_fRadius = fRadius;
-        // pDecal->m_fRandomAngle = g_pSysInterface->FRand(__FILE__, __LINE__) * 6.2831855f;
-        // pDecal->m_lBoneId = lBoneId;
-        // pDecal->m_lSourcePrim = lSourcePrim;
-        // pDecal->m_pLnkObj = pLnkObj;
-        // pDecal->m_pPrimAccess[0] = nullptr;
-        // pDecal->m_pPrimAccess[1] = nullptr;
-        // pDecal->m_pPrimAccess[2] = nullptr;
-        // pDecal->m_pPrimAccess[3] = nullptr;
-        //
-        // pDecal->m_pNextSameLookup = m_pBoneDecalsLookup[lDecalLookup];
-        // pDecal->m_pNext = m_pBonesFirst;
-        // if (m_pBonesFirst)
-        // {
-        //     m_pBonesFirst->m_pPrev = pDecal;
-        // }
-        // m_pBonesFirst = pDecal;
-        // pDecal->m_pPrev = nullptr;
-        // if (!m_pBonesLast)
-        // {
-        //     m_pBonesLast = pDecal;
-        // }
-        // m_pBoneDecalsLookup[lDecalLookup] = pDecal;
-        //
+        const uint8_t lDecalLookup = pBoneModify->DecalLookup();
+        ZMatrix rootTM;
+        pLnkObj->GetRootTM(rootTM.m0, rootTM.p0);
+        const uint8_t* pBoneIdLookup = g_pRenderDll->m_pPrimControl->GetBoneIdToIndexLookup(pLnkObj->Prim());
+        const uint8_t lBoneIndex = pBoneIdLookup[lBoneId];
+        const ZBone* pBone = &pLnkObj->GetBones()[lBoneIndex];
+        ZVector3 vPosition;
+        MatrixTransformInverse(vPosition.Get(), pvPosition, rootTM);
+        vPosition -= pBone->_Pos;
+        vmtmul(vPosition.Get(), pBone->_Mat.Get());
+        ZVector3 vDirection = pvDirection;
+        vmtmul(vDirection.Get(), rootTM.m0.Get());
+        vmtmul(vDirection.Get(), pBone->_Mat.Get());
+        const ZBone* pGlobalBone = &pLnkObj->GetGlobalPrimBones()[lBoneIndex];
+        vmmul(vPosition.Get(), pGlobalBone->_Mat.Get());
+        vPosition += pGlobalBone->_Pos;
+        vmmul(vDirection.Get(), pGlobalBone->_Mat.Get());
+
+        ZBonesDecal* pDecal = m_BoneDecals.Count() == m_BoneDecals.TotalNrEntries()
+            ? GetAvailBoneDecal() : m_BoneDecals.Add();
+        if (!pDecal)
+            return;
+        pDecal->m_vPosition = vPosition;
+        vnorm(pDecal->m_vDirection.Get(), vDirection.Get());
+        pDecal->m_fRadius = fRadius;
+        pDecal->m_fRandomAngle = g_pSysInterface->FRand(const_cast<char*>(__FILE__), __LINE__) * 6.2831855f;
+        pDecal->m_lBoneId = lBoneId;
+        pDecal->m_lSourcePrim = lSourcePrim;
+        pDecal->m_pLnkObj = pLnkObj;
+        memset(pDecal->m_pPrimAccess, 0, sizeof(pDecal->m_pPrimAccess));
+        pDecal->m_pNextSameLookup = m_pBoneDecalsLookup[lDecalLookup];
+        pDecal->m_pNext = m_pBonesFirst;
+        if (m_pBonesFirst)
+            m_pBonesFirst->m_pPrev = pDecal;
+        m_pBonesFirst = pDecal;
+        pDecal->m_pPrev = nullptr;
+        if (!m_pBonesLast)
+            m_pBonesLast = pDecal;
+        m_pBoneDecalsLookup[lDecalLookup] = pDecal;
         pLnkObj->SetControl(ZCRENDERATTACHED, 0);
         pLnkObj->BaseGeom()->SetAttachUpdate();
     }

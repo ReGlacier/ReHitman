@@ -19,6 +19,8 @@
 #include <Glacier/Render/Entry/SRenderEntryNotifyInfo.h>
 #include <Glacier/Render/Material/ZRenderMaterialBuffer.h>
 #include <Glacier/Render/Material/ZRenderMaterialInstance.h>
+#include <Glacier/Render/Prim/SPrims.h>
+#include <Glacier/Render/Prim/SPrimSpritesArray.h>
 #include <Glacier/Render/Object/ZRenderObject.h>
 #include <Glacier/Render/Object/ZRenderObjectInstance.h>
 #include <Glacier/Render/Prim/ZPrimControlBase.h>
@@ -29,6 +31,8 @@
 #include <Glacier/Render/Entry/ZRenderEntryEnvSamplerD3D.h>
 #include <Glacier/Render/Entry/ZRenderEntryReflectorD3D.h>
 #include <Glacier/IK/ZLNKOBJ.h>
+#include <Glacier/IK/ZBoneModifyBase.h>
+#include <Glacier/Animation/Model.h>
 #include <Glacier/System/ZSysMem.h>
 #include <Glacier/ZUniMemory.h>
 #include <cstring>
@@ -370,13 +374,12 @@ namespace Glacier
             return false;
         }
 
-        // TODO: Finish this place after ZLNKOBJ shadow-caster validation will be reversed.
-        // Reference (PC 0x464870):
-        // ZGEOM* pGeom = pBaseGeom->m_pExtraGeom;
-        // const bool bIsLnkObj = pGeom
-        //     ? (pGeom->GetObjectId() & ZLNKOBJ::m_Mask) == ZLNKOBJ::m_Id
-        //     : pBaseGeom->IsDerivedFromStdObj(ZLNKOBJ::m_Id);
-        // if (!bIsLnkObj) return false;
+        ZGEOM* pGeom = pBaseGeom->m_pExtraGeom;
+        const bool bIsLnkObj = pGeom
+            ? (pGeom->GetObjectId() & ZLNKOBJ::m_Mask) == ZLNKOBJ::m_Id
+            : pBaseGeom->IsDerivedFromStdObj(ZLNKOBJ::m_Id);
+        if (!bIsLnkObj)
+            return false;
 
         const uint16_t lDrawId = pBaseGeom->m_lDrawId;
         const ZRenderEntry* pEntry = m_apRenderEntryLookup[lDrawId];
@@ -385,9 +388,7 @@ namespace Glacier
             return false;
         }
 
-        // TODO: Finish this place after ZRenderEntry shadow-caster distance will be reversed.
-        // Reference (PC): return *(float*)((char*)pEntry + 0xA4) <= 2000.0f;
-        return false;
+        return static_cast<const ZRenderEntryBones*>(pEntry)->m_fMinDistanceToObservers <= 2000.0f;
     }
 
     const ZBone* ZRenderDraw::GetBaseGeomBones(const ZBaseGeom* pBaseGeom)
@@ -404,11 +405,10 @@ namespace Glacier
             return nullptr;
         }
 
-        // TODO: Finish this place after ZRenderEntryBones will be reversed.
-        // Reference (PC 0x477C80, ZRenderEntryBones::GetBoneArray):
-        // const uint32_t lNumBones = *(uint32_t*)((const char*)pEntry + 0xA8);
-        // return lNumBones ? (const ZBone*)(*(uintptr_t*)((const char*)pEntry + 0x9C) + 16 * (3 * lNumBones + 9)) : nullptr;
-        return nullptr;
+        const auto* pBones = static_cast<const ZRenderEntryBones*>(pEntry);
+        return pBones->m_lNumAllocatedBones
+            ? reinterpret_cast<const ZBone*>(pBones->m_pBoneData + 16 * (3 * pBones->m_lNumAllocatedBones + 9))
+            : nullptr;
     }
 
     bool ZRenderDraw::ValidateReceiver(const ZBaseGeom* pBaseGeom)
@@ -440,8 +440,7 @@ namespace Glacier
             ZRenderEntry* pEntry = m_apRenderEntryLookup[lDrawId];
             if (pEntry)
             {
-                // TODO: Finish this place after ZRenderEntryGeom will be reversed.
-                // Reference (PC): *(float*)((char*)pEntry + 0x88) = fTextureFrameNumber;
+                memcpy(&static_cast<ZRenderEntryGeom*>(pEntry)->m_lRenderFlags, &fTextureFrameNumber, sizeof(fTextureFrameNumber));
             }
         }
     }
@@ -452,21 +451,22 @@ namespace Glacier
 
         if (bUniqueRenderObject)
         {
-            // TODO: Finish this place after ZRenderMaterialBuffer will be reversed.
-            // Reference (PC 0x476520):
-            // const auto* pPrim = hPrim.Get<SPrims>(); // SPrimInfo is a decompiler label; resolve via ZPrimHandle::Get<T>
-            // uint32_t lMaterialId = pPrim->lType == 2
-            //     ? g_pMaterialBufferInstance->CreateMaterialInstanceSprite(...)
-            //     : static_cast<uint16_t>(pPrim->lTextureId /* iMaterialId */);
-            // ZRenderMaterialInstance* pMaterial = g_pMaterialBufferInstance->GetMaterialInstance(lMaterialId);
-            // if (pMaterial)
-            // {
-            //     pRenderObject = pMaterial->CreateRenderObject(hPrim);
-            //     if (pRenderObject)
-            //     {
-            //         pRenderObject->m_lFlags |= 2;
-            //     }
-            // }
+            const auto* pPrim = hPrim.Get<SPrims>();
+            if (pPrim && ZRenderMaterialBuffer::g_pMaterialBufferInstance)
+            {
+                const auto* pSprite = hPrim.Get<SPrimSpritesArray>();
+                const uint32_t lMaterialId = pPrim->lType == 2 && pSprite
+                    ? ZRenderMaterialBuffer::g_pMaterialBufferInstance->CreateMaterialInstanceSprite(
+                        pSprite->lTextureId, pSprite->lDrawMode, pSprite->lSpriteType)
+                    : pPrim->lTextureId;
+                auto* pMaterial = ZRenderMaterialBuffer::g_pMaterialBufferInstance->GetMaterialInstance(lMaterialId);
+                if (pMaterial)
+                {
+                    pRenderObject = pMaterial->CreateRenderObject(hPrim);
+                    if (pRenderObject)
+                        pRenderObject->m_lFlags |= 2;
+                }
+            }
         }
         else
         {
@@ -477,21 +477,22 @@ namespace Glacier
             }
             else
             {
-                // TODO: Finish this place after ZRenderMaterialBuffer will be reversed.
-                // Reference (PC 0x476520):
-                // const auto* pPrim = hPrim.Get<SPrims>(); // SPrimInfo is a decompiler label; resolve via ZPrimHandle::Get<T>
-                // uint32_t lMaterialId = pPrim->lType == 2
-                //     ? g_pMaterialBufferInstance->CreateMaterialInstanceSprite(...)
-                //     : static_cast<uint16_t>(pPrim->lTextureId);
-                // ZRenderMaterialInstance* pMaterial = g_pMaterialBufferInstance->GetMaterialInstance(lMaterialId);
-                // if (pMaterial)
-                // {
-                //     pRenderObject = pMaterial->CreateRenderObject(hPrim);
-                //     if (pRenderObject)
-                //     {
-                //         m_RenderObjects[hPrim.m_lHandleValue] = pRenderObject;
-                //     }
-                // }
+                const auto* pPrim = hPrim.Get<SPrims>();
+                if (pPrim && ZRenderMaterialBuffer::g_pMaterialBufferInstance)
+                {
+                    const auto* pSprite = hPrim.Get<SPrimSpritesArray>();
+                    const uint32_t lMaterialId = pPrim->lType == 2 && pSprite
+                        ? ZRenderMaterialBuffer::g_pMaterialBufferInstance->CreateMaterialInstanceSprite(
+                            pSprite->lTextureId, pSprite->lDrawMode, pSprite->lSpriteType)
+                        : pPrim->lTextureId;
+                    auto* pMaterial = ZRenderMaterialBuffer::g_pMaterialBufferInstance->GetMaterialInstance(lMaterialId);
+                    if (pMaterial)
+                    {
+                        pRenderObject = pMaterial->CreateRenderObject(hPrim);
+                        if (pRenderObject)
+                            m_RenderObjects[hPrim.m_lHandleValue] = pRenderObject;
+                    }
+                }
             }
         }
 
@@ -871,7 +872,24 @@ namespace Glacier
 
     void ZRenderDraw::UpdateBoneModifiersList(ZStackArray<ELEMENTS_IN_RENDER_ENTRY_LIST_COUNT, ZRenderEntryGeom*>& sList)
     {
-        // TODO: Finish me
+        for (uint32_t i = 0; i < sList.Count(); ++i)
+        {
+            auto* pEntry = sList.Get(i) ? *sList.Get(i) : nullptr;
+            auto* pBones = dynamic_cast<ZRenderEntryBones*>(pEntry);
+            if (!pBones || !pBones->m_pBaseGeom)
+                continue;
+
+            auto* pGeom = pBones->m_pBaseGeom->GetGeom();
+            if (!pGeom || !pGeom->Is<ZLNKOBJ>())
+                continue;
+
+            auto* pLinkObject = static_cast<ZLNKOBJ*>(pGeom);
+            if (pLinkObject->m_pBoneModify && pLinkObject->m_Model && pLinkObject->m_Model->m_Bones)
+            {
+                pLinkObject->m_pBoneModify->UpdateGlobalIK(
+                    pLinkObject->m_Model->m_Bones, pBones->m_lPrimId, pLinkObject);
+            }
+        }
     }
 
     void ZRenderDraw::UpdateBoneModifiersListIK(ZStackArray<ELEMENTS_IN_RENDER_ENTRY_LIST_COUNT, ZRenderEntryGeom*>& sList)

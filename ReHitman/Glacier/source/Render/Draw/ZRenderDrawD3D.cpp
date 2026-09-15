@@ -1,5 +1,7 @@
 #include <Glacier/Render/Draw/ZRenderDrawD3D.h>
 #include <Glacier/Render/View/ZRenderViewD3D.h>
+#include <Glacier/Render/Entry/ZRenderEntryBones.h>
+#include <Glacier/Geom/ZBaseGeom.h>
 #include <Glacier/ZUniMemory.h>
 
 
@@ -13,7 +15,7 @@ namespace Glacier
 
     void ZRenderDrawD3D::BeginFrame()
     {
-        // TODO: Finish me
+        m_DecalMarks.BeginFrame();
     }
 
     ZRenderViewBase* ZRenderDrawD3D::NewView(ZRender* pRender, uint32_t lViewNumber, uint32_t lViewId)
@@ -23,6 +25,11 @@ namespace Glacier
 
     void ZRenderDrawD3D::CalcBoneLightSources(ZBaseGeom* pBaseGeom, float* pDirectLights)
     {
-        // TODO: Finish me
+        if (!pBaseGeom || !pBaseGeom->m_lDrawId)
+            return;
+
+        auto* pEntry = m_apRenderEntryLookup[pBaseGeom->m_lDrawId & 0x7FFFu];
+        if (pEntry && (pEntry->m_lControl & ZRenderEntry::RE_HASBONES) != 0)
+            static_cast<ZRenderEntryBones*>(pEntry)->m_pLightData = pDirectLights;
     }
 }

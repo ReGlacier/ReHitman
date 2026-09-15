@@ -24,6 +24,8 @@ namespace Glacier
         ZRenderMaterialInstance* m_pMaterialInstance; // +0x4
         ZPrimHandle m_hPrim; // +0x8
         uint16_t m_lNumActiveInstances; // +0xC
-        uint16_t m_lFlags; // +0x10
+        uint16_t m_lFlags; // +0x0E
     };
+    RE_VERIFY_SIZE(ZRenderObject, 0x10);
+    RE_VERIFY_OFFSET(ZRenderObject, m_lFlags, 0x0E);
 }

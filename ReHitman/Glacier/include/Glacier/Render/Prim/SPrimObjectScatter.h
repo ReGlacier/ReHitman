@@ -26,5 +26,14 @@ namespace Glacier
       ZVector3 vColB;
       uint8_t lMeshType;
     };
+    RE_VERIFY_OFFSET(SPrimObjectScatter, lMasterPrim, 0x2C);
+    RE_VERIFY_OFFSET(SPrimObjectScatter, lDistributionPrim, 0x34);
+    RE_VERIFY_OFFSET(SPrimObjectScatter, fTileSize, 0x3C);
+    RE_VERIFY_OFFSET(SPrimObjectScatter, vCen, 0x40);
+    RE_VERIFY_OFFSET(SPrimObjectScatter, vSize, 0x4C);
+    RE_VERIFY_OFFSET(SPrimObjectScatter, fDrawDist, 0x58);
+    RE_VERIFY_OFFSET(SPrimObjectScatter, vColA, 0x5C);
+    RE_VERIFY_OFFSET(SPrimObjectScatter, vColB, 0x68);
+    RE_VERIFY_OFFSET(SPrimObjectScatter, lMeshType, 0x74);
     RE_VERIFY_SIZE(SPrimObjectScatter, 0x78);
 }

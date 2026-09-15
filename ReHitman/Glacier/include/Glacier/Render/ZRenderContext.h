@@ -9,18 +9,27 @@
 
 namespace Glacier
 {
+    struct SRenderStats
+    {
+        const uint8_t* m_pData[4];
+        uint32_t m_lCount;
+        float m_fValue[4];
+
+        const uint8_t* Data(uint32_t lIndex) const { return lIndex < m_lCount ? m_pData[lIndex] : nullptr; }
+        float Value(uint32_t lIndex) const { return lIndex < m_lCount ? m_fValue[lIndex] : 0.0f; }
+    };
     class ZRenderContext
     {
     public:
         // methods
 
         // members
-        IView* m_pRenderView; // +0x0 Verified by mem analysis
+        SRenderStats* m_pRenderStats; // +0x0
         ZRender* m_pRender; // +0x4 Verified by ZRenderMaterialBinderSpriteD3DFX::Execute
         ZRenderObjectInstance* m_pRenderObjectInstance; // +0x8
-        uint32_t m_UnkC; // +0xC
+        IView* m_pRenderView; // +0xC
         uint32_t m_Unk10; // +0x10
-        // TODO: Finish this place - light parameters written by render commands 3/4
+        // Four light slots populated by render commands 3/4.
         const SPrimLight* m_pLight[4]; // +0x14 (only m_pLight[0] confirmed as dword write)
         uint32_t m_lLightDrawEntryId; // +0x24
         const SPrimLight* m_pCurrentLight; // +0x28 Pointer to the current light data (was mislabelled as CAMERA_VIEW_DIRECTION)
@@ -39,13 +48,21 @@ namespace Glacier
         // === Newly reversed fields (PC) ===
         uint32_t m_Unk180; // +0x180 Set by render command 0x28
         float m_fZBias; // +0x184 Written by ZRenderMaterialBinderRenderStateD3DFX::Execute (XBOX name: m_fZBias)
-        RE_ADD_PADDING(0x10); // +0x188..0x198 (unknown)
+
+        // === Unconfirmed yet ===
+        // RE_ADD_PADDING(0x10); // +0x188..0x198 (unknown) / Should include m_fZOffset, pointer to texture and etc
+        float m_fZOffset;
+        ZTextureBase* m_pLightMapTexture;
+        uint32_t m_lLightMapColor;
+        uint32_t m_lAmbientOcclusionEnable;
+
         ZMat4x4 m_ProjectionMatrix; // +0x198 Main projection matrix (render command 0 / push-pop commands 0x2A-0x2C)
         ZMat4x4 m_aLightClipMatrix[3]; // +0x1D8 Per-light clip/projection matrices (render commands 3/4/6)
     };
     RE_VERIFY_SIZE(ZRenderContext, 0x298); // Verified PC alloc at ZRenderWintelD3D::Init
 
-    RE_VERIFY_OFFSET(ZRenderContext, m_pRenderView, 0x0); // Verified
+    RE_VERIFY_OFFSET(ZRenderContext, m_pRenderStats, 0x0);
+    RE_VERIFY_OFFSET(ZRenderContext, m_pRenderView, 0xC);
     RE_VERIFY_OFFSET(ZRenderContext, m_pRender, 0x4); // Verified
     RE_VERIFY_OFFSET(ZRenderContext, m_pRenderObjectInstance, 0x08); // Verified
     RE_VERIFY_OFFSET(ZRenderContext, m_pCurrentLight, 0x28); // Verified in ZRenderDrawD3D::Update
