@@ -42,6 +42,7 @@ set(GLACIER_COMMON_LIBS
     PUBLIC
         HF::Core
         stlport
+        BinkVideoInterface
 )
 
 set(GLACIER_COMMON_INCLUDE_DIRS)
@@ -114,6 +115,7 @@ add_library(G1::Core ALIAS Glacier)
 
 target_include_directories(Glacier PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../Modules/BinkVideoInterface
     $<$<BOOL:${DXSDK_INCLUDE_DIR}>:${DXSDK_INCLUDE_DIR}>
 )
 
@@ -133,6 +135,7 @@ if(REHITMAN_BUILD_TESTS)
 
     target_include_directories(GlacierTest PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/../Modules/BinkVideoInterface
         $<$<BOOL:${DXSDK_INCLUDE_DIR}>:${DXSDK_INCLUDE_DIR}>
     )
 

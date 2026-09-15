@@ -28,7 +28,7 @@ namespace Glacier
         ZRender* m_pRender; // +0x4 Verified by ZRenderMaterialBinderSpriteD3DFX::Execute
         ZRenderObjectInstance* m_pRenderObjectInstance; // +0x8
         IView* m_pRenderView; // +0xC
-        uint32_t m_Unk10; // +0x10
+        uint32_t m_Unk10; // +0x10 - m_lLightDrawEntryId ? Need confirm
         // Four light slots populated by render commands 3/4.
         const SPrimLight* m_pLight[4]; // +0x14 (only m_pLight[0] confirmed as dword write)
         uint32_t m_lLightDrawEntryId; // +0x24
@@ -43,7 +43,7 @@ namespace Glacier
         const float* m_pBonesLight; // +0x170 (Verified in SetRenderContext)
         uint32_t m_nCurrentPass; // +0x174 - Verified in ZRenderEntryGeom::SetRenderContext
         uint32_t m_lRenderFlags; // +0x178 - Verified in ZRenderEntryGeom::SetRenderContext
-        float m_fObjectFade; // +0x17C Verified in ZRenderEntryGeom::SetRenderContext
+        float m_fObjectFade; // +0x17C Verified in ZRenderEntryGeom::SetRenderContext - m_fBonesShadowMultiplier ?
 
         // === Newly reversed fields (PC) ===
         uint32_t m_Unk180; // +0x180 Set by render command 0x28
