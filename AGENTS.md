@@ -19,6 +19,15 @@
 - Prefer `stlp::` explicitly in Glacier headers and sources for original STL containers. Do not alias `stlp` to `std`, and do not use host `std::` containers in binary-compatible Glacier layouts.
 - Never use ordinary `new`, `new[]`, `delete`, or `delete[]` in project code. Use `ZUniMemory::Allocate`/`ZUniMemory::Free` instead; placement-new construction through the project's placement-new mechanism is the only exception.
 - Never use `goto` in project code. Rewrite decompiled control flow that relies on `goto` with structured constructs (loops, `break`/`continue`, early `return`, or small helpers) while preserving the original semantics.
+- **Choosing a data source (MCP tools):**
+  - **MCP xexe:** Data source strictly for the PS2 build. Do NOT query it for anything render- or DirectX (d3d)-specific. Every access to xexe must be approved by the user first — ask before using it.
+  - **MCP hyper:** Use for all decompilation, reversing, and type-database questions. Follow this platform priority order:
+    1. **PC** – highest priority for code, references, vtbl, and layout.
+    2. **XBOX_KL1** – closest to PC; use when PC info is missing or insufficient.
+    3. **iOS** – close to PC but with its own modifications; use when XBOX_KL1 does not match. Contains function and code info only (no type info).
+    4. **XBOX_MiniNinjas** – next closest.
+    5. **XBOX_KL2** – furthest overall, but may have more debug symbols than XBOX_MiniNinjas.
+    6. **PS2** – furthest overall, but one of the closest by game code and layout; carries info specific to Hitman Blood Money and early Glacier engine roots (excluding render and sound).
 - At the end of your work, you MUST verify that the code compiles. Follow these build rules strictly:
   - **Never invent or guess build commands.** This project is built exclusively with CMake. Use only the documented CMake workflow below.
   - **Always build in the `build` directory.** It already exists and is configured; do not reconfigure it or build in any other directory unless the user explicitly asks.

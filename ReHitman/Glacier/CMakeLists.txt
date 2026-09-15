@@ -140,7 +140,7 @@ if(REHITMAN_BUILD_TESTS)
         target_link_directories(GlacierTest PUBLIC ${DXSDK_LIB_DIR})
     endif()
 
-    target_link_libraries(GlacierTest PUBLIC ${GLACIER_COMMON_LIBS})
+    target_link_libraries(GlacierTest ${GLACIER_COMMON_LIBS})
     target_compile_definitions(GlacierTest PUBLIC REHITMAN_TESTS DIRECTINPUT_VERSION=0x0800)
     target_compile_definitions(GlacierTest PUBLIC INEDITOR=$<IF:$<BOOL:${GLACIER_IN_EDITOR}>,1,0>)
 endif()
