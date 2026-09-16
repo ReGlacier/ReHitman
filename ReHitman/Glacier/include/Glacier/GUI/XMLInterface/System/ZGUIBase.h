@@ -12,6 +12,7 @@ namespace Glacier
     class ZWINGROUP;
     class ZWINOBJ;
     class ZCONTROL;
+    class zstring;
 
     enum ENavigation
     {
@@ -25,6 +26,30 @@ namespace Glacier
         ELEFT = 1,
         ECENTER = 2,
     };
+
+    namespace GUI
+    {
+        const char* GetAttr(const char** ppAttrs, const char* pAttrName, bool bCaseInsensitive);
+        bool ReadUIntHex(uint32_t& rDest, const char** ppAttrs, const char* pAttrName);
+    }
+
+    namespace ZGUI
+    {
+        bool ReadText(char* pDest, const char* pAttrName, const char** ppAttrs);
+    }
+
+    namespace GuiOption
+    {
+        bool readBool(bool* pValue, const char** ppAttrs, const char* pAttrName, bool bCaseInsensitive);
+        bool readString(zstring& rDest, const char* pAttrName, const char** ppAttrs);
+        bool readInt(int32_t& rDest, const char** ppAttrs, const char* pAttrName);
+        bool readInt2(float& rDest, const char** ppAttrs, const char* pAttrName);
+        bool readVirtualKey(int32_t* pValue, const char** ppAttrs, const char* pAttrName);
+        bool readMoveButton(int32_t* pValue, const char** ppAttrs, const char* pAttrName);
+    }
+
+    bool ReadV2(float (&pDest)[2], const char** ppAttrs, const char* pDefaultAttrPrefix);
+    bool ReadAlignment(uint32_t& rAlignment, const char** ppAttrs);
 
     class ZGUIBase
     {

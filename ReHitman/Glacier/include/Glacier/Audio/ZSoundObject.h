@@ -125,6 +125,7 @@ namespace Glacier
         const SSound* GetPackedSound() const;
         const SWave* GetWave() const;
         void Update();
+        void Stop();
         void Stopped();
         void NotifyStarted();
         void AddNotifyTarget(ZREF rTarget);

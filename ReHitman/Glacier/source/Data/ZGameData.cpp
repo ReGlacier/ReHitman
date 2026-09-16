@@ -9,6 +9,31 @@
 
 namespace Glacier
 {
+    namespace
+    {
+        int GetNextUTC4Char(const char*& pText)
+        {
+            const uint8_t first = static_cast<uint8_t>(*pText++);
+            if (first < 0x80)
+                return first;
+            if ((first & 0xE0) == 0xC0)
+                return ((first & 0x1F) << 6) | (*pText++ & 0x3F);
+            if ((first & 0xF0) == 0xE0)
+            {
+                int result = (first & 0x0F) << 12;
+                result |= (*pText++ & 0x3F) << 6;
+                result |= (*pText++ & 0x3F);
+                return result;
+            }
+
+            int result = (first & 0x07) << 18;
+            result |= (*pText++ & 0x3F) << 12;
+            result |= (*pText++ & 0x3F) << 6;
+            result |= (*pText++ & 0x3F);
+            return result;
+        }
+    }
+
     ZGameData::ZGameData()
         : m_pkBoidSystem(nullptr),
           m_ActorsPool(),
@@ -116,6 +141,40 @@ namespace Glacier
         return g_pEngineData->GetSceneName();
     }
     void ZGameData::AddIconToText(zstring&, const char*, bool) {}
+
+    void ZGameData::InsertIconsInText(zstring& rOut, const char* pText, bool bAddColor)
+    {
+        rOut.clear();
+
+        if (!pText)
+            return;
+
+        const char* pSegment = pText;
+        const char* pCursor = pText;
+        for (int iChar = GetNextUTC4Char(pCursor); iChar != 0; iChar = GetNextUTC4Char(pCursor))
+        {
+            if (iChar == '{')
+            {
+                const char* pEnd = pCursor;
+                while (*pEnd != '\0' && *pEnd != '}')
+                    ++pEnd;
+
+                const zstring sIcon(pSegment + 1, static_cast<uint32_t>(pEnd - (pSegment + 1)));
+                AddIconToText(rOut, sIcon.c_str(), bAddColor);
+
+                if (*pEnd == '\0')
+                    break;
+
+                pSegment = pEnd + 1;
+                pCursor = pSegment;
+            }
+            else
+            {
+                rOut.append(pSegment, static_cast<uint32_t>(pCursor - pSegment));
+                pSegment = pCursor;
+            }
+        }
+    }
 
     void ZGameData::SetPlayer(ZPlayer* pPlayer, int32_t lIndex)
     {

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Glacier/GUI/XMLInterface/System/IMenuFactoryInterface.h>
+#include <Glacier/GUI/XMLInterface/System/ZGUIDataInterfaces.h>
 
 
 namespace Glacier
@@ -8,20 +9,6 @@ namespace Glacier
     class ZGUIBase;
     class ZStandardWindow;
     class ZMenuElements;
-
-    class ZListDataInterface
-    {
-    public:
-        // vtbl
-        // TODO: Finish me
-    };
-
-    class ITableDataInterface
-    {
-    public:
-        // vtbl
-        // TODO: Finish me
-    };
 
     class ZStandardMenuFactory : public IMenuFactoryInterface
     {

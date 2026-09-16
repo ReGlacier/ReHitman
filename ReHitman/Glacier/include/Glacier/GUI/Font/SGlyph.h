@@ -17,7 +17,7 @@ namespace Glacier
         int8_t vUV2[2];
         uint8_t vSize[2];
         int8_t vStart[2];
-        int8_t vAdvance;
+        int8_t vAdvance[2];
         int8_t bIcon;
         int8_t _pad;
     };

@@ -94,6 +94,7 @@ namespace Glacier
         bool IsRoot() const;
         void GroupContainsLight();
         SREF AddSound3d(float* pDirection, float* pPosition, int lSoundIndex, int lSoundEvent, uint32_t lEventArgument, uint32_t lExtraArgument);
+        SREF AddSound2d(int lSoundIndex);
 
 #       pragma region " --- RTTI Methods --- "
         void GetLightShinesIn(bool& bLightShinesIn);

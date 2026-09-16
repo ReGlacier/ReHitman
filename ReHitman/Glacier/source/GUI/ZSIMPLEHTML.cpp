@@ -145,7 +145,7 @@ namespace Glacier
             }
             if (ch == ' ')
             {
-                penX += m_pFont->GetCharInfo(' ')->vAdvance;
+                penX += m_pFont->GetCharInfo(' ')->vAdvance[0];
                 previous = 0;
                 continue;
             }
@@ -155,7 +155,7 @@ namespace Glacier
             if (previous)
                 penX -= state.Font()->GetKerning(previous, ch);
             faces[count] = {state.Color(), glyph, {penX, penY}};
-            penX += glyph->vAdvance;
+            penX += glyph->vAdvance[0];
             previous = ch;
             ++count;
         }

@@ -12,7 +12,22 @@ namespace Glacier
     {
     public:
         // vtbl
+        virtual void readParams(const char** ppParams, ZMenuElements* pElems) override;
+        virtual void addElement(const char* pName, ZGUIBase* pEntry) override;
+        virtual void OpenWindow(ZResourceManager* pResourceManager, bool, ZWINGROUP* pWinGroup, bool) override;
+        virtual void CloseWindow(ZResourceManager* pResourceManager, bool) override;
+        virtual bool Update(int) override;
+        virtual const ZStaticVector<IGUIElement*, 44>* GetCurrentElements() override;
+        virtual void Cancel() override;
+        virtual void Invalidate() override;
+        virtual void GrapFocus() override;
+        virtual bool IsDialog() override;
+        virtual bool IsTRC() override;
+        virtual int GetTRCPriority() override;
+
         // methods
+        ZStandardWindow(ZMenuElements* pMenuElements);
+
         // members
         zvector<IWindowInterface::ZElementExtraInfo> m_vecGUIElementExtraInfo;
         ZStaticVector<IGUIElement*, 44> m_vecCurrentElements;

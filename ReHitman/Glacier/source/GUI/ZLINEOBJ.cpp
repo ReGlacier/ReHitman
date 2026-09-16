@@ -96,7 +96,7 @@ namespace Glacier
                     ++m_iNumberOfLines;
                     break;
                 }
-                remaining -= m_pFont->GetCharInfo(character)->vAdvance;
+                remaining -= m_pFont->GetCharInfo(character)->vAdvance[0];
             }
 
             const char* next = lineEnd;
@@ -158,7 +158,7 @@ namespace Glacier
     }
     int ZLINEOBJ::GetCharWidth(const char** text)
     {
-        return m_pFont->GetCharInfo(GetLineChar(*text))->vAdvance;
+        return m_pFont->GetCharInfo(GetLineChar(*text))->vAdvance[0];
     }
     int ZLINEOBJ::GetStringWidth(const char* text, int length)
     {
@@ -169,6 +169,11 @@ namespace Glacier
     }
     void ZLINEOBJ::SetWidth(int width) { m_iWidth = width; if (m_szText) Wrap(); }
     float ZLINEOBJ::GetWidth() { return static_cast<float>(m_iWidth); }
+
+    int32_t ZLINEOBJ::GetLineHeight()
+    {
+        return static_cast<int32_t>(m_pFont->GetCharInfo(' ')->vAdvance[1] * 1.5f) + m_iLineSpacing;
+    }
 
 #   pragma region " --- RTTI --- "
     namespace cProperties

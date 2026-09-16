@@ -113,7 +113,7 @@ namespace Glacier
             }
             if (ch == ' ')
             {
-                x += m_pFont->GetCharInfo(' ')->vAdvance;
+                x += m_pFont->GetCharInfo(' ')->vAdvance[0];
                 previous = 0;
                 continue;
             }
@@ -136,7 +136,7 @@ namespace Glacier
             if (glyph->bIcon)
                 m_iIconPrim = glyph->rTexture;
             ++index;
-            x += m_iMonoSpaceSize >= 0 ? m_iMonoSpaceSize : glyph->vAdvance + m_iSpacingAdd;
+            x += m_iMonoSpaceSize >= 0 ? m_iMonoSpaceSize : glyph->vAdvance[0] + m_iSpacingAdd;
             previous = ch == ' ' ? 0 : ch;
         }
 
@@ -205,7 +205,7 @@ namespace Glacier
             const UTC4CHAR ch = GetNextChar(text);
             if (!ch)
                 break;
-            position += m_pFont->GetCharInfo(ch)->vAdvance;
+            position += m_pFont->GetCharInfo(ch)->vAdvance[0];
             if (previous)
                 position -= m_pFont->GetKerning(previous, ch);
             previous = ch == ' ' ? 0 : ch;

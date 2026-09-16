@@ -27,6 +27,40 @@ namespace Glacier
             data[0] = '\0';
             return data;
         }
+
+        int EncodeUTF8(char* pDest, uint32_t uiCodepoint)
+        {
+            if (uiCodepoint > 0x7F)
+            {
+                if (uiCodepoint > 0x7FF)
+                {
+                    if (uiCodepoint > 0xFFFF)
+                    {
+                        pDest[0] = static_cast<char>((uiCodepoint >> 18) | 0xF0);
+                        pDest[1] = static_cast<char>(((uiCodepoint >> 12) & 0x3F) | 0x80);
+                        pDest[2] = static_cast<char>(((uiCodepoint >> 6) & 0x3F) | 0x80);
+                        pDest[3] = static_cast<char>((uiCodepoint & 0x3F) | 0x80);
+                        pDest[4] = '\0';
+                        return 4;
+                    }
+
+                    pDest[0] = static_cast<char>((uiCodepoint >> 12) | 0xE0);
+                    pDest[1] = static_cast<char>(((uiCodepoint >> 6) & 0x3F) | 0x80);
+                    pDest[2] = static_cast<char>((uiCodepoint & 0x3F) | 0x80);
+                    pDest[3] = '\0';
+                    return 3;
+                }
+
+                pDest[0] = static_cast<char>((uiCodepoint >> 6) | 0xC0);
+                pDest[1] = static_cast<char>((uiCodepoint & 0x3F) | 0x80);
+                pDest[2] = '\0';
+                return 2;
+            }
+
+            pDest[0] = static_cast<char>(uiCodepoint);
+            pDest[1] = '\0';
+            return 1;
+        }
     }
 
     zstring::~zstring()
@@ -184,6 +218,37 @@ namespace Glacier
         *this = formatted;
     }
 
+    void zstring::CStrToUTF8(char* pDest, const char* pSrc, int nLength)
+    {
+        int written = 0;
+
+        if (*pSrc)
+        {
+            while (true)
+            {
+                if (written + 1 >= nLength)
+                    break;
+
+                char utf8[5];
+                const int count = EncodeUTF8(utf8, static_cast<uint8_t>(*pSrc));
+                ZASSERT(count > 0);
+                ZASSERT(count <= 4);
+
+                if (count + written + 1 >= nLength)
+                    break;
+
+                std::memcpy(&pDest[written], utf8, count);
+                ++pSrc;
+                written += count;
+
+                if (!*pSrc)
+                    break;
+            }
+        }
+
+        pDest[written] = '\0';
+    }
+
     bool zstring::equal(const zstring& rhs) const
     {
         return std::strcmp(c_str(), rhs.c_str()) == 0;
@@ -230,5 +295,32 @@ namespace Glacier
     bool zstring::empty() const
     {
         return m_iLength == 0;
+    }
+
+    void zstring::clear()
+    {
+        m_iLength = 0;
+
+        if (m_pData)
+            m_pData[0] = '\0';
+    }
+
+    zstring& zstring::append(const char* pStr, uint32_t count)
+    {
+        if (!pStr || count == 0)
+            return *this;
+
+        const uint32_t newLength = m_iLength + count;
+        char* newData = AllocateString(newLength);
+        std::memcpy(newData, c_str(), m_iLength);
+        std::memcpy(newData + m_iLength, pStr, count);
+        newData[newLength] = '\0';
+
+        ZUniMemory::Free(m_pData);
+        m_pData = newData;
+        m_iLength = newLength;
+        m_iCapacity = newLength;
+
+        return *this;
     }
 }

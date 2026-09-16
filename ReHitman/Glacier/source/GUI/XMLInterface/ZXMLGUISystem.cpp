@@ -5,9 +5,16 @@
 #include <Glacier/Com/CCOMType.h>
 #include <Glacier/Data/ZEngineDataBase.h>
 #include <Glacier/Data/ZGameData.h>
+#include <Glacier/GUI/Control/ZBUTTON.h>
 #include <Glacier/GUI/Control/ZCONTROL.h>
 #include <Glacier/GUI/Frame/ZFRAME.h>
+#include <Glacier/GUI/Font/ZTTFONT.h>
 #include <Glacier/GUI/ZLINEOBJ.h>
+#include <Glacier/GUI/ZWINPIC.h>
+#include <Glacier/GUI/ZSlider.h>
+#include <Glacier/GUI/XMLInterface/Elements/ZButtonGraphic.h>
+#include <Glacier/GUI/XMLInterface/Elements/ZButtonGraphicPart.h>
+#include <Glacier/GUI/XMLInterface/Elements/ZColorSet.h>
 #include <Glacier/GUI/XMLInterface/System/ZMenuElements.h>
 #include <Glacier/GUI/XMLInterface/Windows/IWindowInterface.h>
 #include <Glacier/GUI/XMLInterface/ZXMLGUISystem.h>
@@ -22,6 +29,7 @@
 #include <Glacier/System/ZDllBase.h>
 #include <Glacier/System/ZSysInterface.h>
 #include <Glacier/ZMessageResolver.h>
+#include <cstring>
 
 
 namespace Glacier
@@ -90,6 +98,11 @@ namespace Glacier
             pElement->SetValue(static_cast<int>(iValue));
 
         return true;
+    }
+
+    void ZXMLGUISystem::SetFocus()
+    {
+        GetSystem()->SetFocusedControl(static_cast<ZWINGROUP*>(GetGeom()));
     }
 
     void ZXMLGUISystem::AddOtherWindowCount(int iAmount)
@@ -1015,17 +1028,383 @@ namespace Glacier
         return pFrame;
     }
 
-    void ZResourceManager::ReleaseTextGroup(ZWINGROUP* pGroup)
+    ZWINGROUP* ZResourceManager::GetGraphic(const ZVector2& vPos, ZColorSet* pColorSet, ZWINGROUP* pParent,
+        const char* pszName, EAlignment, int iPriority)
+    {
+        ZGEOM* pGeom = m_pWinGroupGraphic->FindGeom(pszName, nullptr);
+        ZASSERT(!pGeom || pGeom->IsDerivedFrom<ZWINGROUP>());
+        if (!pGeom)
+            return nullptr;
+
+        ZWINGROUP* pGroup = static_cast<ZWINGROUP*>(pGeom);
+        pParent->AttachGeom(pGroup, true);
+        pGroup->SetPos(vPos.x, vPos.y, 0.0f);
+
+        for (ZBaseGeom* pBaseGeom = pGroup->BaseGeom(); pBaseGeom; pGroup->RecurGetNext(&pBaseGeom))
+        {
+            ZGEOM* pChildGeom = pBaseGeom->GetGeom();
+            if (!pChildGeom || !pChildGeom->IsDerivedFrom<ZWINOBJ>())
+                continue;
+
+            ZWINOBJ* pWinObj = static_cast<ZWINOBJ*>(pChildGeom);
+            if (pColorSet)
+                SetColor(1, pWinObj, pColorSet);
+
+            if (iPriority != -1)
+            {
+                ZASSERT(iPriority > 0 && iPriority < 16);
+                pWinObj->SetPriority(static_cast<uint8_t>(iPriority));
+            }
+        }
+
+        return pGroup;
+    }
+
+    void ZResourceManager::ReleaseGraphic(ZWINGROUP* pGroup)
     {
         if (!pGroup)
             return;
 
+        m_pWinGroupGraphic->AttachGeom(pGroup, true);
+    }
+
+    void ZResourceManager::ReleaseFrame(ZFRAME* pFrame)
+    {
+        if (!pFrame)
+            return;
+
+        m_pWinGroupFrames->AttachGeom(pFrame, true);
+    }
+
+    void ZResourceManager::SetupResourceGroups(ZWINGROUP* pResources, ZGROUP* pFonts)
+    {
+        ZGEOM* pGeom = pResources->FindGeom("LineObjs", nullptr);
+        ZASSERT(pGeom && pGeom->IsDerivedFrom<ZWINGROUP>());
+        m_pWinGroupLineObjs = static_cast<ZWINGROUP*>(pGeom);
+
+        pGeom = pResources->FindGeom("Buttons", nullptr);
+        ZASSERT(pGeom && pGeom->IsDerivedFrom<ZWINGROUP>());
+        m_pWinGroupButtons = static_cast<ZWINGROUP*>(pGeom);
+
+        pGeom = pResources->FindGeom("Sliders", nullptr);
+        ZASSERT(pGeom && pGeom->IsDerivedFrom<ZWINGROUP>());
+        m_pWinGroupSlider = static_cast<ZWINGROUP*>(pGeom);
+
+        pGeom = pResources->FindGeom("Groups", nullptr);
+        ZASSERT(pGeom && pGeom->IsDerivedFrom<ZWINGROUP>());
+        m_pWinGroupGroups = static_cast<ZWINGROUP*>(pGeom);
+
+        pGeom = pResources->FindGeom("Graphic", nullptr);
+        ZASSERT(pGeom && pGeom->IsDerivedFrom<ZWINGROUP>());
+        m_pWinGroupGraphic = static_cast<ZWINGROUP*>(pGeom);
+
+        pGeom = pResources->FindGeom("ButtonGraphic", nullptr);
+        ZASSERT(pGeom && pGeom->IsDerivedFrom<ZWINGROUP>());
+        m_pWinGroupButtonGraphic = static_cast<ZWINGROUP*>(pGeom);
+
+        pGeom = pResources->FindGeom("Frames", nullptr);
+        ZASSERT(pGeom && pGeom->IsDerivedFrom<ZWINGROUP>());
+        m_pWinGroupFrames = static_cast<ZWINGROUP*>(pGeom);
+
+        static const char* s_apFontNames[3] = { "Header", "Menu", "Text" };
+        for (int i = 0; i < 3; ++i)
+        {
+            ZGEOM* pFontGeom = pFonts->FindGeom(s_apFontNames[i], nullptr);
+            ZASSERT(pFontGeom && pFontGeom->IsDerivedFrom<ZTTFONT>());
+            m_pFonts[i] = static_cast<ZTTFONT*>(pFontGeom);
+        }
+    }
+
+    ZWINGROUP* ZResourceManager::GetWingroup(ZWINGROUP* pParent)
+    {
+        if (m_pWinGroupGroups->m_NrAttachGeom == 0)
+            return nullptr;
+
+        ZGEOM* pGeom = m_pWinGroupGroups->m_pGroupFirst->GetGeom();
+        ZASSERT(pGeom && pGeom->IsDerivedFrom<ZWINGROUP>());
+        if (!pGeom)
+            return nullptr;
+
+        ZWINGROUP* pWinGroup = static_cast<ZWINGROUP*>(pGeom);
+        pParent->AttachGeom(pWinGroup, true);
+        pWinGroup->Hide(false);
+        pWinGroup->SetPos(0.0f, 0.0f, 0.0f);
+        return pWinGroup;
+    }
+
+    void ZResourceManager::ReleaseWinGroup(ZWINGROUP* pGroup)
+    {
+        if (!pGroup)
+            return;
+
+        m_pWinGroupGroups->AttachGeom(pGroup, true);
+    }
+
+    ZWINGROUP* ZResourceManager::GetBackgroundGroup()
+    {
+        return m_pWinGroupBackground;
+    }
+
+    void ZResourceManager::SetBackgroundGroup(ZWINGROUP* pGroup)
+    {
+        m_pWinGroupBackground = pGroup;
+    }
+
+    void ZResourceManager::SetColor(uint32_t iMask, ZWINOBJ* pWinObj, ZColorSet* pColorSet)
+    {
+        if (!pColorSet)
+        {
+            pWinObj->SetColor(0);
+            pWinObj->SetAlpha(255);
+            return;
+        }
+
+        switch (iMask)
+        {
+        case 1:
+        case 2:
+        case 128:
+        case 129:
+        {
+            const uint32_t iColor = pColorSet->GetColor(ZColorSet::NormalColor);
+            pWinObj->SetColor(iColor);
+            pWinObj->SetAlpha(static_cast<uint8_t>(iColor >> 24));
+            break;
+        }
+        case 8:
+        case 10:
+        {
+            const uint32_t iColor = pColorSet->GetColor(ZColorSet::FocusColor);
+            pWinObj->SetColor(iColor);
+            pWinObj->SetAlpha(static_cast<uint8_t>(iColor >> 24));
+            break;
+        }
+        case 32:
+        {
+            const uint32_t iColor = pColorSet->GetColor(ZColorSet::DisableColor);
+            pWinObj->SetColor(iColor);
+            pWinObj->SetAlpha(static_cast<uint8_t>(iColor >> 24));
+            break;
+        }
+        default:
+            break;
+        }
+    }
+
+    void ZResourceManager::SetAlignment(ZWINOBJ* pWinObj, EAlignment eAlignment)
+    {
+        const uint8_t uFlags = static_cast<uint8_t>(pWinObj->GetAlignment() & 0xF0);
+
+        switch (eAlignment)
+        {
+        case ERIGHT:
+            pWinObj->SetAlignment(static_cast<uint8_t>(uFlags | 0x02));
+            break;
+        case ELEFT:
+            pWinObj->SetAlignment(static_cast<uint8_t>(uFlags | 0x01));
+            break;
+        case ECENTER:
+            pWinObj->SetAlignment(static_cast<uint8_t>(uFlags | 0x04));
+            break;
+        default:
+            break;
+        }
+    }
+
+    ZLINEOBJ* ZResourceManager::GetLineObj(const ZVector2& vPos, ZColorSet* pColorSet, uint32_t iMask,
+        EFontType eFontType, EAlignment, bool bDisableAnimateAlpha)
+    {
+        if (m_pWinGroupLineObjs->m_NrAttachGeom == 0)
+            return nullptr;
+
+        ZGEOM* pGeom = m_pWinGroupLineObjs->m_pGroupFirst->GetGeom();
+        ZASSERT(pGeom && pGeom->IsDerivedFrom<ZLINEOBJ>());
+        if (!pGeom)
+            return nullptr;
+
+        ZLINEOBJ* pLineObj = static_cast<ZLINEOBJ*>(pGeom);
+        pLineObj->RemoveGeometry();
+        pLineObj->SetPos(vPos.x, vPos.y, 0.0f);
+        pLineObj->SetFont(m_pFonts[eFontType]);
+        pLineObj->m_bAnimateAlpha = false;
+        pLineObj->SetWidth(400);
+        pLineObj->SetLineSpacing(0);
+        pLineObj->SetSpacingAdd(0);
+        pLineObj->SetPriority(static_cast<uint8_t>(pColorSet ? 13 : 12));
+        SetColor(iMask, pLineObj, pColorSet);
+
+        if (iMask == 8)
+            iMask = 10;
+
+        pLineObj->SetType(static_cast<uint8_t>(iMask));
+
+        if ((iMask & 8) != 0 && !bDisableAnimateAlpha)
+            pLineObj->m_bAnimateAlpha = true;
+
+        return pLineObj;
+    }
+
+    void ZResourceManager::AddLineObj(const ZVector2& vPos, ZColorSet* pColorSet, uint32_t iMask,
+        ZWINGROUP* pGroup, EFontType eFontType, EAlignment eAlignment,
+        ZStaticVector<ZLINEOBJ*, 8>* pLineObjs, bool bDisableAnimateAlpha, bool bShadow)
+    {
+        static const uint32_t s_aMasks[4] = { 1, 8, 32, 128 };
+
+        for (int i = 0; i < 4; ++i)
+        {
+            if ((iMask & s_aMasks[i]) == 0)
+                continue;
+
+            ZLINEOBJ* pLineObj = GetLineObj(vPos, pColorSet, s_aMasks[i], eFontType, eAlignment, bDisableAnimateAlpha);
+            if (!pLineObj)
+                continue;
+
+            pLineObj->Hide(false);
+            pGroup->AttachGeom(pLineObj, true);
+            SetAlignment(pLineObj, eAlignment);
+
+            if (pLineObjs && pLineObjs->size() < pLineObjs->capacity())
+                pLineObjs->push_back(pLineObj);
+        }
+
+        if (bShadow)
+        {
+            const ZVector2 vShadowPos { vPos.x + 1.0f, vPos.y + 1.0f };
+            ZLINEOBJ* pLineObj = GetLineObj(vShadowPos, nullptr, 128, eFontType, eAlignment, bDisableAnimateAlpha);
+            if (pLineObj)
+            {
+                pLineObj->Hide(false);
+                pGroup->AttachGeom(pLineObj, true);
+                SetAlignment(pLineObj, eAlignment);
+
+                if (pLineObjs && pLineObjs->size() < pLineObjs->capacity())
+                    pLineObjs->push_back(pLineObj);
+            }
+        }
+    }
+
+    ZWINGROUP* ZResourceManager::GetTextGroup(const ZVector2& vPos, ZColorSet* pColorSet, ZWINGROUP* pParent,
+        uint32_t iMask, EFontType eFontType, bool bShadow, EAlignment eAlignment)
+    {
+        ZWINGROUP* pGroup = GetWingroup(pParent);
+        if (!pGroup)
+            return nullptr;
+
+        pParent->AttachGeom(pGroup, true);
+        pGroup->SetPos(vPos.x, vPos.y, 0.0f);
+
+        ZVector2 vOffset { 0.0f, 0.0f };
+        AddLineObj(vOffset, pColorSet, iMask, pGroup, eFontType, eAlignment, nullptr, false, false);
+
+        if (bShadow)
+        {
+            vOffset.x += 1.0f;
+            vOffset.y += 1.0f;
+            AddLineObj(vOffset, nullptr, 128, pGroup, eFontType, eAlignment, nullptr, false, false);
+        }
+
+        return pGroup;
+    }
+
+    void ZResourceManager::AddAdditionalLineObjs(ZStaticVector<ZLINEOBJ*, 8>* pLineObjs, const ZVector2& vPos,
+        ZColorSet* pColorSet, ZWINGROUP* pGroup, EAlignment eAlignment, uint32_t iMask,
+        EFontType eFontType, bool bShadow)
+    {
+        AddLineObj(vPos, pColorSet, iMask, pGroup, eFontType, eAlignment, pLineObjs, false, false);
+
+        if (bShadow)
+        {
+            const ZVector2 vShadowPos { vPos.x + 1.0f, vPos.y + 1.0f };
+            AddLineObj(vShadowPos, nullptr, 128, pGroup, eFontType, eAlignment, pLineObjs, false, false);
+        }
+
+        if (pGroup->IsDerivedFrom<ZBUTTON>())
+        {
+            ZBUTTON* pButton = static_cast<ZBUTTON*>(pGroup);
+            pButton->SetState(8);
+            pButton->SetState(1);
+        }
+    }
+
+    ZBUTTON* ZResourceManager::GetButton(const ZVector2& vPos, ZColorSet* pColorSet, ZWINGROUP* pParent, int iId,
+        ZStaticVector<ZWINOBJ*, 8>* pChecked, ZStaticVector<ZWINOBJ*, 8>* pUnchecked,
+        EAlignment eAlignment, ZButtonGraphic* pButtonGraphic, uint32_t iType,
+        EFontType eFontType, bool bShadow, bool bDisableAnimateAlpha)
+    {
+        if (m_pWinGroupButtons->m_NrAttachGeom == 0)
+            return nullptr;
+
+        ZGEOM* pGeom = m_pWinGroupButtons->m_pGroupFirst->GetGeom();
+        ZASSERT(pGeom && pGeom->IsDerivedFrom<ZBUTTON>());
+        if (!pGeom)
+            return nullptr;
+
+        ZBUTTON* pButton = static_cast<ZBUTTON*>(pGeom);
+        pButton->Hide(false);
+
+        ZVector2 vOffset { 0.0f, 0.0f };
+        bool bAddText = true;
+        if (pButtonGraphic)
+        {
+            pButtonGraphic->GetTextOffSet(&vOffset);
+            eAlignment = pButtonGraphic->GetTextAlignment();
+
+            const float aButtonOffset[2] = { 0.0f, 0.0f };
+            AddButtonGraphic(pButton, pButtonGraphic, pColorSet, ELEFT, pChecked, pUnchecked, aButtonOffset);
+
+            bAddText = !pButtonGraphic->GraphcisOnly();
+        }
+
+        if (bAddText)
+        {
+            AddLineObj(vOffset, pColorSet, iType, pButton, eFontType, eAlignment, nullptr, bDisableAnimateAlpha, false);
+
+            if (bShadow)
+            {
+                vOffset.x += 1.0f;
+                vOffset.y += 1.0f;
+                AddLineObj(vOffset, nullptr, 128, pButton, eFontType, eAlignment, nullptr, bDisableAnimateAlpha, false);
+            }
+        }
+
+        pButton->Enable();
+        pButton->SetControlId(iId);
+        pButton->SetAvailibleStates(iType | 0x22);
+        pButton->SetState(8);
+        pButton->SetState(1);
+        pParent->AttachGeom(pButton, true);
+        pButton->SetOwner(pParent->GetRef());
+        pButton->SetPos(vPos.x, vPos.y, 0.0f);
+        pButton->SetNextFocus(nullptr, Up);
+        pButton->SetNextFocus(nullptr, Down);
+        pButton->SetNextFocus(nullptr, Left);
+        pButton->SetNextFocus(nullptr, Right);
+
+        (void)pChecked;
+        (void)pUnchecked;
+
+        return pButton;
+    }
+
+    void ZResourceManager::ReleaseButton(ZBUTTON* pButton)
+    {
+        if (!pButton)
+            return;
+
+        ReleaseLineObjects(pButton);
+        ReleaseButtonGraphic(pButton);
+        m_pWinGroupButtons->AttachGeom(pButton, true);
+    }
+
+    void ZResourceManager::ReleaseLineObjects(ZWINGROUP* pGroup)
+    {
         ZLINEOBJ* apLineObjects[32];
         int iLineObjects = 0;
+
         for (ZBaseGeom* pBaseGeom = pGroup->m_pGroupLast; ForNotGroupsCheck(pBaseGeom); pBaseGeom = pBaseGeom->GetPrev())
         {
             ZGEOM* pGeom = pBaseGeom->GetGeom();
-            if (pGeom->IsDerivedFrom<ZLINEOBJ>())
+            if (pGeom && pGeom->IsDerivedFrom<ZLINEOBJ>())
             {
                 ZASSERT(iLineObjects < 32);
                 apLineObjects[iLineObjects++] = static_cast<ZLINEOBJ*>(pGeom);
@@ -1038,7 +1417,239 @@ namespace Glacier
             apLineObjects[i]->RemoveGeometry();
             m_pWinGroupLineObjs->AttachGeom(apLineObjects[i], true);
         }
+    }
 
+    void ZResourceManager::ReleaseButtonGraphic(ZWINGROUP* pGroup)
+    {
+        ZWINPIC* apWinPics[8];
+        int iWinPics = 0;
+        ZFRAME* apFrames[8];
+        int iFrames = 0;
+
+        for (ZBaseGeom* pBaseGeom = pGroup->m_pGroupLast; ForNotGroupsCheck(pBaseGeom); pBaseGeom = pBaseGeom->GetPrev())
+        {
+            ZGEOM* pGeom = pBaseGeom->GetGeom();
+            if (!pGeom)
+                continue;
+
+            const char* pszName = pGeom->Name();
+            if (!pszName)
+                pszName = "<NONAME>";
+
+            if (strcmp(pszName, "SliderBackground") == 0)
+                continue;
+
+            if (pGeom->IsDerivedFrom<ZWINPIC>())
+            {
+                ZASSERT(iWinPics < 8);
+                apWinPics[iWinPics++] = static_cast<ZWINPIC*>(pGeom);
+            }
+
+            if (pGeom->IsDerivedFrom<ZFRAME>())
+            {
+                ZASSERT(iFrames < 8);
+                apFrames[iFrames++] = static_cast<ZFRAME*>(pGeom);
+            }
+        }
+
+        for (int i = 0; i < iWinPics; ++i)
+            m_pWinGroupButtonGraphic->AttachGeom(apWinPics[i], true);
+
+        for (int i = 0; i < iFrames; ++i)
+            m_pWinGroupFrames->AttachGeom(apFrames[i], true);
+    }
+
+    ZWINOBJ* ZResourceManager::GetButtonGraphic(const zstring& rName, bool bFrame)
+    {
+        if (bFrame)
+        {
+            ZGEOM* pGeom = m_pWinGroupFrames->FindGeom(rName.c_str(), nullptr);
+            ZASSERT(!pGeom || pGeom->IsDerivedFrom<ZFRAME>());
+            if (!pGeom)
+                return nullptr;
+
+            return static_cast<ZWINOBJ*>(static_cast<ZFRAME*>(pGeom));
+        }
+
+        ZGEOM* pGeom = m_pWinGroupButtonGraphic->FindGeom(rName.c_str(), nullptr);
+        ZASSERT(!pGeom || pGeom->IsDerivedFrom<ZWINPIC>());
+        if (!pGeom)
+            return nullptr;
+
+        return static_cast<ZWINOBJ*>(static_cast<ZWINPIC*>(pGeom));
+    }
+
+    void ZResourceManager::AddButtonGraphic(ZWINGROUP* pParent, ZButtonGraphic* pButtonGraphic,
+        ZColorSet* pColorSet, EAlignment eAlignment, ZStaticVector<ZWINOBJ*, 8>* pChecked,
+        ZStaticVector<ZWINOBJ*, 8>* pUnchecked, const float* pOffset)
+    {
+        if (pChecked)
+            pChecked->clear();
+
+        if (pUnchecked)
+            pUnchecked->clear();
+
+        const int32_t iNumOfGraphicElements = pButtonGraphic->GetNumOfGraphicElements();
+        for (int32_t i = 0; i < iNumOfGraphicElements; ++i)
+        {
+            ZButtonGraphicPart* pGraphicPart = pButtonGraphic->GetGraphicPart(i);
+            if (!pGraphicPart)
+                continue;
+
+            const zstring sName = zstring(pGraphicPart->GetName()) + "*";
+
+            ZWINOBJ* pWinObj = GetButtonGraphic(sName, pGraphicPart->m_bFrame);
+            if (!pWinObj)
+                continue;
+
+            if (pGraphicPart->m_eCheckStatus == eCHECK_OFF && pChecked &&
+                pChecked->size() < pChecked->capacity())
+            {
+                pChecked->push_back(pWinObj);
+            }
+
+            if (pGraphicPart->m_eCheckStatus == eCHECK_ON && pUnchecked &&
+                pUnchecked->size() < pUnchecked->capacity())
+            {
+                pUnchecked->push_back(pWinObj);
+            }
+
+            pWinObj->Hide(false);
+            pWinObj->SetPriority(static_cast<uint8_t>(pGraphicPart->m_iPriority));
+            pWinObj->m_bAnimateAlpha = pGraphicPart->m_bAnimateAlpha;
+
+            ZVector2 vPos{};
+            pGraphicPart->GetPos(&vPos);
+            vPos.x += pOffset[0];
+            vPos.y += pOffset[1];
+
+            pWinObj->SetPos(vPos.x, vPos.y, 30.0f - static_cast<float>(pGraphicPart->m_iPriority));
+            pParent->AttachGeom(pWinObj, true);
+
+            if (pColorSet)
+                SetColor(pGraphicPart->m_iType, pWinObj, pColorSet);
+
+            SetAlignment(pWinObj, eAlignment);
+            pWinObj->SetType(static_cast<uint8_t>(pGraphicPart->m_iType));
+
+            if (pGraphicPart->m_bFrame)
+            {
+                static_cast<ZFRAME*>(pWinObj)->SetSize(static_cast<int>(pGraphicPart->m_v2Size.x),
+                    static_cast<int>(pGraphicPart->m_v2Size.y));
+            }
+        }
+    }
+
+    void ZResourceManager::AddButtonGraphic(ZBUTTON* pButton, ZButtonGraphic* pButtonGraphic,
+        ZColorSet* pColorSet, EAlignment eAlignment, ZStaticVector<ZWINOBJ*, 8>* pChecked,
+        ZStaticVector<ZWINOBJ*, 8>* pUnchecked)
+    {
+        const float aOffset[2] = { 0.0f, 0.0f };
+        AddButtonGraphic(pButton, pButtonGraphic, pColorSet, eAlignment, pChecked, pUnchecked, aOffset);
+
+        pButton->UpdateStateGraphics(pButton->GetState());
+    }
+
+    ZSlider* ZResourceManager::GetSlider(float* pfPos, ZColorSet* pColorSet, ZWINGROUP* pParent, int iIndex,
+        int iLowerBound, int iUpperBound, int iSteps, ZButtonGraphic* pButtonGraphic, uint32_t iType,
+        EFontType eFontType, bool bShadow, EAlignment eAlignment, float fSliderSize, float fSliderOffset)
+    {
+        if (m_pWinGroupSlider->m_NrAttachGeom == 0)
+            return nullptr;
+
+        ZGEOM* pGeom = m_pWinGroupSlider->m_pGroupFirst->GetGeom();
+        ZASSERT(pGeom && pGeom->IsDerivedFrom<ZSlider>());
+        if (!pGeom)
+            return nullptr;
+
+        ZSlider* pSlider = static_cast<ZSlider*>(pGeom);
+        pSlider->SetSliderSize(fSliderSize);
+
+        ZVector2 vTextPos{};
+        EAlignment eTextAlignment = eAlignment;
+        if (pButtonGraphic)
+        {
+            pButtonGraphic->GetTextOffSet(&vTextPos);
+            eTextAlignment = pButtonGraphic->GetTextAlignment();
+        }
+
+        vTextPos.x -= fSliderOffset;
+
+        AddLineObj(vTextPos, pColorSet, iType, pSlider, eFontType, eTextAlignment, nullptr, false, true);
+
+        static const uint32_t s_aMasks[4] = { 1, 8, 32, 128 };
+
+        ZVector2 vPos = vTextPos;
+        vPos.x = fSliderSize + 10.0f;
+
+        for (int i = 0; i < 4; ++i)
+        {
+            const uint32_t iMask = s_aMasks[i];
+            if (iMask == 128)
+            {
+                if (!bShadow)
+                    break;
+
+                vPos.x += 1.0f;
+                vPos.y += 1.0f;
+            }
+
+            ZLINEOBJ* pLineObj = GetLineObj(vPos, iMask == 128 ? nullptr : pColorSet, iMask,
+                eFontType, ELEFT, false);
+            if (!pLineObj)
+                continue;
+
+            SetAlignment(pLineObj, ELEFT);
+            pSlider->AttachGeom(pLineObj, true);
+            pSlider->AddExtraText(pLineObj);
+
+            if (iMask == 8)
+                pLineObj->m_bAnimateAlpha = true;
+        }
+
+        if (pButtonGraphic)
+        {
+            const float aOffset[2] = { -fSliderOffset, 0.0f };
+            AddButtonGraphic(pSlider, pButtonGraphic, pColorSet, ELEFT, nullptr, nullptr, aOffset);
+        }
+
+        pSlider->Enable();
+        pSlider->SetAvailibleStates(iType);
+        pSlider->SetControlId(iIndex);
+        pSlider->SetRange(iLowerBound, iUpperBound);
+        pSlider->SetSteps(iSteps);
+        pSlider->SetPos(pfPos[0] + fSliderOffset, pfPos[1], 0.0f);
+        pSlider->SetState(8);
+        pSlider->SetState(1);
+        pParent->AttachGeom(pSlider, true);
+
+        for (ZBaseGeom* pBaseGeom = pSlider->m_pGroupFirst; ForGroupsCheck(pBaseGeom); pBaseGeom = pBaseGeom->Next())
+        {
+            ZGEOM* pChildGeom = pBaseGeom->GetGeom();
+            if (pChildGeom && pChildGeom->IsDerivedFrom<ZBUTTON>())
+                static_cast<ZBUTTON*>(pChildGeom)->SetControlId(iIndex);
+        }
+
+        return pSlider;
+    }
+
+    void ZResourceManager::ReleaseSlider(ZSlider* pSlider)
+    {
+        if (!pSlider)
+            return;
+
+        pSlider->ClearExtraText();
+        ReleaseButtonGraphic(pSlider);
+        ReleaseLineObjects(pSlider);
+        m_pWinGroupSlider->AttachGeom(pSlider, true);
+    }
+
+    void ZResourceManager::ReleaseTextGroup(ZWINGROUP* pGroup)
+    {
+        if (!pGroup)
+            return;
+
+        ReleaseLineObjects(pGroup);
         m_pWinGroupGroups->AttachGeom(pGroup, true);
     }
 

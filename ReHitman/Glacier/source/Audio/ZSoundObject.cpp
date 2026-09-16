@@ -141,6 +141,36 @@ namespace Glacier
         }
     }
 
+    void ZSoundObject::Stop()
+    {
+        auto* soundDll = g_pSysInterface ? g_pSysInterface->GetSoundDll() : nullptr;
+
+        if (soundDll && m_lChainIdxSlaves)
+        {
+            soundDll->FreeRefChain(m_lChainIdxSlaves);
+            m_lChainIdxSlaves = 0;
+        }
+
+        if (m_pControllers)
+        {
+            // TODO: Finish me after the SoundObject::ZControllers stop/remove API (PC 0x4C43A0, 0x4C4240) is reversed
+        }
+
+        m_rSound = m_lOrigSound;
+
+        if (m_pGroup)
+        {
+            // TODO: Finish me after the sound-group channel release (PC 0x5A5920, SSoundGroup::m_Actives) is reversed
+        }
+        m_pGroup = nullptr;
+
+        m_fTimeLeft = 0.0f;
+        m_fFadeStartTime = 0.0f;
+        m_fFadeInterval = 0.0f;
+        m_fFadeDestination = 0.0f;
+        m_lSoundFlags &= ~0x180000u;
+    }
+
     void ZSoundObject::Stopped()
     {
         auto* soundDll = g_pSysInterface ? static_cast<ZDllSound*>(g_pSysInterface->m_pSoundDll) : nullptr;

@@ -39,6 +39,8 @@ namespace Glacier
         // methods
         ZLINEOBJ(const char* psName, ZBaseGeom* pBaseGeom);
 
+        int32_t GetLineHeight();
+
         // members
         char* m_szText;
         int32_t m_iWidth;

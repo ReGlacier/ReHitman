@@ -11,13 +11,16 @@ namespace Glacier
     public:
         enum EColorIndex
         {
-            DisableColor = 0,
+            NormalColor = 0,
             FocusColor = 1,
-            NormalColor = 2
+            DisableColor = 2
         };
 
         // vtbl
+        virtual void readParams(const char** ppParams, ZMenuElements* pElems) override;
+
         // methods
+        ZColorSet();
         uint32_t GetColor(EColorIndex colorIndex);
 
         //data (total size is 0x58, base size is 0x4C)

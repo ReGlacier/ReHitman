@@ -63,6 +63,7 @@ namespace Glacier
         ZSDOwner& GetAudioOSDInterface() const { return *m_pSoundDef_OSD; }
         void SetAudioEffectsInterface(ZSDOwner* pOwner) { m_pSoundDef_Effects = pOwner; }
         ZSDOwner& GetAudioEffectsInterface() const { return *m_pSoundDef_Effects; }
+        void InsertIconsInText(zstring& rOut, const char* pText, bool bAddColor);
 
         // members
         void* m_pkBoidSystem;

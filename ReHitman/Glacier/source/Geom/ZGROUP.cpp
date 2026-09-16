@@ -48,6 +48,15 @@ namespace Glacier
         return rSound;
     }
 
+    SREF ZGROUP::AddSound2d(int lSoundIndex)
+    {
+        auto* pSoundDll = g_pSysInterface->GetSoundDll();
+        if (!pSoundDll)
+            return 0;
+
+        return pSoundDll->AddSound2d(lSoundIndex);
+    }
+
     ZGROUP::ZGROUP(const char* psName, ZBaseGeom* pBaseGeom)
         : ZGEOM(psName, pBaseGeom)
     {

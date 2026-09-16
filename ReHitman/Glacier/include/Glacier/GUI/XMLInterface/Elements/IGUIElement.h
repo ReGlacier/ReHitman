@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Glacier/GUI/XMLInterface/System/ZGUIBase.h>
+#include <Glacier/GUI/XMLInterface/Windows/ZGUIElementLink.h>
 #include <Glacier/GUI/eZWUserEvents.h>
 #include <Glacier/GUI/XMLInterface/Elements/ZColorSet.h>
 
@@ -25,24 +26,37 @@ namespace Glacier
     {
     public:
         // vtbl
+        virtual void readParams(const char** ppParams, ZMenuElements* pElems) override;
         virtual void Update(bool);
         virtual void Click(eZWUserEvents, int, ZXMLGUISystem*);
         virtual void OpenSubwindow();
         virtual void SetValue(int);
-        virtual void Use();
+        virtual bool Use();
         virtual void FocusUpdate();
-        virtual void Setup(float*, ZResourceManager* pResourceManager, ZWINGROUP* pGroup);
+        virtual ZGUIElementLink Setup(float*, ZResourceManager* pResourceManager, ZWINGROUP* pGroup);
         virtual void ReleaseResources(ZResourceManager* pResourceManager);
         virtual bool SetFocus(bool);
         virtual void Cancel();
         virtual void Invalidate();
-        virtual ZWINDOW* GetWindow();
+        virtual const char* GetWindow();
 
         // methods
+        IGUIElement();
+        int32_t GenerateSubId(int iId);
+        int32_t GetId(int iSubId);
+        int32_t GetIndexFromId(int iSubId);
+        void CloseWindow(bool bCloseAll);
+        void RollBackIfOnStack(const char* pszWindowName, bool bPushWindow, bool bResetStack);
         void ChangeColorSet(ZWINGROUP* pGroup, ZColorSet* pColorSet);
         void ChangeColor(ZWINGROUP* pGroup, ZColorSet* pColorSet, ZColorSet::EColorIndex eColorIndex);
         void SetColor(uint32_t rgba, ZWINGROUP* pGroup, uint32_t mask = 0xFFFFFFFFu);
         void GetRightPosOfTextGroup(ZWINGROUP*, Glacier::Vector3* pPos, int iOffsetByX);
+        void SetLineSpace(ZWINGROUP* pGroup, int iSpace);
+        void SetLineWidth(ZWINGROUP* pGroup, int iWidth);
+        void ChangeType(ZWINGROUP* pGroup, uint8_t uType);
+        void SetAnimateAlpha(ZWINGROUP* pGroup, bool bAnimate);
+        void SetAnimateAlphaRecur(ZWINGROUP* pGroup, bool bAnimate);
+        void FadeRecur(ZWINGROUP* pGroup, uint8_t alpha);
 
         // members
         ZColorSet* m_pColorSet;

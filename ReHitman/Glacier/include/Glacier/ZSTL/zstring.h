@@ -48,6 +48,8 @@ namespace Glacier
         friend zstring operator+(const char* lhs, const zstring& rhs);
         /** @brief Formats text into this string using printf-style formatting. */
         void format(const char* fmt, ...);
+        /** @brief Converts a Latin-1 C string into a bounded UTF-8 destination buffer. */
+        static void CStrToUTF8(char* pDest, const char* pSrc, int nLength);
         /** @brief Returns true when this string has the same contents as @p rhs. */
         bool equal(const zstring& rhs) const;
         /** @brief Returns true when the first @p num bytes match @p rhs. */
@@ -64,6 +66,10 @@ namespace Glacier
         uint32_t length() const;
         /** @brief Returns true when the string is empty. */
         bool empty() const;
+        /** @brief Removes all characters, leaving the string empty. */
+        void clear();
+        /** @brief Appends the first @p count bytes of @p pStr to this string. */
+        zstring& append(const char* pStr, uint32_t count);
 
         // members
         /** @brief Owned null-terminated character buffer. */
