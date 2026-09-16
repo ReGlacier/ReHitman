@@ -196,7 +196,7 @@ namespace Glacier
         sFrame.Plot(0, 4, "Tex memory: %u  Draw mode: %u", pRender->m_lTextureSize,
             g_RenderDebugMenu.m_lDrawModeIndex);
         sFrame.Plot(0, 5, "Camera mode: %u  Timer: %u", g_RenderDebugMenu.m_lCameraModeIndex,
-            g_pDrawDebugTimer ? g_pDrawDebugTimer->m_lTimerType : NONE);
+            g_pDrawDebugTimer ? g_pDrawDebugTimer->m_lTimerType : TIMER_NONE);
     }
 
     void ZDrawDebugText::DrawText(uint32_t x, uint32_t y, const char* pszText, uint32_t lColor)

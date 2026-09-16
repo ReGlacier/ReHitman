@@ -2,6 +2,7 @@
 
 #include <Glacier/ReGlacier.h>
 #include <Glacier/Render/Debug/ZDrawDebugRender.h>
+#include <Glacier/Render/D3D9.h>
 #include <Glacier/Render/Fwd.h>
 
 
@@ -35,16 +36,18 @@ namespace Glacier
         void xFlush() override;
         void Begin(IView* pView, ZCameraSpace* pCameraSpace) override;
         void End() override;
-        void DrawLines() override;
-        void DrawTriangles() override;
+        void DrawLines(const SVertex* pVertices, uint32_t lNumLines) override;
+        void DrawTriangles(const SVertex* pVertices, uint32_t lNumTriangles) override;
         void SetDrawMode(uint32_t lMode) override;
         void SetTexture(ZTextureBase* pTexture) override;
         void SetTexture(uint32_t lTextureId) override;
 
         // methods
+        ZDrawDebugRenderD3D(ZRenderWintelD3D* pRender);
         void Allocate();
         void Invalidate();
         void Free();
+        void DrawPrimitives(D3DPRIMITIVETYPE eType, const SVertex* pVertices, uint32_t lNumPrimitives);
 
         // members
         IDirect3DTexture9* m_pFontTexture;
