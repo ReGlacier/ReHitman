@@ -33,7 +33,6 @@ namespace Glacier
 
         // vtbl
         ~ZDrawDebugRenderD3D() override;
-        void xFlush() override;
         void Begin(IView* pView, ZCameraSpace* pCameraSpace) override;
         void End() override;
         void DrawLines(const SVertex* pVertices, uint32_t lNumLines) override;

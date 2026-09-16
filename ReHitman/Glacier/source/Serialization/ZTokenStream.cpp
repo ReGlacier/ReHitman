@@ -44,7 +44,6 @@ namespace Glacier
 
         printf("Action --> Error parsing action binds, expected token nr %i", eToken);
         printf("Action --> got (blank for end of string): %.50s", m_szData);
-        ZASSERT(false);
         return false;
     }
 
@@ -58,7 +57,6 @@ namespace Glacier
         
         printf("Action --> Error parsing action binds, expected token nr %i", eToken);
         printf("Action --> got (blank for end of string): %.50s", m_szData);
-        ZASSERT(false);
         return false;
     }
 

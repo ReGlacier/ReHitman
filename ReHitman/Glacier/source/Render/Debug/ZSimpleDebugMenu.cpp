@@ -11,10 +11,9 @@ namespace Glacier
     namespace
     {
         static Action::ZStaticBinds pszActionMapDef_0 {
-            "DebugAlways={DrawDebugText={DDTConCmdMenu=&& hold(gc,left2) hold(gc,left1) tap(gc,start);DDTEnableMenu=& tap(gc,right2) tap(gc,left2);DDTUp=| tap(gc,up) tap(kb,up);DDTDown=| tap(gc,down) tap(kb,down);DDTUpHold=| hold(gc,up) hold(kb,up);DDTDownHold=| hold(gc,down) hold(kb,down);DDTLeft=| tap(gc,left) tap(kb,left);DDTRight=| tap(gc,right) tap(kb,right);DDTLeftHold=| hold(gc,left) hold(kb,left);DDTRightHold=| hold(gc,right) hold(kb,right);DDTSelect=| release(gc,cross) release(kb,return);DDTExit=| release(gc,triangle) release(kb,esc);DDTHideMenu=| hold(gc,square) hold(kb,space);};};"
+            "DebugAlways={DrawDebugText={DDTEnableMenu= & tap(gc0,left_thumb) tap(gc0,right_thumb);DDTUp= tap(gc0,pad_up);DDTDown= tap(gc0,pad_down);DDTUpHold= hold(gc0,pad_up);DDTDownHold= hold(gc0,pad_down);DDTLeft= tap(gc0,pad_left);DDTRight= tap(gc0,pad_right);DDTLeftHold= hold(gc0,pad_left);DDTRightHold= hold(gc0,pad_right);DDTSelect= release(gc0,a);DDTExit= release(gc0,y);DDTHideMenu= hold(gc0,x);};};"
         };
 
-        static Action::ZHandle a_DDTConsoleCommandMenu { "DDTConCmdMenu" };
         static Action::ZHandle a_DDTEnableMenu { "DDTEnableMenu" };
         static Action::ZHandle a_DDTUp { "DDTUp" };
         static Action::ZHandle a_DDTUpHold { "DDTUpHold" };
