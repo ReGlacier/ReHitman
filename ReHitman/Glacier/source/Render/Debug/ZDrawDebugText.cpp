@@ -1,6 +1,7 @@
 #include <Glacier/Render/Debug/ZDrawDebugRender.h>
 #include <Glacier/Render/Debug/ZDrawDebugText.h>
 #include <Glacier/Render/Debug/ZDrawDebugTimer.h>
+#include <Glacier/Render/Debug/ZDrawDebugTextLayer.h>
 #include <Glacier/Render/Debug/Globals.h>
 #include <Glacier/Render/ZRender.h>
 #include <Glacier/Render/View/IView.h>
@@ -143,6 +144,8 @@ namespace Glacier
     void ZDrawDebugText::Update()
     {
         DrawInfo();
+
+        ZDrawDebugTextLayer::Instance().DrawFullScreen(m_pRender);
 
         for (int i = 0; i < m_Menus.Count(); ++i)
         {

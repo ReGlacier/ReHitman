@@ -20,5 +20,6 @@ namespace Glacier
     extern uint32_t g_lTimerDisplayEnabled;
     extern ZDebugInt g_lShowFrameRate;
     extern ZDebugInt g_lShowDebug;
+    extern ZDebugInt g_lShowDebugText;
 #pragma endregion
 }
