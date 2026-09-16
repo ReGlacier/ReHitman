@@ -35,4 +35,7 @@ namespace Glacier
         ZMenu* m_pCurrentMenu;
         ZSafeStackArray<32, ZStoredMenu> m_LastMenu;
     };
+
+    // Xbox_KL1 0x822D2900 - debug menu callback bound through ZDrawDebugText::AddMenu.
+    void EnableRenderDebugMenu(const void* pData, bool bFirst);
 }
