@@ -14,6 +14,11 @@
 #include <Glacier/Physics/CRagdoll2.h>
 #include <Glacier/Animation/Model.h>
 #include <Glacier/Animation/ZBone.h>
+#include <Glacier/Animation/EBoneID.h>
+#include <Glacier/Data/ZGameData.h>
+#include <Glacier/GameBase/ZPlayer.h>
+#include <Glacier/Render/Draw/ZRenderDraw.h>
+#include <Glacier/Render/Entry/ZRenderEntryBones.h>
 #include <Glacier/EventBase/ZPhysicsLinkage.h>
 #include <Glacier/IK/ZLNKOBJ.h>
 #include <Glacier/Geom/ZGeomBuffer.h>
@@ -23,6 +28,96 @@
 
 namespace Glacier
 {
+    namespace
+    {
+        int32_t s_FirstPersonBonesState = -1;
+        ZQuat s_FirstPersonRootQuat{};
+        ZVector3 s_FirstPersonSpine0Pos{};
+        ZVector3 s_FirstPersonSpine1Pos{};
+
+        void ConvertModelBonesToLocal(Animation::Model* pModel)
+        {
+            for (int i = pModel->m_BoneCount - 1; i > 0; --i)
+            {
+                ZBone& bone = pModel->m_Bones[i];
+                const ZBone& parent = pModel->m_Bones[pModel->m_Parent[i]];
+                bone._Pos -= parent._Pos;
+                vmtmul(bone._Pos, parent._Mat);
+                ZMat3x3 localMat = bone._Mat;
+                mmmul(localMat, parent._Mat.TransposedAntidiagonal());
+                mattoquat(bone._Quat, localMat);
+            }
+        }
+    }
+
+    // PC 0x0046E280. PC stores the transition state at 0x008EBE50 and converts
+    // the player model between model and local space only when the state changes.
+    void ZBoneModifyBase::UpdateFirstPersonBones(ZRender*, bool bEnable)
+    {
+        const int32_t lState = bEnable ? 1 : 0;
+        if (s_FirstPersonBonesState == lState || !g_pGameData)
+            return;
+        s_FirstPersonBonesState = lState;
+
+        auto* pPlayer = g_pGameData->GetPlayer(0);
+        auto* pLinkObject = pPlayer ? static_cast<ZLNKOBJ*>(pPlayer) : nullptr;
+        auto* pModel = pLinkObject ? pLinkObject->Model() : nullptr;
+        if (!pLinkObject || !pModel || !pModel->m_Bones || !pModel->m_BoneIdToIndexLookup)
+            return;
+
+        const uint8_t lPelvis = pModel->m_BoneIdToIndexLookup[Pelvis];
+        const uint8_t lSpine0 = pModel->m_BoneIdToIndexLookup[Spine0];
+        const uint8_t lSpine1 = pModel->m_BoneIdToIndexLookup[Spine1];
+        const uint8_t lSpine2 = pModel->m_BoneIdToIndexLookup[Spine2];
+        if (lPelvis == 0xFF || lSpine0 == 0xFF || lSpine1 == 0xFF || lSpine2 == 0xFF)
+            return;
+
+        ZVector3 oldSpine2Pos = pModel->m_Bones[lSpine2]._Pos;
+        if (bEnable)
+        {
+            ConvertModelBonesToLocal(pModel);
+            pModel->m_Bones[lSpine2]._Quat = s_FirstPersonRootQuat;
+            pModel->ModelSpaceBones();
+            pModel->m_Bones[lSpine0]._Pos = s_FirstPersonSpine0Pos;
+            pModel->m_Bones[lSpine1]._Pos = s_FirstPersonSpine1Pos;
+        }
+        else
+        {
+            s_FirstPersonSpine0Pos = pModel->m_Bones[lSpine0]._Pos;
+            s_FirstPersonSpine1Pos = pModel->m_Bones[lSpine1]._Pos;
+            ConvertModelBonesToLocal(pModel);
+            s_FirstPersonRootQuat = pModel->m_Bones[lSpine2]._Quat;
+
+            const ZQuat identity{ 0.0f, 0.0f, 0.0f, 1.0f };
+            const float fBlend = (std::fabs(s_FirstPersonRootQuat.w) - 0.99f) * 100.0f;
+            if (std::fabs(s_FirstPersonRootQuat.w) <= 0.99f)
+                pModel->m_Bones[lSpine2]._Quat = identity;
+            else
+                qpul(pModel->m_Bones[lSpine2]._Quat, identity, s_FirstPersonRootQuat, fBlend);
+            pModel->ModelSpaceBones();
+        }
+
+        const ZVector3 offset = oldSpine2Pos - pModel->m_Bones[lSpine2]._Pos;
+        for (int i = 1; i < pModel->m_BoneCount; ++i)
+        {
+            uint8_t parent = static_cast<uint8_t>(i);
+            while (parent != lSpine2 && parent != 0)
+                parent = pModel->m_Parent[parent];
+            if (parent == lSpine2)
+                pModel->m_Bones[i]._Pos += offset;
+        }
+
+        auto* pBaseGeom = pLinkObject->BaseGeom();
+        auto* pDraw = IDraw::Instance<ZRenderDraw>();
+        if (pBaseGeom && pDraw && pBaseGeom->m_lDrawId)
+        {
+            auto* pEntry = dynamic_cast<ZRenderEntryBones*>(
+                pDraw->m_apRenderEntryLookup[pBaseGeom->m_lDrawId & 0x7FFFu]);
+            if (pEntry)
+                pDraw->UpdateAttachedBaseGeomsPositions(pEntry, true);
+        }
+    }
+
     ZBoneModifyBase::~ZBoneModifyBase()
     {
         if (m_pRagdoll)

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Glacier/ReGlacier.h>
+#include <Glacier/ZUniMemory.h>
 #include <cstdint>
 
 
@@ -74,4 +75,6 @@ namespace Glacier
         SWaterRippleInst m_pRipples[8];
     };
     RE_VERIFY_SIZE(ZWaterManager, 0x1B4); // Verified PC alloc
+
+    STATIC_GLOBAL_CLASS_INSTANCE(ZWaterManager*, g_pWaterManager);
 }

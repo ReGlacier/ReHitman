@@ -13,6 +13,7 @@ namespace Glacier
 {
     // fwds
     class ZIKLNKOBJ;
+    class ZRender;
     class ZLNKOBJ;
     class ZDynamicsExtend;
     class CRagdoll2;
@@ -61,6 +62,7 @@ namespace Glacier
         void LoadSave(ISerializerStream& stream, bool bSaving);
         bool ActivateRagdoll(ZLNKOBJ* pLnkObj, bool bActive, bool bEnableTimeout, bool bUseDamping);
         bool CheckPointInside(const ZVector3& vPoint, const ZVector3& vBone, const SBoneDefinition *pBoneDefinition) const;
+        static void UpdateFirstPersonBones(ZRender* pRender, bool bEnable);
 
         // members
         bool m_bIsPlayer;

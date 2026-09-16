@@ -65,6 +65,8 @@ namespace Glacier
 
         // PC 0x004A4D50 (static; draws a textured quad plane through g_pVBPDT1)
         static void DrawPlane(ZDirect3DDevice* pD3DDev, float x, float y, float w, float h, D3DCOLOR color, float z, float uMax, float vMax);
+        static void DrawPlaneUV(ZDirect3DDevice* pD3DDev, float x, float y, float w, float h,
+                                D3DCOLOR color, float uMin, float vMin, float uMax, float vMax);
         HRESULT SetVertexDeclaration(IDirect3DVertexDeclaration9* pDecl);
         HRESULT SetIndices(IDirect3DIndexBuffer9* pIndexBuffer);
         HRESULT SetStreamSource(uint32_t lStreamNumber, IDirect3DVertexBuffer9* pVertexBuffer, uint32_t lOffset, uint32_t lStride);
@@ -80,6 +82,7 @@ namespace Glacier
         HRESULT GetDeviceCaps(D3DCAPS9* pCaps);
         void SetGammaRamp(UINT iSwapChain, DWORD dwFlags, const D3DGAMMARAMP* pRamp); // PC 0x0048F490
         void ResetState();
+        void SynchronizeStateCaches(); // PC 0x00490430, used after external D3D rendering
 
         // members
         IDirect3DDevice9* m_pDevice { nullptr }; // +0x4

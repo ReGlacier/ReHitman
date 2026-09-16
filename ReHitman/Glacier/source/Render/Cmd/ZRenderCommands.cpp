@@ -31,7 +31,7 @@ namespace Glacier
     void CmdSetViewport(ZCmdList* pCmdList, uint32_t x, uint32_t y, uint32_t w, uint32_t h)
     {
         ZCmdList::ZCmd* pCmd = pCmdList->Current();
-        pCmd->m_lLayer = ZCmdList::CMD_VIEWPORT_SETUP;
+        pCmd->m_lType = ZCmdList::CMD_VIEWPORT_SETUP;
         pCmd->m_pRenderEntryGeom = nullptr;
         pCmd->m_pCmdList = pCmdList;
         pCmd->m_pRenderView = nullptr;
@@ -61,7 +61,7 @@ namespace Glacier
     )
     {
         ZCmdList::ZCmd* pCmd = pCmdList->Current();
-        pCmd->m_lType = static_cast<ZCmdList::CMD>(0x11); // PC CmdDrawEntries writes 17 for object draws.
+        pCmd->m_lType = ZCmdList::CMD_OBJECT_DRAW;
         pCmd->m_pRenderEntryGeom = nullptr;
         pCmd->m_pCmdList = pCmdList;
         pCmd->m_pRenderView = pRenderView;
@@ -94,7 +94,7 @@ namespace Glacier
     void CmdScissorSetup(ZCmdList* pCmdList, ZRenderView* pRenderView, const ZVector4& vScissor, bool bUnk)
     {
         ZCmdList::ZCmd* pCmd = pCmdList->Current();
-        pCmd->m_lLayer = ZCmdList::CMD_SCISSOR_SETUP;
+        pCmd->m_lType = ZCmdList::CMD_SCISSOR_SETUP;
         pCmd->m_pRenderEntryGeom = nullptr;
         pCmd->m_pCmdList = pCmdList;
         pCmd->m_pRenderView = pRenderView;
@@ -103,12 +103,12 @@ namespace Glacier
 
         pCmdList->NextCommand();
 
-        // Based on iOS: in IOS used 128bit single variable and used weird hack to add data (inlined, I guess?)
-        auto* pData = reinterpret_cast<ZVector4*>(pCmd->AddData(sizeof(ZVector4)));
+        auto* pData = reinterpret_cast<ZVector4*>(pCmd->AddData(sizeof(ZVector4) + sizeof(uint32_t)));
         pData->x = vScissor.x;
         pData->y = vScissor.y;
         pData->z = vScissor.z;
         pData->w = vScissor.w;
+        reinterpret_cast<uint32_t*>(pData)[4] = bUnk;
     }
 
 }

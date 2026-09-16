@@ -141,4 +141,6 @@ namespace Glacier
             UpdateRippleInfo(m_pPatches[i]);
         }
     }
+
+    STATIC_GLOBAL_CLASS_INSTANCE_IMPL(ZWaterManager*, g_pWaterManager, 0x008EC128, nullptr);
 }

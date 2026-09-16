@@ -165,6 +165,12 @@ namespace Glacier
         return m_pDevice->EndScene();
     }
 
+    void ZDirect3DDevice::SynchronizeStateCaches()
+    {
+        ApplyRenderStatesToDevice(m_pDevice);
+        ReapplyTextureAndSamplerStates(m_pDevice);
+    }
+
     HRESULT ZDirect3DDevice::ColorFill(IDirect3DSurface9* pSurface, const RECT* pRect, D3DCOLOR dwColor)
     {
         return m_pDevice->ColorFill(pSurface, pRect, dwColor);
@@ -541,6 +547,37 @@ namespace Glacier
         pD3DDev->SetStreamSource(0, g_pVBPDT1, 0, sizeof(SQuadVertex));
         g_pd3dDevice->SetVertexShader(nullptr);
         g_pd3dDevice->SetFVF(D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_TEX1);
+        pD3DDev->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+        pD3DDev->SetStreamSource(0, nullptr, 0, 0);
+    }
+
+    // PC 0x004A5420. Full UV-rectangle variant used by the alpha-blend pass.
+    void ZDirect3DDevice::DrawPlaneUV(ZDirect3DDevice* pD3DDev, float x, float y, float w, float h,
+                                      D3DCOLOR color, float uMin, float vMin, float uMax, float vMax)
+    {
+        struct SQuadVertex
+        {
+            float x, y, z, rhw;
+            D3DCOLOR color;
+            float u, v;
+        };
+
+        SQuadVertex* pVertices = nullptr;
+        g_pVBPDT1->Lock(0, 0, reinterpret_cast<void**>(&pVertices), D3DLOCK_DISCARD);
+        const float x0 = x - 0.5f;
+        const float y0 = y - 0.5f;
+        const float x1 = x + w - 0.5f;
+        const float y1 = y + h - 0.5f;
+        pVertices[0] = { x0, y0, 0.0f, 1.0f, color, uMin, vMin };
+        pVertices[1] = { x0, y1, 0.0f, 1.0f, color, uMin, vMax };
+        pVertices[2] = { x1, y0, 0.0f, 1.0f, color, uMax, vMin };
+        pVertices[3] = { x1, y1, 0.0f, 1.0f, color, uMax, vMax };
+        g_pVBPDT1->Unlock();
+
+        pD3DDev->SetIndices(nullptr);
+        pD3DDev->SetStreamSource(0, g_pVBPDT1, 0, sizeof(SQuadVertex));
+        pD3DDev->SetVertexShader(nullptr);
+        pD3DDev->SetFVF(D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_TEX1);
         pD3DDev->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
         pD3DDev->SetStreamSource(0, nullptr, 0, 0);
     }
