@@ -31,7 +31,7 @@ namespace Glacier
             RenderDebugItems[3].pText = pInfoMode[g_bInfoDisplayEnabled];
             RenderDebugItems[4].pText = pSInfoMode[g_pEngineData && g_pEngineData->m_bSoundDisplay];
             RenderDebugItems[5].pText = pPauseMode[g_pEngineData && g_pEngineData->m_bPause];
-            RenderDebugItems[6].pText = pTimerMode[g_pDrawDebugTimer ? g_pDrawDebugTimer->m_lTimerType : NONE];
+            RenderDebugItems[6].pText = pTimerMode[g_lTimerDisplayEnabled];
             RenderDebugItems[7].pText = pConCmd[g_bConCmdDisplayEnabled];
         }
     }
@@ -125,12 +125,10 @@ namespace Glacier
         void ToggleTimerMode(void* ptr)
         {
             (void)ptr;
-            if (g_pDrawDebugTimer)
-            {
-                auto& type = g_pDrawDebugTimer->m_lTimerType;
-                type = static_cast<TIMERTYPE>((type + 1) % 5);
-                g_pDrawDebugTimer->m_bRunning = type != NONE;
-            }
+            ++g_lTimerDisplayEnabled;
+            if (g_lTimerDisplayEnabled == 6)
+                g_lTimerDisplayEnabled = 0;
+            RenderDebugItems[6].pText = pTimerMode[g_lTimerDisplayEnabled];
         }
 
         void ToggleConCmdMode(void* ptr)
@@ -193,4 +191,14 @@ namespace Glacier
         };
     }
     // ZRenderDebugMenu
+
+    void EnableRenderDebugMenu(const void* pData, bool bFirst)
+    {
+        (void)pData;
+
+        if (bFirst)
+            g_RenderDebugMenu.BeginEdit();
+        else
+            g_RenderDebugMenu.Update();
+    }
 }

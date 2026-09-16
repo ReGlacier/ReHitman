@@ -8,14 +8,17 @@
 #include <Glacier/Render/ZRenderBaseDll.h>
 #include <Glacier/Render/ZTextureManagerD3D.h>
 #include <Glacier/Render/Material/ZRenderMaterialBuffer.h>
+#include <Glacier/Render/Debug/ZDrawDebugRenderD3D.h>
 #include <Glacier/ZSTL/ZOffsetAlloc.h>
 #include <Glacier/ZSTL/REFTAB.h>
+
 #define XMD_H   // avoid INT16/INT32 typedefs from jmorecfg.h conflicting with other headers
 extern "C"
 {
 #include <jpeglib.h>
 }
 #undef XMD_H
+
 #include <Glacier/ZSTL/STLport.h>
 #include <Glacier/System/ZSysInterface.h>
 #include <Glacier/System/ZRX86AllocIf.h>
@@ -93,6 +96,7 @@ namespace Glacier
             ZSharedResourcesD3D::Create();
 
         m_pRenderDraw = reinterpret_cast<ZRenderDrawBase*>(ZSharedResourcesD3D::g_pInstance->m_pRenderDrawShared);
+        m_pDrawDebugRender = ZUniMemory::New<ZDrawDebugRenderD3D>(this);
 
         m_field16F4 = nullptr;
         m_field16F8 = nullptr;
@@ -1043,6 +1047,12 @@ namespace Glacier
         }
         if (lResCount < 20)
             m_Resolutions[lResCount] = { 0, 0, 0, 0, _GLC_RENDER_RESOLUTION::Aspect4_3 };
+
+        // Debug stuff
+        if (auto* pDebugRender = reinterpret_cast<ZDrawDebugRenderD3D*>(m_pDrawDebugRender))
+        {
+            pDebugRender->Allocate();
+        }
     }
 
     // PC 0x00489270

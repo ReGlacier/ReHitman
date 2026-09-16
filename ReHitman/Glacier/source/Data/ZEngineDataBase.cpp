@@ -13,6 +13,7 @@
 #include <Glacier/Render/ZRenderBaseDll.h>
 #include <Glacier/Render/Draw/IDraw.h>
 #include <Glacier/Render/Debug/Globals.h>
+#include <Glacier/Render/Debug/ZDrawDebugTimer.h>
 #include <Glacier/ScriptEngine/ScriptEngine.h>
 #include <Glacier/Serializer/ISerializerStream.h>
 #include <Glacier/Serializer/ZIOInputStream.h>
@@ -1666,19 +1667,17 @@ namespace Glacier
             g_pGameData->PreFrameUpdate();
         }
 
-        // TODO: Uncomment me after ZDrawDebugTimer reversed
-        // if (g_pDrawDebugTimer)
-        // {
-        //     g_pDrawDebugTimer->StartFastTimer();
-        // }
+        if (g_pDrawDebugTimer)
+        {
+            g_pDrawDebugTimer->StartFastTimer("UpdateList");
+        }
 
         m_EventList.FrameUpdate();
 
-        // TODO: Uncomment me after ZDrawDebugTimer reversed
-        // if (g_pDrawDebugTimer)
-        // {
-        //     g_pDrawDebugTimer->EndFastTimer();
-        // }
+        if (g_pDrawDebugTimer)
+        {
+            g_pDrawDebugTimer->EndFastTimer();
+        }
 
         if (g_pGameData)
         {

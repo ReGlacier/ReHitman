@@ -76,8 +76,8 @@ namespace Glacier
         virtual void xFlush();
         virtual void Begin(IView* pView, ZCameraSpace* pCameraSpace);
         virtual void End();
-        virtual void DrawLines();
-        virtual void DrawTriangles();
+        virtual void DrawLines(const SVertex* pVertices, uint32_t lNumLines);
+        virtual void DrawTriangles(const SVertex* pVertices, uint32_t lNumTriangles);
         virtual void SetDrawMode(uint32_t lMode);
         virtual void SetTexture(ZTextureBase* pTexture);
         virtual void SetTexture(uint32_t lTextureId);
@@ -96,7 +96,7 @@ namespace Glacier
         void xSetDrawMode(uint32_t lDrawMode);
         void xSetTexture(uint32_t lTexture);
         void xSetTexture(ZTextureBase* pTexture);
-        bool xCanFlush();
+        bool xCanFlush() const;
         void xVertex3(float x, float y, float z);
         void xVertex3v(const float* v);
         void xVertex2(float x, float y);
@@ -104,9 +104,10 @@ namespace Glacier
         void xDrawText(const float* m, const float* v, const float* s, const char* pszText, uint32_t lTextLength, uint32_t lColor, int8_t lAlignFlags);
         void xDrawText(const ZVector3& v, const char* pszText, uint32_t lColor, int8_t lAlignFlags);
 
-        void SetOrtho(const float* v);
-        void TransformWorldToView(float* vOut, const float* vIn);
-        void TransformViewToWorld(float* vOut, const float* vIn);
+        void SetOrtho(bool bOrtho, float fScale);
+        void Transform(float* v, const float* m, const float* p, const float* s) const;
+        void TransformWorldToView(float* vOut, const float* vIn) const;
+        void TransformViewToWorld(float* vOut, const float* vIn) const;
 
         void DrawLine(const ZVector3& vStart, const ZVector3& vEnd, uint32_t lColor);
         void DrawTriangle(const ZVector3& v0, const ZVector3& v1, const ZVector3& v2, uint32_t lColor);
@@ -114,11 +115,11 @@ namespace Glacier
         void DrawCircle(const ZMat3x3& m, const ZVector3& v, float fRadius, uint32_t lColor);
         void DrawBoxWire(const ZMat3x3& m, const ZVector3& v, const ZVector3& s, uint32_t lColor);
         void DrawBoxFilled(const ZMat3x3& m, const ZVector3& v, const ZVector3& s, uint32_t lColor);
-        void DrawGrid(const ZMat3x3& m, const ZVector3& v, const ZVector3& s, uint32_t lDivisionsZ, uint32_t lColor);
+        void DrawGrid(const ZMat3x3& m, const ZVector3& v, const ZVector3& s, uint32_t lDivisionsX, uint32_t lDivisionsZ, uint32_t lColor);
         void DrawArrow(const ZMat3x3& m, const ZVector3& v, const ZVector3& s, uint32_t lColor);
         void DrawPyramid(const ZMat3x3& m, const ZVector3& v, const ZVector3& s, uint32_t lColor);
         void DrawSphere3(const ZMat3x3& m, const ZVector3& v, const ZVector3& s, uint32_t lColor);
-        void DrawCappedPyramid(const ZMat3x3& m, const ZVector3& v, float fAngleRad, float fAspect, uint32_t lColor);
+        void DrawCappedPyramid(const ZMat3x3& m, const ZVector3& v, float fAngleRad, float fLength, float fAspect, uint32_t lColor);
         void DrawCylinder(const ZMat3x3& m, const ZVector3& v, float fHeight, float fRadius, uint32_t lColor);
         void DrawCone(const ZMat3x3& m, const ZVector3& v, const ZVector3& s, uint32_t lColor);
         void DrawConeSolid(const ZMat3x3& m, const ZVector3& v, const ZVector3& s, uint32_t lColor);

@@ -16,6 +16,7 @@ namespace Glacier
         // methods
         ZDebugFrame(ZDebugFrame* pParent);
         void SetTextColor(uint32_t lColor);
+        void SetBgColorInv(uint32_t lColor);
         void DrawLine(float fStartX, float fStartY, float fEndX, float fEndY, uint32_t lColor);
         int Plot(uint32_t lLinePosX, uint32_t lLinePosY, const char* Format, ...);
         int PlotInvers(uint32_t lLinePosX, uint32_t lLinePosY, const char* Format, ...);

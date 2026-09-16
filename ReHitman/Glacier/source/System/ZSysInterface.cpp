@@ -10,6 +10,7 @@
 #include <Glacier/Com/CCOMType.h>
 #include <Glacier/Geom/ZGEOM.h>
 #include <Glacier/Data/ZEngineDataBase.h>
+#include <Glacier/Debug/Console.h>
 
 #include <utility>
 #include <cstdarg>
@@ -974,6 +975,24 @@ namespace Glacier
     ZSoundDllBase* ZSysInterface::GetSoundDll() const
     {
         return reinterpret_cast<ZSoundDllBase*>(m_pSoundDll);
+    }
+
+    void ZSysInterface::SetConsole(CConsole* pConsole)
+    {
+        g_pConsole = pConsole;
+    }
+
+    CConsole* ZSysInterface::GetConsole()
+    {
+        return g_pConsole;
+    }
+
+    void ZSysInterface::ConsoleExecuteCommand(const char* szCommand)
+    {
+        if (auto* pConsole = GetConsole())
+        {
+            pConsole->ExecuteCommand(szCommand);
+        }
     }
 
     // Statics

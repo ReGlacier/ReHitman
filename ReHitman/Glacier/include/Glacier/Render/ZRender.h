@@ -134,6 +134,10 @@ namespace Glacier
         void Initialize(int hInstance, void* hParentWnd); // PC 0x004684C0 (called by the ctor)
         void AddCameraToView(ZCAMERA* pCamera, uint32_t lViewId); // PC 0x00468A00 (non-virtual helper, used by AddCamera/AllocateDrawBuffers)
 
+        // debug stuff
+        bool TextDisplayEnabled() const;
+        bool ConsoleDrawEnabled() const;
+
         // members
         struct ZRender* SubChain; // +0x4
         struct ZRender* Nxt; // +0x8

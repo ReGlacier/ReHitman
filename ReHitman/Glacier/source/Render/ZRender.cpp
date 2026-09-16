@@ -11,6 +11,7 @@
 #include <Glacier/Data/ZEngineDataBase.h>
 #include <Glacier/Com/CCom.h>
 #include <Glacier/Animation/Manager.h>
+#include <Glacier/Debug/Console.h>
 
 #include <cstdio>
 #include <cstring>
@@ -415,6 +416,17 @@ namespace Glacier
         pNewView->AddCamera(pCamera);
     }
 
+    bool ZRender::TextDisplayEnabled() const
+    {
+        return !ConsoleDrawEnabled();
+    }
+
+    bool ZRender::ConsoleDrawEnabled() const
+    {
+        auto* pConsole = g_pSysInterface->GetConsole();
+        return pConsole && pConsole->IsDown();
+    }
+
     // PC 0x00468960 (pCamera->Init(this))
     void ZRender::InitCamera(ZCAMERA* pCamera)
     {
@@ -502,6 +514,21 @@ namespace Glacier
             m_RemNxtLine = m_NxtLine;
             m_NxtLine = 10;
             UpdateShortCuts();
+
+            if (TextDisplayEnabled())
+            {
+                for (auto i = m_NxtLine; i < m_RemNxtLine; ++i)
+                {
+                    UPlotFNxt(" ");
+                }
+
+                PlotStatCounters(GetTextSizeY() - 1);
+            }
+
+            if (auto* pConsole = g_pSysInterface->GetConsole())
+            {
+                pConsole->Update();
+            }
 
             // FPS / triangles-per-second counter (PC 0x00468CF0).
             // TIMETYPE is fixed-point at 1024 ticks/second, so elapsed * (1.0f / 1024.0f) gives seconds.
