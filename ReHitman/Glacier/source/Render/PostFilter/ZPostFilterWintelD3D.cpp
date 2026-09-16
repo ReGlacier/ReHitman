@@ -1,9 +1,12 @@
 #include <Glacier/Render/PostFilter/ZPostFilterWintelD3D.h>
 #include <Glacier/Render/ZDirect3DDevice.h>
 #include <Glacier/Render/ZRenderBaseDll.h>
+#include <Glacier/Render/ZRender.h>
 #include <Glacier/System/ZSysInterface.h>
 #include <Glacier/Render/Globals.h>
 #include <Glacier/Data/ZGameData.h>
+#include <algorithm>
+#include <utility>
 
 
 namespace Glacier
@@ -81,9 +84,127 @@ namespace Glacier
 
     void ZPostFilterWintelD3D::Update(ZRenderViewBase* pView)
     {
-        // The post-process command path is not represented by the local render API.
-        // Preserve the current device state rather than issuing an unverifiable draw.
         (void)pView;
+
+        // PC 0x004AC3D0 is an eight-pass orchestrator. The view argument is not read;
+        // case 0x12 has already copied its view matrix into the base object.
+        if (g_bDisablePostEffects || !g_pd3dDevice || !m_pRender || !m_lUnknownE0
+            || g_pRenderDll->m_fPostFilterLOD == 0.0f)
+            return;
+
+        IDirect3DSurface9* pOriginalTarget = nullptr;
+        IDirect3DSurface9* pOriginalDepth = nullptr;
+        if (FAILED(g_pd3dDevice->GetRenderTarget(0, &pOriginalTarget)) || !pOriginalTarget)
+            return;
+        g_pd3dDevice->GetDepthStencilSurface(&pOriginalDepth);
+
+        D3DSURFACE_DESC targetDesc{};
+        pOriginalTarget->GetDesc(&targetDesc);
+        const UINT lWidth = m_Viewport[2];
+        const UINT lHeight = m_Viewport[3];
+
+        IDirect3DTexture9* pCurrent = m_lUnknownE0;
+        IDirect3DTexture9* pNext = m_lUnknownE4;
+        IDirect3DSurface9* pCurrentSurface = nullptr;
+        pCurrent->GetSurfaceLevel(0, &pCurrentSurface);
+        if (!pCurrentSurface)
+        {
+            D3D_SAFE_RELEASE(pOriginalDepth);
+            D3D_SAFE_RELEASE(pOriginalTarget);
+            return;
+        }
+
+        RECT sourceRect{ 0, 0, static_cast<LONG>((std::min)(lWidth, targetDesc.Width)),
+            static_cast<LONG>((std::min)(lHeight, targetDesc.Height)) };
+        g_pd3dDevice->StretchRect(pOriginalTarget, &sourceRect, pCurrentSurface, &sourceRect, D3DTEXF_NONE);
+        D3D_SAFE_RELEASE(pCurrentSurface);
+
+        g_pd3dDevice->SetDepthStencilSurface(nullptr);
+        g_pd3dDevice->SetRenderState(D3DRS_COLORWRITEENABLE, 15);
+        g_pd3dDevice->SetRenderState(D3DRS_FOGENABLE, FALSE);
+        g_pd3dDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
+        g_pd3dDevice->SetRenderState(D3DRS_ZWRITEENABLE, FALSE);
+        g_pd3dDevice->SetRenderState(D3DRS_ZENABLE, FALSE);
+        g_pd3dDevice->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
+
+        const auto runPass = [&](IDirect3DPixelShader9* pShader,
+                                 IDirect3DBaseTexture9* pTexture1 = nullptr,
+                                 IDirect3DBaseTexture9* pTexture2 = nullptr,
+                                 IDirect3DBaseTexture9* pTexture3 = nullptr)
+        {
+            if (!pNext)
+                return;
+
+            IDirect3DSurface9* pNextSurface = nullptr;
+            pNext->GetSurfaceLevel(0, &pNextSurface);
+            if (!pNextSurface)
+                return;
+
+            g_pd3dDevice->SetRenderTarget(0, pNextSurface);
+            D3D_SAFE_RELEASE(pNextSurface);
+            g_pd3dDevice->SetTexture(0, pCurrent);
+            g_pd3dDevice->SetTexture(1, pTexture1);
+            g_pd3dDevice->SetTexture(2, pTexture2);
+            g_pd3dDevice->SetTexture(3, pTexture3);
+            for (DWORD i = 0; i < 4; ++i)
+            {
+                g_pd3dDevice->SetSamplerState(i, D3DSAMP_MINFILTER, D3DTEXF_LINEAR);
+                g_pd3dDevice->SetSamplerState(i, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
+                g_pd3dDevice->SetSamplerState(i, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP);
+                g_pd3dDevice->SetSamplerState(i, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP);
+            }
+            g_pd3dDevice->SetPixelShader(pShader);
+            ZDirect3DDevice::DrawPlane(g_pd3dDevice, 0.0f, 0.0f,
+                static_cast<float>(lWidth), static_cast<float>(lHeight), 0xFFFFFFFF, 0.0f, 1.0f, 1.0f);
+            std::swap(pCurrent, pNext);
+        };
+
+        // PC call order at 0x004AC3DE..0x004AC40D: bloom, color/depth, heat,
+        // finish, feedback, color offset, noise, then state restore/copy.
+        if (m_fBloomAmount != 0.0f)
+            runPass(m_lUnknownF0);
+
+        runPass(m_lUnknown178, m_pPaletteTexture[0], m_pPaletteTexture[1], m_pPaletteTexture[2]);
+        if (g_pRenderDll->m_fPostFilterLOD == 2.0f && m_fDepthBlur != 0.0f)
+            runPass(m_lUnknown174, m_lUnknown140);
+        if (g_pRenderDll->m_fPostFilterLOD == 2.0f && m_bHasBumpEnv && m_fHeatShimmerSpeed != 0.0f)
+            runPass(m_lUnknown17C, m_lUnknownF8, m_lUnknown140);
+        if (m_fFinishBlendAmount != 0.0f)
+            runPass(m_lUnknown188, m_lUnknown148);
+        if (m_fLastBlendAmountFrameBuffer != 0.0f)
+            runPass(m_lUnknown184, m_lUnknown154);
+        if (m_fOffset[0][0] != 0.0f || m_fOffset[0][1] != 0.0f
+            || m_fOffset[1][0] != 0.0f || m_fOffset[1][1] != 0.0f
+            || m_fOffset[2][0] != 0.0f || m_fOffset[2][1] != 0.0f)
+            runPass(m_lUnknown180, pCurrent, pCurrent);
+        if (m_fNoiseMax != 0.0f)
+            runPass(m_lUnknown190, m_lUnknown150);
+
+        IDirect3DSurface9* pFinalSurface = nullptr;
+        pCurrent->GetSurfaceLevel(0, &pFinalSurface);
+        if (pFinalSurface)
+        {
+            g_pd3dDevice->StretchRect(pFinalSurface, &sourceRect, pOriginalTarget, &sourceRect, D3DTEXF_NONE);
+            D3D_SAFE_RELEASE(pFinalSurface);
+        }
+
+        g_pd3dDevice->SetRenderTarget(0, pOriginalTarget);
+        g_pd3dDevice->SetDepthStencilSurface(pOriginalDepth);
+        m_pRender->SetViewport(static_cast<float>(m_Viewport[0]), static_cast<float>(m_Viewport[1]),
+            static_cast<float>(m_Viewport[2]), static_cast<float>(m_Viewport[3]));
+        g_pd3dDevice->SetPixelShader(nullptr);
+        g_pd3dDevice->SetVertexShader(nullptr);
+        g_pd3dDevice->SetIndices(nullptr);
+        g_pd3dDevice->SetStreamSource(0, nullptr, 0, 0);
+        for (DWORD i = 0; i < 4; ++i)
+            g_pd3dDevice->SetTexture(i, nullptr);
+        g_pd3dDevice->SetRenderState(D3DRS_ZENABLE, TRUE);
+        g_pd3dDevice->SetRenderState(D3DRS_ZWRITEENABLE, TRUE);
+        g_pd3dDevice->SetRenderState(D3DRS_COLORWRITEENABLE, 7);
+        g_pd3dDevice->SynchronizeStateCaches();
+
+        D3D_SAFE_RELEASE(pOriginalDepth);
+        D3D_SAFE_RELEASE(pOriginalTarget);
     }
 
     void ZPostFilterWintelD3D::Init()
@@ -184,15 +305,46 @@ namespace Glacier
 
         FreeDeviceBuffers();
 
-        // Curves are exposed as 64 packed 32-bit entries by the base interface.
+        const UINT lWidth = m_Viewport[2];
+        const UINT lHeight = m_Viewport[3];
+        if (!lWidth || !lHeight)
+            return;
+
+        g_pd3dDevice->CreateTexture(lWidth, lHeight, 1, D3DUSAGE_RENDERTARGET,
+            D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &m_lUnknownE0, nullptr);
+        g_pd3dDevice->CreateTexture(lWidth, lHeight, 1, D3DUSAGE_RENDERTARGET,
+            D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &m_lUnknownE4, nullptr);
+        g_pd3dDevice->CreateTexture(lWidth, lHeight, 1, D3DUSAGE_RENDERTARGET,
+            D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &m_lUnknown154, nullptr);
+        g_pd3dDevice->CreateTexture((std::max)(1u, lWidth / 2), (std::max)(1u, lHeight / 2), 1,
+            D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &m_lUnknownFC, nullptr);
+        g_pd3dDevice->CreateTexture((std::max)(1u, lWidth / 2), (std::max)(1u, lHeight / 2), 1,
+            D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &m_lUnknown100, nullptr);
+        g_pd3dDevice->CreateTexture((std::max)(1u, lWidth / 2), (std::max)(1u, lHeight / 2), 1,
+            D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &m_lUnknown104, nullptr);
+        g_pd3dDevice->CreateTexture((std::max)(1u, lWidth / 4), (std::max)(1u, lHeight / 4), 1,
+            D3DUSAGE_RENDERTARGET, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &m_lUnknown14C, nullptr);
+        if (m_lUnknown154)
+            m_lUnknown154->GetSurfaceLevel(0, &m_pSurface);
+
+        // PC palettes are 256 entries; red/blue are vertical and green is horizontal.
         for (int i = 0; i < MAX_PALETTE_TEXTURES_NR; ++i)
         {
-            g_pd3dDevice->CreateTexture(64, 1, 1, 0, D3DFMT_A8R8G8B8,
+            const UINT width = i % 3 == 1 ? 256u : 1u;
+            const UINT height = i % 3 == 1 ? 1u : 256u;
+            g_pd3dDevice->CreateTexture(width, height, 1, 0, D3DFMT_A8R8G8B8,
                 D3DPOOL_MANAGED, &m_pPaletteTexture[i], nullptr);
         }
 
-        g_pd3dDevice->CreateTexture(64, 1, 1, 0, D3DFMT_A8R8G8B8,
+        g_pd3dDevice->CreateTexture(256, 1, 1, 0, D3DFMT_A8R8G8B8,
             D3DPOOL_MANAGED, &m_lUnknown140, nullptr);
+        g_pd3dDevice->CreateTexture(256, 1, 1, 0, D3DFMT_A8R8G8B8,
+            D3DPOOL_MANAGED, &m_lUnknown148, nullptr);
+        g_pd3dDevice->CreateTexture(64, 64, 1, 0, D3DFMT_A8R8G8B8,
+            D3DPOOL_MANAGED, &m_lUnknown150, nullptr);
+        if (m_bHasBumpEnv)
+            g_pd3dDevice->CreateTexture(32, 32, 1, 0, D3DFMT_V8U8,
+                D3DPOOL_MANAGED, &m_lUnknownF8, nullptr);
     }
 
     uint32_t* ZPostFilterWintelD3D::GetRedPalette(uint32_t lIndex)

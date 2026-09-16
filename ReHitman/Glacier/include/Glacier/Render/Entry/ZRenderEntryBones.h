@@ -7,6 +7,22 @@
 
 namespace Glacier
 {
+    struct SBoneLightData
+    {
+        struct SDirectLight
+        {
+            ZVector3 m_vDirection;
+            float m_fDirectionPadding;
+            ZVector3 m_vColor;
+            float m_fIntensity;
+        };
+
+        SDirectLight m_aDirectLights[3];
+        ZVector3 m_vAmbientColor;
+        float m_fTotalIntensity;
+    };
+    RE_VERIFY_SIZE(SBoneLightData, 0x70);
+
     class ZRenderEntryBones : public ZRenderEntryGeom
     {
     public:

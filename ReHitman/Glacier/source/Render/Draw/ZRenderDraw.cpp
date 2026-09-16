@@ -209,6 +209,7 @@ namespace Glacier
         , m_lRenderEntriesCount(0)
         , m_lToBeDeletedCount(0)
         , m_RenderEntryInstances()
+        , m_lLightBoneSelfShadowCount(0)
     {
         memset(m_apRenderEntryLookup, 0, sizeof(m_apRenderEntryLookup));
         memset(m_apRenderEntries, 0, sizeof(m_apRenderEntries));
@@ -615,9 +616,8 @@ namespace Glacier
         }
     }
 
-    void ZRenderDraw::CalcBoneLightSources(ZRenderEntryBones* pRenderEntryBones, float* pDirectLights)
+    void ZRenderDraw::CalcBoneLightSources(ZBaseGeom* pBaseGeom, float* pDirectLights)
     {
-        ZBaseGeom* pBaseGeom = pRenderEntryBones->GetBaseGeom();
         ZGEOM* pGeom = pBaseGeom->m_pExtraGeom;
         const bool bIsLnkObj = pGeom
             ? (pGeom->GetObjectId() & ZLNKOBJ::m_Mask) == ZLNKOBJ::m_Id
@@ -630,7 +630,7 @@ namespace Glacier
             ZRenderEntry* pEntry = m_apRenderEntryLookup[lDrawId];
             if (pEntry)
             {
-                CalcBoneLightSources(pBaseGeom, pDirectLights);
+                CalcBoneLightSources(static_cast<ZRenderEntryBones*>(pEntry), pDirectLights);
             }
         }
     }
@@ -693,7 +693,7 @@ namespace Glacier
         return static_cast<ZRenderEntrySprite*>(pEntry);
     }
 
-    ZRenderEntry* ZRenderDraw::GetOrCreateRenderEntry(ZBaseGeom* pBaseGeom)
+    ZRenderEntry* ZRenderDraw::GetOrCreateRenderEntry(ZBaseGeom* pBaseGeom, ZRenderEntry* pObserverEntry)
     {
         const uint16_t lDrawId = pBaseGeom->m_lDrawId;
         if (lDrawId != 0)
@@ -704,7 +704,7 @@ namespace Glacier
             return pEntry;
         }
 
-        ZRenderEntry* pEntry = CreateRenderEntryFromFactories(pBaseGeom, 0, nullptr);
+        ZRenderEntry* pEntry = CreateRenderEntryFromFactories(pBaseGeom, 0, pObserverEntry);
         if (pEntry)
         {
             if ((pEntry->m_lControl & ZRenderEntry::RE_CONSTRUCTION_FAILED) == 0)
@@ -742,6 +742,8 @@ namespace Glacier
         float* vObserver,
         float fLODScale)
     {
+        // PC 0x004742B0 uses the observer entry while constructing entries. Position and
+        // LOD scale are consumed by each caller's following CmdDrawEntries notify pass.
         (void)vObserver;
         (void)fLODScale;
 
@@ -752,7 +754,7 @@ namespace Glacier
             if (!pBaseGeom)
                 return nullptr;
 
-            ZRenderEntry* pEntry = GetOrCreateRenderEntry(pBaseGeom);
+            ZRenderEntry* pEntry = GetOrCreateRenderEntry(pBaseGeom, pObserverEntry);
             if (!pEntry)
                 return nullptr;
 
@@ -809,7 +811,7 @@ namespace Glacier
             if (!pBaseGeom || (pBaseGeom->m_lControl & 0x2C00u) != 0)
                 continue;
 
-            ZRenderEntry* pEntry = GetOrCreateRenderEntry(pBaseGeom);
+            ZRenderEntry* pEntry = GetOrCreateRenderEntry(pBaseGeom, pObserverEntry);
             if (!pEntry)
                 continue;
 

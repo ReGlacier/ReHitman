@@ -15,7 +15,7 @@ namespace Glacier
     public:
         //vtbl
         virtual ZWINDOWS* GetSystem();
-        virtual void WndMessage(ZWMEVENT* pEvent);
+        virtual bool WndMessage(ZWMEVENT* pEvent);
         virtual void OnCommand(ZMSGID lMsg);
         virtual void OnMouseMove(ZVector2& vPos);
         virtual void OnKeyUp(uint32_t);

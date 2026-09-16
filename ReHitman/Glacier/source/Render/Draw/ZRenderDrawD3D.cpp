@@ -14,18 +14,26 @@
 #include <Glacier/Render/Globals.h>
 #include <Glacier/System/ZSysMem.h>
 #include <Glacier/System/ZSysInterface.h>
+#include <Glacier/Data/ZEngineDataBase.h>
 #include <Glacier/Geom/ZBaseGeom.h>
 #include <Glacier/Geom/ZCAMERA.h>
+#include <Glacier/Geom/ZLIGHT.h>
 #include <Glacier/IK/ZBoneModifyBase.h>
+#include <Glacier/IK/ZCTRLIKLNKOBJ.h>
 #include <Glacier/Render/Material/ZRenderMaterialInstance.h>
 #include <Glacier/Render/Material/ZRenderMaterialSubClass.h>
 #include <Glacier/Render/Object/ZRenderObject.h>
 #include <Glacier/Render/Object/ZRenderObjectInstance.h>
 #include <Glacier/Render/Prim/SPrimLight.h>
+#include <Glacier/Render/Prim/SPrimLightEnvironment.h>
+#include <Glacier/Render/Prim/SPrimLightOmni.h>
+#include <Glacier/Render/Prim/SPrimLightSpot.h>
 #include <Glacier/Render/Prim/ZPrimHandle.h>
 #include <Glacier/Render/PostFilter/ZPostFilter.h>
 #include <Glacier/Render/View/ZRenderView.h>
 #include <Glacier/ZUniMemory.h>
+#include <algorithm>
+#include <cmath>
 #include <cstring>
 
 
@@ -54,6 +62,66 @@ namespace Glacier
         };
 
         ZCommandArena s_CommandArena;
+
+        struct SReducedBoneLight
+        {
+            ZVector3 m_vColor;
+            ZVector3 m_vDirection;
+            float m_fIntensity;
+        };
+
+        void ReduceBoneLight(SReducedBoneLight* pLights, uint32_t& lNumLights,
+                             const ZVector3& vColor, const ZVector3& vDirection)
+        {
+            SReducedBoneLight& light = pLights[lNumLights++];
+            light.m_vColor = vColor;
+            light.m_vDirection = vDirection;
+            light.m_fIntensity = vColor.x + vColor.y + vColor.z;
+            if (lNumLights < 4)
+                return;
+
+            uint32_t lWeakest = 0;
+            for (uint32_t i = 1; i < 4; ++i)
+            {
+                if (pLights[i].m_fIntensity < pLights[lWeakest].m_fIntensity)
+                    lWeakest = i;
+            }
+
+            uint32_t lMerge = lWeakest == 0 ? 1 : 0;
+            float fBestDot = 0.0f;
+            for (uint32_t i = 0; i < 4; ++i)
+            {
+                if (i == lWeakest)
+                    continue;
+                const float fDot = pLights[lWeakest].m_vDirection.x * pLights[i].m_vDirection.x
+                    + pLights[lWeakest].m_vDirection.y * pLights[i].m_vDirection.y
+                    + pLights[lWeakest].m_vDirection.z * pLights[i].m_vDirection.z;
+                if (fDot > fBestDot)
+                {
+                    fBestDot = fDot;
+                    lMerge = i;
+                }
+            }
+
+            pLights[lMerge].m_vColor += pLights[lWeakest].m_vColor;
+            pLights[lMerge].m_vDirection = pLights[lMerge].m_vDirection * pLights[lMerge].m_fIntensity;
+            ZVector3 weightedWeak = pLights[lWeakest].m_vDirection * pLights[lWeakest].m_fIntensity;
+            pLights[lMerge].m_vDirection += weightedWeak;
+            vnorm(pLights[lMerge].m_vDirection.Get());
+            pLights[lMerge].m_fIntensity += pLights[lWeakest].m_fIntensity;
+            if (lWeakest != 3)
+                pLights[lWeakest] = pLights[3];
+            lNumLights = 3;
+        }
+
+        ZVector3 ColorFromD3D(uint32_t lColor, float fScale)
+        {
+            return {
+                static_cast<float>((lColor >> 16) & 0xFF) * fScale,
+                static_cast<float>((lColor >> 8) & 0xFF) * fScale,
+                static_cast<float>(lColor & 0xFF) * fScale
+            };
+        }
 
         struct SurfaceState
         {
@@ -111,6 +179,41 @@ namespace Glacier
     {
         m_DecalMarks.BeginFrame();
         ZRenderDraw::BeginFrame();
+
+        ZVolumeList volumeList{};
+        ZBaseGeomVolume** ppVolumes = volumeList.BeginGroup(nullptr);
+        ZBaseGeomVolume cameraVolumes[16]{};
+        uint32_t lNumCameras = 0;
+
+        for (uint32_t viewIndex = 0; viewIndex < m_Views.Count(); ++viewIndex)
+        {
+            ZRenderViewBase* pView = *m_Views.Get(viewIndex);
+            for (uint32_t cameraIndex = 0; cameraIndex < pView->m_Cameras.Count(); ++cameraIndex)
+            {
+                ZCAMERA* pCamera = *pView->m_Cameras.Get(cameraIndex);
+                const uint32_t* pViewport = pView->Viewport();
+                pCamera->SetCam6ClipPlanes(
+                    pCamera->FOV,
+                    pCamera->Near,
+                    pCamera->Far,
+                    static_cast<int>(pViewport[2] - pViewport[0]),
+                    static_cast<int>(pViewport[3] - pViewport[1]),
+                    g_pSysInterface->WindowFirst->ScreenAspectXY());
+
+                ZASSERT(lNumCameras < 16);
+                ZBaseGeomVolume& volume = cameraVolumes[lNumCameras];
+                pCamera->GetRootTM(volume.m_RootPosition.m0, volume.m_RootPosition.p0);
+                volume.m_pBaseGeom = pCamera->BaseGeom();
+                ppVolumes[lNumCameras] = &volume;
+                ++lNumCameras;
+            }
+        }
+
+        volumeList.EndGroup(lNumCameras);
+        ZRenderEntryLists entryLists;
+        ZRenderEntry* apRenderEntries[16]{};
+        float vObserver[3]{};
+        CreateRenderEntries(apRenderEntries, 16, &volumeList, &entryLists, nullptr, vObserver, 0.0f);
     }
 
     void ZRenderDrawD3D::Update(ZRender* pRender)
@@ -193,8 +296,7 @@ namespace Glacier
         uint32_t projectionDepth = 0;
         ZMatrix currentViewMatrix{};
 
-        for (char* pCurrent = s_CommandArena.m_List.m_Buffer;
-             pCurrent < s_CommandArena.m_List.m_pCurrent; )
+        for (char* pCurrent = s_CommandArena.m_List.m_Buffer; pCurrent < s_CommandArena.m_List.m_pCurrent; )
         {
             auto* pCommand = reinterpret_cast<ZCmdList::ZCmd*>(pCurrent);
             const auto* pData = reinterpret_cast<const uint32_t*>(pCurrent + sizeof(ZCmdList::ZCmd));
@@ -589,13 +691,201 @@ namespace Glacier
         return ZUniMemory::New<ZRenderViewD3D>(pRender, this, lViewNumber, lViewId);
     }
 
-    void ZRenderDrawD3D::CalcBoneLightSources(ZBaseGeom* pBaseGeom, float* pDirectLights)
+    bool ZRenderDrawD3D::HasLightBoneSelfShadow(ZREF rLight, ZREF rBones) const
     {
-        if (!pBaseGeom || !pBaseGeom->m_lDrawId)
+        for (uint32_t i = 0; i < m_lLightBoneSelfShadowCount; ++i)
+        {
+            if (m_aLightBoneSelfShadows[i].m_rLight == rLight
+                && m_aLightBoneSelfShadows[i].m_rBones == rBones)
+                return true;
+        }
+        return false;
+    }
+
+    void ZRenderDrawD3D::CalcBoneLightSources(ZRenderEntryBones* pBonesEntry, float* pDirectLights)
+    {
+        if (!pBonesEntry || !pDirectLights)
             return;
 
-        auto* pEntry = m_apRenderEntryLookup[pBaseGeom->m_lDrawId & 0x7FFFu];
-        if (pEntry && (pEntry->m_lControl & ZRenderEntry::RE_HASBONES) != 0)
-            static_cast<ZRenderEntryBones*>(pEntry)->m_pLightData = pDirectLights;
+        ZBaseGeom* pBaseGeom = pBonesEntry->GetBaseGeom();
+        if (!pBaseGeom || (pBaseGeom->m_lControl & ZCOWNERDRAW) != 0)
+            return;
+
+        auto* pOutput = reinterpret_cast<SBoneLightData*>(pDirectLights);
+        const uint32_t lShaderQuality = ZSharedResourcesD3D::g_pInstance->m_lShaderQuality;
+        const float fFade = (pBonesEntry->m_lFade == 0xFF
+            ? 2.0f : static_cast<float>(pBonesEntry->m_lFade) * (1.0f / 254.0f))
+            * 0.85000002f + 0.15000001f;
+        const float fGlobalMultiplier = std::min(fFade, 1.0f);
+        const bool bNoSelfShadow = (pBonesEntry->m_lDrawDestinationOverride & 0x10) != 0;
+        const ZREF rBones = pBaseGeom->GetRef();
+
+        SReducedBoneLight reduced[4]{};
+        uint32_t lNumReduced = 0;
+        ZVector3 vAmbient{};
+        ZVector3 vTotal{};
+
+        if (const ZBaseGeom* pEnvironment = pBonesEntry->m_pEnvironment)
+        {
+            const uint16_t lDrawId = pEnvironment->m_lDrawId;
+            auto* pEnvironmentEntry = lDrawId
+                ? static_cast<ZRenderEntryGeom*>(m_apRenderEntryLookup[lDrawId]) : nullptr;
+            const auto* pLight = ZPrimHandle{ pEnvironment->m_lPrim }.Get<SPrimLightEnvironment>();
+            if (pEnvironmentEntry && pLight)
+            {
+                bool bReduce = true;
+                if ((pLight->lLightControl & 2) != 0)
+                    bReduce = lShaderQuality < ZSharedResourcesD3D::SHADERQUALITY_HIGH;
+                else if (lShaderQuality >= ZSharedResourcesD3D::SHADERQUALITY_HIGH
+                    && (pEnvironment->m_lControl & 0x10000) != 0
+                    && HasLightBoneSelfShadow(pEnvironment->GetRef(), rBones) && !bNoSelfShadow)
+                    bReduce = false;
+
+                const float fShadowMultiplier = (pLight->lLightControl & 8) != 0 ? 1.0f : fGlobalMultiplier;
+                const float fAmbientScale = pLight->fMultiplier * 0.5f * (1.0f / 255.0f);
+                const float fDirectScale = fShadowMultiplier * pLight->fMultiplier * 0.5f * (1.0f / 255.0f);
+                ZVector3 vDirection = pEnvironmentEntry->m_ObjectToWorldMatrix.m0.ZAxis();
+                vDirection = vDirection * -1.0f;
+                ZVector3 vDirect = ColorFromD3D(pLight->lDiffuseColor, fDirectScale);
+                vAmbient = ColorFromD3D(pLight->lDiffuseColorBack, fAmbientScale);
+                vTotal += vAmbient;
+                vTotal += vDirect;
+                if (bReduce)
+                    ReduceBoneLight(reduced, lNumReduced, vDirect, vDirection);
+            }
+        }
+
+        uint32_t lNumLights = 0;
+        CListUser* pListUser = g_pSysInterface->m_pEngineData->GetListUser();
+        uint32_t* pLights = pListUser ? pListUser->UnfoldList(&lNumLights, pBaseGeom->m_uListID) : nullptr;
+        for (uint32_t i = 0; i < lNumLights; ++i)
+        {
+            auto* pLightGeom = reinterpret_cast<ZBaseGeom*>(pLights[i]);
+            if (!pLightGeom || (pLightGeom->m_lControl & (ZCINACTIVE | ZCINVISIBLE)) != 0 || !pLightGeom->m_lDrawId)
+                continue;
+
+            auto* pLightEntry = static_cast<ZRenderEntryGeom*>(m_apRenderEntryLookup[pLightGeom->m_lDrawId]);
+            const auto* pLight = ZPrimHandle{ pLightGeom->m_lPrim }.Get<SPrimLight>();
+            if (!pLightEntry || !pLight)
+                continue;
+
+            bool bReduce = true;
+            if ((pLight->lLightControl & 2) != 0)
+                bReduce = lShaderQuality < ZSharedResourcesD3D::SHADERQUALITY_HIGH;
+            else if (lShaderQuality >= ZSharedResourcesD3D::SHADERQUALITY_HIGH
+                && (pLightGeom->m_lControl & 0x10000) != 0
+                && HasLightBoneSelfShadow(pLightGeom->GetRef(), rBones) && !bNoSelfShadow)
+                bReduce = false;
+
+            const auto* pLightExtra = dynamic_cast<const ZLIGHT*>(pLightGeom->m_pExtraGeom);
+            if (pLightExtra && pLightExtra->m_rMasterLight)
+            {
+                ZGEOM* pMaster = ZGEOM::RefToPtr(pLightExtra->m_rMasterLight);
+                bool bMasterInList = false;
+                for (uint32_t j = 0; pMaster && j < lNumLights; ++j)
+                    bMasterInList |= reinterpret_cast<ZBaseGeom*>(pLights[j]) == pMaster->BaseGeom();
+                if (bMasterInList)
+                    continue;
+            }
+
+            ZVector3 vLightPos = pLightEntry->m_ObjectToWorldMatrix.p0;
+            ZVector3 vCenter = pBaseGeom->m_vCen;
+            vmmul(vCenter.Get(), pBonesEntry->m_ObjectToWorldMatrix.m0.Get());
+            vCenter += pBonesEntry->m_ObjectToWorldMatrix.p0;
+            ZVector3 vDirection = vLightPos - vCenter;
+            const float fDistance = vnorm(vDirection.Get());
+            if (fDistance == 0.0f)
+                continue;
+
+            float fAttenuation = 0.0f;
+            if (pLight->lLightType == 1)
+            {
+                const auto* pOmni = static_cast<const SPrimLightOmni*>(pLight);
+                if (fDistance >= pOmni->fFarRange)
+                    continue;
+                fAttenuation = fDistance <= pOmni->fNearRange
+                    ? 1.0f : (pOmni->fFarRange - fDistance) * pOmni->fInverseFarMinusNear;
+            }
+            else if (pLight->lLightType == 0 || pLight->lLightType == 2)
+            {
+                const auto* pSpot = static_cast<const SPrimLightSpot*>(pLight);
+                ZVector3 vSpotDirection = pLightEntry->m_ObjectToWorldMatrix.m0.ZAxis();
+                vSpotDirection = vSpotDirection * -1.0f;
+                const float fRange = std::clamp((pSpot->fFarRange - fDistance) * pSpot->fInverseFarMinusNear, 0.0f, 1.0f);
+                const float fCone = std::clamp(
+                    (vSpotDirection.x * vDirection.x + vSpotDirection.y * vDirection.y + vSpotDirection.z * vDirection.z
+                        - pSpot->fCosFallOff) / (pSpot->fCosHotSpot - pSpot->fCosFallOff), 0.0f, 1.0f);
+                fAttenuation = fRange * fCone;
+            }
+            else
+            {
+                continue;
+            }
+
+            const float fShadowMultiplier = (pLight->lLightControl & 8) != 0 ? 1.0f : fGlobalMultiplier;
+            const float fIntensity = fShadowMultiplier * pLight->fMultiplier * fAttenuation;
+            if (fIntensity <= 0.00012207031f)
+                continue;
+            ZVector3 vColor = ColorFromD3D(pLight->lDiffuseColor, fIntensity * (1.0f / 510.0f));
+            if (bReduce)
+                ReduceBoneLight(reduced, lNumReduced, vColor, vDirection);
+            vTotal += vColor;
+        }
+
+        uint32_t lOutputLight = 0;
+        for (; lOutputLight < lNumReduced; ++lOutputLight)
+        {
+            pOutput->m_aDirectLights[lOutputLight].m_vDirection = reduced[lOutputLight].m_vDirection;
+            pOutput->m_aDirectLights[lOutputLight].m_fDirectionPadding = 0.0f;
+            pOutput->m_aDirectLights[lOutputLight].m_vColor = reduced[lOutputLight].m_vColor;
+            pOutput->m_aDirectLights[lOutputLight].m_fIntensity = reduced[lOutputLight].m_fIntensity * (1.0f / 3.0f);
+        }
+        for (; lOutputLight < 3; ++lOutputLight)
+        {
+            pOutput->m_aDirectLights[lOutputLight] = {};
+            pOutput->m_aDirectLights[lOutputLight].m_vDirection.y = 1.0f;
+        }
+        pOutput->m_vAmbientColor = vAmbient;
+        pOutput->m_fTotalIntensity = std::min((vTotal.x + vTotal.y + vTotal.z) * (2.0f / 3.0f), 1.0f);
+
+        if (lShaderQuality <= ZSharedResourcesD3D::SHADERQUALITY_MEDIUM)
+        {
+            float aWeights[3];
+            for (uint32_t i = 0; i < 3; ++i)
+                aWeights[i] = pOutput->m_aDirectLights[i].m_vColor.x
+                    + pOutput->m_aDirectLights[i].m_vColor.y
+                    + pOutput->m_aDirectLights[i].m_vColor.z;
+            const float fSecond = aWeights[1] / (aWeights[0] + aWeights[1]);
+            const float fThird = aWeights[2] / (aWeights[0] + (aWeights[1] - aWeights[0]) * fSecond + aWeights[2]);
+            ZVector3 vDirection = pOutput->m_aDirectLights[0].m_vDirection
+                + (pOutput->m_aDirectLights[1].m_vDirection - pOutput->m_aDirectLights[0].m_vDirection) * fSecond;
+            vDirection += (pOutput->m_aDirectLights[2].m_vDirection - vDirection) * fThird;
+            for (uint32_t i = 0; i < 3; ++i)
+            {
+                auto& light = pOutput->m_aDirectLights[i];
+                const float fDot = vDirection.x * light.m_vDirection.x
+                    + vDirection.y * light.m_vDirection.y + vDirection.z * light.m_vDirection.z;
+                if (fDot >= 0.0f)
+                {
+                    ZVector3 vMove = light.m_vColor * std::min(fDot, 0.1f);
+                    pOutput->m_vAmbientColor += vMove;
+                    light.m_vColor -= vMove;
+                }
+                else
+                {
+                    light.m_vColor = light.m_vColor * 0.1f;
+                    pOutput->m_vAmbientColor += light.m_vColor;
+                    light.m_vColor = {};
+                }
+            }
+            pOutput->m_aDirectLights[0].m_vColor += pOutput->m_aDirectLights[1].m_vColor;
+            pOutput->m_aDirectLights[0].m_vColor += pOutput->m_aDirectLights[2].m_vColor;
+            pOutput->m_aDirectLights[0].m_vDirection = vDirection;
+            pOutput->m_aDirectLights[1].m_vColor = {};
+            pOutput->m_aDirectLights[2].m_vColor = {};
+        }
+
+        if (auto* pController = dynamic_cast<ZCTRLIKLNKOBJ*>(pBaseGeom->m_pExtraGeom))
+            pController->SetLightReceived(pOutput->m_fTotalIntensity);
     }
 }

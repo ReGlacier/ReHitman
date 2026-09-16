@@ -12,14 +12,14 @@ namespace Glacier
         // vtbl
         void InitAllocation() override;
         void BeginFrame() override;
-        void __thiscall Update(ZRender* pRender) override;
+        void Update(ZRender* pRender) override;
         ZRenderViewBase* NewView(ZRender* pRender, uint32_t lViewNumber, uint32_t lViewId) override;
-        void CalcBoneLightSources(ZBaseGeom* pBaseGeom, float* pDirectLights) override;
+        void CalcBoneLightSources(ZRenderEntryBones* pRenderEntryBones, float* pDirectLights) override;
 
         // methods
         ZRenderDrawD3D();
 
-        // members (no new members?)
+        bool HasLightBoneSelfShadow(ZREF rLight, ZREF rBones) const;
     };
     RE_VERIFY_SIZE(ZRenderDrawD3D, 0x58864); // Verified PC allocation
 }

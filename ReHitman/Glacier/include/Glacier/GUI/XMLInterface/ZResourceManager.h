@@ -4,6 +4,7 @@
 #include <Glacier/ZSTL/ZMath.h>
 #include <Glacier/ZSTL/TIMETYPE.h>
 #include <Glacier/ZSTL/ZStaticVector.h>
+#include <Glacier/GUI/XMLInterface/System/ZGUIBase.h>
 
 
 namespace Glacier
@@ -12,6 +13,7 @@ namespace Glacier
     class ZWINGROUP;
     class ZFRAME;
     class ZTTFONT;
+    class ZColorSet;
     class ZMenuElements;
     class IGUIElement;
     class IWindowInterface;
@@ -92,6 +94,8 @@ namespace Glacier
         ZMenu3DCam m_aMenu3DCam[4]; // Count approved by ZResourceManager::CreateMenu3DViews (while loop)
 
         // methods
+        ZFRAME* GetFrame(const ZVector2& vPos, ZColorSet* pColorSet, ZWINGROUP* pParent,
+            const ZVector2& vSize, const char* pszName, EAlignment eAlignment);
         void ReleaseTextGroup(ZWINGROUP* pGroup);
         void CreateMenu3DViews(int iFlags);
     };

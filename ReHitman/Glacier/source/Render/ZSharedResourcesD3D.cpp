@@ -23,6 +23,16 @@
 
 namespace Glacier
 {
+    IDirect3DTexture9* ZSharedResourcesD3D::ResolveBlurredTexture(IDirect3DTexture9* pTexture) const
+    {
+        if (!pTexture || pTexture == m_pBlurredSrcTexture)
+        {
+            return m_BlurTexture.m_pTextures[0];
+        }
+
+        return pTexture;
+    }
+
     namespace
     {
         #include "ZSharedResourcesD3D_ProceduralData.inc"

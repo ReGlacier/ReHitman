@@ -48,6 +48,13 @@ namespace Glacier
             ZFixedArray<ZRenderEntryMap::ZEntry, ENTRIES_NR> m_Entries;
         };
 
+        struct SLightBoneSelfShadow
+        {
+            ZREF m_rLight;
+            ZREF m_rBones;
+            uint32_t m_lShadowId;
+        };
+
         // vtbl
         void BeginFrame() override;
         void Flush() override;
@@ -77,15 +84,15 @@ namespace Glacier
         virtual SRenderEntryInstance* CreateRenderEntryInstance(const ZPrimHandle& hPrim, ZRenderEntry* pEntry, ZBaseGeom* pBaseGeom, bool bUniqueRenderObject);
         virtual void DestroyRenderEntryInstance(SRenderEntryInstance* pRenderEntryInstance);
         virtual void CleanupUnused();
-        virtual void CalcBoneLightSources(ZBaseGeom* pBaseGeom, float* pDirectLights) = 0;
-        virtual void CalcBoneLightSources(ZRenderEntryBones* pRenderEntryBones, float* pDirectLights);
+        virtual void CalcBoneLightSources(ZRenderEntryBones* pRenderEntryBones, float* pDirectLights) = 0;
+        virtual void CalcBoneLightSources(ZBaseGeom* pBaseGeom, float* pDirectLights);
 
         // methods
         ZRenderDraw();
 
         ZRenderEntry* AddRenderEntryArray(uint32_t lPrim, const SDrawArray* pDrawArray);
         ZRenderEntrySprite* AddRenderEntrySprite(uint32_t lPrim);
-        ZRenderEntry* GetOrCreateRenderEntry(ZBaseGeom* pBaseGeom);
+        ZRenderEntry* GetOrCreateRenderEntry(ZBaseGeom* pBaseGeom, ZRenderEntry* pObserverEntry = nullptr);
         uint32_t CreateRenderEntries(
             ZRenderEntry** pRenderEntries,
             uint32_t lMaxNumEntries,
@@ -114,7 +121,8 @@ namespace Glacier
         ZRenderObjectInstance* m_apToBeDeleted[512];              // +0x47F98. Object instances pending deletion
         ZRenderEntryMap* m_pEntryReuse;                           // +0x48798. Verified by ZRenderDraw::AddRenderEntrySprite
         ZFixedArray<SRenderEntryInstance, 4096> m_RenderEntryInstances; // +0x4879C. Name approved by XBox PDB
-        RE_ADD_PADDING(0xC4);                                     // +0x587A0 - 0x58864. Unused tail (not touched by ctor/Flush/CleanupUnused)
+        uint32_t m_lLightBoneSelfShadowCount;                     // +0x587A0. PC D3D self-shadow pair count
+        SLightBoneSelfShadow m_aLightBoneSelfShadows[16];         // +0x587A4. PC D3D self-shadow pairs
     };
     RE_VERIFY_OFFSET(ZRenderDraw, m_DecalMarks, 0x12C);            // Approved by PC & XBox ctor
     RE_VERIFY_OFFSET(ZRenderDraw, m_apRenderEntryLookup, 0x7F70);  // Approved by PC Flush (0x20000 byte memset)
@@ -125,5 +133,6 @@ namespace Glacier
     RE_VERIFY_OFFSET(ZRenderDraw, m_lToBeDeletedCount, 0x47F94);   // Approved by PC DestroyRenderEntryInstance
     RE_VERIFY_OFFSET(ZRenderDraw, m_apToBeDeleted, 0x47F98);       // Approved by PC DestroyRenderEntryInstance
     RE_VERIFY_OFFSET(ZRenderDraw, m_RenderEntryInstances, 0x4879C);// Approved by PC ctor (16 byte stride, 4096 entries)
+    RE_VERIFY_OFFSET(ZRenderDraw, m_lLightBoneSelfShadowCount, 0x587A0); // PC 0x004AFAF0 / 0x004AFAB0
     RE_VERIFY_SIZE(ZRenderDraw, 0x58864);                          // Approved by ZSharedResourcesD3D::ZSharedResourcesD3D allocation
 }

@@ -78,6 +78,7 @@ namespace Glacier
 
     uint32_t ZPrimControlBase::GetPrimOffset(const void* ptr)
     {
+        // PC slot 6 is the shared assert-and-zero error stub, inherited unchanged by Wintel.
         ZASSERT(false);
         return 0u;
     }
@@ -539,19 +540,17 @@ namespace Glacier
         ZPrimHandle hObjectTable { pObjectHeader->lObjectTable };
         const uint32_t* pObjectTable = hObjectTable;
 
-        uint32_t lCurrentVariation = 0u;
-
-        for (; lCurrentVariation < pObjectHeader->lNumObjects; ++lCurrentVariation)
+        for (uint32_t lCurrentVariation = 0; lCurrentVariation < pObjectHeader->lNumObjects; ++lCurrentVariation)
         {
             const uint32_t lObject = pObjectTable[lCurrentVariation];
             ZPrimHandle hObject { lObject };
             const SPrimObject* pObject = hObject;
 
             if (pObject->lVariantId == lVariantId)
-                break;
+                return true;
         }
 
-        return true;
+        return false;
     }
 
     uint32_t ZPrimControlBase::GetNumVariants(uint32_t lPrim)
@@ -797,7 +796,7 @@ namespace Glacier
     {
         while (lPrim)
         {
-            const auto* pData = reinterpret_cast<const SPrims*>(lPrim);
+            const auto* pData = reinterpret_cast<const SPrims*>(GetPrimData(lPrim));
             if ((pData->lTextureId & 0x7FF) != 0)
             {
                 if (!pTextureName)
@@ -817,7 +816,7 @@ namespace Glacier
             lPrim = pData->lNextPrim;
         }
 
-        return 0u;
+        return lPrim;
     }
 
     void ZPrimControlBase::CopyPrimDrawMode(uint32_t lDestPrim, uint32_t lSourcePrim)
@@ -853,7 +852,7 @@ namespace Glacier
         if (!hdr || hdr->lType != PTOBJECTHEADER)
             return 0;
 
-        if (lVariation < hdr->lNumObjects)
+        if (lVariation > hdr->lNumObjects)
             return 0;
 
         const uint32_t* pObjTable = reinterpret_cast<const uint32_t*>(GetPrimData(hdr->lObjectTable));
@@ -881,12 +880,14 @@ namespace Glacier
 
     uint32_t ZPrimControlBase::CopyBasePrim(uint32_t lPrim)
     {
+        // PC slot 67 is the shared assert-and-zero error stub, inherited unchanged by Wintel.
         ZASSERT(false);
         return 0;
     }
 
     uint32_t ZPrimControlBase::GetBasePrim(uint32_t lPrim)
     {
+        // PC slot 68 is the shared assert-and-zero error stub, inherited unchanged by Wintel.
         ZASSERT(false);
         return 0;
     }

@@ -1,6 +1,8 @@
 #include <Glacier/Render/Material/ZRenderBinderContextD3DFX.h>
 #include <Glacier/Render/Material/ZRenderMaterialEffectD3DFX.h>
 #include <Glacier/Render/Globals.h>
+#include <Glacier/Render/Entry/ZRenderEntryBones.h>
+#include <Glacier/Render/Entry/ZRenderEntryGeom.h>
 #include <Glacier/Render/Object/ZRenderObject.h>
 #include <Glacier/Render/Object/ZRenderObjectInstance.h>
 #include <Glacier/Render/Prim/EPrimType.h>
@@ -20,6 +22,7 @@
 #include <Glacier/System/ZSysInterface.h>
 #include <Glacier/ZUniAssert.h>
 #include <cstring>
+#include <cmath>
 
 
 namespace Glacier
@@ -478,7 +481,9 @@ namespace Glacier
 
             if (ZSharedResourcesD3D::g_pInstance->m_bBlurDropShadow && !s_bBlurDropShadowActive)
             {
-                // lTexture = sub_490AD0(lTexture);
+                lTexture = reinterpret_cast<uint32_t>(
+                    ZSharedResourcesD3D::g_pInstance->ResolveBlurredTexture(
+                        reinterpret_cast<IDirect3DTexture9*>(lTexture)));
             }
 
             SetTexture(reinterpret_cast<IDirect3DBaseTexture9*>(lTexture));
@@ -633,26 +638,25 @@ namespace Glacier
         case 44:
         {
             // Bone-light matrix array (28 floats)
-            // The bone-light source layout is only partially represented by local headers.
-            const uint8_t* pBonesLight = reinterpret_cast<const uint8_t*>(pContext->m_pBonesLight);
             s_lBoneLightCache = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(pContext->m_pBonesLight));
 
             float aResult[28] = {};
-            if (pBonesLight == reinterpret_cast<const uint8_t*>(32))
+            if (pContext->m_pBonesLight == reinterpret_cast<const float*>(32))
             {
                 std::memset(aResult, 1, sizeof(aResult));
             }
-            else if (pBonesLight)
+            else if (pContext->m_pBonesLight)
             {
-                // Bone light transform: interleaved bone data (3x4 matrices) transformed by object basis
-                const float* pBonesLightF = reinterpret_cast<const float*>(pBonesLight);
-                vmtmul(&aResult[0], &pBonesLightF[0], pContext->m_ObjectToWorldMatrix.m0);
-                pcpy(&aResult[4], &pBonesLightF[4]);
-                vmtmul(&aResult[8], &pBonesLightF[8], pContext->m_ObjectToWorldMatrix.m0);
-                pcpy(&aResult[12], &pBonesLightF[12]);
-                vmtmul(&aResult[16], &pBonesLightF[16], pContext->m_ObjectToWorldMatrix.m0);
-                pcpy(&aResult[20], &pBonesLightF[20]);
-                pcpy(&aResult[24], &pBonesLightF[24]);
+                const auto* pBonesLight = reinterpret_cast<const SBoneLightData*>(pContext->m_pBonesLight);
+                for (uint32_t i = 0; i < 3; ++i)
+                {
+                    vmtmul(&aResult[i * 8], pBonesLight->m_aDirectLights[i].m_vDirection,
+                           pContext->m_ObjectToWorldMatrix.m0);
+                    pcpy(&aResult[i * 8 + 4], pBonesLight->m_aDirectLights[i].m_vColor);
+                    aResult[i * 8 + 7] = pBonesLight->m_aDirectLights[i].m_fIntensity;
+                }
+                pcpy(&aResult[24], pBonesLight->m_vAmbientColor);
+                aResult[27] = pBonesLight->m_fTotalIntensity;
             }
 
             SetFloatArray(aResult, 28);
@@ -662,24 +666,26 @@ namespace Glacier
         case 46:
         {
             // Bone-light 3x4 matrix (12 floats)
-            // The bone-light source layout is only partially represented by local headers.
-            const uint8_t* pBonesLight = reinterpret_cast<const uint8_t*>(pContext->m_pBonesLight);
+            if (!pContext->m_nCurrentPass)
+                s_lBonesLight2Cache = 0;
             if (s_lBonesLight2Cache != static_cast<uint32_t>(reinterpret_cast<uintptr_t>(pContext->m_pBonesLight)))
             {
                 s_lBonesLight2Cache = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(pContext->m_pBonesLight));
 
                 float aResult[12] = {};
-                if (pBonesLight == reinterpret_cast<const uint8_t*>(32))
+                if (pContext->m_pBonesLight == reinterpret_cast<const float*>(32))
                 {
                     std::memset(aResult, 1, sizeof(aResult));
                 }
-                else if (pBonesLight)
+                else if (pContext->m_pBonesLight)
                 {
-                    // The source layout below is retained from the recovered PC access pattern.
-                    // const float* pBonesLightF = reinterpret_cast<const float*>(pBonesLight);
-                    // pcpy(&aResult[0], &pBonesLightF[24]);
-                    // vmtmul(&aResult[4], &pBonesLightF[0], pContext->m_ObjectToWorldMatrix.m0);
-                    // pcpy(&aResult[8], &pBonesLightF[4]);
+                    const auto* pBonesLight = reinterpret_cast<const SBoneLightData*>(pContext->m_pBonesLight);
+                    pcpy(&aResult[0], pBonesLight->m_vAmbientColor);
+                    aResult[3] = pBonesLight->m_fTotalIntensity;
+                    vmtmul(&aResult[4], pBonesLight->m_aDirectLights[0].m_vDirection,
+                           pContext->m_ObjectToWorldMatrix.m0);
+                    pcpy(&aResult[8], pBonesLight->m_aDirectLights[0].m_vColor);
+                    aResult[11] = pBonesLight->m_aDirectLights[0].m_fIntensity;
                 }
 
                 SetFloatArray(aResult, 12);
@@ -700,12 +706,13 @@ namespace Glacier
             // Texcoord scroll frame fraction
             const ZPrimHandle& hPrim = pContext->m_pRenderObjectInstance->m_pRenderObject->m_hPrim;
             const auto* pMesh = hPrim.Get<SPrimMesh>();
-            // The second render-entry frame field is not represented by the local entry headers.
-            // const float fFrame = *reinterpret_cast<const float*>(<m_pRenderEntry[1].m_PAD4>);
-            // const float fFraction = (fFrame - static_cast<float>(static_cast<uint16_t>(pMesh->lNumFrames)))
-            //     / static_cast<float>(static_cast<uint16_t>(pMesh->lNumFrames >> 16));
-            // float fFrac = fFraction - std::floor(fFraction);
-            // SetFloatArray(&fFrac, 1);
+            const auto* pRenderEntry = static_cast<const ZRenderEntryGeom*>(
+                pContext->m_pRenderObjectInstance->m_pRenderEntry);
+            const float fFraction =
+                (pRenderEntry->m_fVertexFrameNumber - static_cast<float>(pMesh->lFrameStart))
+                / static_cast<float>(pMesh->lFrameStep);
+            const float fPhase = fFraction - std::floor(fFraction);
+            SetFloatArray(&fPhase, 1);
             break;
         }
 

@@ -1,11 +1,13 @@
 #include <Glacier/Action/ZActionManager.h>
 #include <Glacier/Audio/ZSoundObject.h>
+#include <Glacier/Audio/ZSoundDllBase.h>
 #include <Glacier/Com/CCom.h>
 #include <Glacier/Com/CCOMType.h>
 #include <Glacier/Data/ZEngineDataBase.h>
 #include <Glacier/Data/ZGameData.h>
 #include <Glacier/GUI/Control/ZCONTROL.h>
 #include <Glacier/GUI/Frame/ZFRAME.h>
+#include <Glacier/GUI/ZLINEOBJ.h>
 #include <Glacier/GUI/XMLInterface/System/ZMenuElements.h>
 #include <Glacier/GUI/XMLInterface/Windows/IWindowInterface.h>
 #include <Glacier/GUI/XMLInterface/ZXMLGUISystem.h>
@@ -15,12 +17,26 @@
 #include <Glacier/Geom/ZGEOM.h>
 #include <Glacier/Geom/ZSNDOBJ.h>
 #include <Glacier/RTP/VirtualTables.h>
+#include <Glacier/Render/View/IView.h>
+#include <Glacier/Render/ZRender.h>
 #include <Glacier/System/ZDllBase.h>
 #include <Glacier/System/ZSysInterface.h>
+#include <Glacier/ZMessageResolver.h>
 
 
 namespace Glacier
 {
+    namespace
+    {
+        ZMessageResolver g_msgCreateViews("CreateViews");
+
+        void PauseMenuAudio(bool bPause)
+        {
+            if (ZSoundDllBase* pSoundDll = g_pSysInterface->GetSoundDll())
+                pSoundDll->Pause(bPause, true);
+        }
+    }
+
     ZXMLGUISystem::ZXMLGUISystem()
         : CWinEvent<ZWINDOW>()
     {
@@ -47,21 +63,33 @@ namespace Glacier
         m_iNumOfTRCWindows = 0;
     }
 
-    ZXMLGUISystem::~ZXMLGUISystem()
-    {
-        // TODO: Finish me
-    }
+    ZXMLGUISystem::~ZXMLGUISystem() = default;
 
     int ZXMLGUISystem::Command(Glacier::ZMSGID command, Glacier::ZDATA data)
     {
-        // TODO: Finish me
+        if (g_msgCreateViews == command)
+        {
+            if (data)
+                m_bAddBackgroundCamAnd3DCams = *static_cast<const bool*>(data);
+            return 1;
+        }
+
+        if (command == 0x8000 && WndMessage(static_cast<ZWMEVENT*>(data)))
+            static_cast<ZWMEVENT*>(data)->Return = true;
+
         return 0;
     }
 
     bool ZXMLGUISystem::OnSliderChange(ZREF rSlider, uint32_t iValue)
     {
-        // TODO: Finish me
-        return false;
+        ZGEOM* pGeom = ZGEOM::RefToPtr(rSlider);
+        ZASSERT(pGeom && pGeom->IsDerivedFrom<ZCONTROL>());
+
+        ZCONTROL* pControl = static_cast<ZCONTROL*>(pGeom);
+        if (IGUIElement* pElement = m_pMenuElements->GetGUIElement(pControl->GetControlId()))
+            pElement->SetValue(static_cast<int>(iValue));
+
+        return true;
     }
 
     void ZXMLGUISystem::AddOtherWindowCount(int iAmount)
@@ -72,6 +100,13 @@ namespace Glacier
     void ZXMLGUISystem::SetupCameras()
     {
         CCom* pSceneCom = g_pEngineData->GetSceneCom();
+        ZRender* pRender = g_pSysInterface->WindowFirst;
+        const uint32_t aViewport[4] = {
+            0,
+            0,
+            static_cast<uint32_t>(pRender->GetSizeX()),
+            static_cast<uint32_t>(pRender->GetSizeY())
+        };
 
         bool b3dCamExists = false;
         pSceneCom->GetVal("3dBackgroundCamExists", &b3dCamExists);
@@ -83,8 +118,10 @@ namespace Glacier
             ZGEOM* p3dCam = ZGEOM::RefToPtr(static_cast<ZREF>(iRef));
             if (p3dCam)
             {
-                // TODO: Finish me - render view creation for 3dBackgroundCam (view id 1)
-                // g_pSysInterface->WindowFirst->CreateRenderView(1, 1) + SetCamera + SetGeom
+                IView* pView = pRender->CreateView(1, ZDrawSurface::SCREEN);
+                pView->SetViewport(aViewport);
+                pView->AddCamera(static_cast<ZCAMERA*>(p3dCam));
+                pView->EnablePostfilter();
             }
         }
 
@@ -97,10 +134,11 @@ namespace Glacier
 
         if (pBgCam)
         {
-            // TODO: Finish me - render view creation for BackgroundCam (view id 2)
-            // g_pSysInterface->WindowFirst->CreateRenderView(2, 1) + SetCamera + SetGeom
+            IView* pView = pRender->CreateView(2, ZDrawSurface::SCREEN);
+            pView->SetViewport(aViewport);
 
             ZASSERT(pBgCam->IsDerivedFrom<ZCAMERA>());
+            pView->AddCamera(pBgCam);
 
             ZBaseGeom* pParentBase = pBgCam->BaseGeom()->m_pParent;
             if (pParentBase)
@@ -124,8 +162,10 @@ namespace Glacier
 
         if (pMenuCam)
         {
-            // TODO: Finish me - render view creation for MenuCam (view id 3)
+            IView* pView = pRender->CreateView(3, ZDrawSurface::SCREEN);
+            pView->SetViewport(aViewport);
             ZASSERT(pMenuCam->IsDerivedFrom<ZCAMERA>());
+            pView->AddCamera(pMenuCam);
             pMenuCam->MakeActive();
             ZASSERT(GetSystem()->m_pSystem != nullptr);
             m_aMenuLayer[0].pParent = static_cast<ZWINGROUP*>(GetSystem());
@@ -138,8 +178,10 @@ namespace Glacier
 
         if (pDialogCam)
         {
-            // TODO: Finish me - render view creation for DialogCam (view id 177)
+            IView* pView = pRender->CreateView(177, ZDrawSurface::SCREEN);
+            pView->SetViewport(aViewport);
             ZASSERT(pDialogCam->IsDerivedFrom<ZCAMERA>());
+            pView->AddCamera(pDialogCam);
             pDialogCam->MakeActive();
 
             ZBaseGeom* pParentBase = pDialogCam->BaseGeom()->m_pParent;
@@ -159,8 +201,10 @@ namespace Glacier
 
         if (pTRCCam)
         {
-            // TODO: Finish me - render view creation for TRCCam (view id 178)
+            IView* pView = pRender->CreateView(178, ZDrawSurface::SCREEN);
+            pView->SetViewport(aViewport);
             ZASSERT(pTRCCam->IsDerivedFrom<ZCAMERA>());
+            pView->AddCamera(pTRCCam);
             pTRCCam->MakeActive();
 
             ZBaseGeom* pParentBase = pTRCCam->BaseGeom()->m_pParent;
@@ -179,8 +223,10 @@ namespace Glacier
 
         if (pMouseCam)
         {
-            // TODO: Finish me - render view creation for MouseCam (view id 179)
+            IView* pView = pRender->CreateView(179, ZDrawSurface::SCREEN);
+            pView->SetViewport(aViewport);
             ZASSERT(pMouseCam->IsDerivedFrom<ZCAMERA>());
+            pView->AddCamera(pMouseCam);
             pMouseCam->MakeActive();
 
             ZBaseGeom* pParentBase = pMouseCam->BaseGeom()->m_pParent;
@@ -250,8 +296,12 @@ namespace Glacier
 
     IGUIElement* ZXMLGUISystem::GetElementInFocus()
     {
-        // TODO: Finish me
-        return nullptr;
+        ZWINGROUP* pFocused = GetSystem()->GetFocusedControl();
+        if (!pFocused || !pFocused->IsDerivedFrom<ZCONTROL>())
+            return nullptr;
+
+        const int iControlId = static_cast<ZCONTROL*>(pFocused)->GetControlId();
+        return iControlId == 5000 ? nullptr : m_pMenuElements->GetGUIElement(iControlId);
     }
 
     void ZXMLGUISystem::AddTRCWindow(IWindowInterface* pWnd)
@@ -298,8 +348,34 @@ namespace Glacier
         if (rLayer.pOverlayFrame)
             return;
 
-        // TODO: Finish me - ZResourceManager::GetFrame("MenuOverlay*", ...) call
-        // Creates overlay frame for the layer when switching to a deeper layer
+        ZVector2 vPos {};
+        ZVector2 vSize {
+            static_cast<float>(g_pSysInterface->m_lResolution[0]),
+            static_cast<float>(g_pSysInterface->m_lResolution[1])
+        };
+
+        if (m_iNumOfWindows <= 1)
+        {
+            rLayer.pParent->SetPos(0.0f, 0.0f, 0.0f);
+        }
+        else
+        {
+            IWindowInterface* pCoveredWindow = m_apWindowStack[m_iNumOfWindows - 2];
+            if (pCoveredWindow->IsTRC() || pCoveredWindow->IsDialog())
+            {
+                vSize = pCoveredWindow->m_v2WindowSize;
+            }
+            else
+            {
+                const ZVector3& vParentPos = rLayer.pParent->Pos();
+                vPos.x = -vParentPos.x;
+                vPos.y = -vParentPos.y;
+            }
+        }
+
+        ZColorSet colorSet;
+        rLayer.pOverlayFrame = m_ResourceManager.GetFrame(
+            vPos, &colorSet, rLayer.pParent, vSize, "MenuOverlay*", ELEFT);
     }
 
     void ZXMLGUISystem::AddRecieveAllInput(IGUIElement* pElement)
@@ -444,13 +520,13 @@ namespace Glacier
             if (!m_bCloseSystem)
             {
                 g_pEngineData->m_bPause = true;
-                // TODO: Finish me - ZDllBase::PushScene vtable call (pause/mute scene transition)
+                PauseMenuAudio(true);
             }
         }
         else if (m_bUnpauseGame)
         {
             g_pEngineData->m_bPause = false;
-            // TODO: Finish me - ZDllBase::PushScene vtable call (unpause scene transition)
+            PauseMenuAudio(false);
         }
 
         if (g_pGameData)
@@ -676,14 +752,14 @@ namespace Glacier
                     if (!m_bCloseSystem)
                     {
                         g_pEngineData->m_bPause = true;
-                        // TODO: Finish me - ZDllBase::PushScene vtable call (pause)
+                        PauseMenuAudio(true);
                         StopAndSetMusicFlags();
                     }
                 }
                 else if (m_bUnpauseGame)
                 {
                     g_pEngineData->m_bPause = false;
-                    // TODO: Finish me - ZDllBase::PushScene vtable call (unpause)
+                    PauseMenuAudio(false);
                 }
 
                 m_iLastFocusedElement = m_aLastIndex[m_iNumOfWindows - 1];
@@ -702,16 +778,30 @@ namespace Glacier
             (void)GetSystem()->GetObjectId();
         }
 
-        if (m_bCloseSystem && m_iNumOfWindows == 0)
+        if (m_bCloseSystem && m_iNumOfWindows == 0 && m_iNumOfTRCWindows <= 0)
         {
             m_ResourceManager.ReleaseTextGroup(m_pWinGroupResources);
             m_pWinGroupResources = nullptr;
-            // TODO: Finish me - ReleaseOverlayFrame for all 3 layers + DeactivateFrameUpdate
+
+            ZWINDOWS* pWindows = GetSystem();
+            pWindows->m_pExternalMouseColiGroup = nullptr;
+            pWindows->PopWindow();
+            if (!m_iNumOtherWindows)
+            {
+                pWindows->SetShowMouse(false);
+                pWindows->DisableClassCall(16);
+                if (pWindows->m_pMainCamera)
+                    pWindows->m_pMainCamera->DeactivateCam();
+                if (m_pMenuCam)
+                    m_pMenuCam->DeactivateCam();
+            }
+
+            DeactivateFrameUpdate();
 
             if (m_bUnpauseGame)
             {
                 g_pEngineData->m_bPause = false;
-                // TODO: Finish me - ZDllBase::PushScene vtable call (unpause)
+                PauseMenuAudio(false);
                 if (m_bUnpauseGame)
                     g_pGameData->GetAudioEffectsInterface().PlaySound(10);
             }
@@ -723,14 +813,14 @@ namespace Glacier
             if (pGeom)
                 static_cast<ZSNDOBJ*>(pGeom)->GetSoundObject()->SetActive(false);
 
-            if (m_pMenuCam)
-                m_pMenuCam->MakeActive();
+            if (m_pBackgroundCam)
+                m_pBackgroundCam->DeactivateCam();
             if (m_pDialogCam)
-                m_pDialogCam->MakeActive();
+                m_pDialogCam->DeactivateCam();
             if (m_pTRCCam)
-                m_pTRCCam->MakeActive();
+                m_pTRCCam->DeactivateCam();
 
-            Action::instance->DisableInputTimer(0x0C000032);
+            Action::instance->DisableInputTimer(0.3);
         }
 
         if (m_iNumOfTRCWindows > 0)
@@ -907,6 +997,79 @@ namespace Glacier
     void ZXMLGUISystem::SetFont(const ZGEOMREF& rFont)
     {
         m_pGroupFonts = ref_cast<ZGROUP>(rFont.GetRef());
+    }
+
+    ZFRAME* ZResourceManager::GetFrame(const ZVector2& vPos, ZColorSet*, ZWINGROUP* pParent,
+        const ZVector2& vSize, const char* pszName, EAlignment)
+    {
+        ZGEOM* pGeom = m_pWinGroupFrames->FindGeom(pszName, nullptr);
+        ZASSERT(!pGeom || pGeom->IsDerivedFrom<ZFRAME>());
+        if (!pGeom)
+            return nullptr;
+
+        ZFRAME* pFrame = static_cast<ZFRAME*>(pGeom);
+        pParent->AttachGeom(pFrame, true);
+        pFrame->SetPos(vPos.x, vPos.y, 0.0f);
+        pFrame->SetSize(static_cast<int>(vSize.x), static_cast<int>(vSize.y));
+        pFrame->Hide(false);
+        return pFrame;
+    }
+
+    void ZResourceManager::ReleaseTextGroup(ZWINGROUP* pGroup)
+    {
+        if (!pGroup)
+            return;
+
+        ZLINEOBJ* apLineObjects[32];
+        int iLineObjects = 0;
+        for (ZBaseGeom* pBaseGeom = pGroup->m_pGroupLast; ForNotGroupsCheck(pBaseGeom); pBaseGeom = pBaseGeom->GetPrev())
+        {
+            ZGEOM* pGeom = pBaseGeom->GetGeom();
+            if (pGeom->IsDerivedFrom<ZLINEOBJ>())
+            {
+                ZASSERT(iLineObjects < 32);
+                apLineObjects[iLineObjects++] = static_cast<ZLINEOBJ*>(pGeom);
+            }
+        }
+
+        for (int i = 0; i < iLineObjects; ++i)
+        {
+            apLineObjects[i]->SetText("");
+            apLineObjects[i]->RemoveGeometry();
+            m_pWinGroupLineObjs->AttachGeom(apLineObjects[i], true);
+        }
+
+        m_pWinGroupGroups->AttachGeom(pGroup, true);
+    }
+
+    void ZResourceManager::CreateMenu3DViews(int iFirstViewId)
+    {
+        char szCameraName[] = "Menu3DCam0X";
+        for (int i = 0; i < 4; ++i)
+        {
+            szCameraName[10] = static_cast<char>('1' + i);
+            int iRef = 0;
+            g_pEngineData->GetSceneCom()->GetVal(szCameraName, &iRef);
+            ZGEOM* pGeom = ZGEOM::RefToPtr(static_cast<ZREF>(iRef));
+            if (!pGeom)
+                continue;
+
+            ZASSERT(pGeom->IsDerivedFrom<ZCAMERA>());
+            ZCAMERA* pCamera = static_cast<ZCAMERA*>(pGeom);
+            ZMenu3DCam& rMenuCam = m_aMenu3DCam[i];
+            rMenuCam.m_pCamera = pCamera;
+            rMenuCam.m_fDefaultCamPosX = pCamera->Pos().x;
+            rMenuCam.m_pIView = g_pSysInterface->WindowFirst->CreateView(
+                static_cast<unsigned int>(iFirstViewId + i), ZDrawSurface::SCREEN);
+            rMenuCam.m_pIView->AddCamera(pCamera);
+
+            ZGROUP* pParent = pCamera->BaseGeom()->ParentGroup();
+            pParent->m_lGroupCon |= 0x400u;
+            pCamera->SetCameraRoot(pParent->GetRef());
+            pCamera->CameraCon = 0x298000;
+            pCamera->CameraType = 0;
+            pCamera->DeactivateCam();
+        }
     }
 
 #   pragma region " --- RTTI --- "
