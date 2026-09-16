@@ -14,6 +14,7 @@ namespace Glacier
     // fwds
     class ZRender;
     class ZDllBase;
+    class CConsole;
     class CConfiguration;
     class ZEngineDataBase;
     class ZSoundDllBase;
@@ -155,6 +156,11 @@ namespace Glacier
         void NormalizePath(MYSTR* pStr) const;
         float GetTimeMultiplier() const;
         ZSoundDllBase* GetSoundDll() const;
+
+        // debug stuff: it should be virtual, but I'd like to keep PC layout
+        void SetConsole(CConsole* pConsole);
+        CConsole* GetConsole();
+        void ConsoleExecuteCommand(const char* szCommand);
 
         // members
         alignas(8) bool m_bDebugActive; // It's really weird, but it is
