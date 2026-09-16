@@ -99,6 +99,7 @@ Current Project Goals
     * [ ] LevelControls
     * [ ] Script bindings
     * [ ] Per level specific things
+  * [ ] Toolset - TBD
 
 FAQ
 -----
@@ -112,6 +113,7 @@ Credits
  * [Daniel Hunter](https://github.com/HHCHunter)
  * [Notexe](https://github.com/Notexe)
  * [RealMiamo](https://github.com/RealMiamo)
+ * [Pavledev](https://github.com/pavledev)
 
 Contact Information.
 ---------------
