@@ -513,15 +513,14 @@ namespace Glacier
                 break;
             case ZCmdList::CMD_SET_COLOR_WRITE_MASK:
                 if (g_pd3dDevice)
-                    g_pd3dDevice->SetRenderState(static_cast<D3DRENDERSTATETYPE>(0xA8), pData[0]);
+                    g_pd3dDevice->SetRenderState(D3DRS_COLORWRITEENABLE, pData[0]);
                 break;
             case ZCmdList::CMD_BLUR_SURFACE:
                 if (ZSharedResourcesD3D::g_pInstance)
                 {
-                    ZSharedResourcesD3D::g_pInstance->m_field00C4 = static_cast<int>(pData[0]);
-                    ZSharedResourcesD3D::g_pInstance->BlurTexture(
-                        reinterpret_cast<IDirect3DTexture9*>(pData[0]), 2.0f, 0.0f,
-                        2, pData[2] != 0);
+                    const bool bSinglePass = pData[2] != 0;
+                    ZSharedResourcesD3D::g_pInstance->m_pBlurredSrcTexture = reinterpret_cast<IDirect3DTexture9*>(pData[0]);
+                    ZSharedResourcesD3D::g_pInstance->BlurTexture(ZSharedResourcesD3D::g_pInstance->m_pBlurredSrcTexture, 2.0f, 0.0f, 2, bSinglePass);
                 }
                 break;
             case ZCmdList::CMD_TEXTURE_PROJECTION_INDEX:

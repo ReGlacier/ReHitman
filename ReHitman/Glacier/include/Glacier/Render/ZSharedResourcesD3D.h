@@ -82,7 +82,7 @@ namespace Glacier
         IDirect3DSurface9* m_pEnvDepth;
         bool m_bAllocated;
         RE_ADD_PADDING(3);
-        int m_field00C4; // m_pBlurredSrcTexture?
+        IDirect3DTexture9* m_pBlurredSrcTexture;
         ZBlurTextureWintelD3D m_BlurTexture;
     };
     RE_VERIFY_SIZE(ZSharedResourcesD3D, 0x140); // Verified PC
