@@ -79,7 +79,7 @@ jobs:
       run: |
         New-Item -ItemType Directory -Force artifact
 
-        Copy-Item build/ReHitman/Release/ReHitman.exe artifact/
+        Copy-Item build/ReHitman/ReHitman/Release/ReHitman.exe artifact/
         Copy-Item ReHitman/ReHitman/assets/ReHitman.ini artifact/
 
     - name: Upload build artifact - ReHitman
