@@ -33,19 +33,23 @@ jobs:
 
     - name: Generate projects
       shell: pwsh
+      env:
+        REF: ${{ github.ref }}
+        RUN_NUMBER: ${{ github.run_number }}
       run: |
         # Parse version
-        ref = "{{ github.ref }}"
-        runNumber = "{{ github.run_number }}"
-        \(parsedVersion = "0.0.0.\)runNumber"
+        $ref = $env:REF
+        $runNumber = $env:RUN_NUMBER
+        $parsedVersion = "0.0.0.$runNumber"
 
-        if (\$ref -like "refs/tags/*") {
-            tagName = ref -replace "refs/tags/", ""
-            if (\$tagName -match 'v?(\d+\.\d+\.\d+(\.\d+)?)') {
-                parsedVersion = Matches[1]
+        if ($ref -like "refs/tags/*") {
+            $tagName = $ref -replace "^refs/tags/", ""
+            if ($tagName -match '^v?(\d+\.\d+\.\d+(\.\d+)?)$') {
+                $parsedVersion = $Matches[1]
             }
         }
-        Write-Host "Setting CMake project version to: \$parsedVersion"
+
+        Write-Host "Setting CMake project version to: $parsedVersion"
 
         # Run actual build
         mkdir build
