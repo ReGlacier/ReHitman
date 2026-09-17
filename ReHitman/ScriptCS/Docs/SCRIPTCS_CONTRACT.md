@@ -20,33 +20,85 @@ LANGUAGES C)`) pinning the shared CRT via
 
 ```
 ScriptCS/
-├── CMakeLists.txt            # project LANGUAGES C; MultiThreadedDLL; adds AllLevels, Hideout
+├── CMakeLists.txt            # project LANGUAGES C; MultiThreadedDLL; adds ScriptRuntime, AllLevels, Hideout
+├── ScriptRuntime/
+│   ├── CMakeLists.txt        # add_library(ScriptRuntime STATIC source/ScriptRuntime.c)
+│   ├── include/ScriptRuntime/
+│   │   └── ScriptRuntime.h  # canonical C-facing mirrors of the Glacier script metadata
+│   │                         #   (SCRIPTCREATOR, STATECONTROLLER, FUNCTIONCONTROLLER,
+│   │                         #    SAVEGAMESTATICS, SCRIPTIMPORT, SCRIPTFUNCTIONS,
+│   │                         #    INTERNALSCRIPTFUNCTIONS, TODO_PTR)
+│   └── source/ScriptRuntime.c
 ├── AllLevels/
-│   ├── CMakeLists.txt        # add_library(AllLevels STATIC source/AllLevels.c)
-│   ├── include/AllLevels/AllLevels.h   # placeholder header guard, "custom things"
-│   └── source/AllLevels.c    # empty stub
+│   ├── CMakeLists.txt        # add_library(AllLevels STATIC source/AllLevels.c); links ScriptRuntime
+│   ├── include/AllLevels/
+│   │   ├── AllLevels.h       # umbrella: includes ScriptCreator.h + every Alllevels_*.h
+│   │   ├── ScriptCreator.h   # shim re-exporting ScriptRuntime/ScriptRuntime.h
+│   │   └── Alllevels_*.h     # per-script extern SCRIPTCREATOR declarations (11 scripts)
+│   └── source/AllLevels.c    # SCRIPTCREATOR definitions (names/sizes/state/parent)
 ├── Hideout/
-│   ├── CMakeLists.txt        # add_library(Hideout SHARED source/DllMain.c source/Hideout.c)
-│   ├── include/Hideout/Hideout.h       # placeholder header guard, "custom things"
+│   ├── CMakeLists.txt        # add_library(Hideout SHARED source/DllMain.c source/Hideout.c
+│   │                         #   source/Scripts.c Hideout.def); links ScriptDllInterface AllLevels ScriptRuntime
+│   ├── Hideout.def           # ordinal exports SF@1 ISF@2 Scripts@3 ScriptImports@4
+│   ├── include/Hideout/
+│   │   ├── Hideout.h         # umbrella: includes ScriptCreator.h + every Hideout_*.h
+│   │   └── Hideout_*.h       # per-script extern SCRIPTCREATOR declarations (3 scripts)
 │   └── source/
-│       ├── DllMain.c         # stub returning TRUE (// TODO: Finish me)
-│       └── Hideout.c         # empty stub — per-script sources/data go here
+│       ├── DllMain.c         # returns TRUE for all reasons (shape-compatible with original)
+│       ├── Hideout.c         # the 3 level-specific SCRIPTCREATOR definitions
+│       └── Scripts.c         # contract tables: SF, ISF, Scripts list, ScriptImports[0x2CC]
 └── Docs/                     # this memory bank
 ```
+
+## AllLevels shared scripts (reconstructed from PC_Hideout)
+
+The `Alllevels_*` creators (the shared-script subset of the Hideout.dll
+`Scripts` table) are declared in `AllLevels/include/AllLevels/` and defined in
+`AllLevels/source/AllLevels.c` with their recovered `SCRIPTCREATOR` metadata
+(name, script/state variable sizes, initial state controller, parent creator).
+Per the ScriptCS conventions (see MEMORY_BANK.md), unresolved pointer fields
+(`m_pStateController`, `ProcessMessage`, `Initialize`, `Imports`, `Unpack*`,
+`m_pImports`, ...) are written as `TODO_PTR` (`#define TODO_PTR NULL`) pending
+per-script body reversal — `grep -r TODO_PTR` lists what is still missing.
+The PC creator addresses below are reference anchors only (Docs-only).
+
+| Script | PC creator (ref) | ScriptVars | StateVars | Parent |
+| --- | --- | --- | --- | --- |
+| `Alllevels_Baseboid` | 0x1003E5C0 | 0x0C | 0x00 | — |
+| `Alllevels_Bird` | 0x1003F228 | 0x78 | 0x1C | Alllevels_Baseboid |
+| `Alllevels_Rat` | 0x10043BB0 | 0x190 | 0x24 | Alllevels_Basefunc |
+| `Alllevels_Levelcontrol` | 0x100433F8 | 0x04 | 0x00 | — |
+| `Alllevels_Perceptionconverter` | 0x10043658 | 0xEC | 0x00 | — |
+| `Alllevels_Basefunc` | 0x1003ECB0 | 0x17C | 0x24 | Alllevels_Perceptionconverter |
+| `Alllevels_Vehicles_Car` | 0x10043D28 | 0x54 | 0x00 | — |
+| `Alllevels_Human` | 0x10041A40 | 0x270 | 0x3C | Alllevels_Basefunc |
+| `Alllevels_Civilian` | 0x1003FC90 | 0x290 | 0x3C | Alllevels_Human |
+| `Alllevels_Armed` | 0x1003E488 | 0x2A0 | 0x3C | Alllevels_Civilian |
+| `Alllevels_Guard` | 0x10040818 | 0x2DC | 0x3C | Alllevels_Civilian |
+
+The level-specific `Hideout_*` scripts (`Hideout_Levelcontrol`,
+`Hideout_Canary`, `Hideout_Happyrat`) stay in `ScriptCS/Hideout/`. Their
+recovered `SCRIPTCREATOR` metadata (name, sizes, initial state, parent) is
+defined in `Hideout/source/Hideout.c`; unresolved pointer fields are
+`TODO_PTR` pending body reversal, matching the AllLevels scope.
 
 CMake wiring:
 
 - `ReHitman/CMakeLists.txt` adds `ScriptCS` after `Glacier`, `BloodMoney`,
   `ScriptInterface`, `ReHitman`.
 - `ScriptCS/CMakeLists.txt`: `project(ReHitman LANGUAGES C)` +
-  `set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")`; subdirs: `AllLevels`
-  then `Hideout`.
+  `set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")`; subdirs:
+  `ScriptRuntime`, `AllLevels`, then `Hideout`.
+- `ScriptRuntime`: STATIC lib `ScriptRuntime`, PUBLIC include `include/`,
+  links `ScriptDllInterface` — canonical home of the common script-DLL runtime
+  type descriptions (SCRIPTCREATOR family + SCRIPTFUNCTIONS/ISF + TODO_PTR).
 - `AllLevels`: STATIC lib `AllLevels`, PUBLIC include `include/`, links
-  `ScriptDllInterface` — the shared-script-code layer intended to be linked
-  into every scene DLL.
+  `ScriptDllInterface` and `ScriptRuntime` — the shared-script-code layer
+  intended to be linked into every scene DLL.
 - `Hideout`: SHARED lib `Hideout` (this is the real `Hideout.dll` target),
   PUBLIC include `include/`, links `ScriptDllInterface` (signatures only —
-  never link game-side `ScriptInterface` implementations).
+  never link game-side `ScriptInterface` implementations), `AllLevels`, and
+  `ScriptRuntime`.
 
 Binding rule for the `Hideout` target: every contract check (exports, table
 contents, creator metadata shapes, generated function bodies) is verified
@@ -55,9 +107,11 @@ see anchors below). When new scripts are added (`ReHitman/ScriptCS/<Module>/`),
 bind each to its own PC IDA instance the same way and record the mapping in
 [MEMORY_BANK.md](MEMORY_BANK.md).
 
-Note: targets are currently C-only stubs without ordinal exports or script
-data; producing those is the main pending work and must preserve the contract
-below.
+Current state (2026-09-17): the `Hideout` SHARED target now emits the four
+ordinal exports (`SF`, `ISF`, `Scripts`, `ScriptImports`) via `Hideout.def`
+and `source/Scripts.c`; the three level-specific `SCRIPTCREATOR`s are defined
+in `Hideout.c`. Per-script state/function bodies remain `TODO_PTR` and are the
+main pending work.
 
 ## Binary contract the DLL must satisfy
 
@@ -170,15 +224,18 @@ Detailed in SCRIPT_ENGINE.md; the DLL-visible essentials:
 
 1. `AllLevels` and per-script targets stay header/signature-compatible with
    `ScriptDllInterface` (`SI/SI_*.h`) — never add SI implementations there.
-2. The `Hideout` SHARED target will need: ordinal exports 1–4 with the exact
-   content types above; per-script `SCRIPTCREATOR` data + generated function
-   bodies honoring the float protocol; `DllMain` preserving CRT init handling
-   (compare PC_Hideout `DllEntryPoint` which wraps `_CRT_INIT`). Current
-   `Hideout/CMakeLists.txt` has no export definitions yet.
+2. The `Hideout` SHARED target now has ordinal exports 1–4 with the exact
+   content types above (`SF`, `ISF`, `Scripts`, `ScriptImports`) via
+   `Hideout.def` + `source/Scripts.c`. Remaining: per-script `SCRIPTCREATOR`
+   data (defined, bodies pending) + generated function bodies honoring the
+   float protocol; `DllMain` preserving CRT init handling (compare PC_Hideout
+   `DllEntryPoint` which wraps `_CRT_INIT`).
 3. The DLL is loaded from `scriptcs/_gamerelease/<module>.dll` relative to the
    game working directory (scene COM value `ScriptCModule`), or the
    `OverrideScriptPath` registry-style override — so the `Hideout` target must
-   produce `Hideout.dll` under that path layout at runtime.
+   produce `Hideout.dll` under that path layout at runtime. The CI artifact
+   step copies the built `Hideout.dll` into `Scriptcs/_gamerelease/` so the
+   archive carries it at the expected path.
 4. Keep the binary slot/name/order contract documented here in sync with
    `SI.h`/`SI.cpp`; the engine copies the table blindly and compiled script
    callbacks break silently on any mismatch.

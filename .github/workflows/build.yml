@@ -93,9 +93,11 @@ jobs:
       shell: pwsh
       run: |
         New-Item -ItemType Directory -Force artifact
+        New-Item -ItemType Directory -Force artifact/Scriptcs/_gamerelease
 
         Copy-Item build/ReHitman/Release/ReHitman.exe artifact/
         Copy-Item ReHitman/ReHitman/assets/ReHitman.ini artifact/
+        Copy-Item build/ReHitman/ScriptCS/Hideout/Release/Hideout.dll artifact/Scriptcs/_gamerelease/
 
     - name: Upload build artifact - ReHitman
       uses: actions/upload-artifact@v4

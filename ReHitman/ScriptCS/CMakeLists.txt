@@ -4,5 +4,6 @@ project(ReHitman LANGUAGES C)
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
 
 # Components
+add_subdirectory(ScriptRuntime)
 add_subdirectory(AllLevels)
 add_subdirectory(Hideout)

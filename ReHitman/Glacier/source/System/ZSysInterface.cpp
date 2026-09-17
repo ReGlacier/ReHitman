@@ -11,6 +11,9 @@
 #include <Glacier/Geom/ZGEOM.h>
 #include <Glacier/Data/ZEngineDataBase.h>
 #include <Glacier/Debug/Console.h>
+#include <Glacier/Debug/ZDebug.h>
+#include <Glacier/Input/SysInput.h>
+#include <Glacier/Input/ZInterface.h>
 
 #include <utility>
 #include <cstdarg>
@@ -271,7 +274,7 @@ namespace Glacier
 
         if (g_GlobalCom.GetVal("GamepadMode"))
         {
-            // TODO: Finish this place after SysInput reversed
+            SysInput::instance->m_iMode |= 1u;
         }
 
         if (const char* value = static_cast<const char*>(g_GlobalCom.GetVal("LocaleFile")))
@@ -335,6 +338,16 @@ namespace Glacier
         if (const char* value = static_cast<const char*>(g_GlobalCom.GetVal("ScenesPath")))
         {
             m_sScenesPath = MYSTR(value);
+        }
+
+        if (g_GlobalCom.GetVal("EnableConsole") && !g_pSysInterface->GetConsole())
+        {
+            g_pSysInterface->SetConsole(ZUniMemory::New<CConsole>());
+        }
+
+        if (auto sev = static_cast<const char*>(g_GlobalCom.GetVal("DebugSeverity")))
+        {
+            ZDebug::SetDebugSeverity(sev);
         }
 
         // This code is just in PC, I guess in PS2 it's assigned to smth
@@ -919,7 +932,6 @@ namespace Glacier
 
     float ZSysInterface::Get_TimeMultiplier() const
     {
-        // TODO: Need to check this code twice due we have ability to override actual time multiplier!
         return m_fTimeMultiplier;
     }
 
