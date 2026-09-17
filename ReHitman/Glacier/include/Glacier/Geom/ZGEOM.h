@@ -144,7 +144,7 @@ namespace Glacier
         virtual bool RequestCustomDraw();
         virtual bool HasOwnerDraw() const;
         virtual void OwnerDraw(ZBaseGeom *,uint,ZDrawBuffer *,ZCAMERA *,float const*,float const*,void const*);
-#       ifdef REHITMAN_WITH_DEBUG_DRAW
+#       if defined(REHITMAN_WITH_DEBUG_DRAW)
         virtual void DrawDebugObjects(ZDrawDebugRender* pRender) {}
 #       endif
         virtual void CorrectOwnerDrawMatrix(ZMat3x3& mMat, ZVector3& vPos, ZBaseGeom *pOwnerBaseGeom, uint32_t lBoneId);

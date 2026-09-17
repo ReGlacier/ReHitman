@@ -34,14 +34,29 @@ jobs:
     - name: Generate projects
       shell: pwsh
       run: |
+        # Parse version
+        ref = "{{ github.ref }}"
+        runNumber = "{{ github.run_number }}"
+        \(parsedVersion = "0.0.0.\)runNumber"
+
+        if (\$ref -like "refs/tags/*") {
+            tagName = ref -replace "refs/tags/", ""
+            if (\$tagName -match 'v?(\d+\.\d+\.\d+(\.\d+)?)') {
+                parsedVersion = Matches[1]
+            }
+        }
+        Write-Host "Setting CMake project version to: \$parsedVersion"
+
+        # Run actual build
         mkdir build
         cd build
         cmake --version
         cmake -A Win32 -G "Visual Studio 18 2026" `
           -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" `
           -DVCPKG_TARGET_TRIPLET=x86-windows `
+          -DPROJECT_VERSION_OVERRIDE="$parsedVersion" `
           ..
-    
+
     - name: Build
       run: |
         cd build
@@ -87,13 +102,13 @@ jobs:
       with:
         name: "ReHitman"
         path: "artifact"
-  
+
   create_release:
     name: Create release
     needs: [build_windows]
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
-      
+
     steps:
     - name: Get version
       id: get_version

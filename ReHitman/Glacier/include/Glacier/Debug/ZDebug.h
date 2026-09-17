@@ -14,7 +14,7 @@ namespace Glacier
             eSEV_WARN1 = 0x2,
             eSEV_WARN2 = 0x3,
             eSEV_WARN3 = 0x4,
-            eSEV_MSG   = 0x5,  
+            eSEV_MSG   = 0x5,
         };
 
         enum eType
@@ -58,4 +58,8 @@ namespace Glacier
         static void SetDebugSeverity(const char* pszSeverity);
         static void SetDebugChannels(const char* pszChannels);
     };
+
+    void ZDebugOpenOutputFile(const char* pszFileName);
+    void ZDebugStampOutputFile(const char* pszBuildTag);
+    void DebugBrk();
 }

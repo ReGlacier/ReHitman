@@ -29,30 +29,30 @@
 #elif defined(REHITMAN_USE_REAL_ZASSERT)
 #   include <Glacier/Debug/sCall_u.h>
 
-#   define ZASSERT_DEBUGBRK() __debugbreak()
+#   define ZASSERT_DEBUGBRK() Glacier::DebugBrk();
 
 // Internal
 #   define ZASSERT_IMPL(expr, line) \
         do { \
             if (!(expr)) { \
                 { \
-                    sCall_u asc { line, __FILE__, ZDebug::eSEV_ERROR, false, false }; \
-                    asc->(); \
+                    Glacier::sCall_u asc { line, __FILE__, Glacier::ZDebug::eSEV_ERROR, false, false }; \
+                    asc.Dump(); \
                     asc._uPrint("%s(%d): ZASSERT(%s)", __FILE__, line, #expr); \
                 } \
                 { \
-                    sCall_u asc { line, __FILE__, ZDebug::eSEV_ERROR, false, false }; \
-                    asc->(); \
+                    Glacier::sCall_u asc { line, __FILE__, Glacier::ZDebug::eSEV_ERROR, false, false }; \
+                    asc.Dump(); \
                     asc._uPrint("INT3 in %s at line %d", __FILE__, line); \
                 } \
                 ZASSERT_DEBUGBRK(); \
             } \
-        } while (0)
+        } while (0);
 
 #   define ZHALT_IMPL(line) \
         do { \
             sCall_u asc { line, __FILE__, ZDebug::eSEV_ERROR, false, false }; \
-            asc->(); \
+            asc.Dump(); \
             asc._uPrint("INT3 in %s at line %d", __FILE__, line); \
             ZASSERT_DEBUGBRK(); \
         } while (0)
@@ -60,14 +60,14 @@
 #   define ZLOG_GENERIC_IMPL(line, severity, fmt, ...) \
         do { \
             sCall_u asc { line, __FILE__, severity, false, false }; \
-            asc->(); \
+            asc.Dump(); \
             asc._uPrint(fmt, ##__VA_ARGS__); \
         } while (0)
 
 #   define ZLOG_CHANNEL_IMPL(line, severity, channel, fmt, ...) \
         do { \
             sCall_u asc { line, __FILE__, severity, false, false }; \
-            asc->(); \
+            asc.Dump(); \
             asc._uMsg(channel, fmt, ##__VA_ARGS__); \
         } while (0)
 

@@ -25,7 +25,7 @@ configure_file( "${CMAKE_CURRENT_SOURCE_DIR}/resources/Version.rc.in" "${CMAKE_C
 
 # Add some win32 stuff
 if(WIN32)
-    list(APPEND REHITMAN_SOURCES 
+    list(APPEND REHITMAN_SOURCES
         "${CMAKE_CURRENT_BINARY_DIR}/version.rc"
         "resources/App.rc"
     )
@@ -33,4 +33,4 @@ endif()
 
 add_executable(ReHitman WIN32 ${REHITMAN_SOURCES})
 target_include_directories(ReHitman PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_link_libraries(ReHitman PRIVATE G1::Core BloodMoney)
+target_link_libraries(ReHitman PRIVATE BuildInfo G1::Core BloodMoney)

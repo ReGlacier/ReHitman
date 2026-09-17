@@ -17,6 +17,7 @@ add_subdirectory(Modules/jpeg-6b)
 add_subdirectory(Modules/BinkVideoInterface)
 add_subdirectory(Modules/Quazal)
 
+add_subdirectory(BuildInfo)
 add_subdirectory(Glacier)
 add_subdirectory(BloodMoney)
 add_subdirectory(ScriptInterface)

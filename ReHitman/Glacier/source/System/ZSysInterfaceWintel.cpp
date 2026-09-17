@@ -14,6 +14,9 @@
 #include <Glacier/Input/ZSysInputWintel.h>
 #include <Glacier/Render/ZRenderWintel.h>
 #include <Glacier/Render/ZRenderWintelD3D.h>
+#include <Glacier/Debug/ZDebug.h>
+
+#include <BuildInfo.h>
 
 #include <Windows.h>
 #include <intrin.h>
@@ -36,6 +39,9 @@ namespace Glacier
     STATIC_GLOBAL_CLASS_INSTANCE(MYSTR*, psErrorLog);
     STATIC_GLOBAL_CLASS_INSTANCE_IMPL(MYSTR*, psErrorLog, 0x008B4FB8, nullptr);
     STATIC_GLOBAL_CLASS_INSTANCE_IMPL(uint32_t, g_lRunOutOfFocus, 0x008EE930, false);
+
+    // Own globals
+    static bool g_bDumpActive = false;
 
     // ZSysInterfaceWintel
     ZSysInterfaceWintel::ZSysInterfaceWintel(int hInstance, bool bEditorMode)
@@ -1264,6 +1270,16 @@ namespace Glacier
         ResetTime();
         CalcCycSec();
         InitConfiguration();
+
+        if (GetOption("DumpLogToHD", nullptr) && !g_bDumpActive)
+        {
+            char aLogFileName[0x100] { 0 };
+            snprintf(aLogFileName, sizeof(aLogFileName), "%s%s-%d.txt", BuildInfo::g_psBuildTag, "oj", 0);
+            ZDebugOpenOutputFile(aLogFileName);
+            ZDebugStampOutputFile(BuildInfo::g_psBuildTag);
+
+            g_bDumpActive = true;
+        }
 
         m_pMainDll = ZDllMain::BuildInstance();
         if (m_pMainDll)

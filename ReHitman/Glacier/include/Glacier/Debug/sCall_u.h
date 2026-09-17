@@ -41,6 +41,8 @@ namespace Glacier
         void _uPrint(const char* fmt, ...);
         void _uMsg(uChannelEnums eChannel, const char* fmt, ...);
 
+        void Dump();
+
         // members
         bool m_bIsConsoleLine;
         bool m_bDisplayOnce;

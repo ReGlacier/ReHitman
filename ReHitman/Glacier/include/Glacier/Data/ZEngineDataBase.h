@@ -12,6 +12,7 @@
 #include <Glacier/ZSTL/ZList.h>
 #include <Glacier/Animation/Manager.h>
 #include <Glacier/EventBase/ZEventList.h>
+#include <Glacier/Data/ILoadCallBack.h>
 
 #include <Glacier/PF4/Fwd.h>
 
@@ -63,11 +64,6 @@ namespace Glacier
         AS_DATABLOCKS = 4,
         AS_INIT = 5,
         AS_INCLUDESCENE = 6,
-    };
-
-    struct ILoadCallBack
-    {
-        virtual void CallMe() = 0;
     };
 
     struct SMakeGeomDynamic

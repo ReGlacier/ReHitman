@@ -44,6 +44,7 @@ set(GLACIER_COMMON_LIBS
         stlport
         BinkVideoInterface
         Quazal
+        BuildInfo
 )
 
 set(GLACIER_COMMON_INCLUDE_DIRS)
@@ -120,14 +121,23 @@ target_include_directories(Glacier PUBLIC
     $<$<BOOL:${DXSDK_INCLUDE_DIR}>:${DXSDK_INCLUDE_DIR}>
 )
 
-target_compile_definitions(Glacier PUBLIC INEDITOR=$<IF:$<BOOL:${GLACIER_IN_EDITOR}>,1,0>)
-
 if(DXSDK_LIB_DIR)
     target_link_directories(Glacier PUBLIC ${DXSDK_LIB_DIR})
 endif()
 
 target_link_libraries(Glacier ${GLACIER_COMMON_LIBS})
 target_compile_definitions(Glacier PUBLIC DIRECTINPUT_VERSION=0x0800)
+
+# Definitions
+target_compile_definitions(Glacier
+  PUBLIC
+    $<$<CONFIG:Debug>:
+      REHITMAN_USE_REAL_ZASSERT
+      REHITMAN_DEBUG_BUILD
+      REHITMAN_WITH_DEBUG_DRAW
+    >
+    INEDITOR=$<IF:$<BOOL:${GLACIER_IN_EDITOR}>,1,0>
+)
 
 # Test target
 if(REHITMAN_BUILD_TESTS)

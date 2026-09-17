@@ -66,21 +66,4 @@ target_include_directories(ScriptInterface
     PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}/../Glacier/include
 )
-target_link_libraries(ScriptInterface PUBLIC ScriptDllInterface)
-
-
-if (REHITMAN_TESTS AND TARGET G1::TestCore)
-    # Test env
-    target_link_libraries(
-        ScriptInterface
-        PUBLIC
-            G1::TestCore
-    )
-else()
-    # Prod env
-    target_link_libraries(
-        ScriptInterface
-        PUBLIC
-            G1::Core
-    )
-endif()
+target_link_libraries(ScriptInterface PUBLIC ScriptDllInterface G1::Core)

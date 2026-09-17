@@ -29,12 +29,12 @@ namespace Glacier
 
     ZDebug::uSeverityEnums ZDebug::g_eChannelSeverity[19]
     {
-        eSEV_MSG, eSEV_MSG, eSEV_MSG, 
-        eSEV_MSG, eSEV_MSG, eSEV_MSG, 
-        eSEV_MSG, eSEV_MSG, eSEV_MSG, 
-        eSEV_MSG, eSEV_MSG, eSEV_MSG, 
-        eSEV_MSG, eSEV_MSG, eSEV_MSG, 
-        eSEV_MSG, eSEV_MSG, eSEV_MSG, 
+        eSEV_MSG, eSEV_MSG, eSEV_MSG,
+        eSEV_MSG, eSEV_MSG, eSEV_MSG,
+        eSEV_MSG, eSEV_MSG, eSEV_MSG,
+        eSEV_MSG, eSEV_MSG, eSEV_MSG,
+        eSEV_MSG, eSEV_MSG, eSEV_MSG,
+        eSEV_MSG, eSEV_MSG, eSEV_MSG,
         eSEV_MSG
     };
 
@@ -56,7 +56,7 @@ namespace Glacier
         if (!pszChannels || !*pszChannels)
             return;
 
-        char cleanBuffer[1024]; 
+        char cleanBuffer[1024];
         char* pDst = cleanBuffer;
 
         const char* pSrc = pszChannels;
