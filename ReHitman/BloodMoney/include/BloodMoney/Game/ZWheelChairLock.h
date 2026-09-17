@@ -4,7 +4,7 @@
 #include <Glacier/ReGlacier.h>
 #include <Glacier/Geom/ZGEOM.h>
 
-namespace Hitman::BloodMoney {
+namespace Hitman {
     class ZHM3Actor;
 
     class ZWheelChairLock : public Glacier::CBaseEvent<Glacier::ZGEOM> {

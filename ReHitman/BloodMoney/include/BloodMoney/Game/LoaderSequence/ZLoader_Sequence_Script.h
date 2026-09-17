@@ -4,7 +4,7 @@
 #include <BloodMoney/Game/LoaderSequence/ZLoader_Sequence_Info.h>
 
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     struct ZLoader_Sequence_Script
     {

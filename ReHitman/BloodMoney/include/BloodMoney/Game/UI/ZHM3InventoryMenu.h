@@ -2,7 +2,7 @@
 
 #include <Glacier/GUI/XMLInterface/Elements/ZNavigator.h>
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     class ZHM3InventoryMenu : public Glacier::ZNavigator
     {

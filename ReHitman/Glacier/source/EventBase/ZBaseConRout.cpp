@@ -1,5 +1,4 @@
 #include <Glacier/EventBase/ZBaseConRout.h>
-#include <G1ConfigurationService.h>
 
 
 namespace Glacier

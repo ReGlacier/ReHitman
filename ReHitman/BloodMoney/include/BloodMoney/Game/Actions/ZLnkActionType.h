@@ -1,6 +1,6 @@
 #pragma once
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     enum class ZLnkActionType
     {

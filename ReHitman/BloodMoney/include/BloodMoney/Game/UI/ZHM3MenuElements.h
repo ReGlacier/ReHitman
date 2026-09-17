@@ -7,7 +7,7 @@ namespace Glacier
     class ZStandardMenuFactory;
 }
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     class ZHM3MenuFactory;
     class ZOnlineElements;

@@ -10,7 +10,7 @@
 #include <BloodMoney/Game/LevelControls/ESecurityZone.h>
 #include <BloodMoney/Game/Actions/EHM3Action.h>
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     // fwds
     class ZHitman3;

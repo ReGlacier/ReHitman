@@ -3,7 +3,7 @@
 #include <Glacier/Geom/ZGROUP.h>
 #include <Glacier/ReGlacier.h>
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
 	struct ZHM3CombineItems : public Glacier::ZGROUP 
 	{

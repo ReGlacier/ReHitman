@@ -26,13 +26,11 @@ jobs:
     - name: Get latest CMake
       uses: lukka/get-cmake@latest
 
-    # --- 1. Установка DirectX SDK (x86) через vcpkg ---
     - name: Install DirectX SDK (x86) via vcpkg
       shell: pwsh
       run: |
         vcpkg install directxsdk:x86-windows
 
-    # --- 2. Генерация CMake с указанием тулчейна vcpkg ---
     - name: Generate projects
       shell: pwsh
       run: |
@@ -81,8 +79,8 @@ jobs:
       run: |
         New-Item -ItemType Directory -Force artifact
 
-        Copy-Item build/ReHitman/Release/ReHitman.dll artifact/
-        Copy-Item build/ReHitman/NVCPL/Release/NVCPL.dll artifact/
+        Copy-Item build/ReHitman/Release/ReHitman.exe artifact/
+        Copy-Item ReHitman/ReHitman/assets/ReHitman.ini artifact/
 
     - name: Upload build artifact - ReHitman
       uses: actions/upload-artifact@v4

@@ -6,7 +6,7 @@
 #include <BloodMoney/Game/LevelControls/ESecurityZone.h>
 #include <Glacier/ZSTL/ZRTStringObject.h>
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     enum EDressQuality : uint32_t {
         eQualityBad = 0,

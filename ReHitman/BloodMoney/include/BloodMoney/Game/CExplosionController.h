@@ -8,7 +8,7 @@
 #include <Glacier/CBaseEvent.h>
 
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     class CExplosionController : public Glacier::CBaseEvent<Glacier::ZGEOM>
     {

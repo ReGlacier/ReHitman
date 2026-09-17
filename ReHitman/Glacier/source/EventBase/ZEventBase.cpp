@@ -10,8 +10,7 @@
 #include <Glacier/Data/ZEngineDataBase.h>
 #include <Glacier/System/ZSysInterface.h>
 #include <Glacier/RTP/VirtualTables.h>
-#include <G1ConfigurationService.h>
-#include <cassert>
+
 
 namespace Glacier
 {

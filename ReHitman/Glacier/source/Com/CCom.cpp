@@ -1,7 +1,6 @@
 #include <Glacier/Com/CCom.h>
 #include <Glacier/Com/CComRead.h>
-#include <G1ConfigurationService.h>
-#include <cassert>
+
 
 namespace Glacier
 {

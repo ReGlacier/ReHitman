@@ -4,7 +4,7 @@
 #include <BloodMoney/Game/Items/ESilencerType.h>
 #include <Glacier/ZSTL/ZStackArray.h>
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     using ZStackArrayVisibleBones = Glacier::ZStackArray<20, uint32_t>;
 

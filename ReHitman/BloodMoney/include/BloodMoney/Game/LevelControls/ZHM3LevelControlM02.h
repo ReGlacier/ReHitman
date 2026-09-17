@@ -6,7 +6,7 @@
 #include <BloodMoney/Game/LevelControls/ZHM3LevelControl.h>
 
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     class ZHM3LevelControlM02 : public ZHM3LevelControl
     {

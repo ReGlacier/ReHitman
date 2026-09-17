@@ -3,7 +3,7 @@
 #include <Glacier/ReGlacier.h>
 #include <cstdint>
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     struct SKeyFrame_Info 
     {

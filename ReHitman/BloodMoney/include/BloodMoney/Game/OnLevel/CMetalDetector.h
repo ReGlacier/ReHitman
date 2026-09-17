@@ -6,7 +6,7 @@
 #include <Glacier/ReGlacier.h>
 
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     class CMetalDetector : public Glacier::CBaseEvent<Glacier::ZBoxPrimitive>
     {

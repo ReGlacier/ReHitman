@@ -7,7 +7,7 @@
 
 namespace Glacier
 {
-    using namespace Hitman::BloodMoney;
+    using namespace Hitman;
 
     void Zactor__Setscriptpaused(ZREF rActor, bool paused);
     void Zactor__Setmoveset(ZREF rActor, int moveSet, int moveSetType);

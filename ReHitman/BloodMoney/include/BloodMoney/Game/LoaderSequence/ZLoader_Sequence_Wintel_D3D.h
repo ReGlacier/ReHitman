@@ -6,7 +6,7 @@
 #include <BloodMoney/Game/LoaderSequence/ZLoader_Sequence_Player_Base.h>
 
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     struct ZLoader_Sequence_Script_Reader;
 

@@ -4,7 +4,7 @@
 #include <Glacier/GlacierFWD.h>
 #include <BloodMoney/Game/Items/ZHM3ItemTemplateWeapon.h>
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     class ZHM3ItemTemplateBomb : public ZHM3ItemTemplateWeapon
     {

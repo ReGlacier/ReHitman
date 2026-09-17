@@ -14,9 +14,9 @@ namespace Glacier
     void Zhm3Actor__Die(ZREF rActor);
     void Zhm3Actor__Initializehitpoints(ZREF rActor, int hitPoints);
     void Zhm3Actor__Sethitpoints(ZREF rActor, float hitPoints);
-    void Zhm3Actor__Setcharactertype(ZREF rActor, Hitman::BloodMoney::eCharacterType characterType);
-    Hitman::BloodMoney::eCharacterType Zhm3Actor__Getcharactertype(ZREF rActor, ZREF rDefaultActor);
-    void Zhm3Actor__Changemapiconandcharactertype(ZREF rActor, Hitman::BloodMoney::eCharacterType characterType, bool forceDeadIcon);
+    void Zhm3Actor__Setcharactertype(ZREF rActor, Hitman::eCharacterType characterType);
+    Hitman::eCharacterType Zhm3Actor__Getcharactertype(ZREF rActor, ZREF rDefaultActor);
+    void Zhm3Actor__Changemapiconandcharactertype(ZREF rActor, Hitman::eCharacterType characterType, bool forceDeadIcon);
     void Zhm3Actor__Removefrommap(ZREF rActor);
     float Zhm3Actor__Gethitpoints(ZREF rActor);
     float Zhm3Actor__Takedamage(ZREF rActor, float damage);
@@ -25,9 +25,9 @@ namespace Glacier
     void Zhm3Actor__Setvisionrangeandfov(ZREF rActor, float range, float fov);
     void Zhm3Actor__Setmood(ZREF rActor, uint8_t mood, float intensity);
     float Zhm3Actor__Gettension(ZREF rActor);
-    void Zhm3Actor__Settension(ZREF rActor, Hitman::BloodMoney::eInterestLevel interestLevel);
-    void Zhm3Actor__Increasetension(ZREF rActor, Hitman::BloodMoney::eInterestLevel interestLevel, float amount);
-    void Zhm3Actor__Releasetension(ZREF rActor, Hitman::BloodMoney::eInterestLevel interestLevel);
+    void Zhm3Actor__Settension(ZREF rActor, Hitman::eInterestLevel interestLevel);
+    void Zhm3Actor__Increasetension(ZREF rActor, Hitman::eInterestLevel interestLevel, float amount);
+    void Zhm3Actor__Releasetension(ZREF rActor, Hitman::eInterestLevel interestLevel);
     uint8_t Zhm3Actor__Getmaxneed(ZREF rActor, float value);
     void Zhm3Actor__Setneed(ZREF rActor, uint8_t need, float value);
     void Zhm3Actor__Setneedtime(ZREF rActor, uint8_t need, float value);

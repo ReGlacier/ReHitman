@@ -1,7 +1,7 @@
 #pragma once
 
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     enum EAmmoType {
         eNormalAmmo = 0,

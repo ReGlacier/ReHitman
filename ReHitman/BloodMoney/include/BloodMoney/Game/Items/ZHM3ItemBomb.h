@@ -5,7 +5,7 @@
 #include <Glacier/ZSTL/TIMETYPE.h>
 #include <BloodMoney/Game/Items/ZHM3ItemWeapon.h>
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     class ZHM3ItemBomb : public ZHM3ItemWeapon
     {

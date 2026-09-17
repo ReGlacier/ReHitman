@@ -4,7 +4,7 @@
 #include <Glacier/Geom/ZSTDOBJ.h>
 
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     enum ActorCollisionType : uint32_t
     {

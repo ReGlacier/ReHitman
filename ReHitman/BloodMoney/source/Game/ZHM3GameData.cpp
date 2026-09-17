@@ -4,7 +4,7 @@
 #include <Glacier/Materials/BS_Runtime.h>
 
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     ZHM3GameData::ZHM3GameData()
         : m_Hitman3(nullptr)

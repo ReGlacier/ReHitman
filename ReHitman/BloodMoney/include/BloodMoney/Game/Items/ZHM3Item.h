@@ -4,7 +4,7 @@
 
 #include <BloodMoney/Game/Items/EHM3ItemType.h>
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     class ZHM3Item : public Glacier::ZItem
     {

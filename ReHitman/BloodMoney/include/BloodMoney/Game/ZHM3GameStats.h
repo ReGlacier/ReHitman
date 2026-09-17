@@ -2,7 +2,7 @@
 
 #include <Glacier/Data/ZGameStats.h>
 
-namespace Hitman::BloodMoney {
+namespace Hitman {
     class ZHM3GameStats : public Glacier::ZGameStats {
     public:
         //vftable (no changes)

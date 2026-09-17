@@ -4,7 +4,7 @@
 #include <Glacier/CBaseEvent.h>
 #include <Glacier/Geom/ZGEOM.h>
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     class ZVCR : public Glacier::CBaseEvent<Glacier::ZGEOM>
     {

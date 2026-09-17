@@ -8,7 +8,7 @@
 #include <BloodMoney/Game/Items/ZHM3Item.h>
 
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     /**
      * @msg MSG_DETERMINELNKOBJLOC
@@ -35,7 +35,7 @@ namespace Hitman::BloodMoney
         void DetermineLnkObjLocation(sQueryLnkObjLocation* pQuery);
         Glacier::ZREF GetKeyCard(Glacier::ZREF playerREF, bool* hasCard);
         Glacier::ZREF GetItemTemplateFromName(const char* itemName);
-        bool IsKeyCardValid(BloodMoney::ZHM3Item* pItem);
+        bool IsKeyCardValid(ZHM3Item* pItem);
 
         // data (total size is 0x8C, base size is 0x30)
         Glacier::ZAction* m_pAction;

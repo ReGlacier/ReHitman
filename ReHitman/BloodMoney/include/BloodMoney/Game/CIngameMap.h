@@ -24,7 +24,7 @@
 #   undef small
 #endif
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     enum EAnimMode
     {

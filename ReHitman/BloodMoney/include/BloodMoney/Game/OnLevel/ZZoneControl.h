@@ -6,7 +6,7 @@
 #include <BloodMoney/Game/LevelControls/ESecurityZone.h>
 
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     class ZZoneControl : public Glacier::CBaseEvent<Glacier::ZGEOM> 
     {

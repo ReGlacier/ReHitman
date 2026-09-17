@@ -4,7 +4,7 @@
 #include <Glacier/GlacierFWD.h>
 #include <Glacier/ZSTL/ZMath.h>
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     class ZHM3LevelControlM13;
 

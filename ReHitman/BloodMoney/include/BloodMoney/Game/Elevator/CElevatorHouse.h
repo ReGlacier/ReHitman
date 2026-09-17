@@ -5,7 +5,8 @@
 #include <Glacier/ZSTL/ZMath.h>
 #include <Glacier/ZSTL/REFTAB.h>
 
-namespace Hitman::BloodMoney {
+namespace Hitman
+{
     class CElevatorHouse : public Glacier::ZBaseConRout {
     public:
         // vftable (not changed)

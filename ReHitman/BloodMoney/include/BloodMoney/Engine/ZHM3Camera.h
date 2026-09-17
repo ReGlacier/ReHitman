@@ -4,7 +4,8 @@
 #include <BloodMoney/Engine/ZHM3CameraConsole.h>
 
 
-namespace Hitman::BloodMoney {
+namespace Hitman
+{
 	class ZHM3Camera : public Glacier::ZBaseCamera
 	{
 	public:

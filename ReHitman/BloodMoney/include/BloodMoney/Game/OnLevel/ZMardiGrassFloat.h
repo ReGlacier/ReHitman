@@ -7,7 +7,7 @@
 #include <Glacier/GlacierFWD.h>
 #include <Glacier/ReGlacier.h>
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     struct ZMardiGrassFloat : public Glacier::ZGROUP
     {

@@ -12,7 +12,7 @@
 
 #include <BloodMoney/Game/ZHM3ClipParticleControl.h>
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     class ZHM3ItemWeaponCustomTemplate : public ZHM3ItemTemplateWeapon
     {

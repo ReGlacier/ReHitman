@@ -7,7 +7,7 @@
 #include <BloodMoney/Game/ZHM3Damage.h>
 
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     struct ZHM3HitEvent
     {

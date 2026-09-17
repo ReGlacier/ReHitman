@@ -6,7 +6,7 @@
 #include <Glacier/ZSTL/REFTAB32.h>
 
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
 	class ZLoader_Sequence_Setup : public Glacier::ZSTDOBJ
 	{

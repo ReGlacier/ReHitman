@@ -1,4 +1,3 @@
-#include <G1ConfigurationService.h>
 #include <Glacier/Geom/ZCAMERA.h>
 #include <Glacier/Geom/ZGeomBuffer.h>
 #include <Glacier/Geom/ZROOM.h>
@@ -7,8 +6,8 @@
 #include <Glacier/Serializer/ISerializerStream.h>
 #include <Glacier/Data/ZEngineDataBase.h>
 #include <Glacier/System/ZSysInterface.h>
-#include <cassert>
 #include <cmath>
+
 
 namespace Glacier
 {

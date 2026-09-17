@@ -8,7 +8,7 @@
 #include <Glacier/ZSTL/ZRTStringObject.h>
 
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     enum EPlaceItemType 
     {

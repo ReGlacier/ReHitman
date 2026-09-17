@@ -41,4 +41,10 @@ namespace Glacier
 
         return 0;
     }
+
+    int Glacier_RunNormal(int hInstance, int hPrevInstance, const char* psCmdLine)
+    {
+        g_sProjectID = "hitman3";
+        return Glacier_Main(hInstance, hPrevInstance, psCmdLine);
+    }
 }

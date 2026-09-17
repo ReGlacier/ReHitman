@@ -2,7 +2,7 @@
 
 #include <Glacier/GlacierFWD.h>
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     class ZCutSequencePlayer
     {

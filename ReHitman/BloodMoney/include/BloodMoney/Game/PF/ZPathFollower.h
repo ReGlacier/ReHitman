@@ -4,7 +4,7 @@
 #include <Glacier/ZSTL/ZRTTI.h>
 #include <Glacier/EventBase/ZBaseConRout.h>
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     class ZEventBase;
 

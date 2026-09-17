@@ -2,7 +2,7 @@
 
 #include <Glacier/IK/ZLnkAction.h>
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     class ZHitman3;
 

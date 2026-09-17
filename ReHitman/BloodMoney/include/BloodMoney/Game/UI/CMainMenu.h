@@ -10,7 +10,7 @@ namespace Glacier
     class IView;
 }
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     class CMainMenu : public Glacier::CBaseEvent<Glacier::ZGROUP>
     {

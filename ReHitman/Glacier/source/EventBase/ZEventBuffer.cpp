@@ -3,7 +3,6 @@
 #include <Glacier/Serializer/ISerializerStream.h>
 #include <Glacier/Serializer/IOutputSerializerStream.h>
 #include <Glacier/ZSTL/ZOffsetAlloc.h>
-#include <G1ConfigurationService.h>
 #include <Glacier/EventBase/ZBaseConRout.h>
 #include <Glacier/Debug/ZMemReadOut.h>
 #include <Glacier/ZUniAssert.h>

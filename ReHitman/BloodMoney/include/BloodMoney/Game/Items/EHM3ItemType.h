@@ -1,6 +1,6 @@
 #pragma once
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     enum class EHM3ItemType : int {
         eHM3NoType = 0,

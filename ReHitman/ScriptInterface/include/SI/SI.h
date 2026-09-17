@@ -82,9 +82,9 @@ namespace SI
         void (*Zhm3Actor__Die)(ZREF rActor);
         void (*Zhm3Actor__Initializehitpoints)(ZREF rActor, int hitPoints);
         void (*Zhm3Actor__Sethitpoints)(ZREF rActor, float hitPoints);
-        void (*Zhm3Actor__Setcharactertype)(ZREF rActor, Hitman::BloodMoney::eCharacterType characterType);
-        Hitman::BloodMoney::eCharacterType (*Zhm3Actor__Getcharactertype)(ZREF rActor, ZREF rDefaultActor);
-        void (*Zhm3Actor__Changemapiconandcharactertype)(ZREF rActor, Hitman::BloodMoney::eCharacterType characterType, bool forceDeadIcon);
+        void (*Zhm3Actor__Setcharactertype)(ZREF rActor, Hitman::eCharacterType characterType);
+        Hitman::eCharacterType (*Zhm3Actor__Getcharactertype)(ZREF rActor, ZREF rDefaultActor);
+        void (*Zhm3Actor__Changemapiconandcharactertype)(ZREF rActor, Hitman::eCharacterType characterType, bool forceDeadIcon);
         void (*Zhm3Actor__Removefrommap)(ZREF rActor);
         float (*Zhm3Actor__Gethitpoints)(ZREF rActor);
         float (*Zhm3Actor__Takedamage)(ZREF rActor, float damage);
@@ -93,9 +93,9 @@ namespace SI
         void (*Zhm3Actor__Setvisionrangeandfov)(ZREF rActor, float range, float fov);
         void (*Zhm3Actor__Setmood)(ZREF rActor, uint8_t mood, float intensity);
         float (*Zhm3Actor__Gettension)(ZREF rActor);
-        void (*Zhm3Actor__Settension)(ZREF rActor, Hitman::BloodMoney::eInterestLevel interestLevel);
-        void (*Zhm3Actor__Increasetension)(ZREF rActor, Hitman::BloodMoney::eInterestLevel interestLevel, float amount);
-        void (*Zhm3Actor__Releasetension)(ZREF rActor, Hitman::BloodMoney::eInterestLevel interestLevel);
+        void (*Zhm3Actor__Settension)(ZREF rActor, Hitman::eInterestLevel interestLevel);
+        void (*Zhm3Actor__Increasetension)(ZREF rActor, Hitman::eInterestLevel interestLevel, float amount);
+        void (*Zhm3Actor__Releasetension)(ZREF rActor, Hitman::eInterestLevel interestLevel);
         uint8_t (*Zhm3Actor__Getmaxneed)(ZREF rActor, float value);
         void (*Zhm3Actor__Setneed)(ZREF rActor, uint8_t need, float value);
         void (*Zhm3Actor__Setneedtime)(ZREF rActor, uint8_t need, float value);
@@ -354,7 +354,7 @@ namespace SI
         ZREF (*Silevelcontrol__Getcoverlist)();
         bool (*Silevelcontrol__Start_Actorinvestigatehitman)(ZREF rInspector);
         void (*Silevelcontrol__End_Actorinvestigatehitman)(ZREF rInspector);
-        Hitman::BloodMoney::SDifficultySettings (*Silevelcontrol__Getdifficultysettings)();
+        Hitman::SDifficultySettings (*Silevelcontrol__Getdifficultysettings)();
         int (*Silevelcontrol__Getdifficulty)();
         bool (*Silevelcontrol__Ishitmantrespassing)();
         bool (*Silevelcontrol__Ishitmaninoutsidelocation)();
@@ -375,8 +375,8 @@ namespace SI
         ZREF (*Silevelcontrol__Getcurrenthitmanweapontemplate)();
         ZREF (*Silevelcontrol__Getactorfriskinghm)();
         ZREF (*Silevelcontrol__Setactorfriskinghm)(ZREF rActor);
-        Hitman::BloodMoney::EFriskOp (*Silevelcontrol__Getfriskoperation)();
-        Hitman::BloodMoney::EFriskOp (*Silevelcontrol__Setfriskoperation)(Hitman::BloodMoney::EFriskOp operation);
+        Hitman::EFriskOp (*Silevelcontrol__Getfriskoperation)();
+        Hitman::EFriskOp (*Silevelcontrol__Setfriskoperation)(Hitman::EFriskOp operation);
         int (*Silevelcontrol__Getcurrentzone)();
         int (*Silevelcontrol__Starteventcamera)(ZREF rAttachGeom, eEventCameraType cameraType, ZREF rLookAtGeom, eEventCameraPosition position);
         int (*Silevelcontrol__Starteventcameralookatgeom)(ZREF rLookAtGeom, ZREF rCameraGeom, eEventCameraPosition position);

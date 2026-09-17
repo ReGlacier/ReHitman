@@ -4,7 +4,7 @@
 #include <Glacier/Geom/ZLIST.h>
 #include <Glacier/CBaseEvent.h>
 
-namespace Hitman::BloodMoney 
+namespace Hitman 
 {
     class CTelePortList : public Glacier::CBaseEvent<Glacier::ZLIST> 
     {

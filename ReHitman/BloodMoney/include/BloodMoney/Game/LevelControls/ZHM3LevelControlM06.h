@@ -7,7 +7,7 @@
 #include <BloodMoney/Game/LevelControls/ZHM3LevelControl.h>
 #include <BloodMoney/Game/OnLevel/ZMardiGrassFloat.h>
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     class ZHM3Actor;
 

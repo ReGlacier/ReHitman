@@ -4,7 +4,7 @@
 #include <Glacier/Geom/ZGEOM.h>
 #include <Glacier/GlacierFWD.h>
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     class ZFireAlarm : public Glacier::CBaseEvent<Glacier::ZGEOM>
     {

@@ -1,11 +1,9 @@
-#include <G1ConfigurationService.h>
 #include <Glacier/EventBase/ZScheduledUpdate.h>
 #include <Glacier/EventBase/ZScheduledEvent.h>
 #include <Glacier/EventBase/ZScheduledScript.h>
 #include <Glacier/EventBase/ZEventBase.h>
 #include <Glacier/Data/ZEngineDataBase.h>
 #include <Glacier/System/ZSysInterface.h>
-#include <cassert>
 
 
 namespace Glacier

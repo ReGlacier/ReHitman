@@ -24,7 +24,7 @@ namespace Glacier
 
 }
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     DECLARE_UNKNOWN_TYPE_PTR(N00001B3F);
     DECLARE_UNKNOWN_TYPE_PTR(N000033C1);

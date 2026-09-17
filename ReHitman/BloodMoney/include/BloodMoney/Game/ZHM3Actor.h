@@ -11,7 +11,7 @@
 #include <BloodMoney/Game/ZHM3HmAs.h>
 #include <Glacier/GameBase/ZActor.h>
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     // fwds
     class ZHM3HmAs;

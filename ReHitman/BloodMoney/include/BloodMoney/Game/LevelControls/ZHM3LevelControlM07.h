@@ -7,7 +7,7 @@
 #include <BloodMoney/Game/LevelControls/ZHM3LevelControl.h>
 
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     // Unfinished game mission
     class ZHM3LevelControlM07 : public ZHM3LevelControl

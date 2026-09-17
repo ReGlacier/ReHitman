@@ -3,7 +3,7 @@
 #include <Glacier/Items/ZItemTemplateAmmo.h>
 #include <BloodMoney/Game/Items/EHM3ItemType.h>
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     class ZHM3ItemTemplateAmmo : public Glacier::ZItemTemplateAmmo
     {

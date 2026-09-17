@@ -8,7 +8,7 @@ namespace Glacier {
     class ZLNKWHANDS;
 }
 
-namespace Hitman::BloodMoney {
+namespace Hitman {
     class ZHM3DialogControl : public Glacier::ZEventBase
     {
     public:

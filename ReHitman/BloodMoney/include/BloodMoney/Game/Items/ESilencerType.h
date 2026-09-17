@@ -1,7 +1,9 @@
 #pragma once
 
-namespace Hitman::BloodMoney {
-    enum class ESilencerType : int {
+namespace Hitman 
+{
+    enum class ESilencerType : int 
+    {
         eNotSilent = 0,
         eSilentLowVelocityAmmo = 1,
         eSilentUpTo20 = 2,

@@ -5,7 +5,7 @@
 #include <Glacier/ZSTL/REFTAB.h>
 
 
-namespace Hitman::BloodMoney 
+namespace Hitman 
 {
     struct SActor 
     {

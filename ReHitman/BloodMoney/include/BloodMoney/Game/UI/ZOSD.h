@@ -12,7 +12,7 @@ namespace Glacier
     class ZLINEOBJ;
 }
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
 	class ZCheatMenu;
     class ZContainerMenu;

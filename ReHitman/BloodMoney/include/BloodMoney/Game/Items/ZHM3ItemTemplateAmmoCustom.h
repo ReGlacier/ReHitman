@@ -9,7 +9,7 @@
 #include <BloodMoney/Game/Items/ESilencerType.h>
 
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     class ZHM3ItemTemplateAmmoCustom : public ZHM3ItemTemplateAmmo
     {

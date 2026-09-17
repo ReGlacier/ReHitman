@@ -5,7 +5,7 @@
 #include <Glacier/Geom/ZSTDOBJ.h>
 
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     class ZUsePoint : public Glacier::ZSTDOBJ
     {

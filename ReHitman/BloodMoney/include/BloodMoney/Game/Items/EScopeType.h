@@ -1,8 +1,9 @@
 #pragma once
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
-    enum EScopeType {
+    enum EScopeType 
+    {
         eNoScope = 0,
         eStandardScope = 1,
         eIncreasedZoomScope = 2,

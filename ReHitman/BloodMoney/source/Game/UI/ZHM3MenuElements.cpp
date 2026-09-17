@@ -1,16 +1,10 @@
 #include <BloodMoney/Game/UI/ZHM3MenuElements.h>
-#include <BloodMoney/BMConfigurationService.h>
-#include <cassert>
 
-namespace Hitman::BloodMoney {
-    Glacier::ZGUIBase* ZHM3MenuElements::GetGUIElement(const char *psElementName) {
-        assert(BMConfigurationService::BMAPI_FunctionAddress_ZHM3MenuElements_GetGUIElement != BMConfigurationService::kNotConfiguredOption);
-        assert(psElementName != nullptr);
-
-        if (BMConfigurationService::BMAPI_FunctionAddress_ZHM3MenuElements_GetGUIElement != BMConfigurationService::kNotConfiguredOption && psElementName) {
-            return ((Glacier::ZGUIBase*(__thiscall*)(ZHM3MenuElements*,const char*))BMConfigurationService::BMAPI_FunctionAddress_ZHM3MenuElements_GetGUIElement)(this, psElementName);
-        }
-
+namespace Hitman 
+{
+    Glacier::ZGUIBase* ZHM3MenuElements::GetGUIElement(const char *psElementName) 
+    {
+        // TODO: Finish me
         return nullptr;
     }
 }

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 4.0)
-project(ReHitman)
+project(ReHitmanProject)
 enable_testing()
 
 set(CMAKE_CXX_STANDARD 20)
@@ -20,19 +20,6 @@ add_subdirectory(Modules/Quazal)
 add_subdirectory(Glacier)
 add_subdirectory(BloodMoney)
 add_subdirectory(ScriptInterface)
-add_subdirectory(Client)
-add_subdirectory(NVCPL)
-
-file(GLOB_RECURSE REHITMAN_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/DLL/source/*.cpp)
+add_subdirectory(ReHitman)
 
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
-
-add_library(ReHitman SHARED ${REHITMAN_SOURCES})
-target_include_directories(ReHitman PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/DLL/include)
-target_link_libraries(ReHitman PUBLIC G1::Core ReHitman::IClient spdlog fmt::fmt)
-
-# For BloodMoney only (TODO: Create abstraction for this later)
-target_link_libraries(ReHitman PRIVATE Hitman::BloodMoney ScriptInterface ImGui::Core ImGui::DX9)
-target_compile_definitions(ReHitman PRIVATE -DREHITMAN_BLOOD_MONEY_PROJECT=1) #Build for HitmanBloodMoney
-
-add_dependencies(ReHitman NVCPL)

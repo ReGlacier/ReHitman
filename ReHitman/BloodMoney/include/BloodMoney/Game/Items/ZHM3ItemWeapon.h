@@ -5,7 +5,7 @@
 #include <Glacier/ZSTL/ZStackArray.h>
 #include <BloodMoney/Game/Items/EHM3ItemType.h>
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     using ZStackArrayItemWeaponMetaKeyEvents = Glacier::ZStackArrayInsert<5, int, float>;
     RE_VERIFY_SIZE(ZStackArrayItemWeaponMetaKeyEvents, 44);

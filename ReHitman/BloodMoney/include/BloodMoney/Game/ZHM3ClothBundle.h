@@ -4,7 +4,7 @@
 #include <Glacier/ReGlacier.h>
 #include <Glacier/Glacier.h>
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     struct SAccessoryGeom
     {

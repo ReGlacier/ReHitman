@@ -4,7 +4,7 @@
 #include <Glacier/Geom/ZAllocMany.h>
 #include <cstdint>
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
 	class ZHM3ClipParticleControl : public Glacier::ZAllocMany
 	{

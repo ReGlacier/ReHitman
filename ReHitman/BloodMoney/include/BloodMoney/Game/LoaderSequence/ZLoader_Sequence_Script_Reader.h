@@ -3,7 +3,7 @@
 #include <Glacier/ZSTL/SimpleXML.h>
 #include <BloodMoney/Game/LoaderSequence/ZLoader_Sequence_Info.h>
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     enum eREAD_MODE {
         eNOTHING = 0,

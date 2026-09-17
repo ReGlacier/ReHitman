@@ -5,7 +5,7 @@
 #include <Glacier/GUI/ZWINDOW.h>
 #include <Glacier/GUI/CWinEvent.h>
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     class CMenuWindow : public Glacier::CWinEvent<Glacier::ZWINDOW>
     {

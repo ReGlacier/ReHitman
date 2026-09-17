@@ -32,18 +32,18 @@ namespace Glacier
         // TODO: Finish me
     }
 
-    void Zhm3Actor__Setcharactertype(ZREF rActor, Hitman::BloodMoney::eCharacterType characterType)
+    void Zhm3Actor__Setcharactertype(ZREF rActor, Hitman::eCharacterType characterType)
     {
         // TODO: Finish me
     }
 
-    Hitman::BloodMoney::eCharacterType Zhm3Actor__Getcharactertype(ZREF rActor, ZREF rDefaultActor)
+    Hitman::eCharacterType Zhm3Actor__Getcharactertype(ZREF rActor, ZREF rDefaultActor)
     {
         // TODO: Finish me
-        return Hitman::BloodMoney::eCharacterType_Enemy;
+        return Hitman::eCharacterType_Enemy;
     }
 
-    void Zhm3Actor__Changemapiconandcharactertype(ZREF rActor, Hitman::BloodMoney::eCharacterType characterType, bool forceDeadIcon)
+    void Zhm3Actor__Changemapiconandcharactertype(ZREF rActor, Hitman::eCharacterType characterType, bool forceDeadIcon)
     {
         // TODO: Finish me
     }
@@ -91,17 +91,17 @@ namespace Glacier
         return 0.0f;
     }
 
-    void Zhm3Actor__Settension(ZREF rActor, Hitman::BloodMoney::eInterestLevel interestLevel)
+    void Zhm3Actor__Settension(ZREF rActor, Hitman::eInterestLevel interestLevel)
     {
         // TODO: Finish me
     }
 
-    void Zhm3Actor__Increasetension(ZREF rActor, Hitman::BloodMoney::eInterestLevel interestLevel, float amount)
+    void Zhm3Actor__Increasetension(ZREF rActor, Hitman::eInterestLevel interestLevel, float amount)
     {
         // TODO: Finish me
     }
 
-    void Zhm3Actor__Releasetension(ZREF rActor, Hitman::BloodMoney::eInterestLevel interestLevel)
+    void Zhm3Actor__Releasetension(ZREF rActor, Hitman::eInterestLevel interestLevel)
     {
         // TODO: Finish me
     }

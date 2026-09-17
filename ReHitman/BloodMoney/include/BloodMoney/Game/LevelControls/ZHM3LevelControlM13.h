@@ -5,7 +5,7 @@
 #include <BloodMoney/Game/LevelControls/ZHM3LevelControl.h>
 #include <BloodMoney/Game/ZPodiumController.h>
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     // Class definition ZHM3LevelControlM13
     class ZHM3LevelControlM13 : public ZHM3LevelControl

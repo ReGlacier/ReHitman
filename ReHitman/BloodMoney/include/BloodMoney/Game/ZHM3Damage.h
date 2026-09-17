@@ -5,7 +5,7 @@
 #include <Glacier/Physics/COLI.h>
 
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     enum EDamageType 
     {

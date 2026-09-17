@@ -4,7 +4,7 @@
 #include <Glacier/Geom/ZSTDOBJ.h>
 
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     /**
      * I guess, this class is not used by game, but available in RTTI and looks incomplete

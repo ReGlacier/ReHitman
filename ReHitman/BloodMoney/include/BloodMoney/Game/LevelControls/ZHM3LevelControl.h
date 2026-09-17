@@ -12,7 +12,7 @@
 #include <BloodMoney/Game/Items/EHM3ItemType.h>
 #include <BloodMoney/Game/LevelControls/ESecurityZone.h>
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     class ZHM3Actor;
     class ZHM3HmAs;

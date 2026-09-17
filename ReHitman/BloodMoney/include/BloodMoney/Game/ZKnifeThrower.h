@@ -4,7 +4,7 @@
 #include <Glacier/Geom/ZGEOM.h>
 #include <Glacier/CBaseEvent.h>
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
 	struct ZKnifeThrower : public Glacier::CBaseEvent<Glacier::ZGEOM>
 	{

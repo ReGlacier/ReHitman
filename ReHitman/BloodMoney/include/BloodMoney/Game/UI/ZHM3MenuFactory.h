@@ -2,7 +2,7 @@
 
 #include <Glacier/GUI/XMLInterface/System/ZStandardMenuFactory.h>
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     class ZHM3MenuFactory : public Glacier::ZStandardMenuFactory
     {

@@ -1,7 +1,7 @@
 #pragma once
 
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     enum EHM3RecoilRandom : int {
         eNoRandom = 0,

@@ -3,7 +3,7 @@
 #include <Glacier/ReGlacier.h>
 
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     class ZLoader_Sequence_Player_Base
     {

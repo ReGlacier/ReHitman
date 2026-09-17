@@ -6,7 +6,7 @@
 #include <Glacier/Geom/ZGEOM.h>
 
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     class ZM13PosController : public Glacier::CBaseEvent<Glacier::ZGEOM>
     {

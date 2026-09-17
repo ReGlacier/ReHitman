@@ -5,7 +5,7 @@
 #include <Glacier/GlacierFWD.h>
 #include <Glacier/PF4/Fwd.h>
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     class ZBoid;
 

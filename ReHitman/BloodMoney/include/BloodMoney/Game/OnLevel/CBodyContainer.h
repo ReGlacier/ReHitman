@@ -8,7 +8,7 @@
 #include <Glacier/Geom/ZGROUP.h>
 
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     enum eBCState
     {

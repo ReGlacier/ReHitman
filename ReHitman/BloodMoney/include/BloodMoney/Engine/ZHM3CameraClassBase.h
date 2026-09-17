@@ -2,7 +2,7 @@
 
 #include <Glacier/Geom/ZCAMERA.h>
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     class ZHM3CameraClassBase : public Glacier::ZCAMERA
     {

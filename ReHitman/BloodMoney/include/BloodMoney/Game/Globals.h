@@ -8,12 +8,12 @@ namespace Glacier
     class ZSysInterfaceWintel;
 }
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     class ZHM3GameData;
 }
 
-namespace Hitman::BloodMoney::Globals
+namespace Hitman::Globals
 {
     static constexpr std::uintptr_t kSysInterfaceAddr  = 0x00820820;
     static constexpr std::uintptr_t kGameDataAddr      = 0x0082083C;

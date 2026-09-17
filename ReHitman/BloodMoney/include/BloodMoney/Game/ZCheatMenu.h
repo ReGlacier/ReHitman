@@ -12,7 +12,7 @@ namespace Glacier
 	class ZCHAROBJ;
 }
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
 	enum ECheatType
 	{

@@ -11,7 +11,7 @@
 #include <BloodMoney/Game/Items/ESilencerType.h>
 #include <BloodMoney/Game/Items/EHM3RecoilRandom.h>
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     class ZHM3ItemTemplateWeapon : public Glacier::ZItemTemplateWeapon
     {

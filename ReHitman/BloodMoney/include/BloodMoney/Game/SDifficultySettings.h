@@ -1,6 +1,6 @@
 #pragma once
 
-namespace Hitman::BloodMoney {
+namespace Hitman {
     struct SDifficultySettings {
         //total size is 0xA4
         int m_field0;

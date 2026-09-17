@@ -4,7 +4,7 @@
 #include <Glacier/ZSTL/REFTAB.h>
 #include <Glacier/ZSTL/REFTAB32.h>
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     struct SPlayListEntry
     {

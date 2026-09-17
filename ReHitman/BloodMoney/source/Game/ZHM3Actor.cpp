@@ -1,35 +1,20 @@
 #include <BloodMoney/Game/ZHM3Actor.h>
-#include <BloodMoney/BMConfigurationService.h>
 
-#include <cassert>
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     void ZHM3Actor::PreparePath()
     {
-        assert(BMConfigurationService::BMAPI_FunctionAddress_ZHM3Actor_PreparePath != BMConfigurationService::kNotConfiguredOption);
-        if (BMConfigurationService::BMAPI_FunctionAddress_ZHM3Actor_PreparePath != BMConfigurationService::kNotConfiguredOption)
-        {
-            ((void(__thiscall*)(Hitman::BloodMoney::ZHM3Actor*))(BMConfigurationService::BMAPI_FunctionAddress_ZHM3Actor_PreparePath))(this);
-        }
+        // TODO: Finish me
     }
 
-    void ZHM3Actor::ActivateBloodSpurt(const Glacier::Vector3* pInvDir,
-                                       const Glacier::Vector3* pCollisionPos,
-                                       EBloodSpurtType type)
+    void ZHM3Actor::ActivateBloodSpurt(const Glacier::Vector3* pInvDir, const Glacier::Vector3* pCollisionPos, EBloodSpurtType type)
     {
-        assert(BMConfigurationService::BMAPI_FunctionAddress_ZHM3Actor_ActivateBloodSpurt != BMConfigurationService::kNotConfiguredOption);
-        if (BMConfigurationService::BMAPI_FunctionAddress_ZHM3Actor_ActivateBloodSpurt != BMConfigurationService::kNotConfiguredOption) {
-            ((void(__thiscall*)(Hitman::BloodMoney::ZHM3Actor*, const Glacier::ZVector3*, const Glacier::ZVector3*, Hitman::BloodMoney::EBloodSpurtType))
-            (BMConfigurationService::BMAPI_FunctionAddress_ZHM3Actor_ActivateBloodSpurt))(this, pInvDir, pCollisionPos, type);
-        }
+        // TODO: Finish me
     }
 
     void ZHM3Actor::InitMapIcon(bool a1)
     {
-        assert(BMConfigurationService::BMAPI_FunctionAddress_ZHM3Actor_InitMapIcon != BMConfigurationService::kNotConfiguredOption);
-        if (BMConfigurationService::BMAPI_FunctionAddress_ZHM3Actor_InitMapIcon != BMConfigurationService::kNotConfiguredOption) {
-            ((void(__thiscall*)(Hitman::BloodMoney::ZHM3Actor*, bool))(BMConfigurationService::BMAPI_FunctionAddress_ZHM3Actor_InitMapIcon))(this, a1);
-        }
+        // TODO: Finish me
     }
 }

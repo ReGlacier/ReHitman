@@ -55,6 +55,8 @@ namespace Glacier
 
         ZComponentGlobalList::Instance().DestroyComponents(1u);
     }
+
+    STATIC_GLOBAL_CLASS_INSTANCE_IMPL(const char*, g_sProjectID, 0x007F0AC0, "[unknown]");
 }
 
 // PC 00450C10

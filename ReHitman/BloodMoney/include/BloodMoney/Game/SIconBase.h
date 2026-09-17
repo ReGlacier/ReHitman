@@ -3,7 +3,7 @@
 #include <Glacier/ReGlacier.h>
 #include <Glacier/GlacierFWD.h>
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     struct SIconBase 
     {

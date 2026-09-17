@@ -29,7 +29,7 @@ namespace Glacier
     ZREF Silevelcontrol__Getcoverlist();
     bool Silevelcontrol__Start_Actorinvestigatehitman(ZREF rInspector);
     void Silevelcontrol__End_Actorinvestigatehitman(ZREF rInspector);
-    Hitman::BloodMoney::SDifficultySettings Silevelcontrol__Getdifficultysettings();
+    Hitman::SDifficultySettings Silevelcontrol__Getdifficultysettings();
     int Silevelcontrol__Getdifficulty();
     bool Silevelcontrol__Ishitmantrespassing();
     bool Silevelcontrol__Ishitmaninoutsidelocation();
@@ -50,8 +50,8 @@ namespace Glacier
     ZREF Silevelcontrol__Getcurrenthitmanweapontemplate();
     ZREF Silevelcontrol__Getactorfriskinghm();
     ZREF Silevelcontrol__Setactorfriskinghm(ZREF rActor);
-    Hitman::BloodMoney::EFriskOp Silevelcontrol__Getfriskoperation();
-    Hitman::BloodMoney::EFriskOp Silevelcontrol__Setfriskoperation(Hitman::BloodMoney::EFriskOp operation);
+    Hitman::EFriskOp Silevelcontrol__Getfriskoperation();
+    Hitman::EFriskOp Silevelcontrol__Setfriskoperation(Hitman::EFriskOp operation);
     int Silevelcontrol__Getcurrentzone();
     int Silevelcontrol__Starteventcamera(ZREF rAttachGeom, eEventCameraType cameraType, ZREF rLookAtGeom, eEventCameraPosition position);
     int Silevelcontrol__Starteventcameralookatgeom(ZREF rLookAtGeom, ZREF rCameraGeom, eEventCameraPosition position);

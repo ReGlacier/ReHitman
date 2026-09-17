@@ -122,7 +122,7 @@ namespace Glacier
         // TODO: Finish me
     }
 
-    Hitman::BloodMoney::SDifficultySettings Silevelcontrol__Getdifficultysettings()
+    Hitman::SDifficultySettings Silevelcontrol__Getdifficultysettings()
     {
         // TODO: Finish me
         return {};
@@ -248,16 +248,16 @@ namespace Glacier
         return 0;
     }
 
-    Hitman::BloodMoney::EFriskOp Silevelcontrol__Getfriskoperation()
+    Hitman::EFriskOp Silevelcontrol__Getfriskoperation()
     {
         // TODO: Finish me
-        return Hitman::BloodMoney::eeFriskOp_Attack;
+        return Hitman::eeFriskOp_Attack;
     }
 
-    Hitman::BloodMoney::EFriskOp Silevelcontrol__Setfriskoperation(Hitman::BloodMoney::EFriskOp operation)
+    Hitman::EFriskOp Silevelcontrol__Setfriskoperation(Hitman::EFriskOp operation)
     {
         // TODO: Finish me
-        return Hitman::BloodMoney::eeFriskOp_Attack;
+        return Hitman::eeFriskOp_Attack;
     }
 
     int Silevelcontrol__Getcurrentzone()
