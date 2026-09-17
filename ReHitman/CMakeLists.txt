@@ -22,5 +22,6 @@ add_subdirectory(Glacier)
 add_subdirectory(BloodMoney)
 add_subdirectory(ScriptInterface)
 add_subdirectory(ReHitman)
+add_subdirectory(ScriptCS)
 
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
