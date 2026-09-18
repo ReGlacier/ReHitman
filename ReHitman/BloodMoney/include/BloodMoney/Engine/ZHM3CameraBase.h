@@ -2,7 +2,7 @@
 
 #include <BloodMoney/Engine/ZHM3CameraBaseFunc.h>
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
 	class ZHM3CameraBase : public ZHM3CameraBaseFunc
 	{

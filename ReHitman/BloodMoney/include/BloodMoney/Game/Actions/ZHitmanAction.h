@@ -1,8 +1,8 @@
 #pragma once
 
-#include <Glacier/EventBase/ZLnkAction.h>
+#include <Glacier/IK/ZLnkAction.h>
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     class ZHitman3;
 

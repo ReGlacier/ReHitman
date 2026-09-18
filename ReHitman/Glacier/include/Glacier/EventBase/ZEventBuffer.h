@@ -1,43 +1,45 @@
 #pragma once
 
-#include <Glacier/ZListNodeBase.h>
+#include <Glacier/ReGlacier.h>
+#include <Glacier/ZSTL/ZList.h>
 #include <Glacier/GlacierFWD.h>
 #include <Glacier/EventBase/ZEventBase.h>
+#include <Glacier/Serializer/ZSerializable.h>
+#include <Glacier/ZSTL/ZFixedSizeMemoryManager.h>
+#include <Glacier/ZUniMemory.h>
 
 namespace Glacier
 {
-    class ZEventBuffer
+    class ZEventBuffer : public ZSerializable // total size is 0x1C
     {
     public:
+        // static
+        STATIC_CLASS_VAR(ZEventBuffer, ZEventBuffer*, m_Instance);
+
+        // vtbl
+        ~ZEventBuffer() override;
+        void LoadObject(IInputSerializerStream &) override;
+        void SaveObject(IOutputSerializerStream &) override;
+
+        // methods
+        static ZEventBuffer& Instance();
+        ZEventBuffer(uint32_t iEventBufferSize);
+        void InitEventBuffer(uint32_t lEventRamSize);
+        void FreeEventBuffer();
+        ZEventBase* AllocEventRam(uint32_t lEventSize);
+        ZREF AllocRef(ZEventBase* pEvent);
+        int AllocRefDirect(ZEventBase* pEvent, ZREF ref);
+        ZEventBase* ConvEventRefToPtr(ZREF ref);
+        void FreeEventRam(ZEventBase* pEvent);
+        void FreeRef(ZREF ref);
+
         // members
-        char pad_0004[4]; //0x0004
-        ZEventBase* m_events; //0x0008
-        char pad_000C[4]; //0x000C
-        ZOffsetAlloc* m_offsetAlloc; //0x0010
-        char pad_0014[44]; //0x0014
-
-        /// === vftable ===
-        virtual void Release(bool);
-	    virtual void PreSave(ZPackedInput*);
-	    virtual void PostSave(ZPackedInput*);
-	    virtual void PreLoad(ZPackedInput*);
-	    virtual void PostLoad(ZPackedInput*);
-	    virtual void PostProcess(int, int);
-	    virtual void LoadSave(ZPackedInput*, bool);
-	    virtual void LoadObject(IInputSerializerStream*);
-	    virtual void SaveObject(IOutputSerializerStream*);
-	    virtual void ExchangeObject(ZPackedInput*);
-	    virtual void SetToDefault();
-	    virtual int GetTypeID();
-
-    public:
-	    // Custom API
-	    static std::intptr_t GetGQC(Glacier::ZREF ref);
-
-	    template <typename TEntity>
-	    static TEntity* EventRefToInstance(Glacier::ZREF ref) {
-		    return reinterpret_cast<TEntity*>(ZEventBuffer::GetGQC(ref));
-	    }
+        ZFixedSizeMemoryManager<ZEventBase*>* m_EventRefs; // +0x4
+        char* m_pEventRam; // +0x8
+		uint32_t m_lEventRamSize; // +0xC
+		ZOffsetAlloc* m_pEventAlloc; // +0x10
+        uint32_t m_lAllocatedEventsRam; // +0x14
+        uint32_t m_lNrAllocatedEvents; // +0x18
     };
-
+    RE_VERIFY_SIZE(ZEventBuffer, 0x1C); // verified
 }

@@ -2,7 +2,7 @@
 
 #include <d3d9.h>
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     // Created with ReClass.NET 1.2 by KN4CK3R
     class ZEntryGeom

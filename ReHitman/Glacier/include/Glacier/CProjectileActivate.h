@@ -4,17 +4,18 @@
 
 namespace Glacier {
     struct CProjectileActivate {
-        Glacier::ZREF m_unkREF0;
-        int m_field4;
-        float m_field8;
-        int m_fieldC;
-        bool m_field10;
-        bool m_field11;
-        bool m_field12;
-        bool m_field13;
-        Glacier::ZVector3 m_vTargetPosition;
+        uint32_t m_rOwner;
+        uint32_t m_rWeapon;
+        float m_fSpeed;
+        float m_fRange;
+        bool m_bExplodeOnImpact;
+        bool m_bCanPenetrate;
+        bool m_bCanPenetrateBody;
+        bool m_bSendUnderFireWarning;
+        ZVector3 m_vTarget;
         float m_fPrecision;
-        int m_field24;
-        int m_field28;
+        uint32_t m_eAmmoMaterialEnumId;
+        ZItemTemplateWeapon* m_pWeaponTemplate;
     };
+    RE_VERIFY_SIZE(CProjectileActivate, 0x2C);
 }

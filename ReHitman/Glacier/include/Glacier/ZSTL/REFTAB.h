@@ -1,53 +1,259 @@
 #pragma once
 
+#include <cstdint>
+#include <type_traits>
 #include <Glacier/Glacier.h>
 #include <Glacier/GlacierFWD.h>
+#include <Glacier/ReGlacier.h>
+#include <Glacier/ZUniAssert.h>
 
 namespace Glacier
 {
-    struct RefRun {
-        int m_field0;
-        int m_field4;
-        int m_field8;
+    /**
+     * @struct TabBlk
+     * @brief Internal memory block header for REFTAB storage.
+     *        Each block manages a contiguous array of raw data elements immediately
+     *        following this header in memory. Blocks are chained into a doubly-linked list.
+     */
+    struct TabBlk
+    {
+        TabBlk *_Prev; ///< Pointer to the previous memory block.
+        TabBlk *_Next; ///< Pointer to the next memory block.
+        int _Cou;      ///< Current active element counter inside this specific block.
+        int _Pad;      ///< 0x10 Alignment padding
     };
 
+    /**
+     * @struct RefRun
+     * @brief Opaque iterator/cursor state utilized for REFTAB traversal and mutations.
+     *        Keeps track of the current block, position offset, and direction during forward or backward iterations.
+     */
+    struct RefRun
+    {
+        TabBlk *_RunPtr; ///< Pointer to the currently iterated memory block.
+        int _RunCou;     ///< Current element offset (in bytes) within the block.
+        int _RunDir;     ///< Iteration direction flag.
+
+        /**
+         * @brief Evaluates whether the iterator is pointing to a valid block.
+         */
+        explicit operator bool() const { return _RunPtr != nullptr; }
+    };
+
+    /**
+     * @class REFTAB
+     * @brief A fixed-size chunked allocator container (Unrolled Linked List) from Glacier Engine.
+     *
+     * @details
+     * REFTAB is a performance-oriented hybrid container optimized for cache locality and rapid element recycling.
+     * Instead of allocating memory for every single element (like std::list) or shifting the entire array
+     * on erase operations (like std::vector), REFTAB allocates large chunks of memory called **TabBlk**.
+     * * ### Key Characteristics:
+     * - **Chunked Allocations:** Contains an internal doubly-linked list of pages (@ref TabBlk). Each page holds a fixed
+     * amount of elements calculated via `BlkSize`.
+     * - **Fast O(1) Erasure:** When an element is deleted via @ref RunDelRef, REFTAB avoids memory shifting.
+     * Instead, it copies the **very last element** of the entire container into the slot of the deleted element
+     * using a raw `memcpy`.
+     * - **Binary Compatibility:** Strictly maintains a structure size of `0x1C` (28 bytes) to remain fully compatible
+     * with the original game binary (*Hitman: Blood Money*).
+     */
     class REFTAB
     {
     public:
-        virtual REFTAB* Release(bool doFreeMem);   //#0 +0 .rdata:007569ec
-        virtual void* Add(unsigned int);            //#1 +4 .rdata:007569f0
-        virtual void AddUnique(uint);              //#2 +8 .rdata:007569f4
-        virtual void Clear();                      //#3 +c .rdata:007569f8
-        virtual void ClearThis();                  //#4 +10 .rdata:007569fc
-        virtual uint Count();                      //#5 +14 .rdata:00756a00
-        virtual uint Size();                       //#6 +18 .rdata:00756a04
-        virtual uint GetEleSize();                 //#7 +1c .rdata:00756a08
-        virtual uint PoolSize();                   //#8 +20 .rdata:00756a0c
-        virtual void DelRefPtr(uint*);             //#9 +24 .rdata:00756a10
-        virtual bool Exists(uint);                 //#10 +28 .rdata:00756a14
-        virtual bool Exists(uint*);                //#11 +2c .rdata:00756a18
-        virtual void* Find(uint);                  //#12 +30 .rdata:00756a1c
-        virtual uint GetRefNr(int);                //#13 +34 .rdata:00756a20
-        virtual uint GetRefPtrNr(int);             //#14 +38 .rdata:00756a24
-        virtual uint GetIndex(uint);               //#15 +3c .rdata:00756a28
-        virtual void Remove(uint);                 //#16 +40 .rdata:00756a2c
-        virtual void RemoveIfExists(uint);         //#17 +44 .rdata:00756a30
-        virtual void RunDelRef(RefRun *);          //#18 +48 .rdata:00756a34
-        virtual void RunInitNxtRef(RefRun *);      //#19 +4c .rdata:00756a38
-        virtual void RunInitNxtRef_1(RefRun *);    //#20 +50 .rdata:00756a3c
-        virtual void RunInitPrevRef(RefRun *);     //#21 +54 .rdata:00756a40
-        virtual void RunInitPrevRef_1(RefRun *);   //#22 +58 .rdata:00756a44
-        virtual void RunNxtRef(RefRun *);          //#23 +5c .rdata:00756a48
-        virtual void RunNxtRef_1(RefRun *);        //#24 +60 .rdata:00756a4c
-        virtual void RunNxtRefPtr(RefRun *);       //#25 +64 .rdata:00756a50
-        virtual void RunNxtRefPtr_1(RefRun *);     //#26 +68 .rdata:00756a54
-        virtual void RunPrevRef(RefRun *);         //#27 +6c .rdata:00756a58
-        virtual void RunPrevRef_1(RefRun *);       //#28 +70 .rdata:00756a5c
-        virtual void RunPrevRefPtr(RefRun *);      //#29 +74 .rdata:00756a60
-        virtual void RunPrevRefPtr_1(RefRun *);    //#30 +78 .rdata:00756a64
-        virtual void* operator[](int);             //#31 +7c .rdata:00756a68
-        virtual void RunToRefPtr(RefRun *);        //#32 +80 .rdata:00756a6c
-        virtual void DeleteBlock(TabBlk *);        //#33 +84 .rdata:00756a70
-        virtual void* NewBlock(void);              //#34 +88 .rdata:00756a74
+        // members
+        TabBlk* TabFirstPtr; ///< Head of the memory block linked list.
+        TabBlk* TabBlockPtr; ///< Tail of the memory block linked list (last allocated block).
+        int m_lRefsPrBlk;    ///< Maximum capacity of elements per single block.
+        int BlkSize;         ///< Total data capacity size per block in bytes (`m_lRefsPrBlk * EleSize`).
+        int EleCount;        ///< Total number of active elements across all blocks.
+        int EleSize;         ///< Total size of one element in bytes (`pUserData + 1`).
+
+        // methods
+        /**
+         * @brief Constructs a new REFTAB container.
+         * @param pPoolSize Maximum number of elements allowed inside one chunk/block.
+         * @param pUserData Inner element size metric (internally incremented by 1 to form EleSize).
+         */
+        REFTAB(int pPoolSize, int pUserData);
+
+        // factory
+        static REFTAB* MakeReftab(int pPoolSize, int pUserData);
+        static void DeleteReftab(REFTAB* pRefTab);
+
+        // vtbl
+        virtual ~REFTAB();
+        virtual uint32_t* Add(uint32_t);
+        virtual uint32_t* AddUnique(uint32_t);
+        virtual void Clear();
+        virtual void ClearThis();
+        virtual int Count() const;
+        virtual uint32_t Size() const;
+        virtual uint32_t GetEleSize() const;
+        virtual uint32_t PoolSize() const;
+        virtual void DelRefPtr(uint32_t*);
+        virtual bool Exists(uint32_t*);
+        virtual bool Exists(uint32_t) const;
+        virtual uint32_t* Find(uint32_t) const;
+        virtual uint32_t GetRefNr(int) const;
+        virtual uint32_t* GetRefPtrNr(int);
+        virtual uint32_t GetIndex(uint32_t) const;
+        virtual void Remove(uint32_t);
+        virtual bool RemoveIfExists(uint32_t);
+        virtual void RunDelRef(RefRun *);
+        virtual void RunInitNxtRef(RefRun *) const;
+        virtual void RunInitNxtRef(RefRun *);
+        virtual void RunInitPrevRef(RefRun *) const;
+        virtual void RunInitPrevRef(RefRun *);
+        virtual uint32_t RunNxtRef(RefRun *) const;
+        virtual uint32_t RunNxtRef(RefRun *);
+        virtual const uint32_t* RunNxtRefPtr(RefRun *) const;
+        virtual uint32_t* RunNxtRefPtr(RefRun *);
+        virtual uint32_t RunPrevRef(RefRun *) const;
+        virtual uint32_t RunPrevRef(RefRun *);
+        virtual const uint32_t* RunPrevRefPtr(RefRun *) const;
+        virtual uint32_t* RunPrevRefPtr(RefRun *);
+        virtual uint32_t operator[](int) const;
+        virtual const uint32_t* RunToRefPtr(RefRun *) const;
+        virtual void DeleteBlock(TabBlk *);
+        virtual TabBlk* NewBlock(void);
+
+        // STL Iterators
+        template <typename T = uint32_t>
+        class Iterator
+        {
+        private:
+            REFTAB* m_pContainer;
+            RefRun  m_Run;
+            uint32_t* m_pCurrentPtr;
+
+            void Advance()
+            {
+                m_pCurrentPtr = m_pContainer->RunNxtRefPtr(&m_Run);
+            }
+
+        public:
+            using iterator_category = std::forward_iterator_tag;
+            using value_type        = T;
+            using difference_type   = std::ptrdiff_t;
+            using pointer           = T*;
+            using reference         = const T&;
+
+            Iterator(REFTAB* container, bool isEnd) : m_pContainer(container)
+            {
+                if (isEnd || !container || container->EleCount == 0)
+                {
+                    m_Run._RunPtr = nullptr;
+                    m_Run._RunCou = 0;
+                    m_Run._RunDir = 0;
+                    m_pCurrentPtr = nullptr;
+                }
+                else
+                {
+                    m_pContainer->RunInitNxtRef(&m_Run);
+                    m_pCurrentPtr = m_pContainer->RunNxtRefPtr(&m_Run);
+                }
+            }
+
+            value_type operator*() const
+            {
+                if constexpr (std::is_pointer_v<value_type>)
+                {
+                    return reinterpret_cast<value_type>(*m_pCurrentPtr);
+                }
+                else
+                {
+                    return static_cast<value_type>(*m_pCurrentPtr);
+                }
+            }
+
+            value_type operator->() const
+            {
+                if constexpr (std::is_pointer_v<value_type>)
+                {
+                    return reinterpret_cast<value_type>(*m_pCurrentPtr);
+                }
+                else
+                {
+                    return static_cast<value_type>(*m_pCurrentPtr);
+                }
+            }
+
+            Iterator& operator++()
+            {
+                Advance();
+                return *this;
+            }
+
+            /**
+             * @brief Erases the element the iterator currently points to.
+             *
+             * @details
+             * Mirrors the engine's `RunDelRef` semantics: the last element of the
+             * container is memcpy'd into the erased slot, so this method leaves the
+             * iterator positioned on the element that replaced the erased one (which
+             * is why the caller must NOT increment again after calling Erase).
+             *
+             * @return Reference to *this, advanced to the replacement element.
+             */
+            Iterator& Erase()
+            {
+                ZASSERT(m_pCurrentPtr != nullptr);
+                m_pContainer->RunDelRef(&m_Run);
+                Advance();
+                return *this;
+            }
+
+            Iterator operator++(int)
+            {
+                Iterator tmp = *this;
+                Advance();
+                return tmp;
+            }
+
+            bool operator==(const Iterator& other) const
+            {
+                if (!m_pCurrentPtr && !other.m_pCurrentPtr)
+                    return true;
+
+                return m_pCurrentPtr == other.m_pCurrentPtr;
+            }
+
+            bool operator!=(const Iterator& other) const
+            {
+                return !(*this == other);
+            }
+        };
+
+        template <typename T>
+        class TypedView
+        {
+        public:
+            explicit TypedView(REFTAB* container) : m_pContainer(container) {}
+
+            Iterator<T> begin() { return Iterator<T>(m_pContainer, false); }
+            Iterator<T> end() { return Iterator<T>(m_pContainer, true); }
+
+        private:
+            REFTAB* m_pContainer;
+        };
+
+        template <typename T>
+        TypedView<T> As()
+        {
+            return TypedView<T>(this);
+        }
+
+        template <typename T>
+        TypedView<T> As() const
+        {
+            return TypedView<T>(const_cast<REFTAB*>(this));
+        }
+
+        Iterator<uint32_t> begin() { return Iterator<uint32_t>(this, false); }
+        Iterator<uint32_t> end()   { return Iterator<uint32_t>(this, true); }
+
+    protected:
+        void MakeDirty();
     };
+    RE_VERIFY_SIZE(REFTAB, 0x1C);
 }

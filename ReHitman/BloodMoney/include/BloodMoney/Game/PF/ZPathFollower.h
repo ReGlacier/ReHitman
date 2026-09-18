@@ -2,15 +2,15 @@
 
 #include <Glacier/ZSTL/REFTAB.h>
 #include <Glacier/ZSTL/ZRTTI.h>
-#include <Glacier/EventBase/ZEventBase.h>
+#include <Glacier/EventBase/ZBaseConRout.h>
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     class ZEventBase;
 
     enum EScriptPathType : int {}; //TODO: Reverse all possible values of enum
 
-    class ZPathFollower : public Glacier::ZEventBase
+    class ZPathFollower : public Glacier::ZBaseConRout
     {
     public:
         /// === consts ===

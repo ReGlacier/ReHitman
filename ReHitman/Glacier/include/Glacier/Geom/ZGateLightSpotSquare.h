@@ -1,27 +1,57 @@
 #pragma once
 
+#include <Glacier/ReGlacier.h>
 #include <Glacier/Geom/ZSPOTLIGHTSQUARE.h>
+#include <Glacier/Runtime/Macro.h>
+#include <Glacier/ZSTL/REFTAB.h>
 
-namespace Glacier {
-    class ZGateLightSpotSquare : public ZSPOTLIGHTSQUARE {
+
+namespace Glacier
+{
+    class ZGateLightSpotSquare : public ZSPOTLIGHTSQUARE
+    {
     public:
-        //vftable
-        //data (total size is 0x60, base size is 0x20)
-        int m_field20;
-        int m_field24;
-        int m_field28;
-        int m_field2C;
-        int m_field30;
-        int m_field34;
-        int m_field38;
-        int m_field3C;
-        int m_field40;
-        int m_field44;
-        int m_field48;
-        int m_field4C;
-        int m_field50;
-        int m_field54;
-        int m_field58;
-        int m_field5C;
+        // types
+        enum EType
+        {
+            CLONES = 0,
+            AIMATGATES = 1
+        };
+
+        enum EFilterType
+        {
+            EXCLUDE = 0,
+            INCLUDE = 1
+        };
+
+        // RTTI
+        DECLARE_GEOM_CLASS(ZGateLightSpotSquare, 0x8000F2u);
+
+        // vtbl
+        ~ZGateLightSpotSquare() override;
+
+        // ZSerializable
+        // RTP::cBase
+        const RTP::ZPropertyInfo& GetProperties() const override;
+
+        // ZGEOM
+        uint32_t GetObjectId() const override;
+        void GetObjectIdAndMask(uint32_t& id, uint32_t& mask) const override;
+        ZGEOMCLASSINFO* GetOldClassInfo() const override;
+        void Activate(bool bActive) override;
+        void CopyData(const ZGEOM* Source) override;
+        void Enable() override;
+        void Disable() override;
+        void SetMultiplier(float fValue) override;
+
+        // methods
+        ZGateLightSpotSquare(const char* psName, ZBaseGeom* pBaseGeom);
+
+        // members
+        EType m_lType;
+        REFTAB m_RoomsFilter;
+        EFilterType m_lFilterType;
+        REFTAB m_Slaves;
     };
+    RE_VERIFY_SIZE(ZGateLightSpotSquare, 0x60);
 }

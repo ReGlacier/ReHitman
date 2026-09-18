@@ -8,7 +8,7 @@ namespace Glacier {
     class CInventory;
 }
 
-namespace Hitman::BloodMoney {
+namespace Hitman {
     class CCheat
     {
     public:

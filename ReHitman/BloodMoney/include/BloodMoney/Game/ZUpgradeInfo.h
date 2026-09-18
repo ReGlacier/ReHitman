@@ -2,7 +2,7 @@
 
 #include <BloodMoney/Game/UI/IGUIElement.h>
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     // Type forwardings for class ZUpgradeInfo
     class ZGUIBase;
