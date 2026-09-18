@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Glacier/ReGlacier.h>
+
 #include <BloodMoney/Game/ZHM3Actor.h>
 #include <BloodMoney/Game/LevelControls/ZHM3LevelControl.h>
 #include <BloodMoney/Game/SDifficultySettings.h>
@@ -15,8 +17,6 @@
 #include <Glacier/ReGlacier.h>
 #include <Glacier/EventBase/ZBaseConRout.h>
 
-#define DECLARE_UNKNOWN_TYPE_PTR(name) using name = std::uintptr_t;
-#define VERIFY_FIELD_POS(cls, fld, expected) static_assert(offsetof(cls, fld) == (expected), "Bad offset of " #cls "::" #fld);
 
 namespace Glacier
 {
@@ -27,12 +27,7 @@ namespace Glacier
 
 namespace Hitman
 {
-    DECLARE_UNKNOWN_TYPE_PTR(N00001B3F);
-    DECLARE_UNKNOWN_TYPE_PTR(N000033C1);
-    DECLARE_UNKNOWN_TYPE_PTR(N0000163D);
-    DECLARE_UNKNOWN_TYPE_PTR(CGlobalCom);
-    DECLARE_UNKNOWN_TYPE_PTR(ZHM3CameraEventCameraClass);
-
+    class ZHM3CameraEventCameraClass;
     class ZHM3DialogControl;
     class ZHM3MenuElements;
     class ZHitman3;
@@ -49,8 +44,8 @@ namespace Hitman
         int m_iShotCount; // +0x10
     };
 
-    VERIFY_FIELD_POS(ZHM3GameStats, m_iShotsHit, 0xC);
-    VERIFY_FIELD_POS(ZHM3GameStats, m_iShotCount, 0x10);
+    RE_VERIFY_OFFSET(ZHM3GameStats, m_iShotsHit, 0xC);
+    RE_VERIFY_OFFSET(ZHM3GameStats, m_iShotCount, 0x10);
 
     enum EBriefingDetailType : int {
         eBriefingTypeNoType = 0,
@@ -82,7 +77,7 @@ namespace Hitman
     class ZDifficultySettings
     {
     public:
-        sDifficultySettings aSettings[EDifficulty::eMAX_VALUE];
+        SDifficultySettings aSettings[EDifficulty::eMAX_VALUE];
     };
 
     struct sPricesStruct {
@@ -281,5 +276,3 @@ namespace Hitman
     RE_VERIFY_OFFSET(ZHM3GameData, m_DialogControl, 0x69A8);
     RE_VERIFY_OFFSET(ZHM3GameData, m_pWeaponUpgradeUtils, 0x69C8);
 }
-
-#undef DECLARE_UNKNOWN_TYPE_PTR
