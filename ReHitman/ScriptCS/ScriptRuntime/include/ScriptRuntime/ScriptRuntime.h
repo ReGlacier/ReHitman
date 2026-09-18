@@ -15,6 +15,7 @@
  */
 
 #include <stdint.h>
+#include "ZScriptImportTable.h"
 
 #ifndef TODO_PTR
 #define TODO_PTR NULL
@@ -30,7 +31,9 @@ typedef struct FUNCTIONCONTROLLER FUNCTIONCONTROLLER;
 typedef struct SAVEGAMESTATICS SAVEGAMESTATICS;
 typedef struct SCRIPTIMPORT SCRIPTIMPORT;
 
-typedef int  (*ProcessMessage_t)(unsigned short, void*);
+typedef uint16_t ZMSGID;
+
+typedef int  (*ProcessMessage_t)(ZMSGID, void*);
 typedef void (*VoidFunction_t)(void);
 typedef float (*EntryPoint_t)(void* pScriptState); /* float yield protocol */
 
@@ -95,33 +98,33 @@ struct SCRIPTCREATOR
 /* SCRIPTFUNCTIONS — 0x6C (27 pointers), engine → script */
 typedef struct SCRIPTFUNCTIONS
 {
-    void* SetForkStateController;      /* +0x00 */
-    void* GetForkThread;               /* +0x04 */
-    void* Sleep;                       /* +0x08 */
-    void* StopThread;                  /* +0x0C */
-    void* TerminateThread;             /* +0x10 */
-    void* ResumeThread;                /* +0x14 */
-    void* CheckTimeout;                /* +0x18 */
-    void* SendCommand;                 /* +0x1C */
-    void* SendScriptCommand;           /* +0x20 */
-    void* DebugPrint;                  /* +0x24 */
-    void* Pack;                        /* +0x28 */
-    void* Unpack;                      /* +0x2C */
-    void* Input;                       /* +0x30 */
-    void* GetZDefine;                  /* +0x34 */
-    void* Alloc;                       /* +0x38 */
-    void* AllocNM;                     /* +0x3C */
-    void* Free;                        /* +0x40 */
-    void* FreeNM;                      /* +0x44 */
-    void* RunNoBreak;                  /* +0x48 */
-    void* FindScriptStateByRef;        /* +0x4C */
-    void* GetAlienVirtualTableEntry;   /* +0x50 */
-    void* GetAlienScriptState;         /* +0x54 */
-    void* GetRootScriptStateRef;       /* +0x58 */
-    void* Memcpy;                      /* +0x5C */
-    void* Memset;                      /* +0x60 */
-    void* GetPriority;                /* +0x64 */
-    void* SetPriority;                /* +0x68 */
+    void (*SetForkStateController)(const STATECONTROLLER* pController);            /* +0x00 */
+    const STATECONTROLLER* (*GetForkThread)();                                     /* +0x04 */
+    void (*Sleep)(float fTime);                                                    /* +0x08 */
+    void (*StopThread)(void* pScriptState);                                        /* +0x0C */
+    void (*TerminateThread)(void* pScriptState);                                   /* +0x10 */
+    void (*ResumeThread)(void* pScriptState);                                      /* +0x14 */
+    int (*CheckTimeout)();                                                         /* +0x18 */
+    void (*SendCommand)(ZREF rSender, ZMSGID Msg, void* pData, ZREF rTarget);      /* +0x1C */
+    int (*SendScriptCommand)(ZREF rGeomTarget, ZMSGID Msg, void* pData, int unused); /* +0x20 */
+    void (*DebugPrint)(const char* format, ...);                                   /* +0x24 */
+    void (*Pack)(void* pData, uint32_t lSize);                                     /* +0x28 */
+    void (*Unpack)(void* pData, uint32_t lSize);                                   /* +0x2C */
+    void (*Input)(void* pData, uint32_t lSize);                                    /* +0x30 */
+    void (*GetZDefine)(const char* pName, void* pData, uint32_t lSize);            /* +0x34 */
+    void* (*Alloc)(uint32_t lSize, const char* psFile, uint32_t lLine);            /* +0x38 */
+    void* (*AllocNM)(uint32_t lSize, const char* psFile, uint32_t lLine);          /* +0x3C */
+    void (*Free)(void* ptr);                                                       /* +0x40 */
+    void (*FreeNM)(void* ptr);                                                     /* +0x44 */
+    void (*RunNoBreak)(void* pScriptState);                                        /* +0x48 */
+    ZREF (*FindScriptStateByRef)(ZREF rRef, const char* psScriptName);             /* +0x4C */
+    const FUNCTIONCONTROLLER* (*GetAlienVirtualTableEntry)(ZREF rRef, int32_t lEntryNr); /* +0x50 */
+    void* (*GetAlienScriptState)(ZREF rRef);                                       /* +0x54 */
+    ZREF (*GetRootScriptStateRef)();                                               /* +0x58 */
+    void (*Memcpy)(void* dst, void* src, uint32_t lSize);                          /* +0x5C */
+    void (*Memset)(void* dst, uint8_t b, uint32_t lSize);                          /* +0x60 */
+    int32_t (*GetPriority)(void* pScriptState);                                    /* +0x64 */
+    void (*SetPriority)(void* pScriptState, int32_t lPriority);                    /* +0x68 */
 } SCRIPTFUNCTIONS; /* 0x6C */
 
 /* INTERNALSCRIPTFUNCTIONS — 4 bytes */

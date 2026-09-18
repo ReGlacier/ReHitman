@@ -1,6 +1,7 @@
 #include <Hideout/Hideout.h>
 #include <AllLevels/AllLevels.h>
 #include <ScriptRuntime/ScriptRuntime.h>
+#include <ScriptRuntime/ZScriptImportTable.h>
 
 /*
  * ScriptDLL contract tables (ordinals 1-4), reconstructed from the
@@ -12,8 +13,9 @@
  *                          clears it then points its own ISF at this field.
  *   Scripts       @3 DATA  SCRIPTCREATOR** — [0] = count, creators at [1..],
  *                          null-terminated.
- *   ScriptImports @4 DATA  void*[0x2CC] import block; zero-filled in the image;
- *                          the engine overwrites it with ScriptInterfaces.
+ *   ScriptImports @4 DATA  SCRIPTIMPORTSTABLE (0x2CC pointers) import block;
+ *                          zero-filled in the image; the engine overwrites it
+ *                          with ScriptInterfaces.
  *
  * The creator list below preserves the PC_Hideout Scripts table order
  * (AllLevels shared scripts interleaved with the level-specific Hideout ones).
@@ -43,5 +45,5 @@ const SCRIPTCREATOR* const Scripts[] =
     NULL                        /* terminator */
 };
 
-/* Ordinal 4: ScriptImports — void*[0x2CC] import block */
-void* ScriptImports[0x2CC];     /* @4 DATA */
+/* Ordinal 4: ScriptImports — typed 0x2CC import block */
+SCRIPTIMPORTSTABLE ScriptImports;     /* @4 DATA */

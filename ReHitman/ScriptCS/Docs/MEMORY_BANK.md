@@ -19,7 +19,7 @@ mechanics.
 | Script engine (host side) | `ReHitman/Glacier/source/ScriptEngine/`, `ReHitman/Glacier/include/Glacier/ScriptEngine/` | [SCRIPT_ENGINE.md](SCRIPT_ENGINE.md) |
 | Script interface (game API, 716 slots) | `ReHitman/ScriptInterface/` | [SCRIPT_INTERFACE.md](SCRIPT_INTERFACE.md) |
 | Script DLL workspace (per-script projects) | `ReHitman/ScriptCS/AllLevels/`, `ReHitman/ScriptCS/Hideout/`, `ReHitman/ScriptCS/ScriptRuntime/` | [SCRIPTCS_CONTRACT.md](SCRIPTCS_CONTRACT.md) |
-| ScriptRuntime shared types | `ReHitman/ScriptCS/ScriptRuntime/include/ScriptRuntime/ScriptRuntime.h` | [SCRIPTCS_CONTRACT.md](SCRIPTCS_CONTRACT.md) — canonical C-facing mirrors of the Glacier script metadata + `SCRIPTFUNCTIONS`/`INTERNALSCRIPTFUNCTIONS` |
+| ScriptRuntime shared types | `ReHitman/ScriptCS/ScriptRuntime/include/ScriptRuntime/ScriptRuntime.h` (+ `ZScriptImportTable.h`) | [SCRIPTCS_CONTRACT.md](SCRIPTCS_CONTRACT.md) — canonical C-facing mirrors of the Glacier script metadata + `SCRIPTFUNCTIONS`/`INTERNALSCRIPTFUNCTIONS` + `SCRIPTIMPORTSTABLE` |
 | AllLevels shared scripts (11 `Alllevels_*` SCRIPTCREATORs) | `ReHitman/ScriptCS/AllLevels/include/AllLevels/` + `source/AllLevels.c` | [SCRIPTCS_CONTRACT.md](SCRIPTCS_CONTRACT.md) (reconstructed from PC_Hideout) |
 | Hideout.dll reference (IDA) | **PC_Hideout** instance — `.../Games/Scriptcs/_gamerelease/Hideout.dll` | [SCRIPTCS_CONTRACT.md](SCRIPTCS_CONTRACT.md) (verification anchor for `ScriptCS/Hideout/`) |
 
@@ -45,6 +45,9 @@ Verified in the rebuilt `ScriptCS/Hideout` target (2026-09-17):
   `FUNCTIONCONTROLLER`, `SAVEGAMESTATICS`, `SCRIPTIMPORT`, `SCRIPTFUNCTIONS`,
   `INTERNALSCRIPTFUNCTIONS`, `TODO_PTR`) live in the `ScriptRuntime` module;
   `AllLevels/ScriptCreator.h` is a shim re-exporting them.
+- `ScriptImports` is a typed `SCRIPTIMPORTSTABLE` (0x2CC function pointers,
+  PC slot order) defined in `ScriptRuntime/include/ScriptRuntime/ZScriptImportTable.h`
+  — the C port of the Glacier `ZScriptImportTable.h` typed import table.
 
 ## Reading order
 

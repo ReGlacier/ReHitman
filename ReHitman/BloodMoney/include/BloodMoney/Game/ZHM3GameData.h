@@ -2,6 +2,7 @@
 
 #include <BloodMoney/Game/ZHM3Actor.h>
 #include <BloodMoney/Game/LevelControls/ZHM3LevelControl.h>
+#include <BloodMoney/Game/SDifficultySettings.h>
 #include <BloodMoney/Game/ZHM3BriefingControl.h>
 #include <BloodMoney/Game/ZClothTracker.h>
 #include <BloodMoney/Game/UI/ZOSD.h>
@@ -68,54 +69,6 @@ namespace Hitman
         void* m_pCom; //0x0004
         uint8_t m_Profile[24216]; //0x0008
     }; //Size: 0x5EA0
-
-    struct sDifficultySettings {
-        float fstanddowntime;
-        float ffollowtrailtime;
-        float fhunttargettracktime;
-        float fseethroughdisguisedistance;
-        float fseethroughdisguisespeed;
-        float fforgetdisguisespeed;
-        float frunsuspiciousrange;
-        float faccuracymodifier;
-        float fburstlength;
-        float frofmultiplier;
-        float faimspeed;
-        float fdrawspeedmultiplier;
-        float fshothearingrange;
-        float fscreamhearingrange;
-        float fcheckfootstepsbehindrange;
-        float factorrelaxedvisionrange;
-        float factorrelaxedfov;
-        float factoralertvisionrange;
-        float factoralertfov;
-        float ffallingdamagemultiplier;
-        float fusecoverpercentage;
-        float fbleedtodeathtime;
-        float fciviliansattackhmpercentage;
-        float fcivilianhidetime;
-        float flockpicktimemultiplier;
-        float ffriskintrusiondecaytime;
-        float fsmallweaponvisiblemultiplierciv;
-        float fsmallweaponvisiblemultipliergrd;
-        int ihitmanhitpoints;
-        int iguardhitpoints;
-        int icivilianhitpoints;
-        int itargethitpoints;
-        bool bautoaim;
-        bool bheadshotsagainsthitman;
-        bool bpad[2];
-        float fmoneymultiplier;
-        float fmaxmoneymultiplier;
-        float fcleanupprice;
-        float finnocentbribeprice;
-        float fpolicebribeprice;
-        float fnewidentityprice;
-        float fweaponupgradeprice;
-        float fweaponretrieveprice;
-    };
-
-    static_assert(sizeof(sDifficultySettings) == 164, "Bad size of sDifficultySettings");
 
     enum EDifficulty : uint32_t {
         eeROOKIE = 0,

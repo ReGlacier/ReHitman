@@ -24,10 +24,13 @@ ScriptCS/
 ├── ScriptRuntime/
 │   ├── CMakeLists.txt        # add_library(ScriptRuntime STATIC source/ScriptRuntime.c)
 │   ├── include/ScriptRuntime/
-│   │   └── ScriptRuntime.h  # canonical C-facing mirrors of the Glacier script metadata
-│   │                         #   (SCRIPTCREATOR, STATECONTROLLER, FUNCTIONCONTROLLER,
-│   │                         #    SAVEGAMESTATICS, SCRIPTIMPORT, SCRIPTFUNCTIONS,
-│   │                         #    INTERNALSCRIPTFUNCTIONS, TODO_PTR)
+│   │   ├── ScriptRuntime.h  # canonical C-facing mirrors of the Glacier script metadata
+│   │   │                     #   (SCRIPTCREATOR, STATECONTROLLER, FUNCTIONCONTROLLER,
+│   │   │                     #    SAVEGAMESTATICS, SCRIPTIMPORT, SCRIPTFUNCTIONS,
+│   │   │                     #    INTERNALSCRIPTFUNCTIONS, TODO_PTR)
+│   │   └── ZScriptImportTable.h # C port of Glacier ZScriptImportTable.h: local script
+│   │                             #   types (v3, ZREF, anim, ZSC_EVENT, sCover, ...) +
+│   │                             #   SCRIPTIMPORTSTABLE (0x2CC typed function pointers)
 │   └── source/ScriptRuntime.c
 ├── AllLevels/
 │   ├── CMakeLists.txt        # add_library(AllLevels STATIC source/AllLevels.c); links ScriptRuntime
@@ -122,7 +125,7 @@ Verified in PC_Hideout (2026-09-17). Export table (ordinal → name → RVA):
 | 1 | `SF` | `0x10045A80` | `SCRIPTFUNCTIONS` (0x6C), zero-filled in the image — engine writes all slots at `AttachSceneScripts` |
 | 2 | `ISF` | `0x10045AEC` | `INTERNALSCRIPTFUNCTIONS` — `RunningThread`; engine clears it then points its own `ISF` at this field |
 | 3 | `Scripts` | `0x10045A10` | `SCRIPTCREATOR**`: `[0] = count` (`0x3B4` = 948 in Hideout.dll), creators at `[1..]`, null-terminated |
-| 4 | `ScriptImports` | `0x10045B00` | `void*[0x2CC]` import block; zero-filled in the image; engine overwrites with `ScriptInterfaces` at attach |
+| 4 | `ScriptImports` | `0x10045B00` | `SCRIPTIMPORTSTABLE` (`0x2CC` typed function pointers) import block; zero-filled in the image; engine overwrites with `ScriptInterfaces` at attach |
 
 Plus ordinary `DllEntryPoint`. A `.rdata` pointer block (`off_10044738`)
 references `{SF, ISF, Scripts, ScriptImports}` in ordinal order (linker
