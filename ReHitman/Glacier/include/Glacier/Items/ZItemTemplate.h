@@ -3,6 +3,9 @@
 #include <Glacier/GlacierFWD.h>
 #include <Glacier/ReGlacier.h>
 #include <Glacier/Geom/ZGROUP.h>
+#include <Glacier/RTP/Base.h>
+#include <Glacier/Runtime/ZGEOMCLASSINFO.h>
+#include <Glacier/Runtime/Macro.h>
 #include <Glacier/Items/ITEMSTATE.h>
 
 
@@ -24,8 +27,25 @@ namespace Glacier
     class ZItemTemplate : public ZGROUP
     {
     public:
+        // RTTI
+        DECLARE_GEOM_CLASS(ZItemTemplate, 0x1007D3u);
+
         // static consts
         static constexpr uint32_t kItemGroupId = 0x4954454D;
+
+        // methods
+        ZItemTemplate(const char* psName, ZBaseGeom* pBaseGeom);
+
+        // vtbl
+        ~ZItemTemplate() override;
+
+        // ZGEOM
+        const RTP::ZPropertyInfo& GetProperties() const override;
+        uint32_t GetObjectId() const override;
+        void GetObjectIdAndMask(uint32_t& id, uint32_t& mask) const override;
+        ZGEOMCLASSINFO* GetOldClassInfo() const override;
+        void ClassInit() override;
+        void CopyData(const ZGEOM* Source) override;
 
         // vftable
         virtual ZItem* CreateItem(ZGROUP* pGroup, unsigned int, bool bOverrideVisibleForNPC, bool bVisibleForNPC);

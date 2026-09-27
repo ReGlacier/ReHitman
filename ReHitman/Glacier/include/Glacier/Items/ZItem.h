@@ -43,6 +43,8 @@ namespace Glacier
         virtual void UpdateDeactivate();
 
         // methods
+        bool SetVisibleToNPCs(bool isVisible);
+
         bool IsNew() const { return m_NewItem; }
 
         uint8_t GetVisionID() const { return static_cast<uint8_t>(m_iVisionID); }
