@@ -2,7 +2,9 @@
 
 #include <Glacier/ReGlacier.h>
 #include <Glacier/ZUniMemory.h>
+#include <Glacier/ZUniAssert.h>
 #include <Glacier/ZSTL/REFTAB.h>
+#include <new>
 
 namespace Glacier
 {
@@ -44,6 +46,18 @@ namespace Glacier
         // members
         void* Alloc(unsigned int iSize);
         void Free(void *p);
+
+        // Typed pool allocation: reserves sizeof(T) bytes from this allocator and constructs a T
+        // in place, forwarding the remaining arguments to T's constructor. The raw byte-allocation
+        // overload (void* Alloc(unsigned int)) is used internally because T cannot be deduced from
+        // the argument list, so the explicit Alloc<T>(...) form is the only one that matches here.
+        template <typename T, typename... TArgs>
+        T* Alloc(TArgs&&... args)
+        {
+            void* pMemory = Alloc(static_cast<unsigned int>(sizeof(T)));
+            ZASSERT(pMemory != nullptr);
+            return ::new (pMemory) T(static_cast<TArgs&&>(args)...);
+        }
         void CheckPool();
         void AddBlock(char* pBlock, unsigned int iSize);
         void RemoveBlock(ZBlockHeader* pBlock);

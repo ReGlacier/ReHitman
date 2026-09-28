@@ -808,52 +808,64 @@ namespace Glacier
         }
     }
 
-    void ZEngineDataBase::FreeSceneMemory()
+    // Parks the currently loaded scene into pScene and detaches it from the engine so a
+    // new scene can be loaded on top of it (the dual-scene stack). Only scene-owned
+    // buffers are stashed; global engine databases are left intact. Symmetric with PushValues.
+    void ZEngineDataBase::FreeSceneMemory(ZScene* pScene)
     {
-        // TODO: Finish me
-        if (m_pEntityTracker)
+        pScene->_lLockMinMax = m_lLockMinMax;
+        ++m_lSceneDepth;
+        m_lLockMinMax = 0;
+        m_rParticleControllerGeom = 0;
+
+        if (g_pRenderDll)
         {
-            ZUniMemory::Delete(m_pEntityTracker);
-            m_pEntityTracker = nullptr;
+            g_pRenderDll->PushScene("");
         }
 
-        // TODO: Finish me
-        if (m_AnimationManager)
+        if (m_pRoot)
         {
-            ZUniMemory::Delete(m_AnimationManager);
-        }
+            pScene->_pBigFiles = nullptr;
 
-        m_AnimationManager = nullptr;
-        DeleteBoundTrees();
-
-        // TODO: Finish me
-
-        FreeRoutsLists();
-        FreeScheduledUpdate();
-        if (auto* pSGD = ZStaticGameLevelData::Instance())
-        {
-            pSGD->Destroy();
-        }
-        ZEngineGeomControl::GetInstance().Clear();
-        FreeLightTable();
-        m_SceneCom.Clear();
-        if (m_pStaticBuffer)
-        {
-            ZUniMemory::Free(m_pStaticBuffer);
+            pScene->_pStaticBuffer = m_pStaticBuffer;
             m_pStaticBuffer = nullptr;
+
+            pScene->_lStaticBufferLength = m_lStaticBufferLength;
             m_lStaticBufferLength = 0;
-        }
-        if (m_pPackedAnims)
-        {
-            ZUniMemory::Free(m_pPackedAnims);
+
+            pScene->_pPackedAnims = m_pPackedAnims;
             m_pPackedAnims = nullptr;
+
+            pScene->_lPackedAnimsLength = static_cast<int>(m_lPackedAnimsLength);
             m_lPackedAnimsLength = 0;
+
+            pScene->_pGeomBuffer = m_pGeomBuffer;
+            m_pGeomBuffer = nullptr;
+
+            pScene->_pPackedTreeData = m_pPackedTreeData;
+            m_pPackedTreeData = nullptr;
+
+            pScene->_pRoot = m_pRoot;
+
+            g_pSysInterface->WindowFirst->RemoveCameras();
+            m_pRoot = nullptr;
+
+            pScene->_FrameTime = g_pSysInterface->FrameTime;
+            pScene->_PreFrameTime = g_pSysInterface->PreFrameTime;
+            pScene->_ActTime = g_pSysInterface->m_fActualTime;
+            g_pSysInterface->ResetTime();
+
+            // Reset the message-name table and hash. The hash pointer is cleared before
+            // FreeMsgValues so the hash object is not freed here (it is released with the pool).
+            for (auto& entry : m_ZMsgStrings)
+            {
+                entry = {};
+            }
+            m_iNumRegisteredMessages = 0;
+            m_pZMessageHash = nullptr;
+
+            FreeMsgValues();
         }
-        g_pSysInterface->FreeActionMap();
-        FreeMsgValues();
-        UnlockMinMax();
-        if (g_pGameDataFactory)
-            g_pGameDataFactory->DestroyGameData();
     }
 
     void ZEngineDataBase::PushValues(ZScene* pNewScene)
@@ -888,10 +900,10 @@ namespace Glacier
         if (pNewScene->_pBigFiles)
             g_pSysFile->m_pBigFiles = pNewScene->_pBigFiles;
 
-        std::memcpy(&g_pSysInterface->FrameTime.secs, &pNewScene->_FrameTime, sizeof(int32_t));
-        std::memcpy(&g_pSysInterface->PreFrameTime.secs, &pNewScene->_PreFrameTime, sizeof(int32_t));
+        g_pSysInterface->FrameTime = pNewScene->_FrameTime;
+        g_pSysInterface->PreFrameTime = pNewScene->_PreFrameTime;
         g_pSysInterface->ResetTime();
-        std::memcpy(&g_pSysInterface->m_fActualTime.secs, &pNewScene->_ActTime, sizeof(int32_t));
+        g_pSysInterface->m_fActualTime = pNewScene->_ActTime;
     }
 
     void ZEngineDataBase::InstallTextureBuffer()
@@ -1207,7 +1219,7 @@ namespace Glacier
         if (g_pGameDataFactory)
             g_pGameDataFactory->CreateGameData();
 
-        FreeSceneMemory();
+        FreeSceneMemory(m_pScene);
 
         MYSTR sSceneName(m_pScene->GetSceneName());
         if (striwcmp(sSceneName, "*premission*"))

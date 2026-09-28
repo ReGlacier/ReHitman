@@ -116,7 +116,7 @@ namespace Glacier
         virtual void LoadScene(char const* scene_name);
         virtual void CheckAndMakeStaticContainer();
         virtual void DoUnloadScene();
-        virtual void FreeSceneMemory();
+        virtual void FreeSceneMemory(ZScene* pScene);
         virtual void PushValues(ZScene* pNewScene);
         virtual void InstallTextureBuffer();
         virtual uint32_t GetPrimsSize();

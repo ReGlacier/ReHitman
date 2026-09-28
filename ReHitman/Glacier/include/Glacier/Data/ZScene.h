@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Glacier/ReGlacier.h>
+#include <Glacier/ZSTL/TIMETYPE.h>
 #include <cstdint>
 
 
@@ -47,9 +48,9 @@ namespace Glacier
         ZGEOMCLASSINFO* _pClassFirst{nullptr};
         ZGEOMCLASSINFO* _pClassLast{nullptr};
         CCom* _pSceneCom{nullptr};
-        float _FrameTime{0.f};
-        float _PreFrameTime{0.f};
-        float _ActTime{0.f};
+        TIMETYPE _FrameTime{};
+        TIMETYPE _PreFrameTime{};
+        TIMETYPE _ActTime{};
         struct ZInputActions* _pInputActions{nullptr};
         struct MMCHK* _pAllGroupsMMChk{nullptr};
         uint8_t* _pStaticBuffer{nullptr};
