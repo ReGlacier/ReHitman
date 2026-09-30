@@ -5,6 +5,9 @@
 #include <Glacier/ZSTL/ZRTTI.h>
 #include <Glacier/ZSTL/ZMath.h>
 #include <Glacier/Geom/ZGROUP.h>
+#include <Glacier/RTP/Base.h>
+#include <Glacier/Runtime/ZGEOMCLASSINFO.h>
+#include <Glacier/Runtime/Macro.h>
 #include <Glacier/Items/ITEMSTATE.h>
 #include <cstdint>
 
@@ -14,15 +17,32 @@ namespace Glacier
     class ZItem : public ZGROUP
     {
     public:
-        // vtbl
+        // RTTI
+        // Type id 0x1007D1: the geom class ZItemTemplate::GetItemClassId() returns and
+        // ZItemTemplate::CreateItem instantiates as a ZItem.
+        DECLARE_GEOM_CLASS(ZItem, 0x1007D1u);
+
+        // methods
+        ZItem(const char* psName, ZBaseGeom* pBaseGeom);
+
+        // vtbl (overrides from ZGEOM)
+        ~ZItem() override;
+        const RTP::ZPropertyInfo& GetProperties() const override;
+        uint32_t GetObjectId() const override;
+        void GetObjectIdAndMask(uint32_t& id, uint32_t& mask) const override;
+        ZGEOMCLASSINFO* GetOldClassInfo() const override;
+        void PostClassInit() override;
+        void CopyData(const ZGEOM* Source) override;
+
+        // vtbl (ZItem-own virtuals, slots [147, 173))
         virtual void CreateFromTemplate();
         virtual void GetItemRootTM(float *,float *);
         virtual void GetMainItemRootTM(float *,float *);
         virtual ITEMSTATE GetState() const;
-        virtual void SetState(ITEMSTATE, CCom*);
+        virtual bool SetState(ITEMSTATE, CCom*);
         virtual void Place(const ZMat3x3& mMat, const ZVector3& vPos);
-        virtual void SetMain(uint32_t);
-        virtual void GetMain();
+        virtual uint32_t SetMain(uint32_t);
+        virtual ZGEOM* GetMain();
         virtual void GetMainMatPos(float *,float *,uint32_t);
         virtual void SetItemTemplate(Glacier::ZREF itemTemplateRef);
         virtual ZItemTemplate* GetItemTemplate();

@@ -120,8 +120,10 @@ TEST(SimpleXML, ParseAttributesAndGetAttr)
     EXPECT_EQ(xml.GetAttr(attrs, nullptr), nullptr);
 }
 
-TEST(SimpleXML, ParseQuotedAttributeKeepsLeadingQuoteLikeOriginalParser)
+TEST(SimpleXML, ParseQuotedAttributeStripsQuotesLikeOriginalParser)
 {
+    // PC getsym (0x4304E0) returns the value starting after the opening quote and
+    // the caller null-terminates at the closing quote, so both quotes are stripped.
     CapturingSimpleXML xml;
     auto buffer = MakeBuffer("<item name=\"agent\"/>");
 
@@ -130,7 +132,7 @@ TEST(SimpleXML, ParseQuotedAttributeKeepsLeadingQuoteLikeOriginalParser)
     ASSERT_GE(xml.Events.size(), 1u);
     ASSERT_EQ(xml.Events[0].Attrs.size(), 1u);
     EXPECT_EQ(xml.Events[0].Attrs[0].first, "name");
-    EXPECT_EQ(xml.Events[0].Attrs[0].second, "\"agent");
+    EXPECT_EQ(xml.Events[0].Attrs[0].second, "agent");
 }
 
 TEST(SimpleXML, CommentsAreSkippedDuringParse)

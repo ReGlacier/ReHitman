@@ -11,6 +11,8 @@
 
 namespace Glacier
 {
+    struct ISerializerStream;
+
     enum GLOBALMESSAGE
     {
         NONE = 0,
@@ -65,6 +67,9 @@ namespace Glacier
 
         // methods
         ZRenderBaseDll();
+
+        // Not virtual: ZEngineDataBase::ExchangeObject calls it directly (PC 0x00469F20).
+        void ExchangeObject(ISerializerStream& stream);
 
         // members
         uint32_t m_lActiveAxis;

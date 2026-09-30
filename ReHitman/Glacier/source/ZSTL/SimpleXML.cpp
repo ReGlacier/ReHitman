@@ -45,6 +45,12 @@ namespace Glacier
 
             if (firstChar == '"')
             {
+                // Quoted value: PC getsym (0x4304E0) returns the pointer just past
+                // the opening quote, so the leading quote is not part of the value
+                // (the closing quote is nulled by the caller). This lets values like
+                // Position="10,20" carry characters (a comma) that unquoted symbols
+                // stop at.
+                pStartSymbol = *p;
                 while (*p < pEnd)
                 {
                     if (**p == '"')

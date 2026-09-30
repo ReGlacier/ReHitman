@@ -9,8 +9,10 @@
 #include <Glacier/System/ZDllBase.h>
 #include <Glacier/Com/Globals.h>
 #include <Glacier/Com/CCom.h>
+#include <Glacier/Com/CGlobalCom.h>
 #include <Glacier/Render/ZRender.h>
 #include <Glacier/Render/ZRenderBaseDll.h>
+#include <Glacier/Render/Prim/ZPrimControlBase.h>
 #include <Glacier/Render/Draw/IDraw.h>
 #include <Glacier/Render/Debug/Globals.h>
 #include <Glacier/Render/Debug/ZDrawDebugTimer.h>
@@ -41,6 +43,7 @@
 #include <Glacier/Materials/BS_Runtime.h>
 #include <Glacier/Debug/ZPushMemColor.h>
 #include <Glacier/Debug/ZMemReadOut.h>
+#include <Glacier/LoaderSequence/ZLoader_Sequence_Player.h>
 #include <Glacier/ZUniMemory.h>
 #include <Glacier/ZUniAssert.h>
 #include <cstring>
@@ -72,6 +75,23 @@ namespace Glacier
             const char* str_suffix_start = str + (str_len - suffix_len);
             return _stricmp(str_suffix_start, suffix); // or strcasecmp
         }
+
+        // A single record in ZGameData's total/used/big weapon prim buffers.
+        // The stride is 3 dwords: m_lPrim is the prim id, and the "total" list
+        // additionally carries a two-dword weapon hash in m_lHash that is matched
+        // against the "WeaponHashes" global COM value. The "used" and "big" lists
+        // only consume m_lPrim.
+        //
+        // TODO: Finish me. The field semantics (especially m_lHash) are inferred
+        // purely from PurgePrimBuffer's usage. Once ZGameData's weapon-prim
+        // handling (InitWeaponHandles / GetTotalWeaponPrims internals) is
+        // reversed, replace this POD with the real record type.
+        struct SWeaponPrimEntry
+        {
+            uint32_t m_lPrim;
+            uint32_t m_lHash[2];
+        };
+        RE_VERIFY_SIZE(SWeaponPrimEntry, 0xC);
     }
 
     ZEngineDataBase::ZEngineDataBase(const char* pFileName)
@@ -179,7 +199,19 @@ namespace Glacier
             stream.Exchange<ZGEOM>(token, g_pSysInterface->GetSoundDll()->m_pPlayer);
         }
 
-        // TODO: Finish me
+        {
+            auto token = stream.GetToken("GeomBuffer");
+            stream.Exchange<ZGeomBuffer>(token, *m_pGeomBuffer);
+        }
+
+        g_pRenderDll->ExchangeObject(stream);
+
+        {
+            auto token = stream.GetToken("Root");
+            stream.Exchange<ZROOM>(token, *m_pRoot);
+        }
+
+        g_pGameData->LoadSave(stream, m_SavingGame);
     }
 
     void ZEngineDataBase::InitAllocSequencePercent(ZSWScene* pSceneWrapper, bool bPacked)
@@ -216,7 +248,7 @@ namespace Glacier
         if (m_fDisplayPercent + 0.002f < fProgressValue)
         {
             m_fDisplayPercent = fProgressValue;
-            // TODO: Finish me after ZLoader_Sequence_Player will be reversed!
+            ZLoader_Sequence_Player::Set_Progress(fProgressValue);
         }
 
         return m_fDisplayPercent;
@@ -1268,7 +1300,7 @@ namespace Glacier
         g_pSysFile->RemoveAllBigs();
 
         MYSTR sZipFile = CalcCacheFileName(m_FileName, "zip");
-        // TODO: Finish this place after ZLoader_Sequence_Player will be reversed
+        ZLoader_Sequence_Player::Begin();
         InitAllocSequencePercent(nullptr, false);
         SetAllocSequencePercent(AS_ZIPLOAD, sSceneName, 0.0f);
         g_pSysFile->LoadWholeSceneZip(sZipFile);
@@ -1292,7 +1324,7 @@ namespace Glacier
         g_pSysFile->RemoveAllBigs();
         m_pScene->LoadDoneNotify(nullptr);
         g_pSysInterface->UnlockRefs();
-        // TODO: Finish this place after ZLoader_Sequence_Player will be reversed
+        ZLoader_Sequence_Player::End();
         g_pSysInterface->ResetTime();
 
         for (auto* pRender = g_pSysInterface->WindowFirst; pRender; pRender = pRender->Nxt)
@@ -1730,7 +1762,108 @@ namespace Glacier
 
     void ZEngineDataBase::PurgePrimBuffer()
     {
-        // TODO: Finish me (PC 0045CB20)
+        // PC 0x0045CB20.
+        //
+        // Builds the set of weapon prim ids that must survive the purge and then
+        // frees every remaining weapon prim through the render DLL's prim control.
+        // See SWeaponPrimEntry for the record layout (a TODO marker is left there
+        // because the field semantics are still inferred from this function).
+        const ZGameData* pGameData = g_pGameData;
+
+        auto* pTotalWeaponPrims = reinterpret_cast<SWeaponPrimEntry*>(pGameData->GetTotalWeaponPrims());
+        const uint32_t lNrTotalWeaponPrims = pGameData->GetTotalWeaponPrimsCount();
+        const auto* pUsedWeaponPrims = reinterpret_cast<const SWeaponPrimEntry*>(pGameData->GetUsedWeaponPrims());
+        const uint32_t lNrUsedWeaponPrims = pGameData->GetUsedWeaponPrimsCount();
+        const auto* pBigWeaponPrims = reinterpret_cast<const SWeaponPrimEntry*>(pGameData->GetBigWeaponPrims());
+        const uint32_t lNrBigWeaponPrims = pGameData->GetBigWeaponPrimsCount();
+
+        // The weapon-hash keep-list only applies in the main menu scene (m00_main);
+        // in every other scene the count is forced to 0 so it is ignored.
+        int lWeaponHashesCount = 0;
+        GetGlobalCom()->GetVal("WeaponHashesCount", &lWeaponHashesCount);
+        if (_stricmp(g_pSysInterface->m_sDefaultScene.String, "m00_main") != 0)
+            lWeaponHashesCount = 0;
+
+        // Weapon hashes are stored as pairs of dwords.
+        ZASSERT((lWeaponHashesCount & 1) == 0);
+
+        uint32_t aWeaponHashes[128][2];
+        uint32_t aWeaponPrimIds[128] = {};
+        if (lWeaponHashesCount != 0)
+        {
+            const int lHashesDataLen = GetGlobalCom()->GetVal(
+                reinterpret_cast<char*>(aWeaponHashes), "WeaponHashes", 0);
+            ZASSERT(lHashesDataLen <= 0x400);
+        }
+
+        // Resolve each weapon-hash pair to the prim id of the matching total weapon prim.
+        const int lNrWeaponHashes = lWeaponHashesCount / 2;
+        if (lNrTotalWeaponPrims != 0)
+        {
+            for (int i = 0; i < lNrWeaponHashes; ++i)
+            {
+                for (uint32_t j = 0; j < lNrTotalWeaponPrims; ++j)
+                {
+                    if (aWeaponHashes[i][0] == pTotalWeaponPrims[j].m_lHash[0] &&
+                        aWeaponHashes[i][1] == pTotalWeaponPrims[j].m_lHash[1])
+                    {
+                        aWeaponPrimIds[i] = pTotalWeaponPrims[j].m_lPrim;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // When big-weapon purging is disabled, clear their prim ids so they are
+        // not freed below.
+        if (ZSysInterface::GetOption("NoHitmanBigWeaponsPurge", nullptr) && lNrBigWeaponPrims > 0)
+        {
+            for (uint32_t c = 0; c < lNrBigWeaponPrims; ++c)
+            {
+                for (uint32_t j = 0; j < lNrTotalWeaponPrims; ++j)
+                {
+                    if (pBigWeaponPrims[c].m_lPrim == pTotalWeaponPrims[j].m_lPrim)
+                        pTotalWeaponPrims[j].m_lPrim = 0;
+                }
+            }
+        }
+
+        // Weapon prims currently in use must survive the purge.
+        for (uint32_t c = 0; c < lNrUsedWeaponPrims; ++c)
+        {
+            for (uint32_t j = 0; j < lNrTotalWeaponPrims; ++j)
+            {
+                if (pUsedWeaponPrims[c].m_lPrim == pTotalWeaponPrims[j].m_lPrim)
+                    pTotalWeaponPrims[j].m_lPrim = 0;
+            }
+        }
+
+        // Keep the weapon-hash resolved prims as well.
+        for (int i = 0; i < lNrWeaponHashes; ++i)
+        {
+            for (uint32_t j = 0; j < lNrTotalWeaponPrims; ++j)
+            {
+                if (aWeaponPrimIds[i] == pTotalWeaponPrims[j].m_lPrim)
+                    pTotalWeaponPrims[j].m_lPrim = 0;
+            }
+        }
+
+        // Drop duplicate prim ids so each surviving prim is only freed once.
+        for (uint32_t a = 1; a < lNrTotalWeaponPrims; ++a)
+        {
+            for (uint32_t b = a; b < lNrTotalWeaponPrims; ++b)
+            {
+                if (pTotalWeaponPrims[a - 1].m_lPrim == pTotalWeaponPrims[b].m_lPrim)
+                    pTotalWeaponPrims[b].m_lPrim = 0;
+            }
+        }
+
+        // Free every remaining prim id (zeroed entries are no-ops).
+        if (g_pRenderDll != nullptr && g_pRenderDll->m_pPrimControl != nullptr)
+        {
+            for (uint32_t j = 0; j < lNrTotalWeaponPrims; ++j)
+                g_pRenderDll->m_pPrimControl->FreePrimData(pTotalWeaponPrims[j].m_lPrim);
+        }
     }
 
     void ZEngineDataBase::InitPathfinder4Data(const char* pBuffer)

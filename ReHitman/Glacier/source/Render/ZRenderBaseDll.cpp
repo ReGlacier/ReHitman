@@ -13,6 +13,8 @@
 #include <Glacier/Physics/ZRagdollContainer.h>
 #include <Glacier/IK/ZBoneModifyBase.h>
 #include <Glacier/System/ZSysInterface.h>
+#include <Glacier/Data/ZEngineDataBase.h>
+#include <Glacier/Serializer/ISerializerStream.h>
 #include <Glacier/ZSTL/StringUtils.h>
 #include <Glacier/ZUniAssert.h>
 #include <cstdlib>
@@ -513,6 +515,47 @@ namespace Glacier
 
         g_apPrimHandleToPointerTable[0] = nullptr;
         g_pPrimHandleTable = nullptr;
+    }
+
+    void ZRenderBaseDll::ExchangeObject(ISerializerStream& stream)
+    {
+        // PC 0x00469F20. Saves/loads the per-scene dynamic prim data that lives at the
+        // front of the prim buffer together with the dynamic handle table entries.
+        const bool bLoading = g_pSysInterface->m_pEngineData->m_LoadingGame;
+
+        char* pRunTimePrims = m_pPrimBuffer + reinterpret_cast<uint32_t*>(m_pPrimBuffer)[8];
+        uint32_t lRunTimePrimsLength = static_cast<uint32_t>(m_pCurrentPrimBuffer - pRunTimePrims);
+
+        ZASSERT(!bLoading || lRunTimePrimsLength <= static_cast<uint32_t>(m_pCurrentPrimBufferBack - m_pCurrentPrimBuffer));
+
+        stream.Exchange("lRunTimePrimsLength", lRunTimePrimsLength);
+        m_pCurrentPrimBuffer = pRunTimePrims + lRunTimePrimsLength;
+
+        if (lRunTimePrimsLength != 0)
+            stream.ExchangeRaw("RunTimePrims", pRunTimePrims, lRunTimePrimsLength);
+
+        uint32_t firstHandle = reinterpret_cast<uint32_t*>(m_pPrimBuffer)[4];
+
+        stream.Exchange("firstHandle", firstHandle);
+
+        ZASSERT(!bLoading || static_cast<uint32_t>(g_iCurrentDynamicPrimBuffersCount) <= firstHandle);
+
+        uint32_t handleCount = static_cast<uint32_t>(g_iCurrentDynamicPrimBuffersCount) - firstHandle;
+
+        stream.Exchange("handleCount", handleCount);
+
+        ZASSERT(!bLoading || handleCount <= g_lPrimHandleToPointerFreeBack - static_cast<uint32_t>(g_iCurrentDynamicPrimBuffersCount) + 1);
+
+        g_iCurrentDynamicPrimBuffersCount = static_cast<int32_t>(firstHandle + handleCount);
+
+        for (uint32_t i = firstHandle; i < firstHandle + handleCount; ++i)
+        {
+            uint32_t offset = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(g_apPrimHandleToPointerTable[i]) - reinterpret_cast<uintptr_t>(m_pPrimBuffer));
+
+            stream.Exchange("offset", offset);
+
+            g_apPrimHandleToPointerTable[i] = reinterpret_cast<void*>(static_cast<uintptr_t>(offset) + reinterpret_cast<uintptr_t>(m_pPrimBuffer));
+        }
     }
 
     void ZRenderBaseDll::SetGlobalMessage(GLOBALMESSAGECALLBACK, void*)
