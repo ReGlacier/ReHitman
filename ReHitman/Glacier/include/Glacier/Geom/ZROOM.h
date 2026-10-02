@@ -115,6 +115,8 @@ namespace Glacier
 
         // methods
         ZROOM(const char* psName, ZBaseGeom* pBaseGeom);
+        /** Remaps packed exit/neighbor-room geometry references to runtime pointers using pRemapTable. */
+        void RemapRefs(uint32_t* pRemapTable, uint32_t lCount);
         void FreeGeomsLists();
         void FreeDynamicGeomList();
         void SetAttachedRoom(ZROOM* pRoom);

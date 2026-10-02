@@ -48,6 +48,88 @@ namespace Glacier
         m_rAttachedDrawBaseGeoms[1] = 0;
     }
 
+    // PC 0x004F81A0. Resolves packed 1-based geometry references stored in the room's
+    // exits and neighbor-room table into runtime ZROOM*/ZREF values via pRemapTable.
+    void ZROOM::RemapRefs(uint32_t* pRemapTable, uint32_t lCount)
+    {
+        // Exits: each exit's m_pNeighbor holds a packed 1-based geom number before remap.
+        if (m_lNrExits)
+        {
+            if ((m_pExits->m_lControl & 4) == 0)
+            {
+                m_pExits->m_lControl |= 4; // mark this room's exits as remapped
+
+                for (uint32_t i = 0; i < m_lNrExits; ++i)
+                {
+                    ZExit& rExit = m_pExits[i];
+                    if (rExit.m_lControl & 2)
+                    {
+                        ZROOM* pNeighbor = rExit.m_pNeighbor;
+                        ZASSERT(pNeighbor);
+                        const uint32_t lIndex = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(pNeighbor)) - 1;
+                        ZASSERT(lIndex < lCount);
+                        ZROOM* pRemapped = reinterpret_cast<ZROOM*>(ZGEOM::RefToPtr(pRemapTable[lIndex]));
+                        if (pRemapped)
+                        {
+                            ZASSERT((pRemapped->GetObjectId() & ZROOM::m_Mask) == ZROOM::m_Id);
+                            ZASSERT((rExit.m_lControl & 2) != 0);
+                            ZASSERT(pRemapped != this);
+                        }
+                        rExit.m_pNeighbor = pRemapped;
+                    }
+                    else
+                    {
+                        ZASSERT(rExit.m_pNeighbor == nullptr);
+                    }
+                }
+            }
+        }
+
+        // Neighbor rooms: packed neighbor refs + geoms-in-exit lists.
+        if (m_lNrNeighborRooms)
+        {
+            ZEngineDataBase* pEngineData = g_pSysInterface->m_pEngineData;
+            const uintptr_t lFirstGeoms = reinterpret_cast<uintptr_t>(m_pNeighborRooms[0].m_pGeomsInExit);
+            const uintptr_t lStaticStart = reinterpret_cast<uintptr_t>(pEngineData->m_pStaticBuffer);
+
+            // Remap only when the packed geoms-in-exit value is not already a pointer into the static buffer.
+            if (!pEngineData->m_pStaticBuffer
+                || lFirstGeoms < lStaticStart
+                || lFirstGeoms >= lStaticStart + static_cast<uintptr_t>(pEngineData->m_lStaticBufferLength))
+            {
+                for (uint32_t i = 0; i < m_lNrNeighborRooms; ++i)
+                {
+                    ZNeighborRoom& rNbr = m_pNeighborRooms[i];
+                    ZASSERT(rNbr.m_pNeighbor != nullptr);
+                    const uint32_t lNbr = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(rNbr.m_pNeighbor)) - 1;
+                    ZASSERT(lNbr < lCount);
+                    ZGEOM* pNbrGeom = ZGEOM::RefToPtr(pRemapTable[lNbr]);
+
+                    const uint32_t lGeomsOffset = reinterpret_cast<uint32_t>(rNbr.m_pGeomsInExit);
+                    const uint32_t lNrGeoms = rNbr.m_lNrGeomsInExit;
+                    rNbr.m_pNeighbor = reinterpret_cast<ZROOM*>(pNbrGeom);
+                    uint32_t* pGeoms = reinterpret_cast<uint32_t*>(reinterpret_cast<uint8_t*>(m_pNeighborRooms) + lGeomsOffset);
+                    rNbr.m_pGeomsInExit = pGeoms;
+
+                    for (uint32_t j = 0; j < lNrGeoms; ++j)
+                    {
+                        const uint32_t lRef = pGeoms[j];
+                        ZASSERT(lRef != 0);
+                        const uint32_t lIndex = lRef - 1;
+                        ZASSERT(lIndex < lCount);
+                        ZGEOM* pGeom = ZGEOM::RefToPtr(pRemapTable[lIndex]);
+                        pGeoms[j] = pGeom ? pGeom->GetRef() : 0;
+                    }
+                }
+            }
+        }
+
+        if (!m_lNrNeighborRooms)
+            m_pNeighborRooms = nullptr;
+        if (!m_lNrExits)
+            m_pExits = nullptr;
+    }
+
     ZROOM::~ZROOM()
     {
         // Weird, it's duplicate of ZTreeGroup dtor

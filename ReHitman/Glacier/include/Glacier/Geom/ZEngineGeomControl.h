@@ -25,6 +25,7 @@ namespace Glacier
 
         ZEngineGeomControl();
         bool GetChangeDetection() const;
+        void SetChangeDetection(bool bEnabled) { m_bChangeDetection = bEnabled; }
 
         // data
         ZREF m_MovedGeoms[MAX_MOVED_GEOMS_NR];

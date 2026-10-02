@@ -53,7 +53,7 @@ namespace Glacier
         virtual void FreeTextureData(uint32_t);
         virtual void InitMaterialPack();
         virtual void InstallShaders(void*, uint32_t, uint32_t);
-        virtual void InstallMaterialBuffer(void*, uint32_t, uint32_t);
+        virtual void InstallMaterialBuffer(void* pBuffer, uint32_t lBufferSize, uint32_t lBufferSizeAllocated);
         virtual void SetPopSceneFade(float, uint32_t);
         virtual ZTextureBase* GetTexture(uint32_t);
         virtual uint32_t ReserveTexture(uint32_t, uint32_t);

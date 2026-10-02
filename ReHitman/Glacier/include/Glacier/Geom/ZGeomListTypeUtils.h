@@ -20,4 +20,13 @@ namespace Glacier
     };
 
     eBaseGeomListTypes GetBaseGeomListType(ZBaseGeom* pBaseGeom);
+
+    struct ZGEOMCLASSINFO;
+
+    /**
+     * Same list-type selection as the ZBaseGeom overload, but keyed off a packed
+     * geom's class info (used before the live ZBaseGeom exists, e.g. the GMS
+     * preloader in ZEngineDataBase::CreateGeoms).
+     */
+    eBaseGeomListTypes GetBaseGeomListType(const ZGEOMCLASSINFO* pClassInfo);
 }

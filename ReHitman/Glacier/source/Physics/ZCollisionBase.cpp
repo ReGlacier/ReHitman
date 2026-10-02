@@ -26,10 +26,18 @@
 #include <Glacier/Physics/ZCommonAlgorithms.h>
 #include <Glacier/Physics/STreeGetDynamic.h>
 #include <cmath>
+#include <cstring>
 
 
 namespace Glacier
 {
+    // Declared in ZCollisionBase.h; the object is plain data and callers (e.g.
+    // ZCollisionWintel::GetStripsFromPrim) fully zero it after allocation.
+    STempStrips::STempStrips()
+    {
+        std::memset(this, 0, sizeof(*this));
+    }
+
     namespace  // Tree traversal callbacks
     {
         ZOctree* GetOctreePtr(uint32_t lColiId)

@@ -344,11 +344,15 @@ namespace Glacier
                 if (ui_Tex_Offset == 0)
                     continue;
 
-                // Shape element floats: [0] center X, [1] center Y, [6] width, [7] height.
+                // Shape element floats: [0] center X, [1] center Y, [7] width,
+                // [8] height (the Y-up center half-extents). Verified against the
+                // Loader_Sequence prim data: [6] is unused (0), and using [7]/[8]
+                // reproduces the on-screen sprite tiling exactly; reading [6]/[7]
+                // shifts every sprite half a width to the right.
                 const float* const p_Element = p_Elements + kPrim_Element_Floats * j;
                 p_Entries[ui_Sprite_Count].m_pTexture_Record = pTex_Buffer + ui_Tex_Offset;
-                p_Entries[ui_Sprite_Count].m_fPos_X = p_Element[0] - p_Element[6] * 0.5f;
-                p_Entries[ui_Sprite_Count].m_fPos_Y = -p_Element[1] - p_Element[7] * 0.5f;
+                p_Entries[ui_Sprite_Count].m_fPos_X = p_Element[0] - p_Element[7] * 0.5f;
+                p_Entries[ui_Sprite_Count].m_fPos_Y = -p_Element[1] - p_Element[8] * 0.5f;
                 ++ui_Sprite_Count;
             }
 

@@ -1,10 +1,13 @@
 #include <Glacier/Data/ZEngineDataBase.h>
+#include <Glacier/Data/ZLoadGameInfoBase.h>
 #include <Glacier/Data/ZStaticGameLevelData.h>
+#include <Glacier/ZPackedDataChunk.h>
 #include <Glacier/Data/ZGameData.h>
 #include <Glacier/ResourceCollection.h>
 #include <Glacier/Geom/ZEngineGeomControl.h>
 #include <Glacier/ZMessageResolver.h>
 #include <Glacier/System/ZSysInterface.h>
+#include <Glacier/System/CConfiguration.h>
 #include <Glacier/System/ZSysMem.h>
 #include <Glacier/System/ZDllBase.h>
 #include <Glacier/Com/Globals.h>
@@ -19,6 +22,8 @@
 #include <Glacier/ScriptEngine/ScriptEngine.h>
 #include <Glacier/Serializer/ISerializerStream.h>
 #include <Glacier/Serializer/ZIOInputStream.h>
+#include <Glacier/Serializer/ZInputStream.h>
+#include <Glacier/Serializer/ZPackedInput.h>
 #include <Glacier/Serializer/ZTokenCache.h>
 #include <Glacier/Filesystem/IOFilesystem_t.h>
 #include <Glacier/Filesystem/ZSysFile.h>
@@ -29,8 +34,12 @@
 #include <Glacier/Geom/ZGeomBuffer.h>
 #include <Glacier/Geom/ZTreeGroup.h>
 #include <Glacier/Geom/ZROOM.h>
+#include <Glacier/Geom/ZGROUP.h>
 #include <Glacier/Geom/ZGEOM.h>
 #include <Glacier/Geom/ZCAMERA.h>
+#include <Glacier/Geom/ZGeomListTypeUtils.h>
+#include <Glacier/Data/SPackedGeomsTree.h>
+#include <Glacier/Data/SCompiledGeom.h>
 #include <Glacier/Audio/ZSoundDllBase.h>
 #include <Glacier/Audio/ZSoundObject.h>
 #include <Glacier/Render/ZRender.h>
@@ -348,7 +357,208 @@ namespace Glacier
 
     void ZEngineDataBase::AllocSequence(struct ZSWScene* __formal)
     {
-        // TODO: Finish me... later
+        // PC 0x45FCF0. Master level-load orchestrator. The prologue and the
+        // content buffers below are complete; the remaining pipeline (geoms data
+        // load + zgf unzip, prim/material buffer install, CreateGeoms, tree
+        // build, water manager and post-init stages) is still pending.
+
+        // ---- Prologue ----
+        PUSH_MEMORY_COLOR(0x80FF80u);
+
+        g_pSysInterface->ResetClassInstanceCount();
+        g_pSysInterface->Reset_TimeMultiplier_Lock();
+        g_pSysInterface->Set_TimeMultiplier(1.0f);
+
+        if (g_pGameData)
+            g_pGameData->OnLevelChangeBegin();
+
+        // A saved-game control stream means this level load is restoring a save game.
+        // pControlStream is retained for the load-from-save restore stage below.
+        IInputStream* pControlStream = ZLoadGameInfoBase::CreateControlStream();
+        if (pControlStream)
+            m_LoadingGame = true;
+
+        m_bPause = false;
+        PauseScene(false);
+        g_pSysInterface->InitActionMap();
+        g_pSysInterface->GetConfiguration()->Apply();
+        ZEngineGeomControl::GetInstance().SetChangeDetection(false);
+        ZCollisionBase::InitCollision(false);
+
+        // ---- Content buffer sizes ----
+        const uint32_t lPrimsSize   = GetPrimsSize();
+        const uint32_t lTextureSize = GetTextureSize();
+        const uint32_t lMatSize     = GetMaterialsSize();
+        const uint32_t lStaticSize  = GetStaticSize();
+
+        SetAllocSequencePercent(AS_DLCLOAD, nullptr, 0.0f);
+
+        // PC __debugbreak()s when a packed data size is negative ("Scene packed
+        // data undefined", "File does not exist?").
+        ZASSERT(static_cast<int32_t>(lTextureSize) >= 0 &&
+                static_cast<int32_t>(lPrimsSize) >= 0 &&
+                static_cast<int32_t>(lStaticSize) >= 0);
+
+        // ---- Texture buffer ----
+        InstallTextureBuffer();
+
+        // ---- Materials buffer ----
+        void* pMaterialsData = nullptr;
+        if (lMatSize > 0)
+            pMaterialsData = ZUniMemory::Allocate(lMatSize + 0x20000);
+        GetMaterialsData(pMaterialsData, lMatSize);
+        g_pRenderDll->InstallMaterialBuffer(pMaterialsData, lMatSize, lMatSize + 0x20000);
+
+        // ---- Prims buffer ----
+        // The +0x60000 slack is the workspace CompactPrimBuffer later compacts into.
+        uint32_t lPrimsBufferSize = 0;
+        void* pPrimsData = nullptr;
+        {
+            PUSH_MEMORY_COLOR(0xE0E000u);
+            lPrimsBufferSize = lPrimsSize + 0x60000;
+            pPrimsData = ZUniMemory::Allocate(lPrimsBufferSize);
+        }
+
+        // ---- Static buffer ----
+        {
+            PUSH_MEMORY_COLOR(0xFF0080u);
+            auto* pStaticData = static_cast<uint8_t*>(ZUniMemory::Allocate(lStaticSize));
+            GetStaticData(pStaticData, lStaticSize);
+            m_pStaticBuffer = pStaticData;
+            m_lStaticBufferLength = static_cast<int>(lStaticSize);
+        }
+
+        GetPrimsData(pPrimsData, lPrimsSize);
+
+        // ---- Locale resources ----
+        if (m_pLocaleResources)
+        {
+            MYSTR sLocaleFile = CalcCacheFileName(m_FileName, "loc");
+            m_pLocaleResources->LoadFile(sLocaleFile);
+        }
+
+        // ---- Sound data ----
+        // The sound data buffer is retained for the later InstallSounds stage.
+        void* pSoundData = nullptr;
+        uint32_t lSoundDataSize = 0;
+        if (g_pSysInterface->m_pSoundDll)
+        {
+            lSoundDataSize = GetSoundDataSize();
+            if (lSoundDataSize != static_cast<uint32_t>(-1))
+            {
+                PUSH_MEMORY_COLOR(0xFF7777u);
+                pSoundData = ZUniMemory::Allocate(lSoundDataSize);
+                GetSoundData(pSoundData, lSoundDataSize);
+            }
+        }
+
+        // ---- Anim data ----
+        const uint32_t lAnimsSize = GetAnimsSize();
+        if (lAnimsSize > 0)
+        {
+            PUSH_MEMORY_COLOR(0x808040u);
+            m_pPackedAnims = static_cast<CHUNKFILE*>(ZUniMemory::Allocate(lAnimsSize));
+            m_lPackedAnimsLength = lAnimsSize;
+            GetAnimsData(m_pPackedAnims, lAnimsSize);
+        }
+
+        // ---- Trees, sound graph and packed static game level data ----
+        LoadRoomTrees();
+        LoadBoundTrees();
+        LoadSoundGraph();
+        CreatePackedStaticGameLevelData();
+
+        // ---- Geoms data (packed GMS) ----
+        // Aligned buffer holds the packed GMS; it is decompressed further down
+        // (after the InstallSounds stage) into the block CreateGeoms consumes.
+        const uint32_t lGeomsSize = GetGeomsSize();
+        char* pGeomsData = static_cast<char*>(ZUniMemory::Allocate((lGeomsSize + 15) & 0xFFFFFFF0));
+        GetGeomsData(pGeomsData, lGeomsSize);
+
+        // ---- GeomFiles (zgf) big chunk ----
+        // A separate resource pack unzipped through the render draw allocator and
+        // registered as a "big" file the loaders read. It stays loaded until the
+        // final cleanup stage (RemoveBig + IDraw::Free). packedChunk is reused for
+        // the GMS decompression below.
+        const uint32_t lGeomFilesSize = GetGeomFilesSize();
+        ZPackedDataChunk packedChunk;
+        void* pGeomFilesBig = nullptr;
+        int lGeomFilesUnpackedSize = 0;
+        if (static_cast<int32_t>(lGeomFilesSize) <= 0)
+        {
+            g_pSysFile->RemoveAllBigs();
+            IDraw::Instance()->InitAllocation();
+        }
+        else
+        {
+            auto* pZgfData = static_cast<uint32_t*>(ZUniMemory::Allocate((lGeomFilesSize + 15) & 0xFFFFFFF0));
+            GetGeomFilesData(pZgfData, lGeomFilesSize);
+
+            packedChunk.m_bCustomBuffer = true;
+            packedChunk.m_pPackedData = reinterpret_cast<uint8_t*>(pZgfData);
+            packedChunk.m_iRawDataLength = static_cast<int>(pZgfData[0]);
+            packedChunk.m_iPackedDataLength = static_cast<int>(pZgfData[1]);
+            packedChunk.m_eCompression =
+                (*reinterpret_cast<const uint8_t*>(pZgfData + 2) != 0)
+                    ? ZPackedDataChunk::UNCOMPRESSED
+                    : ZPackedDataChunk::ZIPPED;
+
+            const uint32_t lUnpackedAligned =
+                (static_cast<uint32_t>(packedChunk.m_iRawDataLength) + 15) & 0xFFFFFFF0;
+
+            IDraw::Instance()->InitAllocation();
+            pGeomFilesBig = IDraw::Instance()->Alloc(static_cast<int>(lUnpackedAligned), __FILE__, __LINE__);
+            packedChunk.unzip(static_cast<char*>(pGeomFilesBig), packedChunk.m_iRawDataLength);
+            ZUniMemory::Free(pZgfData);
+
+            lGeomFilesUnpackedSize = packedChunk.m_iRawDataLength;
+            g_pSysFile->UseBig(static_cast<CHUNKFILE*>(pGeomFilesBig), "GeomFiles");
+        }
+
+        // NOTE: InstallSounds (ZDllSound data/stream/whd/wav init) belongs before
+        // the GMS decompress below; it is left pending and does not feed pGmsData.
+
+        // ---- Decompress the packed GMS into the CreateGeoms input buffer ----
+        // Reuses packedChunk; the buffer is allocated in the backward-growing
+        // memory region (matches PC) so it interleaves with the level data.
+        packedChunk.m_bCustomBuffer = true;
+        packedChunk.m_pPackedData = reinterpret_cast<uint8_t*>(pGeomsData);
+        packedChunk.m_iRawDataLength = static_cast<int>(*reinterpret_cast<const uint32_t*>(pGeomsData));
+        packedChunk.m_iPackedDataLength = static_cast<int>(reinterpret_cast<const uint32_t*>(pGeomsData)[1]);
+        packedChunk.m_eCompression =
+            (*reinterpret_cast<const uint8_t*>(pGeomsData + 8) != 0)
+                ? ZPackedDataChunk::UNCOMPRESSED
+                : ZPackedDataChunk::ZIPPED;
+
+        if (ISysMem::Exists())
+            ISysMem::Instance().SetAllocDirection(ISysMem::AD_BACKWARD);
+        char* pGmsData = static_cast<char*>(
+            ZUniMemory::Allocate((static_cast<uint32_t>(packedChunk.m_iRawDataLength) + 15) & 0xFFFFFFF0));
+        if (ISysMem::Exists())
+            ISysMem::Instance().SetAllocDirection(ISysMem::AD_FORWARD);
+        packedChunk.unzip(pGmsData, packedChunk.m_iRawDataLength);
+        ZUniMemory::Free(pGeomsData);
+
+        // ---- Weapon prims / excluded anim names ----
+        // SPackedGeomsHeader::m_iWeaponPrimsOffset (+0x40) and
+        // m_iExcludedAnimNamesOffset (+0x44) are offsets into the static buffer
+        // where those tables were packed. Read by offset: only StartQuad[] /
+        // m_iHighestGeomNr are visible for SPackedGeomsHeader in this TU (the
+        // header also has a fuller definition in Data/SPackedGeomsHeader.h).
+        const uint32_t lWeaponPrimsOffset = *reinterpret_cast<const uint32_t*>(pGmsData + 0x40);
+        if (lWeaponPrimsOffset && g_pGameData)
+            g_pGameData->InitWeaponHandles(
+                reinterpret_cast<uint32_t*>(reinterpret_cast<char*>(m_pStaticBuffer) + lWeaponPrimsOffset));
+        const uint32_t lExcludedAnimOffset = *reinterpret_cast<const uint32_t*>(pGmsData + 0x44);
+        if (lExcludedAnimOffset && g_pGameData)
+            g_pGameData->InitExcludedAnimNames(
+                reinterpret_cast<uint32_t*>(reinterpret_cast<char*>(m_pStaticBuffer) + lExcludedAnimOffset));
+
+        // TODO: Finish me - remaining AllocSequence pipeline (InstallSounds before
+        // the GMS decompress above, prim control buffers, MaterialDescriptionDB /
+        // Animation / Pathfinder4 / Physics init, CreateGeoms, room/bound/dynamic
+        // trees, water manager, Init/PostInit and the level-change callbacks plus
+        // the GeomFiles big-chunk cleanup).
     }
 
     bool ZEngineDataBase::ForceExtraGeom()
@@ -1632,9 +1842,11 @@ namespace Glacier
         return pCamera;
     }
 
-    void ZEngineDataBase::CorrectEditorDestGroup(SCompiledGeom* pCompiledGeom, ZGROUP* pCurrentDestGroup)
+    ZGROUP* ZEngineDataBase::CorrectEditorDestGroup(SCompiledGeom* pCompiledGeom, ZGROUP* pCurrentDestGroup)
     {
-        // Nothing
+        // Editor-only dest-group correction; at runtime the group is returned unchanged.
+        std::ignore = pCompiledGeom;
+        return pCurrentDestGroup;
     }
 
     void ZEngineDataBase::PackHookMissingOnlyInitialize()
@@ -1665,7 +1877,7 @@ namespace Glacier
 
     void ZEngineDataBase::NetworkUpdate()
     {
-        // TODO: Finish me (sub_69D620)
+        // TODO: Finish me (PC sub_69D620)
     }
 
     uint32_t ZEngineDataBase::GetNextAnimId()
@@ -1942,27 +2154,62 @@ namespace Glacier
 
     void ZEngineDataBase::CreateGeoms(REFTAB* prtCreatedGeoms, ZStackArray<1000, SMakeGeomDynamic>* pMakeDynArray, const char* pGeomsData, const char* pStaticBuffer, IInputStream& property_in_stream)
     {
-        int32_t lNumberOfPackedGeoms = 0;
-
         PUSH_MEMORY_COLOR(0x606060u);
         MarkNonRunTime();
 
-        // TODO: Finish me
+        const auto* pGms = reinterpret_cast<const SPackedGeomsHeader*>(pGeomsData);
+        const char* pGmsBase = reinterpret_cast<const char*>(pGms);
+
+        // The geom-type-count table lives at StartQuad[4] inside the GMS block:
+        //   { u32 lNrGeomTypes; SGeomTypeCount aGeomTypes[lNrGeomTypes]; }
+        // CountNrGeoms walks it to compute the base-geom and extra-geom pool sizes.
+        uint32_t lNrBaseGeoms = 0;
+        uint32_t lExtraGeomsSize = 0;
+        const uint32_t lGeomTypeTableOffset = pGms->StartQuad[4];
+        const uint32_t lNrGeomTypes = *reinterpret_cast<const uint32_t*>(pGmsBase + lGeomTypeTableOffset);
+        auto* pGeomTypeCount = reinterpret_cast<SGeomTypeCount*>(const_cast<char*>(pGmsBase) + 4 + lGeomTypeTableOffset);
+        CountNrGeoms(lNrBaseGeoms, lExtraGeomsSize, *pGeomTypeCount, lNrGeomTypes);
+
+        // The packed entity table lives at StartQuad[0]:
+        //   { u32 lNrEntities; SPackedGeomsTree aEntities[lNrEntities]; }
+        const uint32_t lEntriesOffset = pGms->StartQuad[0];
+        const uint32_t lNumberOfPackedGeoms = *reinterpret_cast<const uint32_t*>(pGmsBase + lEntriesOffset);
 
         if (g_pSysInterface->GetOption("PrintEngineInfo", nullptr))
         {
             ZINFO("Number of Packed Geoms: %d", lNumberOfPackedGeoms);
         }
 
-        // TODO: Finish me
-
         if (g_pSysInterface->GetOption("PrintEngineInfo", nullptr))
         {
-            ZINFO("Highest used geomnumber: %d", 123); // TODO: Replace '123' to struct read
+            ZINFO("Highest used geomnumber: %d", pGms->m_iHighestGeomNr);
         }
 
-        // TODO: Finish me
+        // Compute the four ZGeomBuffer pool sizes. The base/extra pools are
+        // clamped to a 0x40000 floor; the event buffer base value is taken from
+        // StartQuad[7] and tuned per default scene, matching the PC build.
+        uint32_t lBaseGeomBufferSize = 0x70 * lNrBaseGeoms;
+        if (lBaseGeomBufferSize < 0x40000)
+            lBaseGeomBufferSize = 0x40000;
 
+        if (lExtraGeomsSize < 0x40000)
+            lExtraGeomsSize = 0x40000;
+
+        const uint32_t lEventBase = pGms->StartQuad[7];
+        uint32_t lEventBufferSize = lEventBase + 0x57800;
+        if (strcmp(g_pSysInterface->m_sDefaultScene.String, "m10_main"))
+            lEventBufferSize = lEventBase + 0x70800;
+        if (strcmp(g_pSysInterface->m_sDefaultScene.String, "m09_main"))
+            lEventBufferSize = lEventBase + 0x53000;
+        if (lEventBufferSize < 0x40000)
+            lEventBufferSize = 0x40000;
+
+        if (!m_pGeomBuffer)
+        {
+            m_pGeomBuffer = ZUniMemory::New<ZGeomBuffer>(lBaseGeomBufferSize, lExtraGeomsSize, 0x14000u, lEventBufferSize);
+        }
+
+        // Allocate the ZROOT group if it does not exist yet.
         if (!m_pRoot)
         {
             m_pRoot = AllocRootGroup();
@@ -1970,20 +2217,269 @@ namespace Glacier
         }
         ZASSERT(m_pRoot);
 
-        // TODO: Finish me
+        // ---- Preloader (PC 0x0045F2D0 / XBOX_KL1 0x82267E98) ----
+        // Scratch arrays stay alive for the rest of the function: pGeomNrToRef
+        // feeds the remap passes below, pBaseGeomArr feeds LoadProperties.
+        constexpr uint32_t kClusterRowSize = 24;
+        constexpr uint32_t kMaxClusterDepth = 128;
+
+        const auto* pEntities = reinterpret_cast<const SPackedGeomsTree*>(pGmsBase + lEntriesOffset + 4);
+        auto* pClusterDefs = reinterpret_cast<uint32_t*>(const_cast<char*>(pGmsBase) + 4 + pGms->StartQuad[5]);
+
+        const uint32_t lNrGeomNrRefs = pGms->m_iHighestGeomNr + 1;
+        ZREF* pGeomNrToRef = static_cast<ZREF*>(ZUniMemory::Allocate(sizeof(ZREF) * lNrGeomNrRefs));
+        memset(pGeomNrToRef, 0, sizeof(ZREF) * lNrGeomNrRefs);
+        auto** pBaseGeomArr = static_cast<ZBaseGeom**>(ZUniMemory::Allocate(sizeof(ZBaseGeom*) * lNumberOfPackedGeoms));
+        auto** pClusterPool = static_cast<ZBaseGeom**>(ZUniMemory::Allocate(sizeof(ZBaseGeom*) * kClusterRowSize * kMaxClusterDepth));
+        ZBaseGeom** pClusterSlots = pClusterPool;
+
+        if (lNumberOfPackedGeoms)
+        {
+            bool bIsRootOfGroup = true;
+            for (uint32_t i = 0; i < lNumberOfPackedGeoms; ++i)
+            {
+                if ((i & 0x1F) == 0)
+                {
+                    SetAllocSequencePercent(ALLOCSEQUENCESTATUS::AS_GEOMS, nullptr, (static_cast<float>(i) * 0.2f) / static_cast<float>(lNumberOfPackedGeoms));
+                }
+
+                const uint32_t lCompiledGeomOffset = pEntities[i].lCompiledGeomOffset;
+                const uint32_t lDepth = lCompiledGeomOffset >> 25;
+                const bool bGroupRoot = (lCompiledGeomOffset & 0x100000) != 0;
+                auto* pCompiled = reinterpret_cast<SCompiledGeom*>(const_cast<char*>(pGmsBase) + ((lCompiledGeomOffset & 0xFFFFFF) << 2));
+
+                // Walk up lDepth levels in the group hierarchy.
+                if (lDepth)
+                {
+                    pClusterSlots -= lDepth * kClusterRowSize;
+                    ZGROUP* pDestGroup = reinterpret_cast<ZGROUP*>(m_pRoot);
+                    for (uint32_t d = 0; d < lDepth; ++d)
+                    {
+                        ZGROUP* pParent = pDestGroup->BaseGeom()->ParentGroup();
+                        ZASSERT(pParent);
+                        pDestGroup = pParent;
+                    }
+                    m_pRoot = reinterpret_cast<ZROOM*>(pDestGroup);
+                }
+
+                // First entity of a group: pre-allocate its typed lists from the
+                // cluster-definition row and seed the working slot cursors.
+                if (bIsRootOfGroup)
+                {
+                    uint32_t lTotalEntries = 0;
+                    for (uint32_t j = 0; j < kClusterRowSize; ++j)
+                        lTotalEntries += pClusterDefs[j];
+
+                    if (lTotalEntries)
+                    {
+                        ZBaseGeom* pFirst = nullptr;
+                        for (uint32_t k = 0; k < lTotalEntries; ++k)
+                        {
+                            auto* pBg = znew_placement<ZBaseGeom>(ZGeomBuffer::Instance().AllocBaseGeom());
+                            if (k == 0)
+                                pFirst = pBg;
+                        }
+                        ZASSERT(pFirst);
+
+                        ZBaseGeom* pCursor = pFirst;
+                        for (uint32_t j = 0; j < kClusterRowSize; ++j)
+                        {
+                            if (pClusterDefs[j])
+                            {
+                                pClusterSlots[j] = pCursor;
+                                pCursor += pClusterDefs[j];
+                            }
+                            else
+                            {
+                                pClusterSlots[j] = nullptr;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        for (uint32_t j = 0; j < kClusterRowSize; ++j)
+                            pClusterSlots[j] = nullptr;
+                    }
+                    bIsRootOfGroup = false;
+                }
+
+                const char* pszName = pStaticBuffer + pCompiled->lOffsetName;
+                const auto* pClassInfo = GetGeomClassInfo(pCompiled->lGeomType);
+                const int32_t lListIndex = static_cast<int32_t>(GetBaseGeomListType(pClassInfo)) + 8 * pCompiled->cAssumedGeomDrawList;
+
+                ZBaseGeom* pBaseGeom = pClusterSlots[lListIndex];
+                pClusterSlots[lListIndex] = pBaseGeom + 1;
+                ZASSERT(pBaseGeom);
+
+                if (ForceExtraGeom() || pCompiled->CanExtraGeomBeZero())
+                {
+                    ZGeomBuffer::Instance().AllocGeom(pszName, pCompiled->lGeomType, pBaseGeom);
+
+                    if (ZGEOM* pGeom = pBaseGeom->GetGeom())
+                    {
+                        ++pGeom->GetOldClassInfo()->m_lSceneInstanceCount;
+                        pGeom->RegisterInstance(1);
+                    }
+                }
+
+                ZGeomBuffer::Instance().m_bGeomCreationLock = true;
+
+                const ZREF rGeom = ZGeomBuffer::Instance().GeomPtrToRef(pBaseGeom);
+                prtCreatedGeoms->Add(rGeom);
+
+                if (ZGEOM* pGeom = pBaseGeom->GetGeom())
+                {
+                    if (pCompiled->lExData)
+                    {
+                        const char* pExDataSrc = pStaticBuffer + pCompiled->lExData;
+                        pGeom->CreateExData();
+
+                        const char* pStatic = reinterpret_cast<const char*>(g_pEngineData->m_pStaticBuffer);
+                        if (pStatic && pExDataSrc >= pStatic && pExDataSrc < pStatic + g_pEngineData->m_lStaticBufferLength)
+                        {
+                            pGeom->m_pExData->_ExtraInitData = reinterpret_cast<CHUNKFILE*>(const_cast<char*>(pExDataSrc));
+                        }
+                        else
+                        {
+                            const uint32_t lSize = *reinterpret_cast<const uint32_t*>(pExDataSrc + 4) & 0x3FFFFFFF;
+                            void* pDst = ZUniMemory::Allocate(static_cast<int>(lSize));
+                            memcpy(pDst, pExDataSrc, lSize);
+                            pGeom->m_pExData->_ExtraInitData = reinterpret_cast<CHUNKFILE*>(pDst);
+                        }
+                    }
+                }
+
+                pBaseGeom->m_uListID = pEntities[i].lLightListID & 0xFFFFFF;
+
+                m_pRoot = reinterpret_cast<ZROOM*>(CorrectEditorDestGroup(pCompiled, reinterpret_cast<ZGROUP*>(m_pRoot)));
+
+                uint32_t lControl = pBaseGeom->Control() | (pCompiled->lGeomAndGroupCon & 0xFFFFF);
+                if ((lControl & 0x8080) != 0)
+                {
+                    lControl |= 0x8080;
+                }
+                else
+                {
+                    pBaseGeom->m_uListID = 0;
+                }
+
+                if (pMakeDynArray && (lControl & ZCDYNAMIC) != 0)
+                {
+                    const ZREF rDyn = ZGeomBuffer::Instance().GeomPtrToRef(pBaseGeom);
+                    const uint32_t lCount = pMakeDynArray->m_lNrEntries;
+                    ZASSERT(lCount + 1 <= 0x3E8);
+                    pMakeDynArray->m_Array[lCount].rGeom = rDyn;
+                    pMakeDynArray->m_Array[lCount].lControl = lControl;
+                    pMakeDynArray->m_lNrEntries = lCount + 1;
+                    ZASSERT(pMakeDynArray->m_lNrEntries <= 0x3E8);
+                    lControl &= 0xFFFBBFFF;
+                }
+
+                pBaseGeom->SetControl(lControl, ~lControl);
+                m_pRoot->AttachGeom(pBaseGeom, false);
+                pBaseGeom->SetControl(pBaseGeom->Control(), ~pBaseGeom->Control());
+
+                if ((pCompiled->lGeomType & 0x100000) != 0) // may be a group -> next cluster-def row
+                    pClusterDefs += kClusterRowSize;
+
+                if (bGroupRoot)
+                {
+                    pClusterSlots += kClusterRowSize;
+                    bIsRootOfGroup = true;
+                    ZGEOM* pGroupGeom = pBaseGeom->GetGeom();
+                    m_pRoot = reinterpret_cast<ZROOM*>(pGroupGeom);
+
+                    // PS2-only safety checks (PS2 0x195894). PC 0x0045F2D0 has neither:
+                    //  (1) the cluster-slot cursor must not overflow its scratch pool, and
+                    //  (2) the group we descend into must really be a ZGROUP.
+                    ZASSERT(pClusterSlots + kClusterRowSize <= pClusterPool + kClusterRowSize * kMaxClusterDepth);
+                    ZASSERT(pGroupGeom && pGroupGeom->IsDerivedFrom<ZGROUP>());
+                }
+
+                if (ZGEOM* pGeom = pBaseGeom->GetGeom())
+                {
+                    if (auto* pGroup = geom_cast<ZGROUP>(pGeom))
+                    {
+                        const uint32_t lGrpCtl = pGroup->GroupControl();
+                        const uint32_t lNewGrpCtl = (pCompiled->lGeomAndGroupCon & 0xFF000000) | lGrpCtl;
+                        pGroup->SetGroupControl(lNewGrpCtl, ~lNewGrpCtl);
+                    }
+                }
+
+                ZASSERT(pCompiled->m_iGeomNr);
+                pGeomNrToRef[pCompiled->m_iGeomNr - 1] = ZGeomBuffer::Instance().GeomPtrToRef(pBaseGeom);
+                pBaseGeomArr[i] = pBaseGeom;
+
+                ZGeomBuffer::Instance().m_bGeomCreationLock = false;
+            }
+        }
+
+        // ---- Load PRP properties (PC 0x0045F2D0) ----
+        ZInputStream propertyStream(property_in_stream);
+        ZPackedInput packedInput(&propertyStream);
+
+        LoadZDefines(packedInput);
+
+        if (m_pPathfinder4Data)
+            m_pPathfinder4Data->RemapDoorRefs(pGeomNrToRef, lNrGeomNrRefs);
+
+        if (g_pGameData)
+            g_pGameData->RemapRefs(reinterpret_cast<uint32_t*>(pGeomNrToRef), lNrGeomNrRefs);
 
         ZMessageResolver::ResolveAll();
 
-        // TODO: Finish me
+        g_iLoadPropertiesProgress = 0;
+        g_iLoadPropertiesTotal = static_cast<int>(lNumberOfPackedGeoms);
+        LoadProperties(lNumberOfPackedGeoms, pBaseGeomArr, packedInput);
 
-        if (!g_pSysInterface->m_bDisableLight)
+        // Dev-tool repack marker: read-and-discard the "SimpleRepack" bool so the
+        // property stream is consumed past it. Both PC 0x0045F2D0 and PS2 0x195894
+        // read it into a throwaway local; the runtime g_pSysInterface->m_bSimpleRepack
+        // flag is a separate config value set elsewhere. Guarded by a non-empty scene.
+        if (lNumberOfPackedGeoms)
         {
-            // TODO: Finish me
+            bool bSimpleRepack = false;
+            packedInput.Exchange("SimpleRepack", bSimpleRepack);
+            std::ignore = bSimpleRepack;
         }
 
-        // TODO: Finish me
-        // InitResourceGeoms(...);
-        // BS_Runtime::ZMaterialDescriptionDB::m_Instance->RemapGeoms(...);
+        packedInput.End();
+
+        // ---- Resolve references in ZROOMs (PC 0x0045F2D0) ----
+        for (auto* pBaseGeom = m_pRoot->BaseGeom(); pBaseGeom; m_pRoot->RecurGetNext(&pBaseGeom))
+        {
+            ZGEOM* pGeom = pBaseGeom->GetGeom();
+            const bool bIsRoom = pGeom
+                ? ((pGeom->GetObjectId() & ZROOM::m_Mask) == ZROOM::m_Id)
+                : pBaseGeom->IsDerivedFrom<ZROOM>();
+            if (bIsRoom && pGeom)
+                reinterpret_cast<ZROOM*>(pGeom)->RemapRefs(pGeomNrToRef, lNrGeomNrRefs);
+        }
+
+        // ---- Light list (PC 0x0045F2D0) ----
+        if (!g_pSysInterface->m_bDisableLight)
+        {
+            const uint32_t lLightOffset = pGms->StartQuad[6];
+            if (lLightOffset)
+            {
+                const uint32_t lSize = *reinterpret_cast<const uint32_t*>(pGmsBase + lLightOffset);
+                PUSH_MEMORY_COLOR(0x20FF7Fu);
+                void* pLightBuf = ZUniMemory::Allocate(static_cast<int>(lSize));
+                memcpy(pLightBuf, pGmsBase + 4 + lLightOffset, lSize);
+                m_pListUser = ZUniMemory::New<CListUser>(pLightBuf);
+                ZASSERT(m_pListUser);
+                m_pListUser->ConvertOffsetsToRefs(reinterpret_cast<const uint32_t*>(pGeomNrToRef));
+            }
+        }
+
+        m_pGeomBuffer->InitResourceGeoms(const_cast<SPackedGeomsHeader*>(pGms));
+        if (BS_Runtime::ZMaterialDescriptionDB::m_Instance)
+            BS_Runtime::ZMaterialDescriptionDB::m_Instance->RemapGeoms(reinterpret_cast<uint32_t*>(pGeomNrToRef));
+
+        // All remap/property passes have consumed the preloader scratch buffers.
+        ZUniMemory::Free(pClusterPool);
+        ZUniMemory::Free(pBaseGeomArr);
+        ZUniMemory::Free(pGeomNrToRef);
     }
 
     void ZEngineDataBase::LoadProperties(uint32_t lNrPackedGeoms, ZBaseGeom** BaseGeoms, IInputSerializerStream& in)

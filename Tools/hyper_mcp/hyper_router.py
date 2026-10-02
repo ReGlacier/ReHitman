@@ -3,8 +3,9 @@
 import argparse
 import concurrent.futures
 import hmac
-import html
 import json
+import mimetypes
+import os
 import queue
 import secrets
 import socket
@@ -12,6 +13,7 @@ import threading
 import time
 import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from urllib.parse import unquote
 
 
 MAX_REQUEST_SIZE = 16 * 1024 * 1024
@@ -20,6 +22,10 @@ REQUEST_TIMEOUT = 120
 INSTANCE_TTL = REQUEST_TIMEOUT + 30
 POLL_WAIT = 30
 DISCOVERY_PORT = 8764
+
+# The Gravity UI console is built by the npm project in ./frontend into ./frontend/dist.
+# This same process serves those static assets plus the JSON/agent APIs below.
+FRONTEND_DIST = os.path.join(os.path.dirname(os.path.abspath(__file__)), "frontend", "dist")
 
 
 TOOLS = {
@@ -315,6 +321,19 @@ class Registry:
             self.entries = {key: value for key, value in self.entries.items() if now - value.last_seen <= INSTANCE_TTL}
             return [value.as_entry() for value in self.entries.values()]
 
+    def kick(self, agent_id):
+        with self.lock:
+            state = self.entries.pop(agent_id, None)
+        if state is None:
+            return False
+        # Dropping the entry invalidates the session, so the agent's next
+        # /agent/poll or /agent/result fails authentication and its connection
+        # loop rediscovers and re-registers. The sentinel unblocks a long-poll
+        # already parked in commands.get() so the drop is noticed immediately
+        # instead of after the poll times out.
+        state.commands.put({"request_id": None, "method": "__reconnect__", "arguments": {}})
+        return True
+
     def resolve(self, names=None):
         entries = self.active()
         by_name = {}
@@ -375,264 +394,18 @@ def _list_instances(arguments):
     }
 
 
-_INDEX_PAGE_TEMPLATE = """<!DOCTYPE html>
-<html lang="ru">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Hyper MCP Router — Active Agents</title>
-<style>
-  :root {
-    --bg-top: #fdf3ff;
-    --bg-bottom: #e6f4ff;
-    --grid: #ffb3ec;
-    --sun-a: #ffd6f7;
-    --sun-b: #ffe9c7;
-    --sun-c: #c9f4ff;
-    --neon-pink: #ff6fd8;
-    --neon-cyan: #4bd8e0;
-    --neon-purple: #b18bff;
-    --ink: #4a2a63;
-    --ink-soft: #7a5a94;
-    --card-bg: rgba(255, 255, 255, 0.62);
-    --card-border: rgba(255, 111, 216, 0.55);
-  }
-  * { box-sizing: border-box; }
-  html, body {
-    margin: 0;
-    min-height: 100%;
-    font-family: 'Trebuchet MS', 'Segoe UI', sans-serif;
-    color: var(--ink);
-  }
-  body {
-    background: linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 65%, #d9ecff 100%);
-    overflow-x: hidden;
-    position: relative;
-  }
-  .sky {
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    background:
-      radial-gradient(circle at 50% 18%, var(--sun-a) 0%, var(--sun-b) 30%, var(--sun-c) 55%, transparent 70%),
-      repeating-linear-gradient(180deg, rgba(255,255,255,0) 0px, rgba(255,255,255,0) 38px, rgba(255,182,238,0.35) 39px, rgba(255,182,238,0.35) 40px);
-  }
-  .sun {
-    position: fixed;
-    left: 50%;
-    top: 10%;
-    width: 240px;
-    height: 240px;
-    transform: translateX(-50%);
-    border-radius: 50%;
-    background: linear-gradient(180deg, #fff4cf 0%, #ffcfe9 45%, #ffb0e0 70%, #d8a9ff 100%);
-    box-shadow: 0 0 70px 10px rgba(255, 180, 230, 0.65), 0 0 140px 40px rgba(190, 160, 255, 0.35);
-    z-index: 1;
-  }
-  .sun::before {
-    content: "";
-    position: absolute;
-    left: 0; right: 0; bottom: 30%;
-    height: 6px;
-    background: repeating-linear-gradient(180deg, var(--bg-bottom) 0 4px, transparent 4px 12px);
-  }
-  .horizon-grid {
-    position: fixed;
-    left: 0; right: 0; bottom: 0;
-    height: 42vh;
-    z-index: 1;
-    background-image:
-      linear-gradient(var(--grid) 1px, transparent 1px),
-      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
-    background-size: 60px 40px, 60px 40px;
-    -webkit-mask-image: linear-gradient(180deg, transparent, black 25%);
-            mask-image: linear-gradient(180deg, transparent, black 25%);
-    transform: perspective(260px) rotateX(55deg);
-    transform-origin: bottom;
-    opacity: 0.55;
-  }
-  main {
-    position: relative;
-    z-index: 2;
-    max-width: 880px;
-    margin: 0 auto;
-    padding: 56px 24px 90px;
-  }
-  header { text-align: center; margin-bottom: 46px; }
-  h1 {
-    font-size: 2.6rem;
-    letter-spacing: 3px;
-    margin: 0 0 8px;
-    text-transform: uppercase;
-    color: var(--neon-purple);
-    text-shadow:
-      0 0 6px rgba(255,255,255,0.8),
-      0 0 18px var(--neon-pink),
-      0 0 34px var(--neon-cyan);
-  }
-  .subtitle {
-    margin: 0;
-    color: var(--ink-soft);
-    letter-spacing: 2px;
-    font-size: 0.85rem;
-    text-transform: uppercase;
-  }
-  .status-line {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    margin-top: 18px;
-    padding: 6px 16px;
-    border-radius: 999px;
-    background: var(--card-bg);
-    border: 1px solid var(--card-border);
-    font-size: 0.8rem;
-    color: var(--ink);
-  }
-  .dot {
-    width: 9px; height: 9px;
-    border-radius: 50%;
-    background: var(--neon-cyan);
-    box-shadow: 0 0 8px var(--neon-cyan);
-  }
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 22px;
-  }
-  .card {
-    background: var(--card-bg);
-    border: 1px solid var(--card-border);
-    border-radius: 16px;
-    padding: 22px 22px 20px;
-    backdrop-filter: blur(6px);
-    box-shadow:
-      0 0 0 1px rgba(255,255,255,0.4) inset,
-      0 8px 24px rgba(177, 139, 255, 0.22),
-      0 0 22px rgba(255, 111, 216, 0.18);
-    transition: transform 0.25s ease, box-shadow 0.25s ease;
-    position: relative;
-    overflow: hidden;
-  }
-  .card::before {
-    content: "";
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, var(--neon-pink), var(--neon-purple), var(--neon-cyan));
-  }
-  .card:hover {
-    transform: translateY(-4px);
-    box-shadow:
-      0 0 0 1px rgba(255,255,255,0.5) inset,
-      0 14px 30px rgba(177, 139, 255, 0.3),
-      0 0 30px rgba(255, 111, 216, 0.3);
-  }
-  .card-name {
-    font-size: 1.15rem;
-    font-weight: 700;
-    margin: 0 0 6px;
-    color: var(--ink);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .pulse {
-    width: 10px; height: 10px;
-    border-radius: 50%;
-    background: var(--neon-pink);
-    box-shadow: 0 0 10px var(--neon-pink);
-    flex: none;
-    animation: pulse 2.2s ease-in-out infinite;
-  }
-  @keyframes pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.45; transform: scale(0.8); }
-  }
-  .card-db {
-    margin: 0 0 14px;
-    font-size: 0.86rem;
-    color: var(--ink-soft);
-    word-break: break-word;
-  }
-  .card-id {
-    font-size: 0.7rem;
-    letter-spacing: 0.5px;
-    color: var(--ink-soft);
-    opacity: 0.75;
-    font-family: 'Consolas', 'Courier New', monospace;
-    word-break: break-all;
-  }
-  .empty {
-    text-align: center;
-    padding: 60px 20px;
-    color: var(--ink-soft);
-    border: 1px dashed var(--card-border);
-    border-radius: 16px;
-    background: var(--card-bg);
-  }
-  .empty-title {
-    font-size: 1.2rem;
-    color: var(--neon-purple);
-    text-shadow: 0 0 12px var(--neon-pink);
-    margin-bottom: 8px;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-  }
-  footer {
-    position: relative;
-    z-index: 2;
-    text-align: center;
-    padding: 0 20px 40px;
-    color: var(--ink-soft);
-    font-size: 0.75rem;
-    letter-spacing: 1px;
-  }
-</style>
-</head>
-<body>
-  <div class="sky"></div>
-  <div class="sun"></div>
-  <div class="horizon-grid"></div>
-  <main>
-    <header>
-      <h1>Hyper MCP Router</h1>
-      <p class="subtitle">Active IDA Agents</p>
-      <div class="status-line"><span class="dot"></span>__COUNT_LABEL__</div>
-    </header>
-    __CONTENT__
-  </main>
-  <footer>hyper-mcp-router &middot; retrowave console</footer>
-</body>
-</html>
-"""
-
-
-def _render_index_page():
+def _api_agents():
+    now = time.monotonic()
     entries = sorted(REGISTRY.active(), key=lambda item: item["name"].casefold())
-    if entries:
-        cards = []
-        for entry in entries:
-            name = html.escape(str(entry["name"]))
-            database = html.escape(str(entry["database"]))
-            agent_id = html.escape(str(entry["id"]))
-            cards.append(
-                """<div class="card">
-      <p class="card-name"><span class="pulse"></span>{name}</p>
-      <p class="card-db">{database}</p>
-      <p class="card-id">{agent_id}</p>
-    </div>""".format(name=name, database=database, agent_id=agent_id)
-            )
-        content = '<div class="grid">\n    ' + "\n    ".join(cards) + "\n  </div>"
-        count_label = "%d ONLINE" % len(entries)
-    else:
-        content = (
-            '<div class="empty"><div class="empty-title">No agents connected</div>'
-            "Waiting for IDA instances to register&hellip;</div>"
-        )
-        count_label = "0 ONLINE"
-    page = _INDEX_PAGE_TEMPLATE.replace("__CONTENT__", content).replace("__COUNT_LABEL__", count_label)
-    return page.encode("utf-8")
+    return [
+        {
+            "id": entry["id"],
+            "name": entry["name"],
+            "database": entry["database"],
+            "age_seconds": round(now - entry["last_seen"], 1),
+        }
+        for entry in entries
+    ]
 
 
 def _search(method, arguments):
@@ -740,10 +513,30 @@ class RouterHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
-    def _send_html(self, status, body):
-        self.send_response(status)
-        self.send_header("Content-Type", "text/html; charset=utf-8")
+    def _serve_static(self, path):
+        rel = unquote(path).split("?", 1)[0].lstrip("/").replace("\\", "/") or "index.html"
+        dist = os.path.abspath(FRONTEND_DIST)
+        target = os.path.normpath(os.path.join(dist, rel))
+        # Confine reads to the dist directory, then fall back to index.html so
+        # client-side routes still resolve for this single-page console.
+        if not target.startswith(dist) or not os.path.isfile(target):
+            target = os.path.join(dist, "index.html")
+        if not os.path.isfile(target):
+            self._send(404, {"error": "frontend not built; run 'npm run build' in frontend/"})
+            return
+        self._serve_file(target)
+
+    def _serve_file(self, target):
+        with open(target, "rb") as handle:
+            body = handle.read()
+        content_type = mimetypes.guess_type(target)[0] or "application/octet-stream"
+        self.send_response(200)
+        self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(len(body)))
+        if "/assets/" in target.replace("\\", "/"):
+            self.send_header("Cache-Control", "public, max-age=31536000, immutable")
+        else:
+            self.send_header("Cache-Control", "no-cache")
         self.end_headers()
         self.wfile.write(body)
 
@@ -758,12 +551,15 @@ class RouterHandler(BaseHTTPRequestHandler):
         return not token or hmac.compare_digest(self.headers.get("Authorization", ""), "Bearer " + token)
 
     def do_GET(self):
-        if self.path == "/":
-            self._send_html(200, _render_index_page())
-        elif self.path == "/health":
+        path = self.path.split("?", 1)[0]
+        if path == "/health":
             self._send(200, _list_instances({}))
-        else:
+        elif path == "/api/agents":
+            self._send(200, {"agents": _api_agents()})
+        elif path.startswith("/api/"):
             self._send(404, {"error": "not found"})
+        else:
+            self._serve_static(path)
 
     def do_POST(self):
         try:
@@ -771,6 +567,16 @@ class RouterHandler(BaseHTTPRequestHandler):
                 state = REGISTRY.register(self._read_json())
                 print("[Hyper MCP Router] Agent '%s' connected from %s" % (state.name, self.client_address[0]))
                 self._send(200, {"session": state.session})
+                return
+            if self.path == "/agent/disconnect":
+                agent_id = self._read_json().get("id")
+                if not isinstance(agent_id, str) or not agent_id:
+                    raise ValueError("disconnect requires an agent id")
+                kicked = REGISTRY.kick(agent_id)
+                print("[Hyper MCP Router] Disconnect requested for '%s' (%s)" % (
+                    agent_id, "kicked" if kicked else "already gone"
+                ))
+                self._send(200, {"status": "disconnect_requested" if kicked else "not_found"})
                 return
             if self.path == "/agent/poll":
                 data = self._read_json()

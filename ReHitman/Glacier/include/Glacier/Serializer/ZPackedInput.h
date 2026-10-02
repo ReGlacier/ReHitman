@@ -38,6 +38,7 @@ namespace Glacier
         void ExchangeData(uint32_t& data) override;
         void ExchangeData(int32_t& data) override;
         void ExchangeData(bool& data) override;
+        void End() override;
 
         // methods
         ZPackedInput(ZInputStreamBase* pInput, ZInputStreamBase* pDataStream = nullptr);

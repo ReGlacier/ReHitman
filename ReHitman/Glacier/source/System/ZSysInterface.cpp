@@ -955,6 +955,17 @@ namespace Glacier
         m_iTimeMultiplier_Locked = 0;
     }
 
+    void ZSysInterface::ResetClassInstanceCount()
+    {
+        // PC 0x444240. Walks the geom and rout class-info factories and zeroes
+        // each type's per-scene instance counter so the next level starts clean.
+        for (auto it = ZGEOM::GetFactory().Begin(); *it; ++it)
+            (*it)->m_lSceneInstanceCount = 0;
+
+        for (auto it = ZBaseConRout::GetFactory().Begin(); *it; ++it)
+            (*it)->m_lSceneInstanceCount = 0;
+    }
+
     void ZSysInterface::SetRunMode(ERunModes eRunMode)
     {
         m_RunMode = eRunMode;

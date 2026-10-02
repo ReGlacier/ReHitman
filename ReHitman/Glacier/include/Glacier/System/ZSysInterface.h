@@ -152,6 +152,7 @@ namespace Glacier
         void Lock_TimeMultiplier();
         void Unlock_TimeMultiplier();
         void Reset_TimeMultiplier_Lock();
+        void ResetClassInstanceCount();
         void SetRunMode(ERunModes eRunMode);
         void NormalizePath(MYSTR* pStr) const;
         float GetTimeMultiplier() const;

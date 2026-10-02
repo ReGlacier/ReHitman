@@ -24,6 +24,15 @@ namespace Glacier
 
     ZPackedInput::~ZPackedInput() = default;
 
+    // PC 0x00457310. Marks the finishing pass, runs deferred post-load processing,
+    // then finalizes the base stream.
+    void ZPackedInput::End()
+    {
+        m_Finishing = true;
+        PostProcess();
+        ISerializerStream::End();
+    }
+
     ZPackedInput::ZPackedInput(ZInputStreamBase* pInput, ZInputStreamBase* pDataStream)
         : IInputSerializerStream()
         , m_Input(pInput)

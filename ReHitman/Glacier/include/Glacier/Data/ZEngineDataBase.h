@@ -150,7 +150,7 @@ namespace Glacier
         virtual uint32_t GetGlobalStripColiTreeSize();
         virtual void GetGlobalStripColiTreeData(void* pData, uint32_t lSize);
         virtual ZCAMERA* CreateDefaultCam(ZCAMERA* pCamera);
-        virtual void CorrectEditorDestGroup(SCompiledGeom* pCompiledGeom, ZGROUP* pCurrentDestGroup);
+        virtual ZGROUP* CorrectEditorDestGroup(SCompiledGeom* pCompiledGeom, ZGROUP* pCurrentDestGroup);
         virtual void PackHookMissingOnlyInitialize();
         virtual void CreatePackedStaticGameLevelData();
         virtual void LoadPackedStaticGameLevelData();

@@ -1,0 +1,26 @@
+{
+  "name": "hyper-mcp-frontend",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Gravity UI console for the Hyper MCP router.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -b --noEmit"
+  },
+  "dependencies": {
+    "@gravity-ui/icons": "^2.22.0",
+    "@gravity-ui/uikit": "^7.50.1",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^5.2.0",
+    "typescript": "^5.6.3",
+    "vite": "^7.3.6"
+  }
+}

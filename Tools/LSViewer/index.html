@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LoaderSequence Viewer</title>
+<style>
+    :root { color-scheme: dark; }
+    html, body { margin: 0; height: 100%; overflow: hidden; background: #101418;
+                 font: 13px/1.4 "Segoe UI", system-ui, sans-serif; color: #dde; }
+    #view { position: fixed; inset: 64px 0 96px 0; }
+    canvas { display: block; width: 100%; height: 100%; }
+    .panel { position: fixed; z-index: 5; background: rgba(18,22,28,.92);
+             border: 1px solid #2a313c; border-radius: 8px; padding: 10px 12px;
+             box-shadow: 0 4px 18px rgba(0,0,0,.45); backdrop-filter: blur(4px); }
+    #topbar { left: 12px; top: 12px; right: 12px; display: flex; gap: 10px; align-items: center; }
+    #topbar h1 { font-size: 14px; margin: 0; font-weight: 600; letter-spacing: .3px; }
+    #topbar .file { margin-left: auto; color: #7cb8ff; }
+    #tree { left: 12px; top: 70px; bottom: 108px; width: 300px; overflow: auto; }
+    #tree h2, #grid h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .5px;
+                         color: #8aa; margin: 0 0 8px; }
+    #grid { right: 12px; top: 70px; width: 320px; bottom: 108px; overflow: auto; display: none; }
+    #controls { left: 12px; right: 12px; bottom: 12px; display: flex; gap: 16px; align-items: center; }
+    #controls .sliders { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+    #controls .srow { display: flex; align-items: center; gap: 10px; }
+    #controls label { width: 70px; color: #9ab; }
+    #controls input[type=range] { flex: 1; }
+    #controls .val { width: 88px; text-align: right; font-variant-numeric: tabular-nums; color: #fff; }
+    #log { right: 12px; top: 70px; max-width: 340px; max-height: 160px; overflow: auto; display: none; }
+    #drop { position: fixed; inset: 0; z-index: 20; display: none;
+            background: rgba(30,60,120,.28); align-items: center; justify-content: center;
+            font-size: 22px; border: 2px dashed #6cf; box-sizing: border-box;
+            border-radius: 12px; pointer-events: none; }
+    button, .btn { background:#263042; color:#dfe; border:1px solid #3a4a63; border-radius:6px;
+                   padding:6px 12px; cursor:pointer; }
+    button:hover { background:#2f3e55; }
+    input[type=file] { display:none; }
+    label.btn { cursor:pointer; }
+    .empty { color: #678; padding: 8px 0; }
+    /* tree */
+    .node { margin: 1px 0; }
+    .row { display: flex; align-items: center; gap: 5px; padding: 1px 3px; border-radius: 4px; cursor: pointer; }
+    .row:hover { background: #1d2732; }
+    .row.sel { background: #24456b; outline: 1px solid #4d7fb5; }
+    .twist { width: 12px; text-align: center; color: #79a; user-select: none; }
+    .twist.leaf { visibility: hidden; }
+    .tag { color: #cfe3ff; }
+    .attr { color: #8fb8d8; }
+    .kids { margin-left: 14px; border-left: 1px solid #233; padding-left: 4px; }
+    table.grid { border-collapse: collapse; width: 100%; font-size: 12px; }
+    table.grid th, table.grid td { text-align: left; padding: 2px 6px; border-bottom: 1px solid #222a34; }
+    table.grid th { color: #8aa; font-weight: 600; }
+    table.grid td.num { font-variant-numeric: tabular-nums; text-align: right; }
+    a { color:#7cb8ff; }
+</style>
+</head>
+<body>
+
+<div id="topbar" class="panel">
+    <h1>LoaderSequence Viewer</h1>
+    <label class="btn">Open Loader_Sequence.ZIP<input type="file" id="file" accept=".zip,application/zip,application/octet-stream"></label>
+    <span class="file" id="filename"></span>
+</div>
+
+<div id="tree" class="panel"><h2>Scene</h2><div id="treeBody" class="empty">Load a Loader_Sequence.ZIP…</div></div>
+<div id="grid" class="panel"><h2>Pictures</h2><div id="gridBody"></div></div>
+<div id="log" class="panel"></div>
+
+<div id="view"><canvas id="canvas"></canvas></div>
+
+<div id="controls" class="panel">
+    <button id="play">▶ Play</button>
+    <div class="sliders">
+        <div class="srow">
+            <label>Time</label>
+            <input type="range" id="time" min="0" max="10" step="0.01" value="0">
+            <span class="val" id="timeVal">0.00 s</span>
+        </div>
+        <div class="srow">
+            <label>Progress</label>
+            <input type="range" id="progress" min="0" max="1" step="0.01" value="1">
+            <span class="val" id="progVal">1.00</span>
+        </div>
+    </div>
+    <div class="srow" style="gap:6px;">
+        <input type="checkbox" id="showBox" checked> <label for="showBox" style="width:auto">design box</label>
+    </div>
+</div>
+
+<div id="drop">Drop a Loader_Sequence.ZIP to preview its sprite animation</div>
+
+<script src="./pako.min.js"></script>
+<script src="./ls.js"></script>
+<script>
+"use strict";
+
+/* ------------------------------------------------------------------ *
+ *  UI wiring, scene tree, and canvas playback for the LoaderSequence. *
+ *  All parsing/interpretation lives in ls.js (ported from Glacier).   *
+ * ------------------------------------------------------------------ */
+
+const $ = (id) => document.getElementById(id);
+const canvas = $("canvas");
+const ctx = canvas.getContext("2d");
+
+let seq = null;           // loaded LoaderSequence bundle (from loadLoaderSequence)
+let tree = null;          // XML hierarchy
+let selected = null;      // selected tree node { picIndex } or null
+let layerVisible = [];    // per-picture show/hide, keyed by script picture index
+let drawOrder = [];       // permutation of script picture indices (back → front)
+let playing = false;
+let curTime = 0;
+let progress = 1;
+let lastFrame = 0;
+
+function setLog(msg) {
+    const el = $("log");
+    if (!msg) { el.style.display = "none"; return; }
+    el.style.display = "block";
+    el.textContent = msg;
+}
+
+/* ----------------------------- loading -------------------------------- */
+async function openFile(file) {
+    setLog("");
+    try {
+        const buf = await file.arrayBuffer();
+        seq = await loadLoaderSequence(buf);
+        tree = parseTree(seq.xml);
+        $("filename").textContent = file.name;
+        $("time").max = String(Math.max(0, seq.fullProgressTime));
+        curTime = 0; progress = 1;
+        $("progress").value = "1";
+        seq.script.setProgress(progress);
+        layerVisible = seq.pictures.map(() => true);
+        drawOrder = seq.pictures.map((_, i) => i);
+        buildTree();
+        buildGrid();
+        updateReadout();
+        fitCanvas();
+    } catch (err) {
+        console.error(err);
+        seq = null; tree = null;
+        $("treeBody").innerHTML = '<div class="empty">Failed to load.</div>';
+        $("grid").style.display = "none";
+        setLog("Error: " + (err && err.message ? err.message : err));
+    }
+}
+
+/* --------------------- XML hierarchy (for the tree) ------------------- */
+// Re-parses the authored XML into a nesting tree (attributes verbatim), used
+// only for display; playback uses the evaluated script tables.
+function parseTree(xmlText) {
+    const root = { name: "#document", attrs: [], kids: [] };
+    const stack = [root];
+    const n = xmlText.length;
+    let i = 0;
+    while (i < n) {
+        const lt = xmlText.indexOf("<", i);
+        if (lt < 0) break;
+        let j = lt + 1;
+        if (j >= n) break;
+        if (xmlText[j] === "!" || xmlText[j] === "?") {
+            const close = xmlText.indexOf(">", j); i = close < 0 ? n : close + 1; continue;
+        }
+        if (xmlText[j] === "/") {
+            const close = xmlText.indexOf(">", j);
+            if (stack.length > 1) stack.pop();
+            i = close < 0 ? n : close + 1; continue;
+        }
+        let k = j;
+        while (k < n && !/[\s/>]/.test(xmlText[k])) ++k;
+        const name = xmlText.slice(j, k);
+        const attrs = [];
+        let selfClose = false;
+        while (k < n) {
+            while (k < n && /\s/.test(xmlText[k])) ++k;
+            if (k >= n) break;
+            if (xmlText[k] === ">") { ++k; break; }
+            if (xmlText[k] === "/" && xmlText[k + 1] === ">") { selfClose = true; k += 2; break; }
+            let a0 = k; while (k < n && !/[\s=/>]/.test(xmlText[k])) ++k;
+            const an = xmlText.slice(a0, k);
+            while (k < n && /\s/.test(xmlText[k])) ++k;
+            let av = "";
+            if (xmlText[k] === "=") {
+                ++k; while (k < n && /\s/.test(xmlText[k])) ++k;
+                const q = xmlText[k];
+                if (q === '"' || q === "'") { ++k; const v0 = k; while (k < n && xmlText[k] !== q) ++k; av = xmlText.slice(v0, k); if (k < n) ++k; }
+                else { const v0 = k; while (k < n && !/[\s>]/.test(xmlText[k])) ++k; av = xmlText.slice(v0, k); }
+            }
+            if (an) attrs.push([an, av]);
+        }
+        const node = { name, attrs, kids: [] };
+        stack[stack.length - 1].kids.push(node);
+        if (!selfClose) stack.push(node);
+        i = k;
+    }
+    return root;
+}
+
+function pictureIndexFor(name) {
+    if (!seq) return -1;
+    for (let i = 0; i < seq.info.picNames.length; ++i)
+        if (seq.info.picNames[i].toLowerCase() === String(name).toLowerCase()) return i;
+    return -1;
+}
+
+/* ------------------------------ tree UI ------------------------------- */
+function buildTree() {
+    const body = $("treeBody");
+    body.classList.remove("empty");
+    body.innerHTML = "";
+    const rootEl = tree.kids.find(x => x.name === "Loader_Sequence_Script") || tree.kids[0];
+    if (!rootEl) { body.innerHTML = '<div class="empty">No script root.</div>'; return; }
+    body.appendChild(renderNode(rootEl, true));
+}
+
+function nodeLabel(node) {
+    if (node.name === "Screen") {
+        const s = attrOf(node, "Screen_Size") || (seq ? `${seq.screen.x},${seq.screen.y}` : "?");
+        const f = attrOf(node, "Full_Progress_Time");
+        return `<span class="tag">Screen</span> <span class="attr">size ${s}${f ? " · full " + f : ""}</span>`;
+    }
+    if (node.name === "Key_Frame") {
+        return `<span class="tag">Key_Frame</span> <span class="attr">t=${attrOf(node, "Time")}</span>`;
+    }
+    if (node.name === "Picture_Settings") {
+        const p = attrOf(node, "Picture");
+        const bits = [];
+        const pos = attrOf(node, "Position"); if (pos) bits.push(pos);
+        const op = attrOf(node, "Opacity"); if (op) bits.push("op " + op);
+        const mu = attrOf(node, "Multiply"); if (mu) bits.push("×" + mu);
+        const ip = attrOf(node, "Position_Interpolation"); if (ip) bits.push(ip);
+        return `<span class="tag">Picture</span> <span class="attr">${p}${bits.length ? " — " + bits.join(", ") : ""}</span>`;
+    }
+    return `<span class="tag">${node.name}</span>`;
+}
+
+function attrOf(node, name) {
+    for (const [k, v] of node.attrs) if (k === name) return v;
+    return null;
+}
+
+function renderNode(node, open) {
+    const wrap = document.createElement("div");
+    wrap.className = "node";
+    const row = document.createElement("div");
+    row.className = "row";
+    const hasKids = node.kids.length > 0;
+
+    const twist = document.createElement("span");
+    twist.className = "twist" + (hasKids ? "" : " leaf");
+    twist.textContent = open ? "▾" : "▸";
+    row.appendChild(twist);
+
+    const label = document.createElement("span");
+    label.innerHTML = nodeLabel(node);
+    row.appendChild(label);
+    wrap.appendChild(row);
+
+    // Pictures are selectable (highlight on canvas).
+    const picName = node.name === "Picture_Settings" ? attrOf(node, "Picture") : null;
+    if (picName) {
+        row.onclick = (e) => {
+            e.stopPropagation();
+            selectNode(row, pictureIndexFor(picName));
+        };
+    } else if (hasKids) {
+        row.onclick = (e) => {
+            e.stopPropagation();
+            const kids = wrap.querySelector(".kids");
+            const nowOpen = kids.style.display !== "none";
+            kids.style.display = nowOpen ? "none" : "";
+            twist.textContent = nowOpen ? "▸" : "▾";
+        };
+    }
+
+    if (hasKids) {
+        const kids = document.createElement("div");
+        kids.className = "kids";
+        if (!open) kids.style.display = "none";
+        for (const c of node.kids) kids.appendChild(renderNode(c, node.name === "Loader_Sequence_Script"));
+        wrap.appendChild(kids);
+    }
+    return wrap;
+}
+
+function selectNode(row, picIndex) {
+    document.querySelectorAll(".row.sel").forEach(r => r.classList.remove("sel"));
+    if (row) row.classList.add("sel");
+    selected = (picIndex >= 0) ? { picIndex } : null;
+}
+
+/* --------------------------- pictures grid ---------------------------- */
+function buildGrid() {
+    $("grid").style.display = "block";
+    const body = $("gridBody");
+    body.innerHTML = "";
+    const table = document.createElement("table");
+    table.className = "grid";
+    const head = document.createElement("tr");
+    head.innerHTML = "<th></th><th>Picture</th><th>#spr</th><th>@t</th><th>op</th><th>×</th><th>mode</th><th></th>";
+    table.appendChild(head);
+    // Rows are listed front-to-back (top of list = drawn last = on top).
+    for (let pos = drawOrder.length - 1; pos >= 0; --pos) {
+        const p = drawOrder[pos];
+        const tr = document.createElement("tr");
+        tr.dataset.pic = String(p);
+        tr.innerHTML =
+            `<td><input type="checkbox" class="vis" ${layerVisible[p] ? "checked" : ""}></td>` +
+            `<td>${seq.info.picNames[p]}</td>` +
+            `<td class="num">${seq.pictures[p].sprites.length}</td>` +
+            `<td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td>` +
+            `<td class="ord"><button class="up" ${pos === drawOrder.length - 1 ? "disabled" : ""}>▲</button>` +
+            `<button class="dn" ${pos === 0 ? "disabled" : ""}>▼</button></td>`;
+        tr.querySelector(".vis").onchange = (e) => {
+            e.stopPropagation();
+            layerVisible[p] = e.target.checked;
+        };
+        tr.querySelector(".up").onclick = (e) => { e.stopPropagation(); moveLayer(pos, +1); };
+        tr.querySelector(".dn").onclick = (e) => { e.stopPropagation(); moveLayer(pos, -1); };
+        // Clicking the row (name cell) selects/highlights the picture.
+        tr.children[1].onclick = () => selectPicture(p);
+        table.appendChild(tr);
+    }
+    body.appendChild(table);
+}
+
+// Swap two adjacent entries in the draw order (pos is an index into drawOrder).
+function moveLayer(pos, dir) {
+    const q = pos + dir;
+    if (q < 0 || q >= drawOrder.length) return;
+    [drawOrder[pos], drawOrder[q]] = [drawOrder[q], drawOrder[pos]];
+    buildGrid();
+}
+
+function selectPicture(p) {
+    document.querySelectorAll(".row.sel").forEach(r => r.classList.remove("sel"));
+    selected = (p >= 0) ? { picIndex: p } : null;
+}
+function refreshGrid() {
+    if (!seq || !$("grid").style.display || $("grid").style.display === "none") return;
+    const rows = $("gridBody").querySelectorAll("tr[data-pic]");
+    rows.forEach(tr => {
+        const p = parseInt(tr.dataset.pic, 10);
+        const c = tr.children;
+        c[2].textContent = seq.script.getPosX(p, curTime).toFixed(1) + "," + seq.script.getPosY(p, curTime).toFixed(1);
+        c[3].textContent = seq.script.getOpacity(p, curTime).toFixed(2);
+        c[4].textContent = seq.script.getMultiply(p, curTime).toFixed(2);
+        c[5].textContent = seq.info.table[p].interp === 1 ? "Prog" : "Time";
+    });
+}
+
+/* ------------------------------ playback ------------------------------ */
+function fitCanvas() {
+    const dpr = window.devicePixelRatio || 1;
+    const r = canvas.getBoundingClientRect();
+    canvas.width = Math.max(1, Math.round(r.width * dpr));
+    canvas.height = Math.max(1, Math.round(r.height * dpr));
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+window.addEventListener("resize", fitCanvas);
+
+function updateReadout() {
+    $("timeVal").textContent = curTime.toFixed(2) + " s";
+    $("progVal").textContent = progress.toFixed(2);
+    $("time").value = String(curTime);
+}
+
+function render() {
+    const dpr = window.devicePixelRatio || 1;
+    const cw = canvas.width / dpr, ch = canvas.height / dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, cw, ch);
+
+    if (!seq) return;
+
+    const W = seq.screen.x || 640, H = seq.screen.y || 480;
+    const scale = Math.min(cw / W, ch / H);
+    const offX = (cw - W * scale) / 2, offY = (ch - H * scale) / 2;
+    ctx.setTransform(dpr * scale, 0, 0, dpr * scale, dpr * offX, dpr * offY);
+
+    // Design-area background box.
+    ctx.fillStyle = "#05070a";
+    ctx.fillRect(0, 0, W, H);
+    if ($("showBox").checked) {
+        ctx.strokeStyle = "#2a3542";
+        ctx.lineWidth = 1 / scale;
+        ctx.strokeRect(0, 0, W, H);
+    }
+
+    ctx.save();
+    const order = drawOrder.length === seq.pictures.length ? drawOrder
+        : seq.pictures.map((_, i) => i);
+    for (const p of order) {
+        if (!layerVisible[p]) continue;  // hidden layer
+        const opacity = seq.script.getOpacity(p, curTime);
+        if (!opacity) continue;
+        const multiply = seq.script.getMultiply(p, curTime);
+        const ox = seq.script.getPosX(p, curTime);
+        const oy = seq.script.getPosY(p, curTime);
+        const sprites = seq.pictures[p].sprites;
+
+        ctx.globalAlpha = Math.max(0, Math.min(1, opacity));
+        // Multiply acts as a per-picture grayscale factor (D3D TEXTUREFACTOR).
+        ctx.filter = `brightness(${Math.max(0, multiply)})`;
+        for (const s of sprites) {
+            const x = ox + s.posX, y = oy + s.posY;
+            const w = s.texW || 0, h = s.texH || 0;
+            if (s.canvas && w > 0 && h > 0) {
+                ctx.drawImage(s.canvas, x, y, w, h);
+            } else if (w > 0 && h > 0) {
+                // Placeholder for an undecoded sprite (M6 fallback).
+                ctx.fillStyle = "rgba(90,120,200,0.35)";
+                ctx.fillRect(x, y, w, h);
+                ctx.strokeStyle = "#5a78c8"; ctx.lineWidth = 2 / scale;
+                ctx.strokeRect(x, y, w, h);
+            }
+        }
+        ctx.filter = "none";
+
+        // Selection gizmo: outline the union of each sprite's *visible* content
+        // (alpha bbox) so text/glyphs are highlighted tightly, not the whole
+        // full-screen sprite quad. Falls back to the quad if bbox unavailable.
+        if (selected && selected.picIndex === p && sprites.length) {
+            let minx = Infinity, miny = Infinity, maxx = -Infinity, maxy = -Infinity;
+            for (const s of sprites) {
+                const b = s.vis || { x: 0, y: 0, w: s.texW || 0, h: s.texH || 0 };
+                const x = ox + s.posX + b.x, y = oy + s.posY + b.y;
+                minx = Math.min(minx, x); miny = Math.min(miny, y);
+                maxx = Math.max(maxx, x + b.w); maxy = Math.max(maxy, y + b.h);
+            }
+            if (isFinite(minx)) {
+                ctx.globalAlpha = 1; ctx.filter = "none";
+                ctx.strokeStyle = "#ffd35a"; ctx.lineWidth = 2 / scale;
+                ctx.setLineDash([6 / scale, 4 / scale]);
+                ctx.strokeRect(minx, miny, maxx - minx, maxy - miny);
+                ctx.setLineDash([]);
+            }
+        }
+    }
+    ctx.restore();
+    ctx.globalAlpha = 1;
+}
+
+function frame(ts) {
+    if (playing) {
+        if (!lastFrame) lastFrame = ts;
+        const dt = (ts - lastFrame) / 1000;
+        lastFrame = ts;
+        curTime += dt;
+        const maxT = seq ? Math.max(0, seq.fullProgressTime) : 0;
+        if (maxT > 0 && curTime > maxT) curTime = 0; // loop
+        updateReadout();
+    } else {
+        lastFrame = ts;
+    }
+    render();
+    refreshGrid();
+    requestAnimationFrame(frame);
+}
+
+/* ------------------------------ controls ------------------------------ */
+$("file").addEventListener("change", (e) => { if (e.target.files[0]) openFile(e.target.files[0]); });
+
+$("play").addEventListener("click", () => {
+    playing = !playing;
+    $("play").textContent = playing ? "⏸ Pause" : "▶ Play";
+});
+$("time").addEventListener("input", (e) => { curTime = parseFloat(e.target.value); updateReadout(); });
+$("progress").addEventListener("input", (e) => { progress = parseFloat(e.target.value); if (seq) seq.script.setProgress(progress); updateReadout(); });
+$("showBox").addEventListener("input", () => render());
+
+// Drag & drop anywhere.
+let dragDepth = 0;
+window.addEventListener("dragenter", (e) => { e.preventDefault(); dragDepth++; $("drop").style.display = "flex"; });
+window.addEventListener("dragover", (e) => { e.preventDefault(); });
+window.addEventListener("dragleave", (e) => { e.preventDefault(); if (--dragDepth <= 0) { dragDepth = 0; $("drop").style.display = "none"; } });
+window.addEventListener("drop", (e) => {
+    e.preventDefault(); dragDepth = 0; $("drop").style.display = "none";
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) openFile(e.dataTransfer.files[0]);
+});
+
+fitCanvas();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

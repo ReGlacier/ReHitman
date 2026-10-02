@@ -6,6 +6,7 @@
 #include <Glacier/Geom/ZGROUP.h>
 #include <Glacier/Geom/ZLIGHT.h>
 #include <Glacier/Geom/ZGEOM.h>
+#include <Glacier/Runtime/ZGEOMCLASSINFO.h>
 
 
 namespace Glacier
@@ -38,6 +39,41 @@ namespace Glacier
         }
 
         if (pBaseGeom->IsDerivedFrom<ZLIGHT>())
+        {
+            return eBaseGeomListTypes::BGLT_Light;
+        }
+
+        return eBaseGeomListTypes::BGLT_Other;
+    }
+
+    eBaseGeomListTypes GetBaseGeomListType(const ZGEOMCLASSINFO* pClassInfo)
+    {
+        if (!pClassInfo)
+        {
+            return eBaseGeomListTypes::BGLT_Other;
+        }
+
+        if (pClassInfo->IsDerviedFrom<ZSHAPE>())
+        {
+            return eBaseGeomListTypes::BGLT_StdObj;
+        }
+
+        if (pClassInfo->IsDerviedFrom<ZSTDOBJ>())
+        {
+            if (pClassInfo->IsDerviedFrom<ZBOUND>())
+            {
+                return eBaseGeomListTypes::BGLT_Other;
+            }
+
+            return pClassInfo->IsDerviedFrom<ZSNDOBJ>() ? eBaseGeomListTypes::BGLT_StdObj : eBaseGeomListTypes::BGLT_Other;
+        }
+
+        if (pClassInfo->IsDerviedFrom<ZGROUP>())
+        {
+            return eBaseGeomListTypes::BGLT_Group;
+        }
+
+        if (pClassInfo->IsDerviedFrom<ZLIGHT>())
         {
             return eBaseGeomListTypes::BGLT_Light;
         }
