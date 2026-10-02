@@ -15,10 +15,15 @@
 #include <Glacier/Com/CGlobalCom.h>
 #include <Glacier/Render/ZRender.h>
 #include <Glacier/Render/ZRenderBaseDll.h>
+#include <Glacier/Render/Globals.h>
 #include <Glacier/Render/Prim/ZPrimControlBase.h>
+#include <Glacier/Render/Prim/EPrimType.h>
+#include <Glacier/Render/Prim/SPrimObjectScatter.h>
 #include <Glacier/Render/Draw/IDraw.h>
 #include <Glacier/Render/Debug/Globals.h>
 #include <Glacier/Render/Debug/ZDrawDebugTimer.h>
+#include <Glacier/Render/ZWaterManager.h>
+#include <Glacier/Debug/ZMemReadOut.h>
 #include <Glacier/ScriptEngine/ScriptEngine.h>
 #include <Glacier/Serializer/ISerializerStream.h>
 #include <Glacier/Serializer/ZIOInputStream.h>
@@ -42,13 +47,19 @@
 #include <Glacier/Data/SCompiledGeom.h>
 #include <Glacier/Audio/ZSoundDllBase.h>
 #include <Glacier/Audio/ZSoundObject.h>
+#include <Glacier/Materials/BS_Runtime.h>
+#include <Glacier/Animation/Manager.h>
+#include <Glacier/ZSTL/CHUNKFILE.h>
 #include <Glacier/Render/ZRender.h>
+#include <Glacier/Render/Prim/ZPrimHandle.h>
 #include <Glacier/Action/ActionInterface.h>
 #include <Glacier/ZSTL/ZPoolAllocRefTab.h>
 #include <Glacier/ZSTL/REFTAB32.h>
 #include <Glacier/ZSTL/StringUtils.h>
 #include <Glacier/PF4/ZData.h>
 #include <Glacier/Physics/ZCollisionBase.h>
+#include <Glacier/Input/SysInput.h>
+#include <Glacier/Input/ZInterface.h>
 #include <Glacier/Materials/BS_Runtime.h>
 #include <Glacier/Debug/ZPushMemColor.h>
 #include <Glacier/Debug/ZMemReadOut.h>
@@ -91,10 +102,6 @@ namespace Glacier
         // against the "WeaponHashes" global COM value. The "used" and "big" lists
         // only consume m_lPrim.
         //
-        // TODO: Finish me. The field semantics (especially m_lHash) are inferred
-        // purely from PurgePrimBuffer's usage. Once ZGameData's weapon-prim
-        // handling (InitWeaponHandles / GetTotalWeaponPrims internals) is
-        // reversed, replace this POD with the real record type.
         struct SWeaponPrimEntry
         {
             uint32_t m_lPrim;
@@ -539,26 +546,234 @@ namespace Glacier
         packedChunk.unzip(pGmsData, packedChunk.m_iRawDataLength);
         ZUniMemory::Free(pGeomsData);
 
+        // The decompressed GMS block begins with its packed-geoms header; the
+        // remaining stages index it through named offset fields.
+        const auto* pGms = reinterpret_cast<const SPackedGeomsHeader*>(pGmsData);
+
         // ---- Weapon prims / excluded anim names ----
-        // SPackedGeomsHeader::m_iWeaponPrimsOffset (+0x40) and
-        // m_iExcludedAnimNamesOffset (+0x44) are offsets into the static buffer
-        // where those tables were packed. Read by offset: only StartQuad[] /
-        // m_iHighestGeomNr are visible for SPackedGeomsHeader in this TU (the
-        // header also has a fuller definition in Data/SPackedGeomsHeader.h).
-        const uint32_t lWeaponPrimsOffset = *reinterpret_cast<const uint32_t*>(pGmsData + 0x40);
+        // Both offsets point into the static buffer where those tables were packed.
+        const uint32_t lWeaponPrimsOffset = pGms->m_iWeaponPrimsOffset;
         if (lWeaponPrimsOffset && g_pGameData)
             g_pGameData->InitWeaponHandles(
                 reinterpret_cast<uint32_t*>(reinterpret_cast<char*>(m_pStaticBuffer) + lWeaponPrimsOffset));
-        const uint32_t lExcludedAnimOffset = *reinterpret_cast<const uint32_t*>(pGmsData + 0x44);
+        const uint32_t lExcludedAnimOffset = pGms->m_iExcludedAnimNamesOffset;
         if (lExcludedAnimOffset && g_pGameData)
             g_pGameData->InitExcludedAnimNames(
                 reinterpret_cast<uint32_t*>(reinterpret_cast<char*>(m_pStaticBuffer) + lExcludedAnimOffset));
 
-        // TODO: Finish me - remaining AllocSequence pipeline (InstallSounds before
-        // the GMS decompress above, prim control buffers, MaterialDescriptionDB /
-        // Animation / Pathfinder4 / Physics init, CreateGeoms, room/bound/dynamic
-        // trees, water manager, Init/PostInit and the level-change callbacks plus
-        // the GeomFiles big-chunk cleanup).
+        // ---- Prim control buffers ----
+        g_pRenderDll->CreatePrimControl();
+
+        // A mission (not the main menu / loader) prunes the leftover weapon prims
+        // left over from the menu before compacting. PC uses a case-sensitive
+        // compare against "_main"; the weapon-handles offset being present is the
+        // same +0x40 header field read above.
+        if (lWeaponPrimsOffset && strcmp(g_pSysInterface->m_sDefaultScene.String, "_main") != 0)
+            PurgePrimBuffer();
+
+        // CompactPrimBuffer reclaims freed prims in place and returns the new
+        // packed size; the buffer is installed with the +0x60000 workspace slack
+        // added back.
+        const uint32_t lCompactedSize = g_pRenderDll->CompactPrimBuffer(pPrimsData, lPrimsSize);
+        g_pRenderDll->InstallPrimBuffer(pPrimsData, lCompactedSize + 0x60000);
+
+        // Hand the (now compacted) prim region to the allocator so it can release
+        // any trailing pages it no longer needs (PC asserts ISysMem is present).
+        ZASSERT(ISysMem::Exists());
+        char* pPrimRegion = static_cast<char*>(pPrimsData);
+        uint32_t lPrimRegionSize = lCompactedSize + 0x60000;
+        ISysMem::Instance().Shrink(pPrimRegion, lPrimRegionSize);
+
+        // ---- Scatter-prim region tinting (debug visualization) ----
+        // Sum the total byte size of every packed scatter prim (lType == PTOBJECTSCATTER,
+        // lPackType == 1) and tint that many bytes at the tail of the prim buffer.
+        // The per-prim size is the dword at +0x58 of SPrimObjectScatter (PC PAD58 /
+        // PS2 dword index 22). Guarded on the debug ZMemReadOut singleton existing.
+        if (ZMemReadOut::Exists())
+        {
+            const uint32_t lNrPrims = *reinterpret_cast<const uint32_t*>(static_cast<char*>(pPrimsData) + 4);
+            uint32_t lScatterPrimSize = 0;
+            for (uint32_t i = 0; i < lNrPrims; ++i)
+            {
+                const auto* pScatter = static_cast<const SPrimObjectScatter*>(g_apPrimHandleToPointerTable[i]);
+                if (pScatter && pScatter->lType == PTOBJECTSCATTER && pScatter->lPackType == 1)
+                    lScatterPrimSize += *reinterpret_cast<const uint32_t*>(&pScatter->fDrawDist);
+            }
+            ZMemReadOut::Instance().OverrideMemColors(
+                static_cast<char*>(pPrimsData) + (lPrimRegionSize - lScatterPrimSize),
+                lScatterPrimSize, 0xF0F000u);
+        }
+
+        // ---- Material description database ----
+        // Created fresh per level, then initialized from the packed material byte
+        // stream. The stream offset (SPackedGeomsHeader::m_iMaterialDescOffset,
+        // +0x30) is relative to the static buffer (matches PC/PS2).
+        BS_Runtime::ZMaterialDescriptionDB::Create();
+        BS_Runtime::ZMaterialDescriptionDB::Instance().Init(
+            m_pStaticBuffer + pGms->m_iMaterialDescOffset);
+
+        // ---- Animation manager ----
+        // Resolved from chunk 4 of the packed ANM file (m_pPackedAnims) when present.
+        if (m_pPackedAnims)
+        {
+            if (CHUNKFILE* pAnimChunk = m_pPackedAnims->FindChild(4))
+                m_AnimationManager = Animation::Manager::CreateFromDataBlock(pAnimChunk->Data(), pAnimChunk->DataSize());
+        }
+
+        // ---- Pathfinder4 data ----
+        // Offset (SPackedGeomsHeader::m_lOffsetPathfinder4Data, +0x34) is relative
+        // to the decompressed GMS buffer.
+        const uint32_t lPathfinderOffset = pGms->m_lOffsetPathfinder4Data;
+        if (lPathfinderOffset)
+            InitPathfinder4Data(pGmsData + lPathfinderOffset);
+
+        // ---- Physics data ----
+        // Offset (SPackedGeomsHeader::m_lPhysicsDataOffset, +0x38) is relative to the
+        // static buffer; -1 means no physics data. PC breaks when init reports failure.
+        const uint32_t lPhysicsOffset = pGms->m_lPhysicsDataOffset;
+        if (static_cast<int32_t>(lPhysicsOffset) != -1)
+        {
+            if (!InitPhysicsData(reinterpret_cast<const char*>(m_pStaticBuffer) + lPhysicsOffset))
+                ZASSERT(false);
+        }
+
+        // ---- CreateGeoms ----
+        // Unlock refs and raise the min/max lock so the geom construction can
+        // adjust bounds without triggering updates, then hook the missing-only
+        // initializer. PC re-runs InitWeaponHandles here (same +0x40 offset into
+        // the static buffer) after the lock count is raised.
+        g_pSysInterface->UnlockRefs();
+        LockMinMax();
+        PackHookMissingOnlyInitialize();
+
+        if (lWeaponPrimsOffset && g_pGameData)
+            g_pGameData->InitWeaponHandles(
+                reinterpret_cast<uint32_t*>(reinterpret_cast<char*>(m_pStaticBuffer) + lWeaponPrimsOffset));
+
+        REFTAB32 rtCreatedGeoms;
+        ZStackArray<1000, SMakeGeomDynamic> makeDynArray;
+        IInputStream* pPropertyStream = CreatePropertyInputStream();
+
+        CreateGeoms(&rtCreatedGeoms, &makeDynArray, pGmsData,
+                    reinterpret_cast<const char*>(m_pStaticBuffer), *pPropertyStream);
+
+        // PC releases the property stream right after use (vtable[0] = deleting destructor).
+        if (pPropertyStream)
+            ZUniMemory::Delete(pPropertyStream);
+
+        // ---- Post-CreateGeoms cleanup ----
+        CleanupPropertyData();
+        g_pSysFile->RemoveAllBigs();
+        // The decompressed GMS block is no longer needed once the geoms exist.
+        ZUniMemory::Free(pGmsData);
+
+        // If the first render window has no camera yet, give it a default one so
+        // the scene is viewable. PC: WindowFirst->GetCamera(0) == 0 ->
+        // CreateDefaultCam(0) -> WindowFirst->AddCamera(pCam, 0, 0).
+        if (!g_pSysInterface->WindowFirst->GetCamera(0))
+        {
+            ZCAMERA* pDefaultCam = CreateDefaultCam(nullptr);
+            if (pDefaultCam)
+                g_pSysInterface->WindowFirst->AddCamera(pDefaultCam, 0, 0.0f);
+        }
+
+        // ---- Tree build and deferred geom setup ----
+        CheckAndMakeStaticContainer();
+        g_pSysInterface->ClearTime();
+        UnlockMinMax();
+        CalcAllMinMax();
+
+        MakeDynamicGeomsDynamic(&makeDynArray);
+        CreateRoomTrees();
+        CreateBoundTrees();
+        if (m_pRoot)
+            m_pRoot->CreateDynamicTrees();
+        MakeAutoAssignGeomsAutoAssign(&makeDynArray);
+        ClearSaveLoadFlags();
+
+        // ---- Water manager ----
+        // Count ZSTDOBJ-derived geoms whose prim is a water patch (PTWATERPATCH == 11)
+        // and create the water manager sized to that count.
+        g_pWaterManager = nullptr;
+        {
+            int lWaterPatchCount = 0;
+            for (auto* pBaseGeom = m_pRoot->BaseGeom(); pBaseGeom; m_pRoot->RecurGetNext(&pBaseGeom))
+            {
+                if (!pBaseGeom->IsDerivedFrom<ZSTDOBJ>())
+                    continue;
+
+                const ZPrimHandle hPrim { pBaseGeom->Prim() };
+                const SPrimHeader* pHdr = hPrim;
+
+                if (pHdr && pHdr->lType == PTWATERPATCH)
+                    ++lWaterPatchCount;
+            }
+
+            if (lWaterPatchCount > 0)
+            {
+                g_pWaterManager = ZUniMemory::New<ZWaterManager>(lWaterPatchCount);
+            }
+        }
+
+        // ---- Runtime flags and level-change callbacks ----
+        MarkRunTime();
+        ZEngineGeomControl::GetInstance().SetChangeDetection(true);
+        if (g_pGameData)
+        {
+            g_pGameData->OnLevelChangeLoadDone();
+        }
+
+        CreateSoundGraph();
+
+        // ---- GeomFiles big cleanup ----
+        if (static_cast<int32_t>(lGeomFilesSize) > 0)
+        {
+            g_pSysFile->RemoveBig("GeomFiles");
+            IDraw::Instance()->Free(pGeomFilesBig, lGeomFilesUnpackedSize);
+        }
+
+        // ---- Init (STATUS_Init / STATUS_Init2 passes) ----
+        Init();
+
+        // TODO: Finish me after ZSaveMemoryManagerFake + ZEngineDataCRCInputStream
+        //   reversed: the saved-game restore block (ZCompressedInputStream +
+        //   ZInputStream + ZPackedInput chain + ISerializerStream::Exchange +
+        //   UpdateMovedGeoms) inside the if (m_LoadingGame) branch.
+        // Per-render-window draw-buffer (re)allocation now that the scene geoms
+        // exist. PC: WindowFirst vtbl +14 = ZRenderX86::AllocateDrawBuffers.
+        for (auto* pCurrentRender = g_pSysInterface->WindowFirst; pCurrentRender; pCurrentRender = pCurrentRender->Nxt)
+            pCurrentRender->AllocateDrawBuffers();
+        // TODO: Finish me: sub_45AC30 + SetAllocSequencePercent(AS_GEOMS, ..., 1.0).
+
+        LockMinMax();
+
+        // ---- PostInit inline pass (STATUS_PostInit) ----
+        ZGEOM::m_PreferedStatus = ZGEOM::STATUS_PostInit;
+        g_pEngineData->m_pRoot->DoInit();
+        ZEventBase::m_DefaultStatus = ZEventBase::STATUS_PostInit;
+        m_EventList.DoInit();
+
+        m_LoadingGame = false;
+        if (g_pSysInterface->m_pSoundDll)
+            g_pSysInterface->m_pSoundDll->CleanupBeforeCloseDown();
+
+        g_pSysInterface->LockRefs();
+
+        if (SysInput::instance)
+        {
+            SysInput::instance->Update();
+            SysInput::instance->ResetTables(true);
+        }
+
+        if (g_pGameData)
+            g_pGameData->OnLevelChangeFinish();
+
+        // TODO: Finish me - remaining AllocSequence tail (PC order):
+        //   InstallSounds (ZDllSound) still belongs before the GMS decompress.
+        //   Default-cam / global strip colli tree (render window vtbl +36/+38).
+
+        ZLoadGameInfoBase::Destroy();
+        DEBUG_WhenToPrintMemory = g_pSysInterface->m_lFrameCount + 10;
     }
 
     bool ZEngineDataBase::ForceExtraGeom()
@@ -2097,6 +2312,73 @@ namespace Glacier
         //
         // DronCode: PC will ignore all things here, I'm not sure about this code.
         return true;
+    }
+
+    // PS2 0x192978. Recalculates the root tree's center/size unless a min/max lock
+    // is currently held by a caller.
+    void ZEngineDataBase::CalcAllMinMax()
+    {
+        if (!m_lLockMinMax)
+        {
+            if (g_pEngineData->m_pRoot)
+                g_pEngineData->m_pRoot->CalcCenSizeRecur();
+        }
+    }
+
+    // PS2 0x1929FC. Walks every geom in the root tree and clears the per-geom
+    // save/load control flag (ZCF bit 0x100000).
+    void ZEngineDataBase::ClearSaveLoadFlags()
+    {
+        for (auto* pBaseGeom = ZROOT->BaseGeom(); pBaseGeom; ZROOT->RecurGetNext(&pBaseGeom))
+            pBaseGeom->SetControlDirect(0, ZCBOUNDSDIRTY);
+    }
+
+    // PS2 0x19ADF8. Turns every deferred-creation geom collected during CreateGeoms
+    // into a dynamic geom.
+    void ZEngineDataBase::MakeDynamicGeomsDynamic(MakeDynArray* pMakeDynArray)
+    {
+        for (uint32_t i = 0; i < pMakeDynArray->Count(); ++i)
+        {
+            auto* pBaseGeom = ZBaseGeom::RefToPtr(pMakeDynArray->m_Array[i].rGeom);
+            pBaseGeom->MakeDynamic(true);
+        }
+    }
+
+    // PS2 0x19AEA4. Applies auto-room-assign to each deferred geom whose captured
+    // control flags carried the auto-assign bit (0x4000).
+    void ZEngineDataBase::MakeAutoAssignGeomsAutoAssign(MakeDynArray* pMakeDynArray)
+    {
+        for (uint32_t i = 0; i < pMakeDynArray->Count(); ++i)
+        {
+            const SMakeGeomDynamic& entry = pMakeDynArray->m_Array[i];
+            if ((entry.lControl & ZCROOMASSIGN) != 0)
+            {
+                auto* pBaseGeom = ZBaseGeom::RefToPtr(entry.rGeom);
+                pBaseGeom->SetAutoRoomAssign(true);
+            }
+        }
+    }
+
+    // PC 0x45AB50. Drives the root geom tree and the level event list through the
+    // STATUS_Init then STATUS_Init2 phases, invoking the matching game-data hook
+    // (ZGameData::Init / Init2) on each round.
+    void ZEngineDataBase::Init()
+    {
+        PUSH_MEMORY_COLOR(0xA0A0A0);
+
+        ZGEOM::m_PreferedStatus = ZGEOM::STATUS_Init;
+        g_pEngineData->m_pRoot->DoInit();
+        ZEventBase::m_DefaultStatus = ZEventBase::STATUS_Init;
+        m_EventList.DoInit();
+        if (g_pGameData)
+            g_pGameData->Init();
+
+        ZGEOM::m_PreferedStatus = ZGEOM::STATUS_Init2;
+        g_pEngineData->m_pRoot->DoInit();
+        ZEventBase::m_DefaultStatus = ZEventBase::STATUS_Init2;
+        m_EventList.DoInit();
+        if (g_pGameData)
+            g_pGameData->Init2();
     }
 
     bool ZEngineDataBase::IsDrawGizmoEnabled(EGizmoType eType) const

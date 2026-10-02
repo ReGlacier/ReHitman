@@ -72,6 +72,8 @@ namespace Glacier
         uint32_t lControl;
     };
 
+    using MakeDynArray = ZStackArray<1000, SMakeGeomDynamic>;
+
     class ZEngineDataBase : public ZSerializable
     {
     public:
@@ -224,6 +226,13 @@ namespace Glacier
         void LoadZDefines(IInputSerializerStream& stream);
         uint32_t GetSoundGraphSize();
         void GetSoundGraphData(void* pData, uint32_t lSize);
+
+        // AllocSequence tail helpers (reversed from PS2; see below).
+        void CalcAllMinMax();
+        void ClearSaveLoadFlags();
+        void MakeDynamicGeomsDynamic(MakeDynArray* pMakeDynArray);
+        void MakeAutoAssignGeomsAutoAssign(MakeDynArray* pMakeDynArray);
+        void Init();
 
 #if 0   // TO FILTER & IMPL
         public: bool SaveGame(unsigned int);

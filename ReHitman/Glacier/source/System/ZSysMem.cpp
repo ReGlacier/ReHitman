@@ -72,6 +72,11 @@ namespace Glacier
         static_cast<ZSysMem*>(this)->Delete(static_cast<char*>(pMem));
     }
 
+    bool ISysMem::Shrink(char*& pMem, unsigned int& iNewSize)
+    {
+        return static_cast<ZSysMem*>(this)->Shrink(pMem, iNewSize);
+    }
+
     // ========================================================================
     // ZSysMem
     // ========================================================================
@@ -274,6 +279,32 @@ namespace Glacier
         }
 
         LeaveCriticalSection();
+    }
+
+    // PC sub_446940. Shrinks a previously allocated region in place. Unlike New/
+    // Delete this does not take the critical section, matching PC. Handlers may
+    // rewrite the pointer/size via PreShrinkChange, then the default allocator is
+    // tried first (PC assumes it is always present) followed by the remaining
+    // allocators in ascending EAllocType order.
+    bool ZSysMem::Shrink(char*& pMem, unsigned int& iNewSize)
+    {
+        ZASSERT(pMem);
+
+        // PreShrinkChange pass: handlers may rewrite the pointer and size (forward order).
+        for (unsigned int i = 0; i < m_iNrDebugHandlers; ++i)
+            m_pDebugHandlers[i]->PreShrinkChange(pMem, iNewSize);
+
+        if (m_pAllocatorList[DEFAULT_MEM].m_pAllocator->Shrink(pMem, iNewSize))
+            return true;
+
+        for (int i = SLOW_MEM; i < EAllocType::END_OF_ALLOCATOR_TYPES; ++i)
+        {
+            ZAllocatorBase* pAlloc = m_pAllocatorList[i].m_pAllocator;
+            if (pAlloc && pAlloc->Shrink(pMem, iNewSize))
+                return true;
+        }
+
+        return false;
     }
 
     // ========================================================================

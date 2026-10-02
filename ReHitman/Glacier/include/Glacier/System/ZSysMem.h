@@ -40,6 +40,7 @@ namespace Glacier
         // singleton instance is always a ZSysMem, so these forward by downcast.
         void* New(EAllocType eMemType, int iSize);
         void Delete(void* pMem);
+        bool Shrink(char*& pMem, unsigned int& iNewSize);
     };
     RE_VERIFY_SIZE(ISysMem, 0x10);
 
@@ -83,6 +84,7 @@ namespace Glacier
         // methods (PC: ?New@ZSysMem / ZSysMem::Delete, not part of ISysMem)
         char* New(EAllocType eMemType, unsigned int iSize);
         void Delete(char* pMem);
+        bool Shrink(char*& pMem, unsigned int& iNewSize); // PC sub_446940
 
         // const
         static constexpr size_t MAX_NR_DEBUG_HANDLERS = 0x8; // Approved by ZSysMem::AddDebugHandler
