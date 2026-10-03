@@ -1,7 +1,9 @@
 #include <Glacier/Audio/ZSDOwner.h>
+#include <Glacier/Audio/ZSoundDllBase.h>
 #include <Glacier/Data/ZEngineDataBase.h>
 #include <Glacier/Data/ZGameData.h>
 #include <Glacier/Data/ZGameStats.h>
+#include <Glacier/GameBase/ZPlayer.h>
 #include <Glacier/Serializer/ISerializerStream.h>
 #include <Glacier/System/ZSysInterface.h>
 #include <Glacier/ZUniAssert.h>
@@ -181,7 +183,12 @@ namespace Glacier
         ZASSERT(pPlayer && static_cast<uint32_t>(lIndex) < 4);
         if (!m_apPlayerIndex[lIndex])
             m_apPlayerIndex[lIndex] = pPlayer;
-        // TODO: Finish this place after ZDllSound player registration will be reversed
+
+        // The audio DLL tracks the first player as its listener. PC 0x463450 calls
+        // slot 0xB8/4 == ZSoundDllBase::SetPlayerListener (verified via the write
+        // to ZDllSound::m_pPlayerListener at 0x5050 and the PS2 symbol build).
+        if (lIndex == 0 && pPlayer != nullptr && g_pSysInterface->m_pSoundDll)
+            g_pSysInterface->GetSoundDll()->SetPlayerListener(*pPlayer);
     }
 
     void ZGameData::SetAudioOSDInterface(ZSDOwner* pOwner)

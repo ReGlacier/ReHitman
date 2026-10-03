@@ -742,7 +742,9 @@ namespace Glacier
         // Per-render-window draw-buffer (re)allocation now that the scene geoms
         // exist. PC: WindowFirst vtbl +14 = ZRenderX86::AllocateDrawBuffers.
         for (auto* pCurrentRender = g_pSysInterface->WindowFirst; pCurrentRender; pCurrentRender = pCurrentRender->Nxt)
+        {
             pCurrentRender->AllocateDrawBuffers();
+        }
         // TODO: Finish me: sub_45AC30 + SetAllocSequencePercent(AS_GEOMS, ..., 1.0).
 
         LockMinMax();
@@ -766,7 +768,9 @@ namespace Glacier
         }
 
         if (g_pGameData)
+        {
             g_pGameData->OnLevelChangeFinish();
+        }
 
         // TODO: Finish me - remaining AllocSequence tail (PC order):
         //   InstallSounds (ZDllSound) still belongs before the GMS decompress.

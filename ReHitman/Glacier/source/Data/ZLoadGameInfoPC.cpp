@@ -1,4 +1,6 @@
 #include <Glacier/Data/ZLoadGameInfoPC.h>
+#include <Glacier/Serializer/ZFileInputStreamWintel.h>
+#include <Glacier/ZUniMemory.h>
 
 namespace Glacier
 {
@@ -14,15 +16,11 @@ namespace Glacier
     {
     }
 
-    // PC 0x675240.
+    // PC 0x675240. Allocates a 12-byte ZFileInputStreamWintel (the PC calls
+    // ZSysMem::allocate(0xC, "hitman3\\gui\\savepc.cpp", 354) first) that reads
+    // pszFilename; returns nullptr when the allocation fails.
     IInputStream* ZLoadGameInfoPC::CreateStream(const char* pszFilename)
     {
-        // Allocates a 12-byte ZFileInputStreamWintel that reads pszFilename.
-        // TODO: Finish me after ZFileInputStreamWintel reversed.
-        //   void* pMem = ZSysMem::allocate(12, "hitman3\\gui\\savepc.cpp", 354);
-        //   if (pMem) return ZFileInputStreamWintel::ZFileInputStreamWintel(pMem, pszFilename);
-        //   return 0;
-        (void)pszFilename;
-        return nullptr;
+        return ZUniMemory::New<ZFileInputStreamWintel>(pszFilename);
     }
 }
