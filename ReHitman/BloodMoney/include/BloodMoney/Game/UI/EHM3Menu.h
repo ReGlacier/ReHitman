@@ -1,6 +1,6 @@
 #pragma once
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     enum EHM3Menu : unsigned int {
         Briefing = 0,

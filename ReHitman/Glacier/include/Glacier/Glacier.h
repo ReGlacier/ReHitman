@@ -16,10 +16,15 @@ namespace Glacier
 
     namespace Animation
     {
-        struct ActiveAnimation {};
-        struct Header {};
-        class ZMetaKey;
+        struct ActiveAnimation;
+        struct Manager;
+        struct Header;
+        struct ZMetaKey;
     }
-
-    struct SBoneDefinition {};
 }
+
+#if defined(_WIN32) || defined(__WIN32__) || defined(WIN32)
+#   define GLACIER_API __declspec(dllexport)
+#else
+#   define GLACIER_API
+#endif

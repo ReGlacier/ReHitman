@@ -1,0 +1,16 @@
+#pragma once
+
+namespace BuildInfo
+{
+    // in original "blood-build3-20060616-26123"
+    static constexpr const char* g_psBuildTag       { "@BUILDTAG@" };
+
+    static constexpr const char* g_psProjectVersion { "@BuildInfo_VERSION@" };
+    static constexpr const char* g_psGitCommit      { "@GIT_HASH@" };
+    static constexpr const char* g_psGitBranch      { "@GIT_BRANCH@" };
+    static constexpr const char* g_psCompiler       { "@BUILD_COMPILER@" };
+    static constexpr const char* g_psPlatform       { "@BUILD_PLATFORM@" };
+    static constexpr const char* g_psBuildType      { "@BUILD_TYPE@" };
+    static constexpr const char* g_psCompileDate    { __DATE__ };
+    static constexpr const char* g_psCompileTime    { __TIME__ };
+}

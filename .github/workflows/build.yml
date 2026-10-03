@@ -16,7 +16,7 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         submodules: "recursive"
 
@@ -26,45 +26,102 @@ jobs:
     - name: Get latest CMake
       uses: lukka/get-cmake@latest
 
-    - name: Generate projects
+    - name: Install DirectX SDK (x86) via vcpkg
+      shell: pwsh
       run: |
+        vcpkg install directxsdk:x86-windows
+
+    - name: Generate projects
+      shell: pwsh
+      env:
+        REF: ${{ github.ref }}
+        RUN_NUMBER: ${{ github.run_number }}
+      run: |
+        # Parse version
+        $ref = $env:REF
+        $runNumber = $env:RUN_NUMBER
+        $parsedVersion = "0.0.0.$runNumber"
+
+        if ($ref -like "refs/tags/*") {
+            $tagName = $ref -replace "^refs/tags/", ""
+            if ($tagName -match '^v?(\d+\.\d+\.\d+(\.\d+)?)$') {
+                $parsedVersion = $Matches[1]
+            }
+        }
+
+        Write-Host "Setting CMake project version to: $parsedVersion"
+
+        # Run actual build
         mkdir build
         cd build
         cmake --version
-        cmake -A Win32 -G "Visual Studio 18 2026" ..
-    
+        cmake -A Win32 -G "Visual Studio 18 2026" `
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" `
+          -DVCPKG_TARGET_TRIPLET=x86-windows `
+          -DPROJECT_VERSION_OVERRIDE="$parsedVersion" `
+          ..
+
     - name: Build
       run: |
         cd build
         cmake --build . --config Release
 
+    - name: Build Glacier tests
+      run: |
+        cd build
+        cmake --build . --config Release --target GlacierTests
+
+    - name: Run Glacier tests
+      shell: pwsh
+      run: |
+        cd build
+        $failed = $false
+        for ($i = 1; $i -le 5; $i++) {
+          Write-Host "Glacier test run $i/5"
+          ctest -C Release --output-on-failure -R Glacier
+          if ($LASTEXITCODE -ne 0) {
+            $failed = $true
+          }
+        }
+        if ($failed) {
+          exit 1
+        }
+
+    - name: Check STLport layout probe
+      run: |
+        cd build
+        cmake --build . --config Release --target STLportLayoutProbe
+        ctest -C Release --output-on-failure -R STLportLayoutProbe
+
     - name: Prepare artifact
       shell: pwsh
       run: |
         New-Item -ItemType Directory -Force artifact
+        New-Item -ItemType Directory -Force artifact/Scriptcs/_gamerelease
 
-        Copy-Item build/ReHitman/Release/ReHitman.dll artifact/
-        Copy-Item build/ReHitman/NVCPL/Release/NVCPL.dll artifact/
+        Copy-Item build/ReHitman/ReHitman/Release/ReHitman.exe artifact/
+        Copy-Item ReHitman/ReHitman/assets/ReHitman.ini artifact/
+        Copy-Item build/ReHitman/ScriptCS/Hideout/Release/Hideout.dll artifact/Scriptcs/_gamerelease/
 
     - name: Upload build artifact - ReHitman
-      uses: actions/upload-artifact@v7
+      uses: actions/upload-artifact@v4
       with:
         name: "ReHitman"
         path: "artifact"
-  
+
   create_release:
     name: Create release
     needs: [build_windows]
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
-      
+
     steps:
     - name: Get version
       id: get_version
       run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
 
     - name: Download artifact
-      uses: actions/download-artifact@v8
+      uses: actions/download-artifact@v4
       with:
         name: ReHitman
         path: ReHitman

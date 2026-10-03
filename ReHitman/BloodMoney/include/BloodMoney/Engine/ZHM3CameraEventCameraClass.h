@@ -3,7 +3,7 @@
 #include <Glacier/Glacier.h>
 #include <BloodMoney/Engine/ZHM3CameraClass.h>
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     enum class _eEventCameraType : int {};
 

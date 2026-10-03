@@ -1,0 +1,15 @@
+CompileFlags:
+  CompilationDatabase: "."
+  Remove:
+    - "/RTC*"
+    - "-RTC*"
+    - "/Zi"
+    - "/FS"
+  Add:
+    - "--target=i686-pc-windows-msvc"
+    - "-fms-extensions"
+    - "-fms-compatibility"
+    - "-fdelayed-template-parsing"
+    - "-DRE_VERIFY_SIZE(cls,expected)="
+    - "-DRE_VERIFY_OFFSET(cls,mbr,expected)="
+    - "-ferror-limit=0"

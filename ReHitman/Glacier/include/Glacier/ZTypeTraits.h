@@ -3,7 +3,7 @@
 #include <Glacier/Geom/ZGEOM.h>
 #include <Glacier/Geom/ZGROUP.h>
 #include <Glacier/Geom/ZSNDOBJ.h>
-#include <Glacier/ZCAMERA.h>
+#include <Glacier/Geom/ZCAMERA.h>
 
 #include <BloodMoney/Game/ZHM3Actor.h>
 
@@ -26,7 +26,7 @@ namespace Glacier
     };
 
     template <>
-    struct ZCast<Hitman::BloodMoney::ZHM3Actor>
+    struct ZCast<Hitman::ZHM3Actor>
     {
         static bool IsBasedOn(Glacier::ZGEOM* pGeom) {
             if (!pGeom) return false;

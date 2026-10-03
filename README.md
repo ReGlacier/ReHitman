@@ -5,14 +5,16 @@
 [![Build status](https://ci.appveyor.com/api/projects/status/300yrxlxkmeyi5le?svg=true)](https://ci.appveyor.com/project/DronCode/rehitman-9uw4c)
 
 What is ReHitman?
----------------
+-----------------
 
-ReHitman is an attempt to reverse the executable of "Hitman: Blood Money".
+ReHitman is a project dedicated to reverse-engineering Hitman: Blood Money.
 
-The final goal of the project is to develop a multiplayer similar to Mafia 2's Mutli-player.
+Project Goals:
+ * Standalone Executable: Fully reverse-engineer the original binary to create a completely independent, buildable source base.
+ * Game Scripts: Decompile and reverse-engineer all in-game scripts to regain their complete original source code.
 
 Game Build Information.
----------------
+------------------------
 
 This project is built for the last build of Hitman Blood Money that IO Interactive released.
 
@@ -27,20 +29,81 @@ Install
  2. Unpack `NVCPL.dll` & `ReHitman.dll` into the game folder
  3. Launch HitmanBloodMoney.exe
 
+Current Project Goals
+---------------------
+
+ * [ ] Glacier 1 Engine
+  * [x] ZSTL (`zstdlib`)
+  * [x] Input system
+  * [x] Animation system
+    * [x] IK animation
+    * [x] Weighted animation
+    * [x] `.anm` file format
+  * [ ] Audio subsystem
+    * [x] DirectSound branch
+    * [ ] OpenAL branch
+    * [ ] DieselPower branch (unmaintained by IOI)
+    * [x] AudioGraph
+    * [x] Synth engine
+  * [x] Filesystem
+    * [x] Generic FS
+    * [x] ZIP FS
+  * [x] Action system
+    * [x] Bindings (dynamic, static)
+    * [x] Parsers
+  * [x] Platform system (`ZSysInterface`)
+  * [x] EventBase
+    * [x] Event base core
+    * [x] Script event base
+  * [x] Geom system
+    * [x] Base geom
+    * [x] Geom extends
+  * [x] COM system
+  * [ ] UI
+    * [ ] Legacy UI system (almost done)
+    * [ ] XML UI system
+  * [ ] Physics
+    * [x] Fysix engine
+    * [x] Rigid bodies
+    * [x] Cloth simulation
+    * [ ] `CRigidBody` event base
+  * [x] Pathfinder4
+  * [x] ScriptEngine
+    * [x] Script engine core & `ZEventBase` integration
+    * [x] Save&Load
+  * [x] RTP (runtime properties)
+  * [ ] Serialization layer (skipped some small classes, not required yet)
+  * [ ] Network - skipped
+  * [x] Material system - `BS_Runtime`
+  * [ ] Render
+    * [x] Camera system
+    * [x] Frontend
+    * [x] Backend (some fields not renamed)
+    * [x] Objects & Instances
+    * [ ] Materials
+      * [x] Material binders
+      * [ ] Render state (almost done)
+    * [ ] Render context
+    * [x] View system
+    * [ ] Draw system
+      * [x] Base interface
+      * [x] Base impl
+      * [ ] D3D9 - not finished `ZRenderDrawD3D::Update`
+    * [x] Entries
+    * [ ] Debug menus - WIP
+  * [ ] Hitman: Blood Money
+    * [ ] Gameplay
+    * [ ] Actors
+    * [ ] Player
+    * [ ] Movement
+    * [ ] LevelControls
+    * [ ] Script bindings
+    * [ ] Per level specific things
+  * [ ] Toolset - TBD
+
 FAQ
----------------
+-----
  * [Wiki.](https://github.com/ReGlacier/ReHitman/wiki)
-
-Current Project Goals.
----------------
-
- - [x] Create an open source SDK for the Glacier 1 Engine
- - [ ] Reverse the rendering API
- - [x] Implement ImGUI backend over Glacier renderer wrapper (ZWintelRendererD3D)
- - [x] Reverse the input API (mouse, keyboard)
- - [ ] Reverse the GUI API
- - [ ] Reverse the scene format
- - [ ] Create a toolset for Hitman Blood Money
 
 Credits
 ------
@@ -49,6 +112,8 @@ Credits
  * [crabovwik](https://github.com/crabovwik)
  * [Daniel Hunter](https://github.com/HHCHunter)
  * [Notexe](https://github.com/Notexe)
+ * [RealMiamo](https://github.com/RealMiamo)
+ * [Pavledev](https://github.com/pavledev)
 
 Contact Information.
 ---------------

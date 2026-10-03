@@ -1,0 +1,10 @@
+{
+  "name": "pf4-navmesh-viewer",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Standalone HTML5 viewer for Hitman: Blood Money PF4 pathfinder navmesh chunks extracted from .GMS level files",
+  "scripts": {
+    "start": "python -m http.server 8000",
+    "serve": "npx --yes http-server . -p 8000 -c-1"
+  }
+}

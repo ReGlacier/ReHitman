@@ -3,7 +3,7 @@
 #include <Glacier/Geom/ZGROUP.h>
 #include <Glacier/Geom/ZGEOM.h>
 
-namespace Hitman::BloodMoney {
+namespace Hitman {
     class ZHM3ItemWeaponCustom;
 
     enum class EWeaponType {

@@ -1,0 +1,155 @@
+:root {
+  color-scheme: light dark;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  min-height: 100vh;
+}
+
+body {
+  background: var(--g-color-base-background);
+}
+
+.hyper-app {
+  min-height: 100vh;
+  padding: 24px clamp(16px, 5vw, 64px) 64px;
+  box-sizing: border-box;
+}
+
+.hyper-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding-bottom: 20px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--g-color-line-generic);
+}
+
+.hyper-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--g-color-text-primary);
+}
+
+.hyper-title__logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  color: var(--g-color-text-brand-contrast);
+  background: linear-gradient(135deg, var(--g-color-base-brand), var(--g-color-base-brand-hover));
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--g-color-base-brand) 45%, transparent);
+}
+
+.hyper-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hyper-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.hyper-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  align-items: stretch;
+}
+
+.hyper-agent {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  height: 100%;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.hyper-agent__name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--g-color-text-primary);
+  word-break: break-word;
+}
+
+.hyper-agent__dot {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--g-color-base-positive-heavy);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--g-color-base-positive-heavy) 22%, transparent);
+  animation: hyper-pulse 2s ease-in-out infinite;
+}
+
+.hyper-agent--ghost {
+  opacity: 0.55;
+  filter: grayscale(0.2);
+}
+
+.hyper-agent--ghost .hyper-agent__dot {
+  background: var(--g-color-text-hint);
+  box-shadow: none;
+  animation: none;
+}
+
+.hyper-mono {
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+  word-break: break-all;
+}
+
+/* Full-bleed footer: pull the action button out to the card's border box so it
+   reads as a footer strip while the rest of the card keeps its inner padding. */
+.hyper-agent__footer {
+  margin: auto -16px -16px;
+  padding-top: 16px;
+}
+
+/* Square the top corners (the button grows out of the card bottom), keep the
+   bottom corners rounded to match the 8px card radius. Targets the paint layer
+   (::before) too, otherwise only the invisible element border would be squared. */
+.hyper-agent__footer .g-button,
+.hyper-agent__footer .g-button::before {
+  border-top-left-radius: 0 !important;
+  border-top-right-radius: 0 !important;
+  border-bottom-left-radius: 8px !important;
+  border-bottom-right-radius: 8px !important;
+}
+
+/* Disconnect action: solid danger fill by default, outline only on hover.
+   These set Gravity's public button CSS variables, which override the base
+   `outlined-danger` view without fighting its internal pseudo-elements. */
+.hyper-kick {
+  --g-button-background-color: var(--g-color-base-danger-heavy);
+  --g-button-background-color-hover: transparent;
+  --g-button-text-color: var(--g-color-text-inverted-primary);
+  --g-button-text-color-hover: var(--g-color-text-danger);
+  --g-button-border-width: 1px;
+  --g-button-border-color: var(--g-color-line-danger);
+}
+
+@keyframes hyper-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}

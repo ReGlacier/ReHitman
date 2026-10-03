@@ -1,17 +1,20 @@
 #pragma once
 
+#include <Glacier/ReGlacier.h>
+#include <Glacier/GlacierFWD.h>
 #include <BloodMoney/Game/Items/ZHM3ItemTemplateWeapon.h>
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     class ZHM3ItemTemplateBomb : public ZHM3ItemTemplateWeapon
     {
     public:
         // data (total size is 0x1B4, base size is 0x1A0)
-        int m_field1A0;
-        int m_field1A4;
-        int m_field1A8;
-        int m_field1AC;
-        int m_field1B0;
+        float m_fMaxDamage;
+        float m_fMaxDamageRange;
+        float m_fMaxRange;
+        float m_fExplodeTimer;
+        Glacier::ZGROUP* m_pEffectGroup;
     };
+    RE_VERIFY_SIZE(ZHM3ItemTemplateBomb, 0x1B4); // Verified
 }
