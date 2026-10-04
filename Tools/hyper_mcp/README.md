@@ -253,9 +253,11 @@ statuses for each build:
 }
 ```
 
-Possible statuses include `found`, `not_found`, `ambiguous`,
-`instance_offline`, `ambiguous_instance`, `hexrays_unavailable`, and `error`.
-Failure in one IDA does not discard successful results from other builds.
+Possible statuses include `found`, `not_found`, `unknown_instance`,
+`ambiguous_instance`, `instance_offline`, `hexrays_unavailable`, and `error`.
+`unknown_instance` means the selected name or id is not registered; the id shown
+by `list_instances` is also accepted as an instance selector. Failure in one IDA
+does not discard successful results from other builds.
 
 IDA API operations are marshalled onto each IDA process's main thread. HTTP
 workers never access an IDB directly. An instance disappears from the router

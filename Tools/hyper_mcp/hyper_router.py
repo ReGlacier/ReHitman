@@ -337,8 +337,10 @@ class Registry:
     def resolve(self, names=None):
         entries = self.active()
         by_name = {}
+        by_id = {}
         for entry in entries:
             by_name.setdefault(entry["name"].casefold(), []).append(entry)
+            by_id.setdefault(entry["id"].casefold(), []).append(entry)
         if names is None:
             names = [entry["name"] for entry in entries]
         if not isinstance(names, list) or not all(isinstance(name, str) for name in names):
@@ -346,9 +348,13 @@ class Registry:
         resolved = []
         errors = {}
         for name in names:
-            matches = by_name.get(name.casefold(), [])
+            key = name.casefold()
+            # list_instances also surfaces the agent id, so accept it as a
+            # fallback selector; an unknown selector must not look like an
+            # offline instance (the web status page would contradict it).
+            matches = by_name.get(key) or by_id.get(key) or []
             if not matches:
-                errors[name] = {"status": "instance_offline"}
+                errors[name] = {"status": "unknown_instance", "hint": "use an instance name from list_instances"}
             elif len(matches) > 1:
                 errors[name] = {"status": "ambiguous_instance", "count": len(matches)}
             else:
