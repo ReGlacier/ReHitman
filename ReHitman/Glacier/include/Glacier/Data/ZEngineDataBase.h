@@ -74,6 +74,9 @@ namespace Glacier
 
     using MakeDynArray = ZStackArray<1000, SMakeGeomDynamic>;
 
+    // globals
+    STATIC_GLOBAL_CLASS_INSTANCE(bool, g_bEngineDataLoadingSaveGame);
+
     class ZEngineDataBase : public ZSerializable
     {
     public:
@@ -233,6 +236,8 @@ namespace Glacier
         void MakeDynamicGeomsDynamic(MakeDynArray* pMakeDynArray);
         void MakeAutoAssignGeomsAutoAssign(MakeDynArray* pMakeDynArray);
         void Init();
+        void PostInit();
+        void PostInit2();
 
 #if 0   // TO FILTER & IMPL
         public: bool SaveGame(unsigned int);

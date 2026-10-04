@@ -106,6 +106,21 @@ namespace Glacier
         m_lPackedDataSize = _size;
         return true;
     }
+    const char* ZDllSound::GetStreamFilename() const
+    {
+        // PC (0x4C7EC0) walks the packed bank header installed by InstallSounds:
+        //   tableOffset = *bank;
+        //   nameOffset  = *(uint32*)(bank + tableOffset + 4);
+        // and returns the string at bank + nameOffset when that offset is set.
+        if (!m_pPackedData)
+            return nullptr;
+        const uint32_t lTableOffset = *reinterpret_cast<const uint32_t*>(m_pPackedData);
+        const uint32_t lNameOffset =
+            *reinterpret_cast<const uint32_t*>(m_pPackedData + lTableOffset + 4);
+        if (!lNameOffset)
+            return nullptr;
+        return m_pPackedData + lNameOffset;
+    }
     bool ZDllSound::InstallStreamWaves(int _size, const char* _fileName)
     {
         if (!m_bSoundInitialized)

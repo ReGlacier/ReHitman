@@ -14,7 +14,7 @@ target_compile_definitions(GlacierTests PUBLIC
     GLACIER_TESTS_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data"
 )
 
-target_link_libraries(GlacierTests PUBLIC G1::TestCore gtest gtest_main)
+target_link_libraries(GlacierTests PUBLIC G1::TestCore gtest gtest_main zlib)
 
 include(GoogleTest)
 gtest_discover_tests(GlacierTests

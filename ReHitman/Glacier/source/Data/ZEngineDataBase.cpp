@@ -1,5 +1,6 @@
 #include <Glacier/Data/ZEngineDataBase.h>
 #include <Glacier/Data/ZLoadGameInfoBase.h>
+#include <Glacier/Data/ZSaveMemoryManagerFake.h>
 #include <Glacier/Data/ZStaticGameLevelData.h>
 #include <Glacier/ZPackedDataChunk.h>
 #include <Glacier/Data/ZGameData.h>
@@ -26,6 +27,9 @@
 #include <Glacier/Debug/ZMemReadOut.h>
 #include <Glacier/ScriptEngine/ScriptEngine.h>
 #include <Glacier/Serializer/ISerializerStream.h>
+#include <Glacier/Serializer/ZCompressedInputStream.h>
+#include <Glacier/Serializer/ZCRCInputStream.h>
+#include <Glacier/Serializer/ZEngineDataCRCInputStream.h>
 #include <Glacier/Serializer/ZIOInputStream.h>
 #include <Glacier/Serializer/ZInputStream.h>
 #include <Glacier/Serializer/ZPackedInput.h>
@@ -45,6 +49,7 @@
 #include <Glacier/Geom/ZGeomListTypeUtils.h>
 #include <Glacier/Data/SPackedGeomsTree.h>
 #include <Glacier/Data/SCompiledGeom.h>
+#include <Glacier/Audio/ZDllSound.h>
 #include <Glacier/Audio/ZSoundDllBase.h>
 #include <Glacier/Audio/ZSoundObject.h>
 #include <Glacier/Materials/BS_Runtime.h>
@@ -79,6 +84,11 @@ namespace Glacier
     STATIC_GLOBAL_CLASS_INSTANCE_IMPL(int, g_iLoadPropertiesProgress, 0x008BA064, 0);
     STATIC_GLOBAL_CLASS_INSTANCE(int, g_iLoadPropertiesTotal);
     STATIC_GLOBAL_CLASS_INSTANCE_IMPL(int, g_iLoadPropertiesTotal, 0x008BA068, 0);
+
+    // PC `byte_9B3B24`: set when the object payload from a save game is being
+    // replayed through `ZPackedInput::Exchange("EngineDataBase", ...)`. PC does not
+    // clear it during the level-load sequence.
+    STATIC_GLOBAL_CLASS_INSTANCE_IMPL(bool, g_bEngineDataLoadingSaveGame, 0x009B3B24, false);
 
     namespace
     {
@@ -364,10 +374,9 @@ namespace Glacier
 
     void ZEngineDataBase::AllocSequence(struct ZSWScene* __formal)
     {
-        // PC 0x45FCF0. Master level-load orchestrator. The prologue and the
-        // content buffers below are complete; the remaining pipeline (geoms data
-        // load + zgf unzip, prim/material buffer install, CreateGeoms, tree
-        // build, water manager and post-init stages) is still pending.
+        // PC 0x45FCF0. Master level-load orchestrator. All content-buffer,
+        // serializer, geometry, renderer, tree, water-manager and staged-init
+        // paths follow the PC control flow.
 
         // ---- Prologue ----
         PUSH_MEMORY_COLOR(0x80FF80u);
@@ -379,11 +388,16 @@ namespace Glacier
         if (g_pGameData)
             g_pGameData->OnLevelChangeBegin();
 
-        // A saved-game control stream means this level load is restoring a save game.
-        // pControlStream is retained for the load-from-save restore stage below.
+        // A saved-game control stream means this level load is restoring a save
+        // game. PC keeps the control and data file streams until the restore stage
+        // below (after the scene itself has been re-created).
         IInputStream* pControlStream = ZLoadGameInfoBase::CreateControlStream();
+        IInputStream* pDataStream = nullptr;
         if (pControlStream)
+        {
+            pDataStream = ZLoadGameInfoBase::CreateDataStream();
             m_LoadingGame = true;
+        }
 
         m_bPause = false;
         PauseScene(false);
@@ -522,8 +536,38 @@ namespace Glacier
             g_pSysFile->UseBig(static_cast<CHUNKFILE*>(pGeomFilesBig), "GeomFiles");
         }
 
-        // NOTE: InstallSounds (ZDllSound data/stream/whd/wav init) belongs before
-        // the GMS decompress below; it is left pending and does not feed pGmsData.
+        // ---- InstallSounds (ZDllSound) ----
+        // PC installs the packed sound bank and registers the per-scene wave files
+        // before the GMS decompression. Everything is guarded on the sound DLL being
+        // present; the region is tinted 0xFFFFC0 for the duration (PC SetMemColor).
+        // PC emits the synth records in this order: sound bank, stream waves, wave
+        // headers ("whd"), wave data ("wav"). NOTE: PC's debug-symbol names for the
+        // three file installs are rotated relative to this project's convention, so
+        // the project members below are chosen by file semantics (and synth record
+        // type): wave headers -> InstallWaveHeaders, wave data -> InstallWaves.
+        if (auto* pSoundDll = static_cast<ZDllSound*>(g_pSysInterface->m_pSoundDll))
+        {
+            PUSH_MEMORY_COLOR(0xFFFFC0u);
+
+            if (pSoundData)
+                pSoundDll->InstallSounds(static_cast<char*>(pSoundData), lSoundDataSize);
+
+            // PC emits a stream-wave record using the stream filename read out of the
+            // packed bank (the localized name slot is left empty).
+            pSoundDll->InstallStreamWaves(0, pSoundDll->GetStreamFilename());
+
+            {
+                MYSTR sWhdFile = CalcCacheFileName(m_FileName, "whd");
+                const int lWhdSize = static_cast<int>(GetWaveHeaderDataSize());
+                pSoundDll->InstallWaveHeaders(lWhdSize, sWhdFile);
+            }
+
+            {
+                MYSTR sWavFile = CalcCacheFileName(m_FileName, "wav");
+                const int lWavSize = static_cast<int>(GetWaveDataSize());
+                pSoundDll->InstallWaves(lWavSize, sWavFile);
+            }
+        }
 
         // ---- Decompress the packed GMS into the CreateGeoms input buffer ----
         // Reuses packedChunk; the buffer is allocated in the backward-growing
@@ -625,7 +669,9 @@ namespace Glacier
         // to the decompressed GMS buffer.
         const uint32_t lPathfinderOffset = pGms->m_lOffsetPathfinder4Data;
         if (lPathfinderOffset)
+        {
             InitPathfinder4Data(pGmsData + lPathfinderOffset);
+        }
 
         // ---- Physics data ----
         // Offset (SPackedGeomsHeader::m_lPhysicsDataOffset, +0x38) is relative to the
@@ -634,7 +680,9 @@ namespace Glacier
         if (static_cast<int32_t>(lPhysicsOffset) != -1)
         {
             if (!InitPhysicsData(reinterpret_cast<const char*>(m_pStaticBuffer) + lPhysicsOffset))
+            {
                 ZASSERT(false);
+            }
         }
 
         // ---- CreateGeoms ----
@@ -668,8 +716,11 @@ namespace Glacier
         ZUniMemory::Free(pGmsData);
 
         // If the first render window has no camera yet, give it a default one so
-        // the scene is viewable. PC: WindowFirst->GetCamera(0) == 0 ->
-        // CreateDefaultCam(0) -> WindowFirst->AddCamera(pCam, 0, 0).
+        // the scene is viewable. PC: WindowFirst vtbl +38 GetCamera(0) == 0 ->
+        // CreateDefaultCam(0) -> WindowFirst vtbl +36 AddCamera(pCam, 0, 0).
+        // (Hex-Rays mislabels the ZEngineDataBase call in this block as
+        // GetGlobalStripColliTreeData; AddCamera's ZCAMERA* parameter proves the
+        // called member is CreateDefaultCam, so this is the complete PC tail.)
         if (!g_pSysInterface->WindowFirst->GetCamera(0))
         {
             ZCAMERA* pDefaultCam = CreateDefaultCam(nullptr);
@@ -734,26 +785,63 @@ namespace Glacier
 
         // ---- Init (STATUS_Init / STATUS_Init2 passes) ----
         Init();
+        SetAllocSequencePercent(AS_GEOMS, nullptr, 0.94999999f);
 
-        // TODO: Finish me after ZSaveMemoryManagerFake + ZEngineDataCRCInputStream
-        //   reversed: the saved-game restore block (ZCompressedInputStream +
-        //   ZInputStream + ZPackedInput chain + ISerializerStream::Exchange +
-        //   UpdateMovedGeoms) inside the if (m_LoadingGame) branch.
+        // ---- Load-from-save restore ----
+        // PC wraps the control file in a raw CRC stream and the data file in a
+        // CRC + compressed stream. The ZPackedInput constructor reads the packed
+        // header, dictionary and string table from the control stream, while the
+        // object payload is read from the compressed data stream. The temporary
+        // stack fake allocator makes ZUniMemory handle serializer allocations for
+        // the duration of the restore (PC: manual save/restore of the singleton).
+        if (m_LoadingGame)
+        {
+            ZSaveMemoryManagerFake saveMemoryManager;
+            ZASSERT(pControlStream && pDataStream);
+
+            ZEngineDataCRCInputStream controlCRC(pControlStream);
+            ZEngineDataCRCInputStream dataCRC(pDataStream);
+            ZCompressedInputStream compressedData(&dataCRC);
+            ZInputStream controlInput(controlCRC);
+            ZInputStream dataInput(compressedData);
+            ZPackedInput packedInput(&controlInput, &dataInput);
+
+            ZEngineGeomControl::GetInstance().UpdateMovedGeoms();
+            ZEngineGeomControl::GetInstance().SetChangeDetection(false);
+
+            g_bEngineDataLoadingSaveGame = true;
+            packedInput.Exchange("EngineDataBase", *this);
+            packedInput.End();
+
+            ZEngineGeomControl::GetInstance().SetChangeDetection(true);
+            for (auto* pBaseGeom = m_pRoot->BaseGeom(); pBaseGeom; m_pRoot->RecurGetNext(&pBaseGeom))
+            {
+                if (std::strcmp(pBaseGeom->Name(), "MOVETOCREATION") != 0)
+                    pBaseGeom->UpdateMovedGeom();
+            }
+
+            // Delete the platform file objects directly (PC's deleting-destructor
+            // flag 1), while the stack CRC/buffer wrappers clean up below.
+            ZUniMemory::Delete(pDataStream);
+            ZUniMemory::Delete(pControlStream);
+        }
+
+        // The concrete load-game descriptor is no longer needed once the restore
+        // (or plain level load) has completed.
+        ZLoadGameInfoBase::Destroy();
+
         // Per-render-window draw-buffer (re)allocation now that the scene geoms
         // exist. PC: WindowFirst vtbl +14 = ZRenderX86::AllocateDrawBuffers.
         for (auto* pCurrentRender = g_pSysInterface->WindowFirst; pCurrentRender; pCurrentRender = pCurrentRender->Nxt)
         {
             pCurrentRender->AllocateDrawBuffers();
         }
-        // TODO: Finish me: sub_45AC30 + SetAllocSequencePercent(AS_GEOMS, ..., 1.0).
+        SetAllocSequencePercent(AS_GEOMS, nullptr, 1.0f);
+        PostInit();
 
         LockMinMax();
 
-        // ---- PostInit inline pass (STATUS_PostInit) ----
-        ZGEOM::m_PreferedStatus = ZGEOM::STATUS_PostInit;
-        g_pEngineData->m_pRoot->DoInit();
-        ZEventBase::m_DefaultStatus = ZEventBase::STATUS_PostInit;
-        m_EventList.DoInit();
+        PostInit2();
 
         m_LoadingGame = false;
         if (g_pSysInterface->m_pSoundDll)
@@ -772,11 +860,7 @@ namespace Glacier
             g_pGameData->OnLevelChangeFinish();
         }
 
-        // TODO: Finish me - remaining AllocSequence tail (PC order):
-        //   InstallSounds (ZDllSound) still belongs before the GMS decompress.
-        //   Default-cam / global strip colli tree (render window vtbl +36/+38).
-
-        ZLoadGameInfoBase::Destroy();
+        // PC schedules the deferred memory dump after the game-level finish hook.
         DEBUG_WhenToPrintMemory = g_pSysInterface->m_lFrameCount + 10;
     }
 
@@ -2383,6 +2467,32 @@ namespace Glacier
         m_EventList.DoInit();
         if (g_pGameData)
             g_pGameData->Init2();
+    }
+
+    // PC 0x45AC30. Runs the root geometry tree and event list through the
+    // STATUS_PostInit phase. PC calls this immediately before raising the min/max
+    // lock; the caller is responsible for the separate STATUS_PostInit2 pass.
+    void ZEngineDataBase::PostInit()
+    {
+        PUSH_MEMORY_COLOR(0xA0A0A0u);
+
+        ZGEOM::m_PreferedStatus = ZGEOM::STATUS_PostInit;
+        g_pEngineData->m_pRoot->DoInit();
+        ZEventBase::m_DefaultStatus = ZEventBase::STATUS_PostInit;
+        m_EventList.DoInit();
+    }
+
+    // PC 0x45FCF0 inline tail (and XBOX_KL2 ?PostInit2@ZEngineDataBase@@QAAXXZ,
+    // 0x8229E178). Runs the root geometry tree and event list through the
+    // STATUS_PostInit2 phase.
+    void ZEngineDataBase::PostInit2()
+    {
+        PUSH_MEMORY_COLOR(0xA0A0A0u);
+
+        ZGEOM::m_PreferedStatus = ZGEOM::STATUS_PostInit2;
+        g_pEngineData->m_pRoot->DoInit();
+        ZEventBase::m_DefaultStatus = ZEventBase::STATUS_PostInit2;
+        m_EventList.DoInit();
     }
 
     bool ZEngineDataBase::IsDrawGizmoEnabled(EGizmoType eType) const

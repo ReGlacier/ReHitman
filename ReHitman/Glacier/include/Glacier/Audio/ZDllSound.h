@@ -160,6 +160,10 @@ namespace Glacier
         // methods
         ZDllSound();
         void AppendSourceCommand(ZSoundObject* _object, ZREF _soundRef, SWave* _wave);
+        // Reads the per-scene stream wave filename out of the packed sound bank
+        // (PC ZDllSound::GetStreamFilename, 0x4C7EC0). Returns a pointer into
+        // m_pPackedData, or nullptr when the bank has no stream entry.
+        const char* GetStreamFilename() const;
 
         // members
         ZSoundObjectManager m_ObjectManager;
