@@ -46,7 +46,10 @@ set linked into every scene module. It declares and defines the 11 shared
 Each header declares one script's `SCRIPTCREATOR`; `source/AllLevels.c`
 defines them with the recovered metadata (name, script/state variable sizes,
 initial state controller, parent creator). Unresolved function-pointer fields
-are `TODO_PTR` pending per-script body reversal.
+are `TODO_PTR` pending per-script body reversal. Ported script *code* lives
+per script (e.g. `source/Alllevels_Baseboid.c`, `source/Alllevels_Bird.c`);
+their `FUNCTIONCONTROLLER` records stay in `source/AllLevels.c` as the
+parent-side anchors the `Hideout_*` children chain through.
 
 `AllLevels/ScriptCreator.h` is a compatibility shim that re-exports the type
 definitions from `ScriptRuntime` — existing includes keep working.

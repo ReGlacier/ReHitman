@@ -5,6 +5,9 @@ project(Hideout LANGUAGES C)
 add_library(Hideout SHARED
     source/DllMain.c
     source/Hideout.c
+    source/Hideout_Levelcontrol.c
+    source/Hideout_Canary.c
+    source/Hideout_Happyrat.c
     source/Scripts.c
     Hideout.def
 )

@@ -4,6 +4,7 @@ project(ScriptRuntime LANGUAGES C)
 # Components
 add_library(ScriptRuntime STATIC
     source/ScriptRuntime.c
+    source/ScriptSupport.c
 )
 
 target_include_directories(ScriptRuntime PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
