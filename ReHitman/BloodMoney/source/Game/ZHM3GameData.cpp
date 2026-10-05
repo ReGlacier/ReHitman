@@ -1,4 +1,8 @@
 #include <BloodMoney/Game/ZHM3GameData.h>
+#include <BloodMoney/Game/ZItemUpgradeSelector.h>
+#include <Glacier/Data/ZEngineDataBase.h>
+#include <Glacier/Com/CGlobalCom.h>
+#include <cstring>
 #include <Glacier/ZUniMemory.h>
 #include <Glacier/ZUniAssert.h>
 #include <Glacier/Materials/BS_Runtime.h>
@@ -31,6 +35,120 @@ namespace Hitman
     ZHM3LevelControl* ZHM3GameData::GetLevelControl() const
     {
         return m_LevelControl;
+    }
+
+
+    // PC profile offsets are relative to m_Profile (ZLevelLinking + 8).
+    namespace
+    {
+        constexpr int kProfileStride = 0x16F0;
+        constexpr int kDifficultyOffset = 0x5C04;
+
+        int ProfileDifficulty(const ZLevelLinking& linking)
+        {
+            int difficulty;
+            std::memcpy(&difficulty, linking.m_Profile + kDifficultyOffset, sizeof(difficulty));
+            return difficulty;
+        }
+
+        int ProfileInt(const ZLevelLinking& linking, int offset)
+        {
+            int value;
+            std::memcpy(&value, linking.m_Profile + offset + kProfileStride * ProfileDifficulty(linking), sizeof(value));
+            return value;
+        }
+
+        void SetProfileInt(ZLevelLinking& linking, int offset, int value)
+        {
+            std::memcpy(linking.m_Profile + offset + kProfileStride * ProfileDifficulty(linking), &value, sizeof(value));
+        }
+    }
+
+    uint32_t ZLevelLinking::GetHitmanMoney() const
+    {
+        return static_cast<uint32_t>(ProfileInt(*this, 0x74));
+    }
+
+    uint32_t ZLevelLinking::GetHitmanTotalMoney() const
+    {
+        uint32_t total = 0;
+        for (int offset = 0; offset < 0xD9C; offset += 0x10C)
+            total += static_cast<uint32_t>(ProfileInt(*this, 0x120 + offset));
+        return total;
+    }
+
+    int ZLevelLinking::GetAvailableItem(int itemType, sSuitcaseItem& item) const
+    {
+        const int count = ProfileInt(*this, 0x70);
+        const auto* entries = m_Profile + kProfileStride * ProfileDifficulty(*this) + 0xE20;
+        for (int i = 0; i < count; ++i)
+        {
+            sSuitcaseItem candidate;
+            std::memcpy(&candidate, entries + i * 0x20, sizeof(candidate));
+            if (candidate.m_eItemType == itemType)
+            {
+                item = candidate;
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    bool ZLevelLinking::AddAvailableItem(sSuitcaseItem item, bool updateAvailable)
+    {
+        const int count = ProfileInt(*this, 0x70);
+        if (count == 64)
+            return false;
+        auto* entries = m_Profile + kProfileStride * ProfileDifficulty(*this) + 0xE20;
+        sSuitcaseItem previous;
+        const int index = GetAvailableItem(item.m_eItemType, previous);
+        if (index == -1)
+        {
+            std::memcpy(entries + count * 0x20, &item, sizeof(item));
+            SetProfileInt(*this, 0x70, count + 1);
+            if (item.m_bInSuitcase)
+                SetProfileInt(*this, 0x6C, ProfileInt(*this, 0x6C) + 1);
+        }
+        else
+        {
+            previous.m_lNumAmmo = item.m_lNumAmmo;
+            if (item.m_lUpgradeMask != 0xFFFFFFFFULL)
+                previous.m_lUpgradeMask = item.m_lUpgradeMask;
+            if (updateAvailable)
+                previous.m_lUpgradesAvailable = item.m_lUpgradesAvailable;
+            if (previous.m_bInSuitcase && !item.m_bInSuitcase)
+                SetProfileInt(*this, 0x6C, ProfileInt(*this, 0x6C) - 1);
+            else if (!previous.m_bInSuitcase && item.m_bInSuitcase)
+                SetProfileInt(*this, 0x6C, ProfileInt(*this, 0x6C) + 1);
+            // PC preserves the old in-suitcase byte when replacing an entry.
+            std::memcpy(entries + index * 0x20, &previous, sizeof(previous));
+        }
+        auto* com = Glacier::ZEngineDataBase::GetGlobalCom();
+        m_pCom = com;
+        com->SetVal("dataProfile", reinterpret_cast<const char*>(m_Profile), 24208);
+        return true;
+    }
+
+    void ZLevelLinking::IncMoney(int amount)
+    {
+        const int money = ProfileInt(*this, 0x74) + amount;
+        SetProfileInt(*this, 0x74, money < 0 ? 0 : money);
+    }
+
+    uint32_t ZMoneySystem::UpgradePrice(int tier) const
+    {
+        ZASSERT(static_cast<uint32_t>(tier) <= 4);
+        return static_cast<uint32_t>(m_sPrices.iTierUpgradePrice[tier]);
+    }
+
+    int ZMoneySystem::GetCurrentTier() const
+    {
+        const auto* gameData = static_cast<const ZHM3GameData*>(Glacier::g_pGameData);
+        const uint32_t total = gameData->m_LevelLinking.GetHitmanTotalMoney();
+        int tier = 0;
+        while (tier < 4 && total >= static_cast<uint32_t>(m_sPrices.iTierPrices[tier + 1]))
+            ++tier;
+        return tier;
     }
 
     class ZGameDataFactory final : public Glacier::ZGameDataFactoryBase

@@ -60,6 +60,12 @@ namespace Hitman
     class ZLevelLinking
     {
     public:
+        uint32_t GetHitmanMoney() const;
+        uint32_t GetHitmanTotalMoney() const;
+        int GetAvailableItem(int itemType, struct sSuitcaseItem& item) const;
+        bool AddAvailableItem(struct sSuitcaseItem item, bool updateAvailable);
+        void IncMoney(int amount);
+
         EBriefingDetailType m_eBriefingDetailType; //0x0000
         void* m_pCom; //0x0004
         uint8_t m_Profile[24216]; //0x0008
@@ -105,6 +111,9 @@ namespace Hitman
 
     // Size: 0x1A4 (420 bytes)
     struct ZMoneySystem {
+        int GetCurrentTier() const;
+        uint32_t UpgradePrice(int tier) const;
+
         sPricesStruct m_sPrices;
     };
 
