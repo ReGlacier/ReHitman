@@ -59,38 +59,40 @@ Current Project Goals
     * [x] Base geom
     * [x] Geom extends
   * [x] COM system
-  * [ ] UI
-    * [ ] Legacy UI system (almost done)
-    * [ ] XML UI system
-  * [ ] Physics
+  * [x] UI
+    * [x] Legacy UI system
+    * [x] XML UI system
+  * [x] Physics
     * [x] Fysix engine
     * [x] Rigid bodies
     * [x] Cloth simulation
-    * [ ] `CRigidBody` event base
+    * [x] `CRigidBody` event base
   * [x] Pathfinder4
   * [x] ScriptEngine
     * [x] Script engine core & `ZEventBase` integration
     * [x] Save&Load
   * [x] RTP (runtime properties)
-  * [ ] Serialization layer (skipped some small classes, not required yet)
+  * [x] Serialization layer
   * [ ] Network - skipped
+    * [ ] Base
+    * [ ] Quazal
   * [x] Material system - `BS_Runtime`
   * [ ] Render
     * [x] Camera system
     * [x] Frontend
     * [x] Backend (some fields not renamed)
     * [x] Objects & Instances
-    * [ ] Materials
+    * [x] Materials
       * [x] Material binders
-      * [ ] Render state (almost done)
-    * [ ] Render context
+      * [x] Render state
+    * [x] Render context
     * [x] View system
-    * [ ] Draw system
+    * [x] Draw system
       * [x] Base interface
       * [x] Base impl
-      * [ ] D3D9 - not finished `ZRenderDrawD3D::Update`
+      * [x] D3D9
     * [x] Entries
-    * [ ] Debug menus - WIP
+    * [ ] Debug menus - mostly done, need test in game
   * [ ] Hitman: Blood Money
     * [ ] Gameplay
     * [ ] Actors
@@ -100,10 +102,20 @@ Current Project Goals
     * [ ] Script bindings
     * [ ] Per level specific things
   * [ ] Toolset - TBD
-
-FAQ
------
- * [Wiki.](https://github.com/ReGlacier/ReHitman/wiki)
+  * [ ] Game scripts (see ReHitman/ScriptCS for details)
+    * [ ] Hideout - Work in progress
+    * [ ] M00
+    * [ ] M01
+    * [ ] M02
+    * [ ] M03
+    * [ ] M04
+    * [ ] M05
+    * [ ] M06
+    * [ ] M08
+    * [ ] M09
+    * [ ] M10
+    * [ ] M11
+    * [ ] M12
 
 Credits
 ------
