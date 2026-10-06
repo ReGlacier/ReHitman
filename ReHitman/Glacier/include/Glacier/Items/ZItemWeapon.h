@@ -3,12 +3,34 @@
 #include <Glacier/Items/ZItem.h>
 #include <Glacier/Items/EWeaponOperation.h>
 #include <Glacier/GlacierFWD.h>
+#include <Glacier/Debug/ZDebugInt.h>
 
 namespace Glacier
 {
+    // Engine globals defined in ZItemWeapon.cpp (source engine/geomsextend/zitem.cpp). The PC
+    // build keeps both as plain engine flags rather than debug objects:
+    //   g_bIsInfClip  PC 0x99BF28 -- the ZCheatMenu "InfClip" toggle, read by GetProjectilesInMagazine.
+    //   g_lBlockFire  PC 0x99BF2C -- debug gate that early-outs ZItemWeapon::FireRound.
+    extern ZDebugInt g_bIsInfClip;
+    extern ZDebugInt g_lBlockFire;
+
     class ZItemWeapon : public ZItem
     {
     public:
+        // RTTI
+        DECLARE_GEOM_CLASS(ZItemWeapon, 0x1007D2u);
+
+        // methods
+        ZItemWeapon(const char* psName, ZBaseGeom* pBaseGeom);
+
+        // vtbl (ZGEOM/ZItem overrides)
+        ~ZItemWeapon() override;
+        const RTP::ZPropertyInfo& GetProperties() const override;
+        uint32_t GetObjectId() const override;
+        void GetObjectIdAndMask(uint32_t& id, uint32_t& mask) const override;
+        ZGEOMCLASSINFO* GetOldClassInfo() const override;
+        void CopyData(const ZGEOM* Source) override;
+
         //vftable
         virtual void DestroyItem();
         virtual void SetAmmoTemplate(ZItemTemplateAmmo*);
@@ -19,10 +41,10 @@ namespace Glacier
         virtual WEAPONOPERATION GetWeaponOperation();
         virtual void SetWeaponOperation(WEAPONOPERATION weaponOperation);
         virtual void SelectNextWeaponOperation();
-        virtual void GetFirePosition(ZMat3x3* mat, ZVector3* pos); //TODO: Recognize math types here
-        virtual void* GetMuzzleExitPos();
+        virtual void GetFirePosition(ZMat3x3* mat, ZVector3* pos);
+        virtual ZGEOM* GetMuzzleExitPos();
         virtual void GetRootMuzzleExitPos(const Glacier::ZVector3* result);
-        virtual ZItemWeaponTemplate* GetWeaponTemplate();
+        virtual ZItemTemplateWeapon* GetWeaponTemplate();
         virtual bool GetBulletInChamber();
         virtual void SetBulletInChamber(bool value);
         virtual int GetProjectilesInMagazine(); //Could be overridden by cheat 'Inf Ammo'
@@ -45,29 +67,34 @@ namespace Glacier
         virtual void CopyGeom(ZGEOM* from, ZGEOM* unused, ZGROUP* inGroup, bool makeActive);
 
         //data (total size is 0xDC, ZItem size is 0x84)
-        Glacier::ZVector3 m_targetPosition;
-        Glacier::ZREF m_ammoTemplateREF;
-        int m_projectilesPerMagazine;
-        bool m_isBulletInChamber;
-        char m_field99;
-        char m_field9A;
-        char m_field9B;
-        int m_field9C;
-        int m_fieldA0;
-        int m_fieldA4;
-        EWeaponOperation m_nextOperation;
-        int m_fieldAC;
-        int m_fieldB0;
-        int m_fieldB4;
-        int m_fieldB8;
-        int m_fieldBC;
-        int m_fieldC0;
-        int m_fieldC4;
-        int m_fieldC8;
-        int m_fieldCC;
-        Glacier::ZREF m_fieldD0;
-        int m_fieldD4;
+        Glacier::ZVector3 m_vTarget;
+        Glacier::ZREF m_rAmmoTemplate;
+        int m_lProjectilesInMagazine;
+        bool m_bBulletInChamber;
+        RE_ADD_PADDING(3);
+        // Verified from the PC ctor: `mov dword ptr [esi+0x9C], 0` and the RTP vtbl is Data_int.
+        int m_lBurstCount;
+        // Verified from the PC ctor: the four byte writes land at [esi+0xA0..0xA3].
+        bool m_bRequestFireRelease;
+        bool m_bReloading;
+        bool m_bChambering;
+        bool m_bTriggerHeld;
+        // Verified from PC ReloadEnd: `fstp dword ptr [esi+0xA4]`.
+        float m_fTimeLastShot;
+        EWeaponOperation m_eWeaponOperation;
+        REFTAB* m_prtWeaponParts;
+        int m_rParticleController;
+        int m_lMuzzleFireIndex;
+        int m_lMuzzleSmokeIndex;
+        int m_lCartridgeIndex;
+        Glacier::ZREF m_rMuzzleLight;
+        Glacier::ZVector3 m_vMuzzleLightAlign;
+        Glacier::ZREF m_rSlide;
+        Glacier::ZREF m_rClip;
         bool m_useBulletsFromMagazine;
+        bool m_bWantSoundEvent;
+        RE_ADD_PADDING(2);
     };
+    RE_VERIFY_SIZE(ZItemWeapon, 0xDC); // Verified
 
 }

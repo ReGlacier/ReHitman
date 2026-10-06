@@ -1,12 +1,13 @@
 #pragma once
 
-#include <Glacier/EventBase/ZEventBase.h>
+#include <Glacier/EventBase/ZBaseConRout.h>
 #include <Glacier/GlacierFWD.h>
 #include <Glacier/ZSTL/ZMath.h>
 #include <Glacier/ZSTL/REFTAB.h>
 
-namespace Hitman::BloodMoney {
-    class CElevatorHouse : public Glacier::ZEventBase {
+namespace Hitman
+{
+    class CElevatorHouse : public Glacier::ZBaseConRout {
     public:
         // vftable (not changed)
 

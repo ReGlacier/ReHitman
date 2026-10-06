@@ -2,7 +2,7 @@
 
 #include <Glacier/EventBase/ZEventBase.h>
 
-namespace Hitman::BloodMoney {
+namespace Hitman {
     class ZGuardQuarterController : public Glacier::ZEventBase {
     public:
         // vftable (no changes)

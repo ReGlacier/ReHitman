@@ -4,7 +4,7 @@
 #include <BloodMoney/Game/UI/ZWINGROUP.h>
 #include <Glacier/ZSTL/zstring.h>
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
 
     class ZSimpleDisplay : public CWinEvent<ZWINGROUP>

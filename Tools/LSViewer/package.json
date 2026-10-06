@@ -1,0 +1,10 @@
+{
+  "name": "loader-sequence-viewer",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Standalone HTML5 viewer for Hitman: Blood Money scene Loader_Sequence.ZIP (sprite loading animations) parsed from the reversed Glacier formats",
+  "scripts": {
+    "start": "python -m http.server 8000",
+    "serve": "npx --yes http-server . -p 8000 -c-1"
+  }
+}

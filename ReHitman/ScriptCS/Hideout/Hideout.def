@@ -1,0 +1,6 @@
+LIBRARY Hideout
+EXPORTS
+    SF             @1 DATA
+    ISF            @2 DATA
+    Scripts        @3 DATA
+    ScriptImports  @4 DATA

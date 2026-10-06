@@ -4,7 +4,7 @@
 #include <Glacier/ZSTL/ZMath.h>
 #include <BloodMoney/Engine/ZHM3CameraClassBase.h>
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
     class ZHM3CameraClass : public ZHM3CameraClassBase
     {

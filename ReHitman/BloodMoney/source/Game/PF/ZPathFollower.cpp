@@ -1,27 +1,27 @@
 #include <BloodMoney/Game/PF/ZPathFollower.h>
-#include <BloodMoney/BMConfigurationService.h>
 
-#include <cassert>
 
-namespace Hitman::BloodMoney
+namespace Hitman
 {
-    int ZPathFollower::GetClosestWaypoint() {
-        assert(BMConfigurationService::BMAPI_FunctionAddress_ZPathFollower_GetClosestWaypoint != BMConfigurationService::kNotConfiguredOption);
-        return ((int(__thiscall*)(ZPathFollower*))(BMConfigurationService::BMAPI_FunctionAddress_ZPathFollower_GetClosestWaypoint))(this);
+    int ZPathFollower::GetClosestWaypoint() 
+    {
+        // TODO: Finish me
+        return 0;
     }
 
-    int ZPathFollower::GetRndUsePoint() {
-        assert(BMConfigurationService::BMAPI_FunctionAddress_ZPathFollower_GetRndUsePoint != BMConfigurationService::kNotConfiguredOption);
-        return ((int(__thiscall*)(ZPathFollower*))(BMConfigurationService::BMAPI_FunctionAddress_ZPathFollower_GetRndUsePoint))(this);
+    int ZPathFollower::GetRndUsePoint() 
+    {
+        // TODO: Finish me
+        return 0;
     }
 
-    void ZPathFollower::SetExternalWaypointList(unsigned int REF) {
-        assert(BMConfigurationService::BMAPI_FunctionAddress_ZPathFollower_SetExternalWaypointList != BMConfigurationService::kNotConfiguredOption);
-        ((void(__thiscall*)(ZPathFollower*, unsigned int))(BMConfigurationService::BMAPI_FunctionAddress_ZPathFollower_SetExternalWaypointList))(this, REF);
+    void ZPathFollower::SetExternalWaypointList(Glacier::ZREF REF) 
+    {
+        // TODO: Finish me
     }
 
-    void ZPathFollower::SetWaypointIndex(int index) {
-        assert(BMConfigurationService::BMAPI_FunctionAddress_ZPathFollower_SetWaypointIndex != BMConfigurationService::kNotConfiguredOption);
-        ((void(__thiscall*)(ZPathFollower*, int))(BMConfigurationService::BMAPI_FunctionAddress_ZPathFollower_SetWaypointIndex))(this, index);
+    void ZPathFollower::SetWaypointIndex(int index) 
+    {
+        // TODO: Finish me
     }
 }
