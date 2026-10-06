@@ -3,6 +3,7 @@
 #include <Glacier/Items/ZItem.h>
 #include <Glacier/Items/EWeaponOperation.h>
 #include <Glacier/GlacierFWD.h>
+#include <Glacier/Debug/ZDebugInt.h>
 
 namespace Glacier
 {
@@ -10,8 +11,8 @@ namespace Glacier
     // build keeps both as plain engine flags rather than debug objects:
     //   g_bIsInfClip  PC 0x99BF28 -- the ZCheatMenu "InfClip" toggle, read by GetProjectilesInMagazine.
     //   g_lBlockFire  PC 0x99BF2C -- debug gate that early-outs ZItemWeapon::FireRound.
-    extern bool g_bIsInfClip;
-    extern int g_lBlockFire;
+    extern ZDebugInt g_bIsInfClip;
+    extern ZDebugInt g_lBlockFire;
 
     class ZItemWeapon : public ZItem
     {

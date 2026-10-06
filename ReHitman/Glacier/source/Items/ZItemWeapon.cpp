@@ -40,8 +40,8 @@ namespace Glacier
     //   g_bIsInfClip  PC 0x99BF28 -- "InfClip" cheat flag (ZCheatMenu MENU_TOGGLE_BOOL) that makes
     //                                GetProjectilesInMagazine report 999.
     //   g_lBlockFire  PC 0x99BF2C -- debug gate that blocks FireRound entirely.
-    bool g_bIsInfClip = false;
-    int g_lBlockFire = 0;
+    ZDebugInt g_bIsInfClip { "InfClip", "Gives Hero infinite ammo and doesn't make him change the clip", 0, 0, 1, 1, "Hitman/" };
+    ZDebugInt g_lBlockFire { "BlockFire", "Blocks fire from all weapons", 0, 0, 1, 1, "Weapons/" };
 
     // Animation commands sent to m_rSlide / m_rClip, e.g. SendCommand(2058, &value, 0).
     static constexpr ZMSGID ZMSG_ANIM_2058 = 2058;
