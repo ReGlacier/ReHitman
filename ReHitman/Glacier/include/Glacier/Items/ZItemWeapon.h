@@ -6,9 +6,30 @@
 
 namespace Glacier
 {
+    // Engine globals defined in ZItemWeapon.cpp (source engine/geomsextend/zitem.cpp). The PC
+    // build keeps both as plain engine flags rather than debug objects:
+    //   g_bIsInfClip  PC 0x99BF28 -- the ZCheatMenu "InfClip" toggle, read by GetProjectilesInMagazine.
+    //   g_lBlockFire  PC 0x99BF2C -- debug gate that early-outs ZItemWeapon::FireRound.
+    extern bool g_bIsInfClip;
+    extern int g_lBlockFire;
+
     class ZItemWeapon : public ZItem
     {
     public:
+        // RTTI
+        DECLARE_GEOM_CLASS(ZItemWeapon, 0x1007D2u);
+
+        // methods
+        ZItemWeapon(const char* psName, ZBaseGeom* pBaseGeom);
+
+        // vtbl (ZGEOM/ZItem overrides)
+        ~ZItemWeapon() override;
+        const RTP::ZPropertyInfo& GetProperties() const override;
+        uint32_t GetObjectId() const override;
+        void GetObjectIdAndMask(uint32_t& id, uint32_t& mask) const override;
+        ZGEOMCLASSINFO* GetOldClassInfo() const override;
+        void CopyData(const ZGEOM* Source) override;
+
         //vftable
         virtual void DestroyItem();
         virtual void SetAmmoTemplate(ZItemTemplateAmmo*);
@@ -19,7 +40,7 @@ namespace Glacier
         virtual WEAPONOPERATION GetWeaponOperation();
         virtual void SetWeaponOperation(WEAPONOPERATION weaponOperation);
         virtual void SelectNextWeaponOperation();
-        virtual void GetFirePosition(ZMat3x3* mat, ZVector3* pos); //TODO: Recognize math types here
+        virtual void GetFirePosition(ZMat3x3* mat, ZVector3* pos);
         virtual ZGEOM* GetMuzzleExitPos();
         virtual void GetRootMuzzleExitPos(const Glacier::ZVector3* result);
         virtual ZItemTemplateWeapon* GetWeaponTemplate();
@@ -50,13 +71,15 @@ namespace Glacier
         int m_lProjectilesInMagazine;
         bool m_bBulletInChamber;
         RE_ADD_PADDING(3);
-        bool m_lBurstCount;
+        // Verified from the PC ctor: `mov dword ptr [esi+0x9C], 0` and the RTP vtbl is Data_int.
+        int m_lBurstCount;
+        // Verified from the PC ctor: the four byte writes land at [esi+0xA0..0xA3].
         bool m_bRequestFireRelease;
         bool m_bReloading;
         bool m_bChambering;
         bool m_bTriggerHeld;
-        RE_ADD_PADDING(3);
-        int m_fTimeLastShot;
+        // Verified from PC ReloadEnd: `fstp dword ptr [esi+0xA4]`.
+        float m_fTimeLastShot;
         EWeaponOperation m_eWeaponOperation;
         REFTAB* m_prtWeaponParts;
         int m_rParticleController;

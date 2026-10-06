@@ -12,6 +12,7 @@ namespace Glacier
 {
     class ZActor;
     class ZAnimExclude;
+    class ZBoidSystem;
     class ZMenuElements;
     class ZPlayer;
     struct ZSDOwner;
@@ -66,7 +67,7 @@ namespace Glacier
         void InsertIconsInText(zstring& rOut, const char* pText, bool bAddColor);
 
         // members
-        void* m_pkBoidSystem;
+        ZBoidSystem* m_pkBoidSystem;
         ZStaticVector<ZActor*, 512> m_ActorsPool;
         ZLIST* m_pTrackLinkObjectList;
         ZStaticVector<ZGEOM*, 128> m_ItemsPool;

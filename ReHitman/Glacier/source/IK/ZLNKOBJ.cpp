@@ -15,6 +15,7 @@
 #include <Glacier/Animation/ActiveAnimation.h>
 #include <Glacier/Animation/Manager.h>
 #include <Glacier/Audio/ZSoundObject.h>
+#include <Glacier/Audio/ZSoundDllBase.h>
 #include <Glacier/Serializer/ISerializerStream.h>
 #include <Glacier/Items/ZItem.h>
 #include <Glacier/Geom/ZGROUP.h>
@@ -164,9 +165,20 @@ namespace Glacier
         return reinterpret_cast<const ZBone*>(ZPrimControlBase::Instance()->GetGlobalPrimBones(Prim()));
     }
 
+    // PS2 0x2830CC (inlined on PC). Forwards the skeleton bounds query to the bone modifier.
+    void ZLNKOBJ::GetBonesCenSize(float* pCen, float* pSize) const
+    {
+        m_pBoneModify->GetBonesCenSize(pCen, pSize, this);
+    }
+
     uint32_t ZLNKOBJ::NumActiveBones() const
     {
         return m_pBoneModify ? m_pBoneModify->m_lNumActiveBones : 0;
+    }
+
+    bool ZLNKOBJ::HideBone(uint8_t lBoneIndex, bool bHide)
+    {
+        return m_pBoneModify->HideBone(m_baseGeom, lBoneIndex, bHide);
     }
 
     Animation::ActiveAnimation* ZLNKOBJ::GetGroundAnimation() const
@@ -188,6 +200,14 @@ namespace Glacier
             return nullptr;
         const uint32_t offset = variation.GetAnimOffset(flags, random);
         return offset == static_cast<uint32_t>(-1) ? nullptr : Animation::instance->FromIndex(static_cast<int>(offset));
+    }
+
+    Animation::Header* ZLNKOBJ::GetAnimHeaderFromHandleName(const char* pszName) const
+    {
+        ZAnimVariationHandle handle;
+        // ZAnimTemplatesNames::FindAnimVariationHandle is not declared const in this project.
+        const_cast<ZAnimTemplatesNames&>(m_TemplateNames).FindAnimVariationHandle(handle, pszName);
+        return GetAnimHeaderFromVariation(handle, m_iAnimVariationFlags, g_pSysInterface->FRand(const_cast<char*>(__FILE__), __LINE__));
     }
 
     bool ZLNKOBJ::MetaKeyCallBack(Animation::ActiveAnimation* pAnimation, float, float, uint32_t metaKeyOffset)
@@ -986,6 +1006,44 @@ namespace Glacier
             pActiveSound->m_rAnimationSound = 0;
             pActiveSound->m_lSequenceID = 0;
         }
+    }
+
+    ZSoundObject* ZLNKOBJ::StartAnimSound(int soundIndex, bool fullBody, Animation::ActiveAnimation* pBoneAnim, float fStartOffsetFrames, bool bReversed, int lSequenceID)
+    {
+        auto* pSoundDll = g_pSysInterface->GetSoundDll();
+        if (pSoundDll && pSoundDll->IsPaused())
+            return nullptr;
+
+        SAnimSound* pAnimSound = &m_AnimSound[fullBody];
+        StopAnimSound(fullBody, lSequenceID, true);
+
+        if (!soundIndex || !g_pSysInterface->m_pSoundDll)
+            return nullptr;
+
+        ZMat3x3 mat;
+        ZVector3 pos;
+        GetMatPos(mat, pos);
+        const ZREF soundRef = pSoundDll->AddSound3d(this, soundIndex, mat.data, pos);
+
+        auto* pSound = g_pEngineData->SRefToPtr(soundRef);
+        if (!pSound)
+            return nullptr;
+
+        pSound->SetLooping(false);
+        if (fStartOffsetFrames != 0.0f)
+            pSound->m_fStartOffset = fStartOffsetFrames * 0.04f;
+
+        pAnimSound->m_rAnimationSound = soundRef;
+        pAnimSound->m_lSequenceID = lSequenceID;
+
+        if (bReversed)
+            pSound->m_lSoundFlags |= 0x4000000u;
+
+        auto* pPacked = pSoundDll->GetPackedObject(pSound->m_rSound);
+        if (pPacked && pBoneAnim && pPacked->m_Type == ZAudioTypes::Seq)
+            pBoneAnim->AddMetaKeyCallBack(500, ToAnimationCallback(&ZLNKOBJ::AnimSoundCallback), soundRef, 0, 0);
+
+        return pSound;
     }
 
     uint32_t ZLNKOBJ::CheckLineCollision(float* pResult, const float* pLineStart, const float* pLineDirection) const

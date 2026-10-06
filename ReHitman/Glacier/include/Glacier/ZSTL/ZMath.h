@@ -969,6 +969,18 @@ namespace Glacier
     }
 
     /**
+     * @brief Returns the squared distance between a and b, i.e. |a - b|^2 (PS2: vdist2).
+     */
+    inline float vdist2(const float* a, const float* b)
+    {
+        const float dx = a[0] - b[0];
+        const float dy = a[1] - b[1];
+        const float dz = a[2] - b[2];
+
+        return dx * dx + dy * dy + dz * dz;
+    }
+
+    /**
      * @brief Transforms a world-space point into matrix-local space: pOut = (pIn - mat.p0) * mat.m0^T.
      */
     inline void MatrixTransformInverse(float* pOut, const float* pIn, const ZMatrix& mat)
@@ -1601,6 +1613,10 @@ namespace Glacier
         return angle;
     }
 
+    /// Returns a pseudo-random integer in the half-open range [iMin, iMax) from the engine RNG.
+    /// Original engine location: engine/zstdlib/zmath.cpp (PC Engine__Randomrange 0x59DA80).
+    int RandomRange(int iMin, int iMax);
+
     template <typename T>
     T clamp(T value, T min, T max)
     {
@@ -1617,6 +1633,15 @@ namespace Glacier
         return value;
     }
 #   pragma endregion
+
+    /**
+     * @brief Returns a random integer in `[lMin, lMax]` from the system RNG.
+     *
+     * Reversed from the PC build (`engine/zstdlib/zmath.cpp`, PC 0x59DA80). The PC implementation is
+     * `FRand() * (lMax - lMin) + lMin` (note: no `+ 1`, so the upper bound is exclusive, which is what
+     * callers such as `ZRigidBodyPool::Assign` rely on when picking an array index).
+     */
+    int RandomRange(int lMin, int lMax);
 }
 
 /*

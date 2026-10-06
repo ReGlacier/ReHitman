@@ -8,6 +8,22 @@ namespace Glacier
     class ZItemTemplateContainer : public ZItemTemplate
     {
     public:
+        // RTTI
+        DECLARE_GEOM_CLASS(ZItemTemplateContainer, 0x1007D9u);
+
+        // methods
+        ZItemTemplateContainer(const char* psName, ZBaseGeom* pBaseGeom);
+
+        // vtbl (RTTI / ZGEOM / ZItemTemplate overrides)
+        ~ZItemTemplateContainer() override;
+        const RTP::ZPropertyInfo& GetProperties() const override;
+        uint32_t GetObjectId() const override;
+        void GetObjectIdAndMask(uint32_t& id, uint32_t& mask) const override;
+        ZGEOMCLASSINFO* GetOldClassInfo() const override;
+        void ClassInit() override;
+        void CopyData(const ZGEOM* Source) override;
+        uint32_t GetItemClassId() const override;
+
         //vftable
         virtual bool CanContainItem(const ZItem* item);
 

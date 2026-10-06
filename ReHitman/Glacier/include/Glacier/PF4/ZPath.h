@@ -6,6 +6,11 @@
 #include <Glacier/ZSTL/ZMath.h>
 
 
+namespace Glacier
+{
+	struct ISerializerStream;
+}
+
 namespace Glacier::PF4
 {
 	struct ZPath
@@ -21,6 +26,7 @@ namespace Glacier::PF4
 		int GetAction(int iPos) const;
 		bool CutAtDistance(float fDistance);
 		void GetEndPosition(ZVector3& vPosition) const;
+		void LoadSave(ISerializerStream& stream, bool bSaving);
 
 		ZDataRef* m_pathIdx;
 		int m_iMaxSize;

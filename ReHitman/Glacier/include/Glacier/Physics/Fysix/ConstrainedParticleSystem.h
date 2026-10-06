@@ -75,6 +75,7 @@ namespace Glacier
         void GetParticleValues(int i, ZVector3& pos, ZVector3& v, float& mass);
         void GetParticleValues(int i, ZVector3& pos, ZVector3& v, float& mass, ZVector3& oldpos);
         void SetParticleValues(int i, const ZVector3& pos, const ZVector3& v, float mass, const ZVector3& oldpos);
+        void SetParticleValues(int i, const ZVector3& pos, const ZVector3& v);
         void SetParticleVel(int i, const ZVector3& vel);
         void InitParticle(int i, const ZVector3& x, const ZVector3& v, float mass);
         void InitConstraint(int i, int ix1, int ix2);

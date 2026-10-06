@@ -52,6 +52,9 @@ namespace Glacier
 
 	struct ZPlayer : public ZLNKWHANDS
 	{
+		// RTTI
+		DECLARE_GEOM_CLASS(ZPlayer, 0x80200014u);
+
 		// Data starts from 0x3D0, total size is 0x768
         bool m_bReady;
         RE_ADD_PADDING(3);
@@ -125,6 +128,9 @@ namespace Glacier
         int32_t m_iDisplayParentBox;
         bool m_bControlGotDisabled;
         RE_ADD_PADDING(3);
+
+        // ZCTRLIKLNKOBJ
+        bool IsDead() const override;
 
         // vtbl
         virtual void DisplayCollisionsBounds(bool);

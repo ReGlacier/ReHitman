@@ -344,6 +344,29 @@ def _function_at(arguments):
     return function
 
 
+def _make_function(arguments):
+    if "address" not in arguments:
+        raise ValueError("address is required")
+    ea = _parse_address(arguments["address"])
+    if not ida_bytes.is_mapped(ea):
+        raise ValueError("address 0x%X is not mapped in the database" % ea)
+    existing = ida_funcs.get_func(ea)
+    if existing is not None:
+        raise ValueError("address 0x%X is already inside function %s" % (
+            ea, ida_funcs.get_func_name(existing.start_ea)
+        ))
+    if not ida_funcs.add_func(ea, ida_idaapi.BADADDR):
+        raise RuntimeError("IDA failed to create a function at 0x%X" % ea)
+    function = ida_funcs.get_func(ea)
+    if function is None:
+        raise RuntimeError("IDA did not create a function at 0x%X" % ea)
+    return {
+        "address": "0x%X" % function.start_ea,
+        "end_address": "0x%X" % function.end_ea,
+        "name": ida_funcs.get_func_name(function.start_ea),
+    }
+
+
 def _rename_function(arguments):
     function = _function_at(arguments)
     new_name = str(arguments.get("new_name", "")).strip()
@@ -516,7 +539,7 @@ METHODS = {
     "decompile": _decompile,
     "read_memory": _read_memory,
     "read_pointer_table": _read_pointer_table,
-    "rename_function": _rename_function,
+    "make_function": _make_function,
     "rename_global": _rename_global,
     "set_function_comment": _set_function_comment,
     "search_local_types": _search_local_types,
@@ -717,7 +740,7 @@ class IdaMcpPlugin(idaapi.plugin_t):
         try:
             arguments = command.get("arguments") or {}
             write = command.get("method") in (
-                "rename_function", "rename_global", "set_function_comment", "add_local_type", "set_comment"
+                "make_function", "rename_function", "rename_global", "set_function_comment", "add_local_type", "set_comment"
             )
             data = _run_in_ida(lambda: handler(arguments), write)
             return {"ok": True, "result": data}

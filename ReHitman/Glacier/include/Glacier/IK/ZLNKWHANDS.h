@@ -212,6 +212,7 @@ namespace Glacier
         // methods
         ZLNKWHANDS(const char* psName, ZBaseGeom* pBaseGeom);
         SREF PlaySpeechResource(uint32_t lSoundIndex, int lSoundEvent);
+        void UpdateVisibilityPosition();
 
         // members
         float m_fLastUpdatedPosition;

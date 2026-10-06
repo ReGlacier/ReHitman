@@ -37,6 +37,10 @@ namespace Glacier
         // methods
         ZAllocMany(const char* psName, ZBaseGeom* pBaseGeom);
 
+        // PC 0x4FFB80. Pops the next free object off the pool. When bWrap is set the read cursor
+        // wraps around once it runs past the last pooled object; otherwise an empty pool yields null.
+        ZGEOM* AllocOne(ZGROUP* pGroup, bool bWrap);
+
         // members
         int16_t m_iNumObjects;        // +0x4C
         int16_t m_iNumFree;           // +0x4E

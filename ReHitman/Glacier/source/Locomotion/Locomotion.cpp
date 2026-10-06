@@ -1,5 +1,7 @@
 #include <Glacier/Locomotion/Locomotion.h>
 
+#include <Glacier/Locomotion/ZStates.h>
+
 
 namespace Glacier::Locomotion
 {
@@ -22,5 +24,11 @@ namespace Glacier::Locomotion
                 }
                 return "OUT_OF_BOUNDS";
         }
+    }
+
+    // Program table accessor (PC off_7FC500): forwards to the singleton state table.
+    ZState* GetProgram(int lProgram)
+    {
+        return ZStates::GetState(lProgram);
     }
 }

@@ -10,6 +10,26 @@ namespace Glacier
     class ZItemTemplateAmmo : public ZItemTemplate
     {
     public:
+        // RTTI
+        DECLARE_GEOM_CLASS(ZItemTemplateAmmo, 0x1007D5u);
+
+        // methods
+        ZItemTemplateAmmo(const char* psName, ZBaseGeom* pBaseGeom);
+
+        // vtbl (RTTI / ZGEOM / ZItemTemplate overrides)
+        ~ZItemTemplateAmmo() override;
+        const RTP::ZPropertyInfo& GetProperties() const override;
+        uint32_t GetObjectId() const override;
+        void GetObjectIdAndMask(uint32_t& id, uint32_t& mask) const override;
+        ZGEOMCLASSINFO* GetOldClassInfo() const override;
+        void ClassInit() override;
+        void ClassInit2() override;
+        void PostClassInit() override;
+        void LoadSave(ISerializerStream& stream, bool bSave) override;
+        void SetStates(CCom* pCom) override;
+        void CopyData(const ZGEOM* Source) override;
+        uint32_t GetItemClassId() const override;
+
         // vftable
         virtual int GetDefaultProjectilesPerMagazine();
         virtual int GetProjectilesPerShot();

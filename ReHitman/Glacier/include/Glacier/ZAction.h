@@ -4,30 +4,57 @@
 #include <Glacier/CBaseEvent.h>
 #include <Glacier/ZSTL/ZStackArray.h>
 #include <Glacier/ZSTL/ZRTStringObject.h>
+#include <Glacier/ZMessageResolver.h>
 
 namespace Glacier
 {
-    // 0 - N/A
-    // 1 - N/A
-    // 2 - Open Door
-    // 3 - Close Door
-    // 4 - N/A
-    // 5 - Talk
-    // 6 - Our custom action in "bottom" actions slot ("E")
-    // 7 - Same to 6
-    // 8 - N/A
-    // 9 - Drag Body
-    // 10 - N/A
-    // 11 - N/A
+    // Engine-internal action type ids, from the PS2 build's symbol dump
+    // (Z:\code\hitman3\hitman3_ps2\startup.cpp). The numeric values are shared with
+    // the PC build's ZAction::m_eType / Initialize() / FindAction() arguments.
     enum EActionType {
-        OPEN_DOOR = 2,
-        CLOSE_DOOR = 3,
-        TALK = 5,
-        CUSTOM = 6,
-        CUSTOM2 = 7,
-        ALWAYS_IN_RANGE = 8,
-        DRAG_BODY = 9,
-        STEAL_TAPE = 0x29
+        AT_PICKUP = 0,
+        AT_BUTTON = 1,
+        AT_OPENDOOR = 2,
+        AT_CLOSEDOOR = 3,
+        AT_CLOTHES = 4,
+        AT_DIALOG = 5,
+        AT_GENERIC = 6,
+        AT_PLACEITEM = 7,
+        AT_ALWAYSINRANGE = 8,
+        AT_DRAG = 9,
+        AT_PICKDOOR = 10,
+        AT_PEEKHOLE = 11,
+        AT_DROPBODY = 12,
+        AT_CLIMBWINDOW = 13,
+        AT_CLIMBWALL = 14,
+        AT_HIDECLOSET = 15,
+        AT_GRAB = 16,
+        AT_RELEASE = 17,
+        AT_PUTITEMELEVATOR = 18,
+        AT_JUMPBALCONY = 19,
+        AT_PLACEBOMB = 20,
+        AT_ACTIONKILL = 21,
+        AT_USESWITCH = 22,
+        AT_HIDEBODYTABLE = 23,
+        AT_OPENLID = 24,
+        AT_CLOSELID = 25,
+        AT_RETRIEVEITEM = 26,
+        AT_PLACE_NOINIT = 27,
+        AT_PICKUP_NOINIT = 28,
+        AT_OPERATEDOOR = 29,
+        AT_BODYCONTAINER = 30,
+        AT_USEKEYCARD = 31,
+        AT_CLIMBHATCH = 32,
+        AT_STRANGELINELEVATOR = 33,
+        AT_ELEVATORBUTTON = 34,
+        AT_PLACEITEMTOPOS = 35,
+        AT_HMUSEWEAPONSTORAGE = 36,
+        AT_BREAKUTILBOX = 37,
+        AT_USELIGHTSWITCH = 38,
+        AT_USEFIREALARM = 39,
+        AT_SURRENDWEAPON = 40,
+        AT_STEALTAPE = 41,
+        AT_LAST = 42,
     };
 
     class ZAction;
@@ -36,7 +63,19 @@ namespace Glacier
     class ZAction : public CBaseEvent<ZGEOM>
     {
     public:
+        /// static message resolvers (registered by the engine's global ctors in action.cpp)
+        STATIC_CLASS_VAR(ZAction, ZMessageResolver, s_msgCharacterEnterRange); // PC unk_99CDAC "CharacterEnterRange"
+        STATIC_CLASS_VAR(ZAction, ZMessageResolver, s_msgCharacterLeaveRange); // PC unk_99CDB8 "CharacterLeaveRange"
+        STATIC_CLASS_VAR(ZAction, ZMessageResolver, s_msgRequestGreying); // PC unk_99CDE8 "MSG_REQUESTGRAYING"
+        STATIC_CLASS_VAR(ZAction, ZMessageResolver, s_msgCanOperateObject); // PC unk_99CDF4 "CanOperateObject"
+        STATIC_CLASS_VAR(ZAction, ZMessageResolver, s_msgRemove); // PC unk_99CE00 "ActionRemove"
+        STATIC_CLASS_VAR(ZAction, ZMessageResolver, s_msgEnableAction); // PC unk_99CE0C "EnableAction"
+        STATIC_CLASS_VAR(ZAction, ZMessageResolver, s_msgDisableAction); // PC unk_99CE18 "DisableAction"
+        STATIC_CLASS_VAR(ZAction, ZMessageResolver, s_msgGetNearObjects); // PC unk_99CE24 "GetNearObjects"
+        STATIC_CLASS_VAR(ZAction, ZMessageResolver, s_msgRemoveNamedAction); // PC unk_99CE30 "RemoveNamedAction"
+
         /// vftable
+        virtual ~ZAction() override;
         virtual bool InRange(ZGEOM* geom); //Allowed to pass only ZPlayer or ZHitman3, other values will be ignored!
         virtual ZAction* FindAction(const char*, const char*, EActionType type, ZREF);
         virtual void Run(ZREF refToEntityAsArgument);
@@ -59,6 +98,7 @@ namespace Glacier
         virtual void ActionFrameUpdate(ZGEOM*);
 
         /// api
+        ZAction();
         ZAction** GetActionArray();
         void Show();
         void Hide();
@@ -74,9 +114,9 @@ namespace Glacier
          * @param entityRef ref to receiver entity (must be inherited of ZEventBase)
          * @param unk0 unknown value, in most cases is zero
          * @param radius the radius accessibility of action
-         * @return action ref
+         * @return the created action, or nullptr if it could not be created
          */
-        static int AddAction(
+        static ZAction* AddAction(
                 ZGEOM* pGeom,
                 const char* psLocalizedActionName,
                 const char* psActionName,
@@ -86,6 +126,15 @@ namespace Glacier
                 int unk0,
                 int radius);
 
+    private:
+        void SetNames(const char* szActionName, const char* szOriginalName);
+        void ReleaseMem();
+        void SendActionChange(void* pData);
+        void UpdateObjectsInRange(ZGEOM* pGeom);
+        void EnableActions(ZGEOM* pTarget);
+        void DisableActions(ZGEOM* pTarget);
+
+    public:
         /// data (total size if 0xFC, size of ZEventBase is 0x30)
         EActionType m_eType;
         ZMSGID m_msgMessage;

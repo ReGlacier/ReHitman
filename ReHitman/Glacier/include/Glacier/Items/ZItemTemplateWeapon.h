@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Glacier/GlacierFWD.h>
+#include <Glacier/ZSTL/REFTAB.h>
 #include <Glacier/Items/ZItemTemplate.h>
 #include <Glacier/Items/EWeaponOperation.h>
 #include <Glacier/ZSTL/ZBitfield.h>
@@ -30,17 +31,35 @@ namespace Glacier
     class ZItemTemplateWeapon : public ZItemTemplate
     {
     public:
-        // vftable
+        // RTTI
+        DECLARE_GEOM_CLASS(ZItemTemplateWeapon, 0x1007D4u);
+
+        // methods
+        ZItemTemplateWeapon(const char* psName, ZBaseGeom* pBaseGeom);
+
+        // vtbl (ZGEOM/ZItemTemplate overrides)
+        ~ZItemTemplateWeapon() override;
+        const RTP::ZPropertyInfo& GetProperties() const override;
+        uint32_t GetObjectId() const override;
+        void GetObjectIdAndMask(uint32_t& id, uint32_t& mask) const override;
+        ZGEOMCLASSINFO* GetOldClassInfo() const override;
+        void ClassInit() override;
+        void CopyData(const ZGEOM* Source) override;
+        ZItem* CreateItem(ZGROUP* pGroup, unsigned int iGeomResourceId, bool bOverrideVisibleForNPC, bool bVisibleForNPC) override;
+        uint32_t GetItemClassId() const override;
+        void ModifyState(CCom* pCom) override;
+
+        // vftable (ZItemTemplateWeapon-own virtuals, slots [166, 192))
         virtual void CreateItemAndActuallyUseDestinationParameter(ZGROUP*, unsigned int);
         virtual void DestroyItem(ZItem*); //actually not destroying anything :sadpeppe:
-        virtual bool GetRecoil();
+        virtual float GetRecoil();
         virtual bool CanHaveMagazines(); //returns same to CanFireProjectiles
         virtual bool CanFireProjectiles();
         virtual void SetCanFireProjectiles(bool);
         virtual bool HasSniperMode();
         virtual int GetWeaponType();
         virtual EWeaponOperation GetWeaponOperations();
-        virtual int GetTimeBetweenShots();
+        virtual float GetTimeBetweenShots();
         virtual ZItemTemplateAmmo* GetAmmoTemplate(int ammoIndex);
         virtual float GetMuzzleVelocity();
         virtual float GetNearRange();
@@ -48,15 +67,15 @@ namespace Glacier
         virtual float GetPrecisionDegrees();
         virtual int GetDefaultProjectilesPerMagazine();
         virtual float GetCartridgeSpeed();
-        virtual void SelectNextWeaponOperation(WEAPONOPERATION weaponOperation);
+        virtual WEAPONOPERATION SelectNextWeaponOperation(WEAPONOPERATION weaponOperation);
         virtual double CalcDamage(const ZItemWeapon* item, float distance);
         virtual double CalcImpact(const ZItemWeapon* item, float distance);
         virtual REFTAB* GetWeaponParts();
-        virtual int GetMuzzleFire();
-        virtual int GetMuzzleSmoke();
-        virtual int GetMuzzleLight();
-        virtual int GetCartridge(); //Same to GetMuzzleSmoke
-        virtual int GetMuzzleEffect();
+        virtual ZGEOM* GetMuzzleFire();
+        virtual ZGEOM* GetMuzzleSmoke();
+        virtual ZGEOM* GetMuzzleLight();
+        virtual ZGEOM* GetCartridge(); //Same to GetMuzzleSmoke
+        virtual ZGEOM* GetMuzzleEffect();
 
         // data (total size is 0x15C, ZItemTemplate size is 0x74)
         ZSDOwner m_SoundDef;

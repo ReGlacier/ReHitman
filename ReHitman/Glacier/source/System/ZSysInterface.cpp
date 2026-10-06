@@ -760,13 +760,26 @@ namespace Glacier
                 continue;
             }
 
+            // The registration macro stringizes the base-class token, so a class registered from
+            // another namespace (e.g. the Hitman classes) carries a qualified parent name such as
+            // "Glacier::ZItem". The factory stores simple class names, so drop any namespace
+            // qualifier before matching.
+            const char* psParentName = psParentClass;
+            for (const char* pScan = psParentClass; pScan[0] != '\0'; ++pScan)
+            {
+                if (pScan[0] == ':' && pScan[1] == ':')
+                {
+                    psParentName = pScan + 2;
+                }
+            }
+
             for (auto parentIt = factory.Begin(); parentIt != factory.End(); ++parentIt)
             {
                 ZGEOMCLASSINFO* pGeomClassInfo2 = *parentIt;
 
                 ZASSERT(pGeomClassInfo2->ClassInfoType() == 0);
 
-                if (StrCompareNoCase(psParentClass, pGeomClassInfo2->ClassInfoName()) == 0)
+                if (StrCompareNoCase(psParentName, pGeomClassInfo2->ClassInfoName()) == 0)
                 {
                     pGeomClassInfo1->Parent = pGeomClassInfo2;
                     break;

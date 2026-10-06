@@ -1,11 +1,29 @@
 #include <Glacier/PF4/ZPath.h>
 
 #include <Glacier/PF4/ZInterface.h>
+#include <Glacier/Serializer/ISerializerStream.h>
 #include <Glacier/ZUniAssert.h>
 
 
 namespace Glacier::PF4
 {
+    // Serializes one encoded path entry: the packed id/type bits and the entry
+    // position (PC 004D9410 / PS2 0x1EF4F0).
+    void ZDataRef::LoadSave(ISerializerStream& stream, bool bSaving)
+    {
+        (void)bSaving;
+
+        int32_t id = static_cast<int32_t>(m_Id);
+        stream.Exchange("m_Id", id);
+        m_Id = static_cast<unsigned int>(id) & 0x3FFFu;
+
+        int32_t type = static_cast<int32_t>(m_Type);
+        stream.Exchange("m_Type", type);
+        m_Type = static_cast<unsigned int>(type) & 0x3u;
+
+        stream.ExchangeArray("m_Pos", &m_Pos.x, 2);
+    }
+
     // Appends a "custom vertex" path entry (type 3) that references m_Vertices
     // and returns the encoded ZDataRef for it (PC 004D8FF0).
     ZDataRef ZPath::AddVertex(const float* pvPos)
@@ -237,5 +255,50 @@ namespace Glacier::PF4
         m_Size = iPos + 1;
         m_Cost = fDistance;
         return true;
+    }
+
+    // Serializes the whole path (PC 004D95F0 / PS2 0x1EF114). When loading, the
+    // entries are first read into a temporary buffer and then copied into the
+    // pathfinder's block allocator through AllocateBufferPath.
+    void ZPath::LoadSave(ISerializerStream& stream, bool bSaving)
+    {
+        if (bSaving)
+        {
+            stream.ExchangeArray("m_Vertices0", &m_Vertices[0].x, 3);
+            stream.ExchangeArray("m_Vertices1", &m_Vertices[1].x, 3);
+            stream.ExchangeArray("m_Vertices2", &m_Vertices[2].x, 3);
+            stream.ExchangeArray("m_Vertices3", &m_Vertices[3].x, 3);
+            stream.Exchange("m_CustomVertices", m_CustomVertices);
+            stream.Exchange("m_Size", m_Size);
+            stream.Exchange("m_Cost", m_Cost);
+
+            for (int i = 0; i < m_Size; ++i)
+            {
+                m_pathIdx[i].LoadSave(stream, bSaving);
+            }
+            return;
+        }
+
+        ZDataRef buffer[200];
+        ZPath tempPath(buffer, 200);
+        tempPath.m_PathFinder = m_PathFinder;
+
+        stream.ExchangeArray("m_Vertices0", &tempPath.m_Vertices[0].x, 3);
+        stream.ExchangeArray("m_Vertices1", &tempPath.m_Vertices[1].x, 3);
+        stream.ExchangeArray("m_Vertices2", &tempPath.m_Vertices[2].x, 3);
+        stream.ExchangeArray("m_Vertices3", &tempPath.m_Vertices[3].x, 3);
+        stream.Exchange("m_CustomVertices", tempPath.m_CustomVertices);
+        stream.Exchange("m_Size", tempPath.m_Size);
+        stream.Exchange("m_Cost", tempPath.m_Cost);
+
+        for (int i = 0; i < tempPath.m_Size; ++i)
+        {
+            tempPath.m_pathIdx[i].LoadSave(stream, false);
+        }
+
+        // PC omits the PS2 diagnostic printed here when no buffer could be allocated.
+        m_PathFinder->AllocateBufferPath(tempPath, this);
+
+        tempPath.m_pathIdx = nullptr;
     }
 }

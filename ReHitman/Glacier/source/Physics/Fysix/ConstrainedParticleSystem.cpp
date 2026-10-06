@@ -922,6 +922,13 @@ namespace Glacier
         par.oldx = oldpos;
     }
 
+    void ConstrainedParticleSystem::SetParticleValues(int i, const ZVector3& pos, const ZVector3& v)
+    {
+        Particle& par = m_pParticles[i];
+        par.x = pos;
+        par.v = v;
+    }
+
     void ConstrainedParticleSystem::SetParticleVel(int i, const ZVector3& vel)
     {
         m_pParticles[i].v = vel;

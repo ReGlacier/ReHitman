@@ -14,6 +14,11 @@
 namespace Glacier
 {
     extern bool g_PerformFullUpdate;
+    extern bool g_BankingEnabled;
+
+    // Per-actor desynchronisation offset (PC flt_97BE44) used by ClassFrameUpdate to
+    // stagger each actor's next full update. Named after the symbol in the Xbox KL2 build.
+    extern float timeSliceSpread;
 
     namespace Locomotion
     {
@@ -291,6 +296,25 @@ namespace Glacier
 
         // methods
         ZActor(const char* psName, ZBaseGeom* pBaseGeom);
+        void Initialize(const char* psName, ZBaseGeom* pBaseGeom);
+        void SetMovePoolWeigh(float weight);
+        void DetermineBanking(LocomotionInfo* pInfo);
+        void PreparePath();
+
+        // ZHM3Actor::SetMoveSet (PC 0x505F00) ported as a ZActor-only non-virtual helper:
+        // re-resolves the locomotion set bindings after a move-set change. Only ZActor
+        // fields are touched, so it lives on ZActor (see ZActor::SyncMoveSet).
+        void SyncMoveSet(int8_t moveSetNr, int8_t preferredState, bool bForce);
+
+        // Internal helpers (reversed from PC 0x502B50 / 0x502C50 / 0x505860 /
+        // 0x502BE0 / 0x5057F0 / 0x504060); all are pure ZActor-internal state syncs.
+        int8_t GetDesiredProgram();
+        void SyncProgramQueue();
+        void UpdateProgramQueue();
+        void DecreaseHeadTargetWeight(float fDeltaTime);
+        void DecayBanking(float fDeltaTime);
+        void ResetLocomotionModel();
+
         void ResetCurrentAnimation();
         void RestartLocomotionSystem();
         void SetCurrentAnimation(ZAnimVariationHandle handle, int flags, float random);

@@ -1,4 +1,5 @@
 #include <Glacier/Geom/ZAllocMany.h>
+#include <Glacier/Geom/ZParticleEmitter.h>
 #include <Glacier/RTP/VirtualTables.h>
 #include <Glacier/Serializer/ISerializerStream.h>
 #include <cstring>
@@ -91,13 +92,11 @@ namespace Glacier
             {
                 auto* pGeom = pBase->GetGeom();
 
-                // TODO: Finish this place after ZParticleEmitter will be reversed
-                // PC decompile:
-                //   if ((pGeom->GetObjectId() & ZParticleEmitter::m_Mask) == ZParticleEmitter::m_Id)
-                //       *(uint8_t*)((char*)pGeom + 0x74) &= ~0x8;
-                //   else if (stricmp(pGeom->GetOldClassInfo()->ClassInfoName(), "ZCigs") != 0)
-                //       pBase->Hide(true);
-                if (stricmp(pGeom->GetOldClassInfo()->ClassInfoName(), "ZCigs") != 0)
+                if (pGeom->IsDerivedFrom<ZParticleEmitter>())
+                {
+                    static_cast<ZParticleEmitter*>(pGeom)->m_bAutoStart = false;
+                }
+                else if (stricmp(pGeom->GetOldClassInfo()->ClassInfoName(), "ZCigs") != 0)
                 {
                     pBase->Hide(true);
                 }
@@ -183,6 +182,23 @@ namespace Glacier
             pObject->MakeActiveRecursive();
             pObject->SendCommandRecursive(m_msgActivate, nullptr, nullptr);
         }
+        return pObject;
+    }
+
+    ZGEOM* ZAllocMany::AllocOne(ZGROUP* pGroup, bool bWrap)
+    {
+        if (!bWrap && m_iNumFree == 0)
+            return nullptr;
+
+        ZASSERT(!m_bClone);
+        ZASSERT((m_Mask & pGroup->GetObjectId()) != m_Id);
+
+        const uint16_t lIndex = m_iFreeIndex;
+        ZAllocMany* pObject = m_pFreeObjects[lIndex];
+        ++m_iFreeIndex;
+        --m_iNumFree;
+        if (bWrap && m_iFreeIndex == m_iNumObjects)
+            m_iFreeIndex = 0;
         return pObject;
     }
 

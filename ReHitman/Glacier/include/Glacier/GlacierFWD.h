@@ -25,7 +25,7 @@ namespace Glacier
     class ZScene;
     class ZLIST;
     struct COLI;
-    class CCom;
+    struct CCom;
     struct ZBone;
     class ZCameraSpace;
     class ZDrawBuffer;
@@ -71,7 +71,7 @@ namespace Glacier
     class ZBaseGeomLists;
     class CInventory;
     class ZParticleEmitter;
-    class ZAllocMany;
+    struct ZAllocMany;
     class ZHumanBoid;
 
     struct SGeomTypeCount;

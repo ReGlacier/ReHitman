@@ -474,6 +474,24 @@ namespace Glacier
         }
     }
 
+    void ZLNKWHANDS::UpdateVisibilityPosition()
+    {
+        if (m_bInMotion && m_iVisionID != 0xFF)
+        {
+            const double now = static_cast<double>(g_pSysInterface->FrameTime.secs) / 1024.0;
+            if (now - m_fLastUpdatedPosition > 0.5)
+            {
+                ZCheckVisible::Instance().UpdateSeeableActor(this);
+                m_fLastUpdatedPosition = static_cast<float>(now);
+            }
+        }
+
+        if (IsInElevator() && m_iVisionID != 0xFF && std::fabs(GetElevatorDeltaY()) > 0.0f)
+        {
+            ZCheckVisible::Instance().UpdateSeeableActor(this);
+        }
+    }
+
     void ZLNKWHANDS::CalcAnimRemapNames()
     {
         if (!bInitializedStaticAnimsZLNKWHANDS)

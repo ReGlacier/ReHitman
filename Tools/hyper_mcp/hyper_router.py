@@ -114,6 +114,18 @@ TOOLS = {
             "additionalProperties": False,
         },
     },
+    "make_function": {
+        "description": "Create a function at an address in one IDA database.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "instance": {"type": "string"},
+                "address": {"oneOf": [{"type": "integer"}, {"type": "string"}]},
+            },
+            "required": ["instance", "address"],
+            "additionalProperties": False,
+        },
+    },
     "rename_function": {
         "description": "Rename an existing function in one IDA database with optional compare-and-set protection.",
         "inputSchema": {
@@ -481,6 +493,9 @@ HANDLERS = {
     "read_memory": lambda arguments: _single_instance_call("read_memory", arguments, ("address", "size")),
     "read_pointer_table": lambda arguments: _single_instance_call(
         "read_pointer_table", arguments, ("address", "count")
+    ),
+    "make_function": lambda arguments: _single_instance_call(
+        "make_function", arguments, ("address",)
     ),
     "rename_function": lambda arguments: _single_instance_call(
         "rename_function", arguments, ("address", "new_name")

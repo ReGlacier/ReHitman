@@ -22,6 +22,8 @@ namespace Glacier
         {
             ZREF rUser;
             uint32_t iChannel;
+
+            void LoadSave(ISerializerStream& stream);
         };
 
         // vtbl
@@ -43,8 +45,8 @@ namespace Glacier
         float SendRadioMessageToNeededForce(unsigned int, int, float, short unsigned int, void*);
         void SendRangedMessage(unsigned int, float, short unsigned int, void*);
         void SendGlobalEvent(unsigned int, short unsigned int, void*);
-        static void SendEventToActorsInBox();
-        static void SendEventToActorsInBox2();
+        static void SendEventToActorsInBox(ZREF rActor, uint16_t message, void* pData);
+        static void SendEventToActorsInBox2(ZREF rActor, uint16_t message, void* pData);
 
         // members
         sRadioOwner m_aRadioUsers[100];

@@ -13,6 +13,18 @@ namespace Hitman
     class ZHM3ItemWeapon : public Glacier::ZItemWeapon
     {
     public:
+        // RTTI
+        DECLARE_GEOM_CLASS(ZHM3ItemWeapon, 0x10042Bu);
+
+        // methods
+        ZHM3ItemWeapon(const char* psName, Glacier::ZBaseGeom* pBaseGeom);
+
+        // vtbl (RTTI)
+        const Glacier::RTP::ZPropertyInfo& GetProperties() const override;
+        uint32_t GetObjectId() const override;
+        void GetObjectIdAndMask(uint32_t& id, uint32_t& mask) const override;
+        Glacier::ZGEOMCLASSINFO* GetOldClassInfo() const override;
+
         //vftable
         virtual EHM3ItemType GetHM3ItemType();
         virtual void ChamberActivateAnimation();
@@ -26,6 +38,9 @@ namespace Hitman
         virtual void UpdateReloadShellAnimMetaKeys();
         virtual void FireAnimCallback(Glacier::Animation::ActiveAnimation*, float, float, unsigned int);
         virtual bool IsDetectable(); //always true
+
+        // ZItem override (vtbl slot 84); does not add a vtable slot.
+        void PostClassInit() override;
 
         //data (total size is 0x15C, ZItemWeapon size is 0xDC)
         float m_fRecoilValues[5];

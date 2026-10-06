@@ -29,6 +29,9 @@ namespace Glacier::PF4
             m_Pos.x = fX;
             m_Pos.y = fZ;
         }
+
+        // Serializes one encoded path entry (PC 004D9410 / PS2 0x1EF4F0).
+        void LoadSave(ISerializerStream& stream, bool bSaving);
     };
     RE_VERIFY_SIZE(ZDataRef, 0xC);
 

@@ -236,6 +236,59 @@ namespace Glacier
         return pBones;
     }
 
+    // PC 0x46F2D0 / PS2 0x184DE4. Sweeps the active bones (skipping the object root at index 0)
+    // and returns the half-extent and centre of the skeleton's bounding box.
+    void ZBoneModifyBase::GetBonesCenSize(float* pCen, float* pSize, const ZLNKOBJ* pLnkObj) const
+    {
+        ZASSERT(pLnkObj);
+
+        const ZBone* pBones = GetBones(pLnkObj);
+        const SBoneDefinition* pDefinitions = pLnkObj->GetBoneDefinitions();
+
+        ZVector3 vMin;
+        vMin.Reset();
+        ZVector3 vMax;
+        vMax.Reset();
+        bool bInitialized = false;
+
+        for (uint32_t i = 1; i < m_lNumActiveBones; ++i)
+        {
+            ZVector3 vCenter;
+            vmmul(vCenter.Get(), pDefinitions[i].Center.Get(), pBones[i]._Mat.Get());
+            vadd(vCenter.Get(), pBones[i]._Pos.Get());
+
+            ZVector3 vHalf = pDefinitions[i].Size;
+            TransformBox(pBones[i]._Mat.Get(), vHalf.Get());
+
+            ZVector3 vBoxMin;
+            ZVector3 vBoxMax;
+            vsub(vBoxMin.Get(), vCenter.Get(), vHalf.Get());
+            vadd(vBoxMax.Get(), vCenter.Get(), vHalf.Get());
+
+            if (!bInitialized)
+            {
+                vMin = vBoxMin;
+                vMax = vBoxMax;
+                bInitialized = true;
+            }
+            else
+            {
+                vmin(vMin.Get(), vBoxMin.Get());
+                vmax(vMax.Get(), vBoxMax.Get());
+            }
+        }
+
+        ZVector3 vExtent;
+        vsub(vExtent.Get(), vMax.Get(), vMin.Get());
+        vscalar(vExtent.Get(), 0.5f);
+
+        ZVector3 vCenter;
+        vsub(vCenter.Get(), vMax.Get(), vExtent.Get());
+
+        vcpy(pSize, vExtent.Get());
+        vcpy(pCen, vCenter.Get());
+    }
+
     const SRagdollCollisionInfo* ZBoneModifyBase::GetCollisionInfo() const
     {
         return m_pRagdoll ? &m_pRagdoll->m_ColiInfo : nullptr;

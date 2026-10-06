@@ -110,6 +110,8 @@ namespace Glacier
         // methods
         ZIKLNKOBJ(const char* psName, ZBaseGeom* pBaseGeom);
 
+        void SetSoundActive(bool bState);
+
         bool CanPlayAnimSegment(Animation::Header* pAnimHeader, float fFrom, float fTo, bool bMirror);
         bool CanPlayAnimSegment(Animation::Header* pAnimHeader, float fFrom, float fTo, const float* pRootMat, const float* pRootPos, bool bMirror, float fHeight, float fDepth);
 

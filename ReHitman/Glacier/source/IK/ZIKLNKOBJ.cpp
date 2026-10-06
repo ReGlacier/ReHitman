@@ -18,6 +18,7 @@
 #include <Glacier/Physics/ZCollisionBase.h>
 #include <Glacier/Physics/SExtendedImpactInfo.h>
 #include <Glacier/System/ZSysInterface.h>
+#include <Glacier/Audio/ZSoundDllBase.h>
 #include <Glacier/ZUniAssert.h>
 #include <cstring>
 
@@ -173,6 +174,18 @@ namespace Glacier
     {
         ZLNKOBJ::ClassInit2();
         CalcAnimRemapNames();
+    }
+
+    void ZIKLNKOBJ::SetSoundActive(bool bState)
+    {
+        auto* pSoundDll = g_pSysInterface->GetSoundDll();
+        if (!pSoundDll)
+            return;
+
+        if (bState)
+            pSoundDll->ActorRegister(this);
+        else
+            pSoundDll->ActorRemove(this);
     }
 
     void ZIKLNKOBJ::ClassFrameUpdate()

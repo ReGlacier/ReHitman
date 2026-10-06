@@ -5,7 +5,6 @@ namespace Glacier
 {
     struct COLI;
     class CRagdoll2;
-    class CRigidBody;
     struct SExplosionInfo;
     struct SLineImpact;
     struct SExtendedImpactInfo;

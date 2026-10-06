@@ -33,6 +33,13 @@ namespace Glacier
         ZGEOMCLASSINFO* GetOldClassInfo() const override;
         void PostClassInit() override;
         void CopyData(const ZGEOM* Source) override;
+        void PostSave(ISerializerStream& stream) override;
+        bool PostLoad(ISerializerStream& stream) override;
+        void CalcCenSize() override;
+        void ClassInit2() override;
+        void PostClassInit2() override;
+        void ClassFrameUpdate() override;
+        void CorrectOwnerDrawMatrix(ZMat3x3& mMat, ZVector3& vPos, ZBaseGeom* pOwnerBaseGeom, uint32_t lBoneId) override;
 
         // vtbl (ZItem-own virtuals, slots [147, 173))
         virtual void CreateFromTemplate();
@@ -49,7 +56,7 @@ namespace Glacier
         virtual void VerifyItemTemplate(ZItemTemplate const*);
         virtual void SetItemOwner(uint32_t,ZGROUP *,bool,bool);
         virtual ZGEOM* GetItemOwner() const;
-        virtual void GetAction(uint32_t);
+        virtual ZAction* GetAction(uint32_t);
         virtual void* InitPickup();
         virtual void EnablePickup(bool);
         virtual void OnMoved();

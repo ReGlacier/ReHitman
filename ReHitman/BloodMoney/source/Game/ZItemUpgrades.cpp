@@ -5,6 +5,9 @@
 #include <BloodMoney/Game/Globals.h>
 #include <Glacier/System/ZSysInterfaceWintel.h>
 #include <Glacier/Data/ZEngineDataBase.h>
+#include <Glacier/Data/ZGameData.h>
+#include <Glacier/GUI/XMLInterface/ZXMLGUISystem.h>
+#include <Glacier/GUI/XMLInterface/System/ZMenuElements.h>
 #include <Glacier/ResourceCollection.h>
 
 namespace Hitman
@@ -173,8 +176,12 @@ namespace Hitman
             return;
         if (state == 1)
         {
-            // TODO: Finish me after ZGui::m_pXMLGUISystem reversed.
-            // gameData->m_Gui->m_pXMLGUISystem->OpenWindow("ImprovedEquippedDialog", true, 0);
+            // PC 0x67F090: OpenWindow(*(g_pGameData + 0xA1C))->+4, "ImprovedEquippedDialog", 1, 0).
+            // ZGameData::m_pMenuElements == +0xA1C, ZMenuElements::m_pXMLGUISystem == +0x04.
+            Glacier::ZMenuElements* pMenuElements = Glacier::g_pGameData->m_pMenuElements;
+            ZASSERT(pMenuElements != nullptr);
+            if (pMenuElements != nullptr && pMenuElements->m_pXMLGUISystem != nullptr)
+                pMenuElements->m_pXMLGUISystem->OpenWindow("ImprovedEquippedDialog", true, false);
             return;
         }
         auto* gameData = static_cast<ZHM3GameData*>(Glacier::g_pGameData);

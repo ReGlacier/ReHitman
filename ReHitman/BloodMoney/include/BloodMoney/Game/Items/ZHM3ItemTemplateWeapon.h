@@ -2,6 +2,7 @@
 
 #include <Glacier/ReGlacier.h>
 #include <Glacier/Animation/ZAnimVariationHandle.h>
+#include <Glacier/ZSTL/REFTAB.h>
 #include <Glacier/ZSTL/ZRTStringObject.h>
 #include <Glacier/Items/ZItemTemplateWeapon.h>
 
@@ -16,6 +17,18 @@ namespace Hitman
     class ZHM3ItemTemplateWeapon : public Glacier::ZItemTemplateWeapon
     {
     public:
+        // RTTI
+        DECLARE_GEOM_CLASS(ZHM3ItemTemplateWeapon, 0x100429u);
+
+        // methods
+        ZHM3ItemTemplateWeapon(const char* psName, Glacier::ZBaseGeom* pBaseGeom);
+
+        // vtbl (RTTI)
+        const Glacier::RTP::ZPropertyInfo& GetProperties() const override;
+        uint32_t GetObjectId() const override;
+        void GetObjectIdAndMask(uint32_t& id, uint32_t& mask) const override;
+        Glacier::ZGEOMCLASSINFO* GetOldClassInfo() const override;
+
         //vftable
         virtual EHM3ItemType GetHM3ItemType();
         virtual float GetRecoilRandom();
@@ -32,6 +45,14 @@ namespace Hitman
         virtual const char* GetAnimNameActorReload(int);
         virtual const char* GetAnimNameActorChamber();
         virtual void* GetClipParticleControl(bool);
+
+        // vftable (base overrides implemented by this class; slots inherited from Glacier)
+        // PC slots: 4 PostLoad, 82 ClassInit, 83 ClassInit2, 172 HasSniperMode, 149 GetItemClassId
+        bool PostLoad(Glacier::ISerializerStream& stream) override;
+        void ClassInit() override;
+        void ClassInit2() override;
+        bool HasSniperMode() override;
+        uint32_t GetItemClassId() const override;
 
         //data (total size is 0x1A0, ZItemTemplateWeapon size is 0x15C)
         Glacier::ZAnimVariationHandle m_1stPersonAimId;

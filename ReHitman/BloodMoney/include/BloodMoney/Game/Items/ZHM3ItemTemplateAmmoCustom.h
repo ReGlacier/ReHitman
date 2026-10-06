@@ -14,6 +14,18 @@ namespace Hitman
     class ZHM3ItemTemplateAmmoCustom : public ZHM3ItemTemplateAmmo
     {
     public:
+        // RTTI
+        DECLARE_GEOM_CLASS(ZHM3ItemTemplateAmmoCustom, 0x10042Eu);
+
+        // methods
+        ZHM3ItemTemplateAmmoCustom(const char* psName, Glacier::ZBaseGeom* pBaseGeom);
+
+        // vtbl (RTTI)
+        const Glacier::RTP::ZPropertyInfo& GetProperties() const override;
+        uint32_t GetObjectId() const override;
+        void GetObjectIdAndMask(uint32_t& id, uint32_t& mask) const override;
+        Glacier::ZGEOMCLASSINFO* GetOldClassInfo() const override;
+
         struct SDefaultValues // Тип 3358
         {
             int32_t m_lProjectilesPerMagazine;
@@ -24,6 +36,9 @@ namespace Hitman
             RE_ADD_PADDING(3);
         };
         RE_VERIFY_SIZE(SDefaultValues, 0x14);
+
+        // vftable
+        bool GetCanPenetrate() override;
 
         // data (total size is 0xC0, ZHM3ItemTemplateAmmo size is 0xA8)
         SDefaultValues m_DefaultValues;

@@ -2,6 +2,8 @@
 #include <BloodMoney/Game/ZItemUpgradeSelector.h>
 #include <Glacier/Data/ZEngineDataBase.h>
 #include <Glacier/Com/CGlobalCom.h>
+#include <Glacier/Geom/ZGEOM.h>
+#include <Glacier/ZSTL/ZMath.h>
 #include <cstring>
 #include <Glacier/ZUniMemory.h>
 #include <Glacier/ZUniAssert.h>
@@ -35,6 +37,51 @@ namespace Hitman
     ZHM3LevelControl* ZHM3GameData::GetLevelControl() const
     {
         return m_LevelControl;
+    }
+
+    // PC 0x69D9E0. Walks m_Elevators and returns the one closest (in the XZ plane) to rID.
+    Glacier::ZREF ZHM3GameData::FindClosestElevator(Glacier::ZREF rID, float fMaxDist)
+    {
+        if (fMaxDist < 1000.0f)
+            fMaxDist = 1000.0f;
+
+        if (!m_Elevators.Count())
+            return 0;
+
+        Glacier::ZGEOM* pGeom = Glacier::ZGEOM::RefToPtr(rID);
+        if (!pGeom)
+            return 0;
+
+        Glacier::ZMat3x3 mat;
+        Glacier::ZVector3 pos;
+        pGeom->GetRootTM(mat, pos);
+
+        float fBestDistSq = fMaxDist * fMaxDist;
+        Glacier::ZREF rResult = 0;
+
+        for (auto rElevator : m_Elevators.As<Glacier::ZREF>())
+        {
+            Glacier::ZGEOM* pElevator = Glacier::ZGEOM::RefToPtr(rElevator);
+            if (!pElevator)
+                continue;
+
+            Glacier::ZMat3x3 matE;
+            Glacier::ZVector3 posE;
+            pElevator->GetRootTM(matE, posE);
+
+            // The Y axis is ignored so a body matches the elevator directly below/above it.
+            posE.y = pos.y;
+
+            const Glacier::ZVector3 diff = pos - posE;
+            const float fDistSq = Glacier::vdot(diff.Get(), diff.Get());
+            if (fDistSq < fBestDistSq)
+            {
+                fBestDistSq = fDistSq;
+                rResult = rElevator;
+            }
+        }
+
+        return rResult;
     }
 
 

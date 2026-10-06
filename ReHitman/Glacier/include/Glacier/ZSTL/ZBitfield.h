@@ -3,6 +3,8 @@
 #include <type_traits>
 #include <cstdint>
 
+#include <Glacier/ReGlacier.h>
+
 namespace Glacier
 {
 	struct ZBitfieldBase

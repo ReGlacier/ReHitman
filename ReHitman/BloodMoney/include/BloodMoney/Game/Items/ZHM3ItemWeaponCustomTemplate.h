@@ -14,9 +14,23 @@
 
 namespace Hitman
 {
+    class ZHM3ItemWeaponCustom;
+
     class ZHM3ItemWeaponCustomTemplate : public ZHM3ItemTemplateWeapon
     {
     public:
+        // RTTI
+        DECLARE_GEOM_CLASS(ZHM3ItemWeaponCustomTemplate, 0x10042Cu);
+
+        // methods
+        ZHM3ItemWeaponCustomTemplate(const char* psName, Glacier::ZBaseGeom* pBaseGeom);
+
+        // vtbl (RTTI)
+        const Glacier::RTP::ZPropertyInfo& GetProperties() const override;
+        uint32_t GetObjectId() const override;
+        void GetObjectIdAndMask(uint32_t& id, uint32_t& mask) const override;
+        Glacier::ZGEOMCLASSINFO* GetOldClassInfo() const override;
+
         // types
         struct SCustomWeaponData {
             ESilencerType m_eSilencerType;
@@ -62,6 +76,18 @@ namespace Hitman
         /// vftable
         virtual void* GetCustomData();
         virtual void SetMuzzleVelocity(float);
+
+        /// api (PC). Kept non-virtual so the verified vtable/layout is untouched.
+
+        // PC 0x653AF0 (declared through the PS2 spin as ZHM3ItemWeaponCustomTemplate::ApplyUpgrades,
+        // PS2 0x5E4134): walks m_pUpgrades and applies every present upgrade to pCustomGun.
+        void ApplyUpgrades(ZHM3ItemWeaponCustom* pCustomGun);
+        // PC 0x64A4B0. Restores the live weapon/template fields from m_DefaultValues.
+        void ApplyDefaultValues();
+        // PC 0x64C2C0. Clears m_pUpgrades and restores the stored default values.
+        void ClearUpgrades();
+        // PC 0x64A720. Returns the (base template) impact.
+        float GetImpact() const;
 
         /// data (total size is 0x1FC, base size is 0x1A0)
         Glacier::REFTAB* m_pUpgrades;

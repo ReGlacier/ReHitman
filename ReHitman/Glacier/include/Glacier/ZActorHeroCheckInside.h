@@ -14,10 +14,24 @@ namespace Glacier {
     {
     public:
         //consts
-        static constexpr Glacier::ZMSGID kActivateFrameUpdateMsg = 0x83A;
-        //vftable (no changes)
+        static constexpr Glacier::ZMSGID kActivateFrameUpdateMsg = 0x83A;         // Routes to ZEventBase::ActivateFrameUpdate
+        static constexpr Glacier::ZMSGID kActorHeroCheckInsideEnterMsg = 0x839;   // Send_Actorherocheckinsideenter (PS2 helper)
+
+        //static
+        STATIC_CLASS_VAR(ZActorHeroCheckInside, Glacier::RTP::ZPropertyInfo, Info);
+
+        //vftable (overrides only; the class adds no new slots)
+        bool PostLoad(Glacier::ISerializerStream& stream) override;
+        const Glacier::RTP::ZPropertyInfo& GetProperties() const override;
+        void Init() override;
+        void FrameUpdate() override;
+        int Command(Glacier::ZMSGID command, Glacier::ZDATA data) override;
+
         //api
+        ZActorHeroCheckInside();
         bool IsInside(Glacier::ZGEOM* pGeom);
+        void GetNearbyActors();
+        void CheckNearbyActors();
      
         //data (total size is 0x15C, base size is 0x30)
         Glacier::ZREF m_rReceiver;

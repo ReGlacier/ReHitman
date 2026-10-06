@@ -1,8 +1,12 @@
 #include <Glacier/Geom/ZParticleTemplate.h>
+
+#include <Glacier/Geom/ZParticleController.h>
 #include <Glacier/RTP/VirtualTables.h>
 #include <Glacier/Render/Prim/ZPrimControlBase.h>
 #include <Glacier/Data/ZEngineDataBase.h>
+#include <Glacier/Data/ZGameData.h>
 #include <Glacier/System/ZSysInterface.h>
+#include <Glacier/ZSTL/REFTAB.h>
 #include <Glacier/ZUniMemory.h>
 #include <algorithm>
 #include <cstring>
@@ -92,7 +96,7 @@ namespace Glacier
 
         if (!m_rNextTemplate && m_szNextTemplateName.c_str() && *m_szNextTemplateName.c_str())
         {
-            // TODO: Finish this place after ZParticleTemplateList will be reversed
+            m_rNextTemplate = FindTemplate(m_szNextTemplateName.c_str());
         }
     }
 
@@ -108,20 +112,35 @@ namespace Glacier
         *pController = g_pSysInterface->m_pEngineData->m_rParticleControllerGeom;
         if (!m_lControllerIndex)
         {
-            ZGEOM* controller = ZGEOM::RefToPtr(*pController);
-            if (controller)
-            {
-                using RegisterParticleTemplate = uint32_t(__thiscall*)(ZGEOM*, ZREF);
-                auto function = reinterpret_cast<RegisterParticleTemplate>((*reinterpret_cast<void***>(controller))[118]);
-                m_lControllerIndex = function(controller, GetRef());
-            }
+            // The PC calls RegisterParticleTemplate through ZParticleController vtable slot 118.
+            // That absolute index only holds on builds without the optional
+            // ZGEOM::DrawDebugObjects slot (REHITMAN_WITH_DEBUG_DRAW shifts it to 119), so call
+            // the method directly instead of hardcoding the index.
+            if (auto* pParticleController = static_cast<ZParticleController*>(ZGEOM::RefToPtr(*pController)))
+                m_lControllerIndex = pParticleController->RegisterParticleTemplate(GetRef());
         }
         *pIndex = m_lControllerIndex;
     }
 
-    ZREF ZParticleTemplate::FindTemplate(const char*)
+    ZREF ZParticleTemplate::FindTemplate(const char* psName)
     {
-        // TODO: Finish this place after ZParticleTemplateList will be reversed
+        if (!g_pGameData || !g_pGameData->m_pParticleTemplates)
+            return 0;
+
+        REFTAB* templates = g_pGameData->m_pParticleTemplates;
+        RefRun run;
+        templates->RunInitNxtRef(&run);
+        for (ZREF ref = templates->RunNxtRef(&run); run; ref = templates->RunNxtRef(&run))
+        {
+            ZGEOM* geom = ZGEOM::RefToPtr(ref);
+            if (!geom)
+                continue;
+
+            ZASSERT((geom->GetObjectId() & m_Mask) == m_Id);
+            const char* name = geom->Name();
+            if (std::strcmp(psName, name ? name : "<NONAME>") == 0)
+                return ref;
+        }
         return 0;
     }
 

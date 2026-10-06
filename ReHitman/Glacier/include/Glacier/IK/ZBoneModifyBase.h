@@ -43,6 +43,7 @@ namespace Glacier
         uint8_t DecalLookup() const;
         bool HideBone(ZBaseGeom* pBaseGeom, uint8_t lBoneIndex, bool bHide);
         const ZBone* GetBones(const ZLNKOBJ* pLnkObj) const;
+        void GetBonesCenSize(float* pCen, float* pSize, const ZLNKOBJ* pLnkObj) const;
         void GetIKBone(const ZBone* pBones, const float* pConvBones, uint32_t lBoneIndex, ZMat3x3& mMat, ZVector3& vPos) const;
         void GetBoneMatPos(ZMat3x3& mMat, ZVector3& vPos, uint32_t lBoneIdx, const ZLNKOBJ* pLnkObj, ZBone* pBone = nullptr) const;
         bool GetIKBoneMatPos(ZMat3x3& mMat, ZVector3& vPos, uint8_t lIndex, const ZLNKOBJ* pLnkObj, ZBone* pBone) const;

@@ -9,6 +9,7 @@
 
 #include <BloodMoney/Game/LevelControls/ESecurityZone.h>
 #include <BloodMoney/Game/Actions/EHM3Action.h>
+#include <BloodMoney/Game/Items/EHM3ItemType.h>
 
 namespace Hitman
 {
@@ -90,6 +91,12 @@ namespace Hitman
 
 	struct ZHM3Inventory
 	{
+        // methods
+        // PC 0x6186E0. Resolves the HM3 item type of a geom that belongs to the HM3 item
+        // family by testing it against each concrete HM3 class (templates first, then the
+        // runtime items). Returns eHM3NoType for a null or unrecognised geom.
+        EHM3ItemType GetItemType(Glacier::ZGEOM* pItem);
+
         // members
 		Glacier::CInventory* m_pInventoryEvent;
 		Glacier::REFTAB* m_pInventory;
@@ -370,6 +377,18 @@ namespace Hitman
         virtual void AttachItemToRightHand(Glacier::ZItem* pItem);
         virtual void AttachItemToLeftHand(Glacier::ZItem* pItem);
         virtual void AttachItemToHitman(Glacier::ZItem* pItem);
+
+        // methods
+        // PC 0x5EC270. False for the fiber wire, binoculars, remote control and unknown items,
+        // true for everything else.
+        bool CanDropItem(Glacier::ZItem* pItem) const;
+
+        // PC 0x5ED450. Classifies the geom as a suitcase/briefcase; bSuitcase picks between the
+        // "suitcase" group (result negated) and the "briefcase/flightcase" group (always true).
+        bool IsItemSuitcase(Glacier::ZItem* pItem, bool bSuitcase) const;
+
+        // PC 0x5F1810. True while the player is aiming through a scope (or in faked scope mode).
+        bool IsInScopeMode() const;
 
         // Test only
         ZTimeMultEffectControl* m_pTimeMultEffectControl;
@@ -681,7 +700,7 @@ namespace Hitman
         float m_fBreathTime;
         bool m_bBreathIn;
         bool m_pad761[3];
-        struct ZParticleEmitter* m_pBreathEmitter;
+        Glacier::ZParticleEmitter* m_pBreathEmitter;
         bool m_bIsInOutsideLocation;
         bool m_pad769[3];
         ZStackArrayPlantedBombs m_PlantedBombs;

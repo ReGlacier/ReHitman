@@ -22,6 +22,7 @@ namespace Glacier
 
     // fwds
     class ZBoneModifyBase;
+    class ZSoundObject;
 
     RE_PACKED_STRUCT(1)
     struct SPoseKey {
@@ -357,9 +358,12 @@ namespace Glacier
         const ZBoneModifyBase* GetBoneModifier() const { return m_pBoneModify; }
         const ZBone* GetBones() const;
         const ZBone* GetGlobalPrimBones() const;
+        void GetBonesCenSize(float* pCen, float* pSize) const;
         uint32_t NumActiveBones() const;
+        bool HideBone(uint8_t lBoneIndex, bool bHide);
         Animation::ActiveAnimation* GetGroundAnimation() const;
         Animation::Header* GetAnimHeaderFromVariation(ZAnimVariationHandle handle, int flags, float random) const;
+        Animation::Header* GetAnimHeaderFromHandleName(const char* pszName) const;
         bool MetaKeyCallBack(Animation::ActiveAnimation* pAnimation, float frame, float deltaFrame, uint32_t metaKeyOffset);
         bool AnimSoundCallback(Animation::ActiveAnimation* pAnimation, float frame, float deltaFrame, uint32_t soundRef);
         const char* LoadAnimVariationsBuffer(const char* pszFileName);
@@ -368,6 +372,7 @@ namespace Glacier
         ZAnimVariationHandle GetAnimVariationHandle(const char* pszName);
         Animation::ActiveAnimation* IsAnimationRunning(int hAnim);
         int PlayAnimSegment(Animation::Header* pAnimHeader, int32_t dwMode, float fFrom, float fTo, float fSpeed);
+        ZSoundObject* StartAnimSound(int soundIndex, bool fullBody, Animation::ActiveAnimation* pBoneAnim, float fStartOffsetFrames, bool bReversed, int lSequenceID);
 
 #       pragma region " --- RTTI Methods --- "
         void GetAnimCollectionProperty(ZANIM& anim_collection_name);

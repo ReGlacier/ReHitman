@@ -8,8 +8,6 @@
 
 namespace Glacier
 {
-    class CRigidBody;
-
     class ZPhysicsLinkage : public CBaseEvent<ZGEOM>
     {
     public:
